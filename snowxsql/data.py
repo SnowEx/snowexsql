@@ -29,6 +29,7 @@ class SingleLocation(SnowData):
     northing = Column(Float)
     easting = Column(Float)
     elevation = Column(Float)
+    version = Column(Integer)
 
 
 class Point(SingleLocation, Base):
@@ -37,7 +38,9 @@ class Point(SingleLocation, Base):
     '''
     __tablename__ = 'point'
     type = Column(String(50))
-
+    measurement_tool = Column(String(50))
+    equipment = Column(String(50))
+    value = Column(Float)
     __mapper_args__ = {
         'polymorphic_identity':'Point',
         'polymorphic_on':type
@@ -48,10 +51,7 @@ class SnowDepth(Point):
     '''
     Base class for points and profiles
     '''
-    measurement_tool = Column(String(50))
-    equipment = Column(String(50))
-    depth = Column(Integer)
-    version = Column(Integer)
+    type = 'snow depth'
     __mapper_args__ = {
         'polymorphic_identity':'SnowDepth'
     }

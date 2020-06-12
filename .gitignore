@@ -2,3 +2,5 @@ build/*
 .eggs/*
 snowxsql.egg-info/*
 dist/*
+*.db
+*/__pycache__/*

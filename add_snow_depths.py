@@ -10,7 +10,7 @@ from os.path import join, abspath
 from snowxsql.data import *
 
 # Start the Database
-engine = create_engine('sqlite:///:memory:', echo=True)
+engine = create_engine('sqlite:///snowex.db', echo=True)
 
 # create a Session
 Session = sessionmaker(bind=engine)
@@ -48,7 +48,9 @@ for i,row in df.iterrows():
         if name in ['date','time']:
             # calls datetime.date() or datetime.time()
             value = getattr(value, name)()
-
+        elif name == 'depth':
+            name = 'value'
+            
         data[name] = value
 
     # Create db interaction, pass data as kwargs to class submit data
