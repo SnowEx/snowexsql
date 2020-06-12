@@ -3,19 +3,25 @@ from sqlalchemy import MetaData, inspect
 
 from snowxsql.create_db import *
 from snowxsql.data import Point
-
+from os import remove
 metadata = MetaData()
 
 class TestDBSetup:
     def setup_class(self):
-        """ setup any state specific to the execution of the given class (which
-        usually contains tests).
-        """
+        '''
+        Setup the database one time for testing
+        '''
         name = 'sqlite:///test.db'
         initialize(name)
         engine = create_engine(name, echo=False)
         conn = engine.connect()
         self.metadata = MetaData(conn)
+
+    def teardown_class(self):
+        '''
+        Remove the database after testing
+        '''
+        remove('test.db')
 
 
     def test_point_structure(self):
