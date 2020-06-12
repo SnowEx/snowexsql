@@ -1,47 +1,68 @@
+import datetime
+
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy import Column, ForeignKey, Integer, String, Float, Boolean, Datetime, Time, Date
+from sqlalchemy import Column, ForeignKey, Integer, String, Float, Boolean, DateTime, Time, Date
 from sqlalchemy import Index
 from sqlalchemy.orm import relationship, backref
-from datetime inmport
+from sqlalchemy.sql import func
+
 Base = declarative_base()
 
-
-class SnowData(Base):
+class SnowData(object):
     '''
     Base class for which all data will have these attributes
     '''
-	site_name = Column(String(250))
+    site_name = Column(String(250))
     date = Column(Date)
     time = Column(Time)
-    created = DateTime(default=datetime.datetime.utcnow)
+    time_created = Column(DateTime(timezone=True), server_default=func.now())
+    time_updated = Column(DateTime(timezone=True), onupdate=func.now())
+    id = Column(Integer, primary_key=True)
 
-class Point(SnowData):
+
+class SingleLocation(SnowData):
     '''
     Base class for points and profiles
     '''
-	__tablename__ = 'point'
-
-	latitude = Column(Float)
-	longitude = Column(Float)
-    utm_northing = Column(Float)
-    utm_easting = Column(Float)
+    latitude = Column(Float)
+    longitude = Column(Float)
+    northing = Column(Float)
+    easting = Column(Float)
     elevation = Column(Float)
+
+
+class Point(SingleLocation, Base):
+    '''
+    Class for point data
+    '''
+    __tablename__ = 'point'
+    type = Column(String(50))
+
+    __mapper_args__ = {
+        'polymorphic_identity':'Point',
+        'polymorphic_on':type
+    }
+
 
 class SnowDepth(Point):
     '''
     Base class for points and profiles
     '''
-	latitude = Column(Float)
-	longitude = Column(Float)
-    measurement_tool = Column(String(250))
+    measurement_tool = Column(String(50))
+    equipment = Column(String(50))
+    depth = Column(Integer)
+    version = Column(Integer)
+    __mapper_args__ = {
+        'polymorphic_identity':'SnowDepth'
+    }
 
-class Profile(Point):
+
+class Profile(SingleLocation, Base):
     '''
     Base class for interacting with profile data. This includes anything measured
     as a function of depth as single point. E.g. SMP profiles, Hand hardness,
     temperature etc...
     '''
-
     __tablename__ = 'profile'
     pass
 
