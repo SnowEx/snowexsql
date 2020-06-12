@@ -9,6 +9,15 @@ from os.path import join, abspath
 
 from snowxsql.data import *
 
+# Site name
+site_name = 'Grand Mesa'
+timezone = 'MST'
+
+# Read in the Grand Mesa Snow Depths Data
+fname = abspath(join('..', 'SnowEx2020_SQLdata',
+                           'DEPTHS',
+                           'SnowEx2020_SD_GM_alldepths_v1.csv'))
+
 # Start the Database
 engine = create_engine('sqlite:///snowex.db', echo=True)
 
@@ -16,12 +25,7 @@ engine = create_engine('sqlite:///snowex.db', echo=True)
 Session = sessionmaker(bind=engine)
 session = Session()
 
-# Read in the Grand Mesa Snow Depths Data
-fname = abspath(join('..', 'SnowEx2020_SQLdata',
-                           'DEPTHS',
-                           'SnowEx2020_SD_GM_alldepths_v1.csv'))
-
-df = pd.read_csv(fname, parse_dates=[2,3])
+df = pd.read_csv(fname)
 
 # Remap some of the names for tools for verbosity
 measurement_names = {'MP':'magnaprobe','M2':'mesa', 'PR':'pit ruler'}
@@ -30,7 +34,7 @@ measurement_names = {'MP':'magnaprobe','M2':'mesa', 'PR':'pit ruler'}
 for i,row in df.iterrows():
 
     # Create the data structure to pass into the interacting class ia attributes
-    data = {}
+    data = {'site_name':site_name}
     for k,v in row.items():
         name = k.lower()
 
@@ -44,14 +48,15 @@ for i,row in df.iterrows():
             name = name.split(' ')[0]
             value = v
 
-        # Isolate the date or time object only
-        if name in ['date','time']:
-            # calls datetime.date() or datetime.time()
-            value = getattr(value, name)()
-        elif name == 'depth':
+        if name == 'depth':
             name = 'value'
-            
+
         data[name] = value
+    # Modify date and time to reflect the timezone and then split again
+    dt_str = str(data['date']) + ' ' + data['time'] + ' ' + timezone
+    d = pd.to_datetime(dt_str)
+    data['date'] = d.date()
+    data['time'] = d.time()
 
     # Create db interaction, pass data as kwargs to class submit data
     sd = SnowDepth(**data)
