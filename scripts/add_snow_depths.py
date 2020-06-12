@@ -14,7 +14,7 @@ site_name = 'Grand Mesa'
 timezone = 'MST'
 
 # Read in the Grand Mesa Snow Depths Data
-fname = abspath(join('..', 'SnowEx2020_SQLdata',
+fname = abspath(join('..', '..', 'SnowEx2020_SQLdata',
                            'DEPTHS',
                            'SnowEx2020_SD_GM_alldepths_v1.csv'))
 
