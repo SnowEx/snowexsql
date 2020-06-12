@@ -1,4 +1,18 @@
-Repo of code for building/using SQL database for SnowEx2020
+# SNOWEX Databse Code
 
-1) Grand Mesa IOP
-2) Time Series
+Welcome to the code used to create the snowex database.
+
+## Installation
+
+### Prequisites
+
+* Python3.5 +
+
+`pip install -r requirements.txt`
+
+
+
+## Getting started
+
+If you do not have the database created yet, use:
+`python create.py`
