@@ -1,0 +1,4 @@
+build/* 
+.eggs/*
+snowxsql.egg-info/*
+dist/*

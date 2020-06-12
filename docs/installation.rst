@@ -8,7 +8,7 @@ Installation
 Stable release
 --------------
 
-To install snowXSQL, run this command in your terminal:
+To install a stable release of snowXSQL, run this command in your terminal:
 
 .. code-block:: console
 
