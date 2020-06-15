@@ -1,9 +1,6 @@
 '''
 Read in the SnowEx profiles from pits
 '''
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-
 import pandas as pd
 from os.path import join, abspath, basename
 from os import listdir
@@ -11,6 +8,7 @@ import glob
 import time
 
 from snowxsql.upload import *
+from snowxsql.db import get_session
 
 # Site name
 site_name = 'Grand Mesa'
@@ -23,11 +21,7 @@ data_dir = abspath(join('..', '..', 'SnowEx2020_SQLdata', 'PITS'))
 filenames = [join(data_dir, f) for f in listdir(data_dir)]
 
 # Start the Database
-engine = create_engine('sqlite:///snowex.db', echo=False)
-
-# create a Session
-Session = sessionmaker(bind=engine)
-session = Session()
+session = get_session('sqlite:///snowex.db')
 
 # Grab only site details
 filenames = [f for f in filenames if 'site' in f]
