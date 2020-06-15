@@ -29,34 +29,18 @@ def clean_str(messy):
     return clean
 
 
-def remap_data_names(layer):
+def remap_data_names(layer, rename):
     '''
     Remaps a layer dictionary to more verbose names
 
     Args:
         layer: Dictionary of layer column names and values
+        rename: Dictionary mapping names (keys) to more verbose names
     Returns:
         new_d: Dictionary containing the names remapped
     '''
     new_d = {}
-    rename = {'location':'site_name',
-             'top': 'depth',
-             'height':'depth',
-             'bottom':'bottom_depth',
-             'density_a': 'sample_a',
-             'density_b': 'sample_b',
-             'density_c': 'sample_c',
-             'site': 'site_id',
-             'pitid': 'pit_id',
-             'slope':'slope_angle',
-             'weather':'weather_description',
-             'sky': 'sky_cover',
-             'notes':'site_notes',
-             'dielectric_constant_a':'sample_a',
-             'dielectric_constant_b':'sample_b',
-             'dielectric_constant_c':'sample_c'
-
-             }
+    
     for k, v in layer.items():
         if k in rename.keys():
             new_k = rename[k]

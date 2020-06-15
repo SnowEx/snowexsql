@@ -40,24 +40,12 @@ class PointData(SingleLocationData, Base):
     type = Column(String(50))
     measurement_tool = Column(String(50))
     equipment = Column(String(50))
-
     value = Column(Float)
+    units = Column(String(50))
+
     __mapper_args__ = {
         'polymorphic_identity':'Points',
-        'polymorphic_on':type
     }
-
-
-class SnowDepthData(PointData):
-    '''
-    Base class for points and profiles
-    '''
-    type = 'snow depth'
-    units = 'cm'
-    __mapper_args__ = {
-        'polymorphic_identity':'SnowDepth'
-    }
-
 
 class LayerData(SingleLocationData):
     '''

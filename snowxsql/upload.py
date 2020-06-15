@@ -138,12 +138,31 @@ class UploadProfileData():
     stratigraphy_names = ['grain_size', 'hand_hardness', 'grain_type',
                          'manual_wetness']
 
+    rename = {'location':'site_name',
+             'top': 'depth',
+             'height':'depth',
+             'bottom':'bottom_depth',
+             'density_a': 'sample_a',
+             'density_b': 'sample_b',
+             'density_c': 'sample_c',
+             'site': 'site_id',
+             'pitid': 'pit_id',
+             'slope':'slope_angle',
+             'weather':'weather_description',
+             'sky': 'sky_cover',
+             'notes':'site_notes',
+             'dielectric_constant_a':'sample_a',
+             'dielectric_constant_b':'sample_b',
+             'dielectric_constant_c':'sample_c'
+             }
+
     def __init__(self, profile_filename, timezone):
 
         self.filename = profile_filename
 
         # Read in the file header
         self._pit = PitHeader(profile_filename, timezone)
+
         # Read in data
         self.df = self._read(profile_filename)
 
@@ -217,7 +236,7 @@ class UploadProfileData():
                     data = {k:v for k,v in layer.items() if k not in self.stratigraphy_names}
                     data['type'] = value_type
                     data['value'] = layer[value_type]
-                    data = remap_data_names(data)
+                    data = remap_data_names(data, self.rename)
 
                     # Send it to the db
                     print('\tAdding {}'.format(value_type))
@@ -225,7 +244,7 @@ class UploadProfileData():
                     session.add(d)
                     session.commit()
             else:
-                data = remap_data_names(layer)
+                data = remap_data_names(layer, self.rename)
                 if 'dielectric_constant_a' in layer.keys():
                     value_type = 'dielectric_constant'
 
@@ -241,3 +260,65 @@ class UploadProfileData():
                 d = BulkLayerData(**data)
                 session.add(d)
                 session.commit()
+
+
+class PointDataCSV():
+    '''
+    Class for submitting whole files of point data in csv format
+
+    '''
+
+    # Remapping for special keywords for snowdepth measurements
+    measurement_names = {'MP':'magnaprobe','M2':'mesa', 'PR':'pit ruler'}
+
+    def __init__(self,filename, value_type, units, site_name, timezone):
+        self.df = self._read(filename)
+        self.value_type = value_type
+        self.units = units
+        self.site_name = site_name
+        self.timezone = timezone
+
+    def _read(self, filename):
+        '''
+        Read in the csv
+        '''
+        df = pd.read_csv(filename)
+        return df
+
+    def submit(self, session):
+        # Loop through all the entries and add them to the db
+        for i,row in self.df.iterrows():
+
+            # Create the data structure to pass into the interacting class attributes
+            data = {'site_name':self.site_name,
+                    'type':self.value_type,
+                    'units':self.units}
+            for k, v in row.items():
+                name = k.lower()
+
+                # Rename the tool name to work for class attributes
+                if 'measurement' in name:
+                    name = 'measurement_tool'
+                    value = self.measurement_names[row[k]]
+
+                # Isolate only the main name not the notes associated in header.
+                else:
+                    name = name.split(' ')[0]
+                    value = v
+
+                if name == 'depth':
+                    name = 'value'
+
+                data[name] = value
+
+            # Modify date and time to reflect the timezone and then split again
+            dt_str = ' '.join([str(data['date']), str(data['time']), self.timezone])
+            d = pd.to_datetime(dt_str)
+            data['date'] = d.date()
+            data['time'] = d.time()
+
+            # Create db interaction, pass data as kwargs to class submit data
+            sd = PointData(**data)
+            session.add(sd)
+            session.commit()
+        

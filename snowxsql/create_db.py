@@ -26,6 +26,8 @@ def initialize(db_name):
         Column('utm_zone', Float),
         Column('version', Integer),
         Column('type', String),
+        Column('units', String),
+
         Column('measurement_tool', String),
         Column('equipment', String),
         Column('value', Float),)
