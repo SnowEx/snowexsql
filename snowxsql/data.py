@@ -20,7 +20,7 @@ class SnowData(object):
     id = Column(Integer, primary_key=True)
 
 
-class SingleLocation(SnowData):
+class SingleLocationData(SnowData):
     '''
     Base class for points and profiles
     '''
@@ -29,14 +29,14 @@ class SingleLocation(SnowData):
     northing = Column(Float)
     easting = Column(Float)
     elevation = Column(Float)
-    version = Column(Integer)
     utm_zone = Column(Integer)
 
-class Point(SingleLocation, Base):
+class PointData(SingleLocationData, Base):
     '''
     Class for point data
     '''
     __tablename__ = 'points'
+    version = Column(Integer)
     type = Column(String(50))
     measurement_tool = Column(String(50))
     equipment = Column(String(50))
@@ -48,31 +48,30 @@ class Point(SingleLocation, Base):
     }
 
 
-class SnowDepth(Point):
+class SnowDepthData(PointData):
     '''
     Base class for points and profiles
     '''
     type = 'snow depth'
-
+    units = 'cm'
     __mapper_args__ = {
         'polymorphic_identity':'SnowDepth'
     }
 
 
-class Layer(SingleLocation):
+class LayerData(SingleLocationData):
     '''
     Base class for interacting with profile data. This includes anything measured
     as a function of depth as single point. E.g. SMP profiles, Hand hardness,
     temperature etc...
     '''
-    __tablename__ = 'layers'
     depth = Column(Float(50))
     site_id = Column(String(50))
     pit_id = Column(String(250))
-    slope_angle = Column(String(2)))
-    aspect = Column(Float))
-    air_temp = Column(Float))
-    total_depth = Column(Integer))
+    slope_angle = Column(String(3))
+    aspect = Column(String(5))
+    air_temp = Column(Float)
+    total_depth = Column(Integer)
     surveyors = Column(String(50))
     weather_description = Column(String(50))
     precip = Column(String(50))
@@ -83,70 +82,31 @@ class Layer(SingleLocation):
     ground_vegetation = Column(String(50))
     vegetation_height = Column(String(50))
     tree_canopy = Column(String(50))
-    notes = Column(String(1000))
+    site_notes = Column(String(1000))
+    type = Column(String(50))
+    value = Column(String(50))
 
 
-class ThickLayer(Layer, Base):
+class BulkLayerData(LayerData, Base):
     '''
     Class for holding data that had a known thickness, e.g. density,
-    hand_hardness For layer measurements with thickness depth always
+    hand_hardness For layer measurements with thickness. Depth always
     represents the top depth value
 
     '''
+    __tablename__ = 'layers'
+
     bottom_depth = Column(Integer)
-
-class stratigraphy(ThickLayer):
-    '''
-    Layer class for hand hardness
-    '''
-    type = 'stratigraphy'
-    grain_size = Column(Integer)
-    grain_type = Column(String(10))
-    hand_hardness = Column(String(5))
-    manual_wetness = Column(String(5))
     comments = Column(String(1000))
+    sample_a = Column(String(20))
+    sample_b = Column(String(20))
+    sample_c = Column(String(20))
 
     __mapper_args__ = {
-        'polymorphic_identity':'stratigraphy'
-    }
-
-class density(ThickLayer):
-    '''
-    Layer class for hand hardness
-
-    For layer measurements with thickness depth always represents the top
-    '''
-    type = 'density'
-    sample_a = Column(Integer)
-    sample_b = Column(Integer)
-    sample_c = Column(Integer)
-
-    __mapper_args__ = {
-        'polymorphic_identity':'density'
-    }
-
-class temperature(Layer, Base):
-    '''
-    Layer class for hand hardness
-
-    For layer measurements with thickness depth always represents the top
-    '''
-    type = 'temperature'
-    temperature = Column(Float)
-
-    __mapper_args__ = {
-        'polymorphic_identity':'temperature'
-    }
-
-class DielectricConstant(ThickLayer):
-    '''
-    Layer class for holding LWC info
-    '''
-    sample_a = Column(Float)
-    sample_b = Column(Float)
+        'polymorphic_identity':'BulkLayers'}
 
 
-class Raster(SnowData):
+class RasterData(SnowData):
     '''
     Base class for connecting to more complicated raster data where is may not
     feasabile to store in the db. E.g. most plane flown devices.
