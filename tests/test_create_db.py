@@ -37,3 +37,21 @@ class TestDBSetup:
 
         for c in shouldbe:
             assert c in columns
+
+    def test_Bulklayer_structure(self):
+        '''
+        Tests our tables are in the database
+        '''
+        t = Table("layers", self.metadata, autoload=True)
+        columns = [m.key for m in t.columns]
+
+        shouldbe = ['depth', 'site_id', 'pit_id', 'slope_angle', 'aspect',
+                    'air_temp', 'total_depth', 'surveyors', 'weather_description',
+                    'precip', 'sky_cover', 'wind', 'ground_condition',
+                    'ground_roughness', 'ground_vegetation', 'vegetation_height',
+                    'tree_canopy', 'site_notes', 'type', 'value',
+                    'bottom_depth', 'comments', 'sample_a', 'sample_b',
+                    'sample_c']
+
+        for c in shouldbe:
+            assert c in columns
