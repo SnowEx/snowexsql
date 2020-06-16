@@ -1,4 +1,5 @@
-from sqlalchemy import create_engine, MetaData, Table
+from sqlalchemy import create_engine, MetaData, Table, Column, Integer, String, Float, Boolean, DateTime, Time, Date
+
 from snowxsql.data import *
 
 def initialize(db_name):
@@ -9,7 +10,7 @@ def initialize(db_name):
         db_name: String of the database name and type e.g. sqlite:///snowex.db
     '''
     meta = MetaData()
-    engine = create_engine(db_name, echo=True)
+    engine = create_engine(db_name, echo=False)
     point = Table(
         'points', meta,
         Column('id', Integer, primary_key = True),
@@ -30,7 +31,7 @@ def initialize(db_name):
 
         Column('measurement_tool', String),
         Column('equipment', String),
-        Column('value', Float),)
+        Column('value', Float))
 
     layers = Table(
         'layers', meta,
@@ -52,10 +53,10 @@ def initialize(db_name):
         Column('bottom_depth', Float),
         Column('site_id', String),
         Column('pit_id', String),
-        Column('slope_angle', String),
-        Column('aspect', String),
-        Column('air_temp', String),
-        Column('total_depth', String),
+        Column('slope_angle', Integer),
+        Column('aspect', Integer),
+        Column('air_temp', Float),
+        Column('total_depth', Float),
         Column('surveyors', String),
         Column('weather_description', String),
         Column('precip', String),

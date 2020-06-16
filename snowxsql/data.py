@@ -14,7 +14,7 @@ class SnowData(object):
     '''
     site_name = Column(String(250))
     date = Column(Date)
-    time = Column(Time)
+    time = Column(Time(timezone=True))
     time_created = Column(DateTime(timezone=True), server_default=func.now())
     time_updated = Column(DateTime(timezone=True), onupdate=func.now())
     id = Column(Integer, primary_key=True)
@@ -53,11 +53,11 @@ class LayerData(SingleLocationData):
     as a function of depth as single point. E.g. SMP profiles, Hand hardness,
     temperature etc...
     '''
-    depth = Column(Float(50))
+    depth = Column(Float)
     site_id = Column(String(50))
     pit_id = Column(String(250))
-    slope_angle = Column(String(3))
-    aspect = Column(String(5))
+    slope_angle = Column(Integer)
+    aspect = Column(Integer)
     air_temp = Column(Float)
     total_depth = Column(Integer)
     surveyors = Column(String(50))
@@ -84,7 +84,7 @@ class BulkLayerData(LayerData, Base):
     '''
     __tablename__ = 'layers'
 
-    bottom_depth = Column(Integer)
+    bottom_depth = Column(Float)
     comments = Column(String(1000))
     sample_a = Column(String(20))
     sample_b = Column(String(20))

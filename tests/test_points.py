@@ -60,5 +60,4 @@ class TestPoints(DBSetup):
         for r in self.records:
             for c, dtype in dtypes.items():
                 db_type = type(getattr(r, c))
-                print(c, db_type)
                 assert (db_type == dtype) or (db_type == type(None))

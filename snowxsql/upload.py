@@ -37,9 +37,14 @@ class PitHeader(object):
             timezone: Pytz valid timezone abbreviation
         '''
         self.timezone = timezone
+
+        # Read in the header into dictionary and list of columns names
         self.info, self.columns = self._read(filename)
 
-    def _read(self,filename):
+        # Interpret any data needing interpretation e.g. aspect
+        self.interpret_data()
+
+    def _read(self, filename):
         '''
         Read in all site details file from the PITS folder under
         SnowEx2020_SQLdata If the filename has the word site in it then we
@@ -127,6 +132,35 @@ class PitHeader(object):
 
         return mismatch
 
+
+    def interpret_data(self):
+        '''
+        Some data inside the headers is inconsistently noted. This function
+        adjusts such data to the correct format.
+
+        Adjustments include:
+
+        1. Aspect is recorded either cardinal directions or degrees from north,
+        should be in degrees
+        '''
+
+        # Adjust Aspect from Cardinal to degrees from North
+        if 'aspect' in self.info.keys():
+            conversion = {'n':0,
+                'ne': 45,
+                'e': 90,
+                'se': 135,
+                's':180,
+                'sw':225,
+                'w':270,
+                'nw':315}
+
+            aspect = self.info['aspect']
+
+            numeric = len([True for c in aspect if c.isnumeric()])
+            if numeric != len(self.info['aspect']) and aspect != 'nan':
+                print('Aspect recorded for site {} is in cardinal directions, converting'.format(self.info['site']))
+                self.info['aspect'] = conversion[aspect.lower()]
 
 class UploadProfileData():
     '''
@@ -229,7 +263,6 @@ class UploadProfileData():
 
             # For now, tag every layer with site details info
             layer.update(self._pit.info)
-
             if 'grain_size' in layer.keys():
                 for value_type in self.stratigraphy_names:
                     # Loop through all important pieces of info and add to db
@@ -237,6 +270,7 @@ class UploadProfileData():
                     data['type'] = value_type
                     data['value'] = layer[value_type]
                     data = remap_data_names(data, self.rename)
+                    print(data)
 
                     # Send it to the db
                     print('\tAdding {}'.format(value_type))

@@ -13,12 +13,13 @@ class TestDB(DBSetup):
         '''
         Setup the database one time for testing
         '''
-        super().setup_class(self)
+        super().setup_class()
 
         site_fname = join(self.data_dir,'site_details.csv' )
         self.pit = PitHeader(site_fname, 'MST')
         self.bulk_q = \
         self.session.query(BulkLayerData).filter(BulkLayerData.site_id == '1N20')
+
 
 
     def get_profile(self, csv, value_type):
