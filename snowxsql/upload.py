@@ -256,6 +256,7 @@ class UploadProfileData():
                     data['value'] = data['temperature']
                     del data['temperature']
 
+                data['type'] = value_type
                 print('\tAdding {}'.format(value_type))
                 d = BulkLayerData(**data)
                 session.add(d)
