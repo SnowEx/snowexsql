@@ -2,8 +2,8 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy import MetaData, inspect
 
 from snowxsql.create_db import *
-from snowxsql.data import Point
 from os import remove
+
 metadata = MetaData()
 
 class TestDBSetup:
@@ -28,7 +28,7 @@ class TestDBSetup:
         '''
         Tests our tables are in the database
         '''
-        t = Table("point", self.metadata, autoload=True)
+        t = Table("points", self.metadata, autoload=True)
         columns = [m.key for m in t.columns]
         shouldbe = ['id', 'site_name', 'date', 'time', 'time_created',
                     'time_updated', 'latitude', 'longitude', 'northing',
