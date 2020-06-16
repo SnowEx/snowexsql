@@ -1,8 +1,12 @@
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import MetaData, inspect
 
-from snowxsql.create_db import *
 from os import remove
+from os.path import join, dirname
+
+from snowxsql.create_db import *
+from snowxsql.upload import *
+from snowxsql.db import get_session
 
 metadata = MetaData()
 
@@ -16,6 +20,10 @@ class TestDBSetup:
         engine = create_engine(name, echo=False)
         conn = engine.connect()
         self.metadata = MetaData(conn)
+        self.session = get_session(name)
+        self.data_dir = join(dirname(__file__), 'data')
+        site_fname = join(self.data_dir,'site_details.csv' )
+        self.pit = PitHeader(site_fname, 'MST')
 
     def teardown_class(self):
         '''
@@ -55,3 +63,36 @@ class TestDBSetup:
 
         for c in shouldbe:
             assert c in columns
+
+
+    def test_snowdepth_upload(self):
+        '''
+        Test uploading snowdepths to db
+        '''
+        fname = join(dirname(__file__), 'data','depths.csv' )
+        csv = PointDataCSV(fname, 'snow_depth', 'cm', 'Grand Mesa', 'MST')
+        csv.submit(self.session)
+
+        records = self.session.query(PointData).all()
+
+        # 10 total records
+        assert len(records) == 10
+
+        # 4 unique dates
+        assert len(set([d.date for d in records])) == 5
+
+
+    def test_stratigraphy_upload(self):
+        '''
+        Test uploading a stratigraphy csv to the db
+        '''
+        f = join(self.data_dir,'stratigraphy.csv')
+        profile = UploadProfileData(f, 'MST')
+        profile.submit(self.session, self.pit.info)
+
+        q = self.session.query(BulkLayerData).filter(BulkLayerData.site_id == '1N20')
+        records = q.filter(BulkLayerData.type == 'hand_hardness').all()
+
+        # Assert 5 layers in the single hand hardness profile
+        print([r.depth for r in records])
+        assert(len(records)) == 5

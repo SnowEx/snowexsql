@@ -180,7 +180,7 @@ class UploadProfileData():
         header_rows = len(self._pit.info.keys())
 
         # header=0 because docs say to if using skiprows and columns
-        df = pd.read_csv(profile_filename, header=0, skiprows=header_rows,
+        df = pd.read_csv(profile_filename, header=0, skiprows=header_rows-1,
                                            names=self._pit.columns)
 
         return df
@@ -321,4 +321,3 @@ class PointDataCSV():
             sd = PointData(**data)
             session.add(sd)
             session.commit()
-        
