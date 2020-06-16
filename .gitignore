@@ -4,3 +4,9 @@ snowxsql.egg-info/*
 dist/*
 *.db
 */__pycache__/*
+*.cpg
+*.dbf
+*.prj
+*.shp
+*.shx
+
