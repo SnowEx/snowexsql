@@ -6,8 +6,7 @@
 # Easting,743281
 # Northing,4324005
 # top (cm),bottom (cm),dielectric constant A,dielectric constant B
-35,25,NaN,NaN
-25,15,NaN,"
-"
-15,5,NaN,NaN
+37,27,1.328,1.317
+27,17,1.372,1.35
+17,7,1.384,1.354
 12,2,NaN,NaN

@@ -1,4 +1,3 @@
-from sqlalchemy.orm import sessionmaker
 from sqlalchemy import MetaData, inspect
 
 from os import remove
@@ -7,31 +6,20 @@ from os.path import join, dirname
 from snowxsql.create_db import *
 from snowxsql.upload import *
 from snowxsql.db import get_session
+from  .sql_test_base import DBSetup
 
-metadata = MetaData()
-
-class TestDBSetup:
+class TestDB(DBSetup):
     def setup_class(self):
         '''
         Setup the database one time for testing
         '''
-        name = 'sqlite:///test.db'
-        initialize(name)
-        engine = create_engine(name, echo=False)
-        conn = engine.connect()
-        self.metadata = MetaData(conn)
-        self.session = get_session(name)
-        self.data_dir = join(dirname(__file__), 'data')
+        super().setup_class(self)
+
         site_fname = join(self.data_dir,'site_details.csv' )
         self.pit = PitHeader(site_fname, 'MST')
         self.bulk_q = \
         self.session.query(BulkLayerData).filter(BulkLayerData.site_id == '1N20')
 
-    def teardown_class(self):
-        '''
-        Remove the database after testing
-        '''
-        remove('test.db')
 
     def get_profile(self, csv, value_type):
         '''
@@ -83,58 +71,3 @@ class TestDBSetup:
 
         for c in shouldbe:
             assert c in columns
-
-
-    def test_snowdepth_upload(self):
-        '''
-        Test uploading snowdepths to db
-        '''
-        fname = join(dirname(__file__), 'data','depths.csv' )
-        csv = PointDataCSV(fname, 'snow_depth', 'cm', 'Grand Mesa', 'MST')
-        csv.submit(self.session)
-
-        records = self.session.query(PointData).all()
-
-        # 10 total records
-        assert len(records) == 10
-
-        # 4 unique dates
-        assert len(set([d.date for d in records])) == 5
-
-
-    def test_stratigraphy_upload(self):
-        '''
-        Test uploading a stratigraphy csv to the db
-        '''
-        records = self.get_profile('stratigraphy.csv','hand_hardness')
-
-        # Assert 5 layers in the single hand hardness profile
-        assert(len(records)) == 5
-
-
-    def test_density_upload(self):
-        '''
-        Test uploading a density csv to the db
-        '''
-        records = self.get_profile('density.csv','density')
-
-        # Check for 4 samples in the a density profile
-        assert(len(records)) == 4
-
-    def test_lwc_upload(self):
-        '''
-        Test uploading a lwc csv to the db
-        '''
-        records = self.get_profile('LWC.csv','dielectric_constant')
-
-        # Check for 4 LWC samples
-        assert(len(records)) == 4
-
-    def test_temperature_upload(self):
-        '''
-        Test uploading a lwc csv to the db
-        '''
-        records = self.get_profile('temperature.csv','temperature')
-
-        # Assert 5 measurements in the temperature profile
-        assert(len(records)) == 5
