@@ -1,0 +1,13 @@
+# Location,Grand Mesa
+# Site,1N20
+# PitID,COGM1N20_20200205
+# Date/Time,2020-02-05-13:30
+# UTM Zone,12N
+# Easting,743281
+# Northing,4324005
+# Top [cm],Bottom [cm],Grain Size [mm],Grain Type,Hand Hardness,Manual Wetness,Comments
+35.0,33.0,< 1 mm,DF,F,D,NaN
+33.0,30.0,< 1 mm,DF,4F,D,NaN
+30.0,17.0,2-4 mm,FC,4F,D,NaN
+17.0,7.0,2-4 mm,FC,4F,D,Cups
+7.0,0.0,2-4 mm,FC,1F,D,NaN

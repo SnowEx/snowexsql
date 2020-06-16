@@ -1,0 +1,13 @@
+# Location,Grand Mesa
+# Site,1N20
+# PitID,COGM1N20_20200205
+# Date/Time,2020-02-05-13:30
+# UTM Zone,12N
+# Easting,743281
+# Northing,4324005
+# top (cm),bottom (cm),dielectric constant A,dielectric constant B
+35,25,NaN,NaN
+25,15,NaN,"
+"
+15,5,NaN,NaN
+12,2,NaN,NaN

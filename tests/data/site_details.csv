@@ -1,0 +1,24 @@
+# Location,Grand Mesa
+# Site,1N20
+# PitID,COGM1N20_20200205
+# Date/Time,2020-02-05-13:30
+# UTM Zone,12N
+# Easting [m],743281
+# Northing [m],4324005
+# Slope [deg],5°
+# Aspect [deg],S
+# Air Temp [deg C],NaN
+# Total Depth [cm],35
+# Surveyors,"Chris Hiemstra, Hans Lievens"
+# Weather,"Sunny, cold, gusts  Ground roughness: rough, rocks in places"
+# Precip,None
+# Sky,Few (< 1/4 of sky)
+# Wind,Moderate
+# Ground Condition,Frozen
+# Ground Roughness,Rough
+# Ground Vegetation,['Grass']
+# Vegetation Height,"5,nan"
+# Tree Canopy,No Trees
+# Comments:,"Start temperature measurements (top): 13:48  End temperature
+measurements (bottom): 13:53  LWC sampler broke, no measurements were
+possible"
