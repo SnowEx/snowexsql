@@ -24,12 +24,32 @@ class TestDBSetup:
         self.data_dir = join(dirname(__file__), 'data')
         site_fname = join(self.data_dir,'site_details.csv' )
         self.pit = PitHeader(site_fname, 'MST')
+        self.bulk_q = \
+        self.session.query(BulkLayerData).filter(BulkLayerData.site_id == '1N20')
 
     def teardown_class(self):
         '''
         Remove the database after testing
         '''
         remove('test.db')
+
+    def get_profile(self, csv, value_type):
+        '''
+        DRYs out the tests for profile uploading
+
+        Args:
+            csv: string to path of a csv in the snowex format
+            value_type: Type of profile were accessing
+        Returns:
+            records: List of Layer objects mapped to the database
+        '''
+
+        f = join(self.data_dir, csv)
+        profile = UploadProfileData(f, 'MST')
+        profile.submit(self.session, self.pit.info)
+
+        records = self.bulk_q.filter(BulkLayerData.type == value_type).all()
+        return records
 
 
     def test_point_structure(self):
@@ -86,12 +106,7 @@ class TestDBSetup:
         '''
         Test uploading a stratigraphy csv to the db
         '''
-        f = join(self.data_dir,'stratigraphy.csv')
-        profile = UploadProfileData(f, 'MST')
-        profile.submit(self.session, self.pit.info)
-
-        q = self.session.query(BulkLayerData).filter(BulkLayerData.site_id == '1N20')
-        records = q.filter(BulkLayerData.type == 'hand_hardness').all()
+        records = self.get_profile('stratigraphy.csv','hand_hardness')
 
         # Assert 5 layers in the single hand hardness profile
         assert(len(records)) == 5
@@ -101,42 +116,25 @@ class TestDBSetup:
         '''
         Test uploading a density csv to the db
         '''
-        f = join(self.data_dir,'density.csv')
-        profile = UploadProfileData(f, 'MST')
-        profile.submit(self.session, self.pit.info)
+        records = self.get_profile('density.csv','density')
 
-        q = self.session.query(BulkLayerData).filter(BulkLayerData.site_id == '1N20')
-        records = q.filter(BulkLayerData.type == 'density').all()
-
-        # Assert 5 layers in the single hand hardness profile
+        # Check for 4 samples in the a density profile
         assert(len(records)) == 4
 
     def test_lwc_upload(self):
         '''
         Test uploading a lwc csv to the db
         '''
-        f = join(self.data_dir,'LWC.csv')
-        profile = UploadProfileData(f, 'MST')
-        profile.submit(self.session, self.pit.info)
+        records = self.get_profile('LWC.csv','dielectric_constant')
 
-        q = self.session.query(BulkLayerData).filter(BulkLayerData.site_id == '1N20')
-        records = q.filter(BulkLayerData.type == 'dielectric_constant').all()
-
-        # Assert 5 layers in the single hand hardness profile
+        # Check for 4 LWC samples
         assert(len(records)) == 4
 
     def test_temperature_upload(self):
         '''
         Test uploading a lwc csv to the db
         '''
-        f = join(self.data_dir,'temperature.csv')
-        profile = UploadProfileData(f, 'MST')
-        profile.submit(self.session, self.pit.info)
+        records = self.get_profile('temperature.csv','temperature')
 
-        q = self.session.query(BulkLayerData).filter(BulkLayerData.site_id == '1N20')
-        records = q.filter(BulkLayerData.type == 'temperature').all()
-
-        for r in records:
-            print(r.type, r.value, r.date)
-        # Assert 5 layers in the single hand hardness profile
+        # Assert 5 measurements in the temperature profile
         assert(len(records)) == 5

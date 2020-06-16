@@ -39,8 +39,23 @@ database by running:
   .. code-block:: bash
 
     cd ./scripts && python add_snow_depths.py
+    cd ./scripts && python add_profiles.py
 
 This will add the whole snow depths csv to a sqlite database named snowex.db
+
+Tests
+---------------
+
+Using the command
+
+.. code-block:: bash
+
+  pytest
+
+Will run a series of tests that create a small database and confirm
+that samples of the data sets in the SnowEx2020_SQLdata folder can be
+uploaded seamlessly. These tests can serve as a nice way to see how to
+interact with the database but also serve to confirm our reproduciblity.
 
 
 Useful tools
