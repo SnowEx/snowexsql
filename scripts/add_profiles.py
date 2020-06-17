@@ -8,7 +8,7 @@ import glob
 import time
 
 from snowxsql.upload import *
-from snowxsql.db import get_session
+from snowxsql.db import get_db
 
 # Site name
 site_name = 'Grand Mesa'
@@ -21,7 +21,7 @@ data_dir = abspath(join('..', '..', 'SnowEx2020_SQLdata', 'PITS'))
 filenames = [join(data_dir, f) for f in listdir(data_dir)]
 
 # Start the Database
-session = get_session('sqlite:///snowex.db')
+engine, metadata, session = get_db('postgresql+psycopg2:///snowex')
 
 # Grab only site details
 filenames = [f for f in filenames if 'site' in f]

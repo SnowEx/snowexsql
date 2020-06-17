@@ -8,7 +8,7 @@ from os.path import join, abspath
 import time
 
 from snowxsql.upload import *
-from snowxsql.db import get_session
+from snowxsql.db import get_db
 
 # Site name
 start = time.time()
@@ -21,7 +21,7 @@ fname = abspath(join('..', '..', 'SnowEx2020_SQLdata',
                            'SnowEx2020_SD_GM_alldepths_v1.csv'))
 
 # Start the Database
-session = get_session('sqlite:///test.db')
+engine, metadata, session = get_db('postgresql+psycopg2:///snowex')
 
 csv = PointDataCSV(fname, 'snow_depth', 'cm', site_name, timezone)
 csv.submit(session)
