@@ -50,6 +50,16 @@ class TestLayers(DBSetup):
         # Assert 5 layers in the single hand hardness profile
         assert(len(records)) == 5
 
+    def test_stratigraphy_comments_search(self):
+        '''
+        Testing a specific comment contains query, value confirmation
+        '''
+        # Check for cups comment assigned to each profile in a stratigraphy file
+        q = self.session.query(BulkLayerData)
+        records = q.filter(BulkLayerData.comments.contains('cups')).all()
+
+        # Should be 1 layer for each grain zise, type, hardness, and wetness
+        assert len(records) == 4
 
     def test_density_upload(self):
         '''
