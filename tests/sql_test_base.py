@@ -1,11 +1,11 @@
-from sqlalchemy import MetaData, inspect
+from sqlalchemy import MetaData
 from sqlalchemy.engine import reflection
 
 import os
 from os.path import join, dirname
 
 from snowxsql.create_db import *
-from snowxsql.db import get_session
+from snowxsql.db import get_db
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
@@ -20,17 +20,9 @@ class DBSetup:
         '''
         self.db = 'postgresql+psycopg2:///snowex'
         self.data_dir = join(dirname(__file__), 'data')
+        
+        self.engine, self.metadata, self.session = get_db(self.db)
 
-        # Start the Database
-        self.engine = create_engine(self.db, echo=False)
-
-        # create a Session
-        Session = sessionmaker(bind=self.engine)
-        self.session = Session()
-        self.metadata = MetaData()
-        self.metadata.reflect(self.engine)
-        self.session = Session(expire_on_commit=False)
-        self.metadata.drop_all(bind=self.engine)
         initialize(self.engine, self.metadata)
 
 

@@ -5,7 +5,6 @@ from os.path import join, dirname
 
 from snowxsql.create_db import *
 from snowxsql.upload import *
-from snowxsql.db import get_session
 from  .sql_test_base import DBSetup
 
 class TestDB(DBSetup):
