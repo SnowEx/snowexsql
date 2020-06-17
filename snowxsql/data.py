@@ -29,7 +29,7 @@ class SingleLocationData(SnowData):
     northing = Column(Float)
     easting = Column(Float)
     elevation = Column(Float)
-    utm_zone = Column(Integer)
+    utm_zone = Column(String(10))
 
 class PointData(SingleLocationData, Base):
     '''

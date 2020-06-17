@@ -23,7 +23,7 @@ class TestPoints(DBSetup):
         csv.submit(self.session)
         self.records = self.session.query(PointData).all()
 
-    def test_snowdepth_upload(self):
+    def test_snowdepth_counts(self):
         '''
         Test uploading snowdepths to db
         '''

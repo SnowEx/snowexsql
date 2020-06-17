@@ -16,30 +16,6 @@ class TestDB(DBSetup):
         super().setup_class()
 
         site_fname = join(self.data_dir,'site_details.csv' )
-        self.pit = PitHeader(site_fname, 'MST')
-        self.bulk_q = \
-        self.session.query(BulkLayerData).filter(BulkLayerData.site_id == '1N20')
-
-
-
-    def get_profile(self, csv, value_type):
-        '''
-        DRYs out the tests for profile uploading
-
-        Args:
-            csv: string to path of a csv in the snowex format
-            value_type: Type of profile were accessing
-        Returns:
-            records: List of Layer objects mapped to the database
-        '''
-
-        f = join(self.data_dir, csv)
-        profile = UploadProfileData(f, 'MST')
-        profile.submit(self.session, self.pit.info)
-
-        records = self.bulk_q.filter(BulkLayerData.type == value_type).all()
-        return records
-
 
     def test_point_structure(self):
         '''

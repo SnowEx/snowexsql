@@ -37,7 +37,6 @@ class TestLayers(DBSetup):
         f = join(self.data_dir, csv)
         profile = UploadProfileData(f, 'MST')
         profile.submit(self.session, self.pit.info)
-
         records = self.bulk_q.filter(BulkLayerData.type == value_type).all()
         return records
 
@@ -56,7 +55,7 @@ class TestLayers(DBSetup):
         '''
         # Check for cups comment assigned to each profile in a stratigraphy file
         q = self.session.query(BulkLayerData)
-        records = q.filter(BulkLayerData.comments.contains('cups')).all()
+        records = q.filter(BulkLayerData.comments.contains('Cups')).all()
 
         # Should be 1 layer for each grain zise, type, hardness, and wetness
         assert len(records) == 4

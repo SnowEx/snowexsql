@@ -17,6 +17,11 @@ Installation
 First ensure you have following prequisites:
 
 * Python3.5 +
+* PostGreSQL_
+* libpq-dev
+* Add yourself as a user to postgres
+
+.. _PostGresSQL: https://www.postgresql.org/download/
 
 Then to install the python package:
 .. code-block:: bash
@@ -61,6 +66,6 @@ interact with the database but also serve to confirm our reproduciblity.
 Useful tools
 ------------
 
-* sqlite database browser_
+* PostGreSQL database browser_
 
-.. _browser: https://sqlitebrowser.org/dl/
+.. _browser: https://www.pgadmin.org/

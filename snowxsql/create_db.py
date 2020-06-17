@@ -1,16 +1,14 @@
-from sqlalchemy import create_engine, MetaData, Table, Column, Integer, String, Float, Boolean, DateTime, Time, Date
+from sqlalchemy import create_engine, Table, Column, Integer, String, Float, Boolean, DateTime, Time, Date
 
 from snowxsql.data import *
 
-def initialize(db_name):
+def initialize(engine, meta):
     '''
     Creates the original database from scratch, currently only for
     point data
     Args:
         db_name: String of the database name and type e.g. sqlite:///snowex.db
     '''
-    meta = MetaData()
-    engine = create_engine(db_name, echo=False)
     point = Table(
         'points', meta,
         Column('id', Integer, primary_key = True),
@@ -24,7 +22,7 @@ def initialize(db_name):
         Column('northing', Float),
         Column('easting', Float),
         Column('elevation', Float),
-        Column('utm_zone', Float),
+        Column('utm_zone', String),
         Column('version', Integer),
         Column('type', String),
         Column('units', String),
@@ -45,7 +43,7 @@ def initialize(db_name):
         Column('longitude', Float),
         Column('northing', Float),
         Column('easting', Float),
-        Column('utm_zone', Float),
+        Column('utm_zone', String),
         Column('elevation', Float),
         Column('type', String),
         Column('value', String),

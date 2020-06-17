@@ -295,7 +295,7 @@ class UploadProfileData():
                 d = BulkLayerData(**data)
                 session.add(d)
                 session.commit()
-
+        session.close()    
 
 class PointDataCSV():
     '''
