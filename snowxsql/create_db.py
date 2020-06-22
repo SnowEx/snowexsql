@@ -7,11 +7,17 @@ def initialize(engine, meta):
     Creates the original database from scratch, currently only for
     point data
     Args:
-        db_name: String of the database name and type e.g. sqlite:///snowex.db
+        db_name: String of the database name and type e.g. postgresql+psycopg2:///snowex
+
     '''
+
+    print(meta.tables.keys())
+    meta.drop_all(bind=engine)
+    print(meta.tables.keys())
+
     point = Table(
         'points', meta,
-        Column('id', Integer, primary_key = True),
+        Column('id', Integer, primary_key=True),
         Column('site_name', String),
         Column('date', Date),
         Column('time', Time),
@@ -33,7 +39,7 @@ def initialize(engine, meta):
 
     layers = Table(
         'layers', meta,
-        Column('id', Integer, primary_key = True),
+        Column('id', Integer, primary_key=True),
         Column('site_name', String),
         Column('date', Date),
         Column('time', Time),
@@ -71,4 +77,5 @@ def initialize(engine, meta):
         Column('sample_c', String),
         Column('comments', String))
 
-    meta.create_all(engine)
+    meta.create_all(bind=engine)
+    print(meta.tables.keys())

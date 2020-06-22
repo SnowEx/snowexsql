@@ -5,8 +5,9 @@ import pandas as pd
 from sqlalchemy import create_engine
 
 # COnnect to the database we made.
-db_name = 'sqlite:///snowex.db'
-session = get_session(db_name)
+db_name = 'postgresql+psycopg2:///snowex'
+
+engine, metadata, session = get_db(db_name)
 
 # Query the datbase looking at BulkLayerData, filter on comments containing graupel (case insensitive)
 records = session.query(BulkLayerData).filter(BulkLayerData.comments.contains('graupel')).all()
