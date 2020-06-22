@@ -11,6 +11,10 @@ def test_cardinal_to_degrees():
     d = convert_cardinal_to_degree('n')
     assert d==0
 
+    # Test south is zero
+    d = convert_cardinal_to_degree('S')
+    assert d==180
+
     # Test composite directions
     d = convert_cardinal_to_degree('s/sw')
     assert d==202.5
