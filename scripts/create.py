@@ -7,5 +7,5 @@ from snowxsql.db import get_db
 db_name = 'postgresql+psycopg2:///snowex'
 
 engine, metadata, session = get_db(db_name)
-initialize(engine, metadata)
+initialize(engine)
 session.close()
