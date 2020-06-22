@@ -161,7 +161,7 @@ class PitHeader(object):
 
             numeric = len([True for c in aspect if c.isnumeric()])
             if numeric != len(self.info['aspect']) and aspect != 'nan':
-                print('Aspect recorded for site {} is in cardinal directions, converting'.format(self.info['site']))
+                self.log.error('Aspect recorded for site {} is in cardinal directions, converting'.format(self.info['site']))
                 self.info['aspect'] = conversion[aspect.lower()]
 
 class UploadProfileData():
@@ -238,9 +238,9 @@ class UploadProfileData():
         mismatch = self._pit.check_integrity(site_info)
 
         if len(mismatch.keys()) > 0:
-            print('Header Error with {}'.format(self.filename))
+            self.log.error('Header Error with {}'.format(self.filename))
             for k,v in mismatch.items():
-                print('\t{}: {}'.format(k, v))
+                self.log.error('\t{}: {}'.format(k, v))
                 raise ValueError('Site Information Header and Profile Header '
                                  'do not agree!\n Key: {} does yields {} from '
                                  'here and {} from site info.'.format(k,
@@ -272,10 +272,9 @@ class UploadProfileData():
                     data['type'] = value_type
                     data['value'] = layer[value_type]
                     data = remap_data_names(data, self.rename)
-                    print(data)
 
                     # Send it to the db
-                    print('\tAdding {}'.format(value_type))
+                    self.log.debug('\tAdding {}'.format(value_type))
                     d = BulkLayerData(**data)
                     session.add(d)
                     session.commit()
@@ -293,7 +292,7 @@ class UploadProfileData():
                     del data['temperature']
 
                 data['type'] = value_type
-                print('\tAdding {}'.format(value_type))
+                self.log.debug('\tAdding {}'.format(value_type))
                 d = BulkLayerData(**data)
                 session.add(d)
                 session.commit()
