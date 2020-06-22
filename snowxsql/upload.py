@@ -1,6 +1,8 @@
 from . data import *
 from .string_management import *
 import pandas as pd
+import progressbar
+from .utilities import get_logger
 
 class PitHeader(object):
     '''
@@ -256,7 +258,7 @@ class UploadProfileData():
             site_info: Additional information to include with the original
                        header, e.g. site descriptions
         '''
-
+        bar = progressbar.ProgressBar(max_value=len(df.index))
         # Grab each row, convert it to dict and join it with site info
         for i,row in self.df.iterrows():
             layer = row.to_dict()
@@ -295,9 +297,12 @@ class UploadProfileData():
                 d = BulkLayerData(**data)
                 session.add(d)
                 session.commit()
-        session.close()    
+            # Visual update
+            bar.update(i)
 
-class PointDataCSV():
+        session.close()
+
+class PointDataCSV(object):
     '''
     Class for submitting whole files of point data in csv format
 
@@ -307,6 +312,7 @@ class PointDataCSV():
     measurement_names = {'MP':'magnaprobe','M2':'mesa', 'PR':'pit ruler'}
 
     def __init__(self,filename, value_type, units, site_name, timezone):
+        self.log = get_logger(__name__)
         self.df = self._read(filename)
         self.value_type = value_type
         self.units = units
@@ -317,11 +323,15 @@ class PointDataCSV():
         '''
         Read in the csv
         '''
+        self.log.info('Reading in CSV data from {}'.format(filename))
         df = pd.read_csv(filename)
         return df
 
     def submit(self, session):
         # Loop through all the entries and add them to the db
+        self.log.info('Submitting {} rows to database...'.format(len(self.df.index)))
+
+        bar = progressbar.ProgressBar(max_value=len(self.df.index))
         for i,row in self.df.iterrows():
 
             # Create the data structure to pass into the interacting class attributes
@@ -356,3 +366,4 @@ class PointDataCSV():
             sd = PointData(**data)
             session.add(sd)
             session.commit()
+            bar.update(i)

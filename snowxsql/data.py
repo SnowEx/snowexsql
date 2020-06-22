@@ -12,6 +12,7 @@ class SnowData(object):
     '''
     Base class for which all data will have these attributes
     '''
+    __table_args__ = {"schema": "public"}
     site_name = Column(String(250))
     date = Column(Date)
     time = Column(Time(timezone=True))
@@ -36,6 +37,8 @@ class PointData(SingleLocationData, Base):
     Class for point data
     '''
     __tablename__ = 'points'
+    __table_args__ = {"schema": "public"}
+
     version = Column(Integer)
     type = Column(String(50))
     measurement_tool = Column(String(50))
@@ -83,6 +86,7 @@ class BulkLayerData(LayerData, Base):
 
     '''
     __tablename__ = 'layers'
+    __table_args__ = {"schema": "public"}
 
     bottom_depth = Column(Float)
     comments = Column(String(1000))
