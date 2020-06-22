@@ -40,7 +40,7 @@ def remap_data_names(layer, rename):
         new_d: Dictionary containing the names remapped
     '''
     new_d = {}
-    
+
     for k, v in layer.items():
         if k in rename.keys():
             new_k = rename[k]
@@ -49,3 +49,19 @@ def remap_data_names(layer, rename):
 
         new_d[new_k] = v
     return new_d
+
+def convert_cardinal_to_degree(cardinal):
+    '''
+    Converts cardinal directions to degrees
+    '''
+    dirs = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW']
+
+    # Manage extra characters separating composite dirs, make it all upper case
+    d = ''.join([c.upper() for c in cardinal if c not in '/-'])
+
+    if d in dirs:
+        i = dirs.index(d)
+        degrees = i * (360. / len(dirs))
+    else:
+        raise ValueError('Invalid cardinal direction {}!'.format(cardinal))
+    return degrees
