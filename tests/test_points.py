@@ -41,8 +41,8 @@ class TestPoints(DBSetup):
         'site_name': str,
         'date': datetime.date,
         'time': datetime.time,
-        'time_created': datetime,
-        'time_updated': datetime,
+        'time_created': datetime.datetime,
+        'time_updated': datetime.datetime,
         'latitude': float,
         'longitude': float,
         'northing': float,
@@ -59,4 +59,5 @@ class TestPoints(DBSetup):
         for r in self.records:
             for c, dtype in dtypes.items():
                 db_type = type(getattr(r, c))
+                print(db_type, dtype)
                 assert (db_type == dtype) or (db_type == type(None))

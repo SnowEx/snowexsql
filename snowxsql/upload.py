@@ -38,6 +38,7 @@ class PitHeader(object):
             filename: File for a site details file containing
             timezone: Pytz valid timezone abbreviation
         '''
+        self.log = get_logger(__name__)
         self.timezone = timezone
 
         # Read in the header into dictionary and list of columns names
@@ -148,21 +149,20 @@ class PitHeader(object):
 
         # Adjust Aspect from Cardinal to degrees from North
         if 'aspect' in self.info.keys():
-            conversion = {'n':0,
-                'ne': 45,
-                'e': 90,
-                'se': 135,
-                's':180,
-                'sw':225,
-                'w':270,
-                'nw':315}
 
             aspect = self.info['aspect']
 
+            # Remove any degrees symbols
+            aspect = aspect.replace('\u00b0','')
+
+            # Check for number of numeric values.
             numeric = len([True for c in aspect if c.isnumeric()])
-            if numeric != len(self.info['aspect']) and aspect != 'nan':
-                self.log.error('Aspect recorded for site {} is in cardinal directions, converting'.format(self.info['site']))
-                self.info['aspect'] = conversion[aspect.lower()]
+
+            if numeric != len(aspect) and aspect.lower() != 'nan':
+                self.log.warning('Aspect recorded for site {} is in cardinal '
+                'directions, converting to degrees...'
+                ''.format(self.info['site']))
+                deg = convert_cardinal_to_degree(aspect)
 
 class UploadProfileData():
     '''
@@ -193,6 +193,7 @@ class UploadProfileData():
              }
 
     def __init__(self, profile_filename, timezone):
+        self.log = get_logger(__name__)
 
         self.filename = profile_filename
 
@@ -258,7 +259,6 @@ class UploadProfileData():
             site_info: Additional information to include with the original
                        header, e.g. site descriptions
         '''
-        bar = progressbar.ProgressBar(max_value=len(df.index))
         # Grab each row, convert it to dict and join it with site info
         for i,row in self.df.iterrows():
             layer = row.to_dict()
@@ -296,8 +296,6 @@ class UploadProfileData():
                 d = BulkLayerData(**data)
                 session.add(d)
                 session.commit()
-            # Visual update
-            bar.update(i)
 
         session.close()
 

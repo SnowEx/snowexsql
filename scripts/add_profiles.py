@@ -2,14 +2,16 @@
 Read in the SnowEx profiles from pits
 '''
 import pandas as pd
-from os.path import join, abspath, basename
+from os.path import join, abspath, basename, relpath
 from os import listdir
 import glob
 import time
 
 from snowxsql.upload import *
 from snowxsql.db import get_db
+from snowxsql.utilities import get_logger
 
+log = get_logger('profiles')
 # Site name
 site_name = 'Grand Mesa'
 timezone = 'MST'
@@ -20,8 +22,9 @@ start = time.time()
 data_dir = abspath(join('..', '..', 'SnowEx2020_SQLdata', 'PITS'))
 filenames = [join(data_dir, f) for f in listdir(data_dir)]
 
-# Start the Database
-engine, metadata, session = get_db('postgresql+psycopg2:///snowex')
+# Grab db
+db_name = 'postgresql+psycopg2:///snowex'
+engine, metadata, session = get_db(db_name)
 
 # Grab only site details
 filenames = [f for f in filenames if 'site' in f]
@@ -39,7 +42,7 @@ for site_fname in filenames:
 
     # Add all profiles matching this site
     for f in profile_filenames:
-        print("Entering in {}".format(f))
+        log.info("Entering in {}".format(relpath(f)))
         f_lower = basename(f).lower()
 
         # Ignore the site details file

@@ -1,3 +1,5 @@
+import warnings
+
 def clean_str(messy):
     '''
     Removes things encapsulated in [] or () we do assume these come after the
@@ -59,9 +61,16 @@ def convert_cardinal_to_degree(cardinal):
     # Manage extra characters separating composite dirs, make it all upper case
     d = ''.join([c.upper() for c in cardinal if c not in '/-'])
 
+    # Assume West, East, South, Or North
+    if len(d) > 3:
+        d = d[0]
+        warnings.warn("Assuming {} is {}".format(cardinal, d))
+
     if d in dirs:
         i = dirs.index(d)
         degrees = i * (360. / len(dirs))
     else:
+        print(repr(d))
         raise ValueError('Invalid cardinal direction {}!'.format(cardinal))
+
     return degrees

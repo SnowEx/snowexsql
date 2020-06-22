@@ -20,10 +20,10 @@ class DBSetup:
         '''
         self.db = 'postgresql+psycopg2:///snowex'
         self.data_dir = join(dirname(__file__), 'data')
-        
+
         self.engine, self.metadata, self.session = get_db(self.db)
 
-        initialize(self.engine, self.metadata)
+        initialize(self.engine)
 
 
     @classmethod

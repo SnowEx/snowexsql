@@ -2,6 +2,7 @@ from snowxsql.string_management import *
 import pytest
 
 
+@pytest.mark.filterwarnings("ignore:Assuming")
 def test_cardinal_to_degrees():
     '''
     Test if we can convert cardinal directions correctly
@@ -19,6 +20,9 @@ def test_cardinal_to_degrees():
     d = convert_cardinal_to_degree('s/sw')
     assert d==202.5
 
+    # Check for full written out words
+    d = convert_cardinal_to_degree('West')
+    assert d==270
 
     # Test composite directions
     with pytest.raises(ValueError):
