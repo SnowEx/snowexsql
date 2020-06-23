@@ -5,6 +5,7 @@ from sqlalchemy import Column, ForeignKey, Integer, String, Float, Boolean, Date
 from sqlalchemy import Index
 from sqlalchemy.orm import relationship, backref
 from sqlalchemy.sql import func
+from geoalchemy2 import Geometry, Geography, Raster
 
 Base = declarative_base()
 
@@ -12,7 +13,6 @@ class SnowData(object):
     '''
     Base class for which all data will have these attributes
     '''
-    __table_args__ = {"schema": "public"}
     site_name = Column(String(250))
     date = Column(Date)
     time = Column(Time(timezone=True))
@@ -31,6 +31,14 @@ class SingleLocationData(SnowData):
     easting = Column(Float)
     elevation = Column(Float)
     utm_zone = Column(String(10))
+
+class RasterData(SnowData, Base):
+    '''
+    Raster class
+    '''
+    __tablename__ = 'images'
+    __table_args__ = {"schema": "public"}
+    raster = Column(Raster)
 
 class PointData(SingleLocationData, Base):
     '''
@@ -96,11 +104,3 @@ class BulkLayerData(LayerData, Base):
 
     __mapper_args__ = {
         'polymorphic_identity':'BulkLayers'}
-
-
-class RasterData(SnowData):
-    '''
-    Base class for connecting to more complicated raster data where is may not
-    feasabile to store in the db. E.g. most plane flown devices.
-    '''
-    pass

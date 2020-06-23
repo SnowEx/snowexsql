@@ -3,6 +3,8 @@ from .string_management import *
 import pandas as pd
 import progressbar
 from .utilities import get_logger
+from subprocess import check_output
+from geoalchemy2.elements import RasterElement
 
 class PitHeader(object):
     '''
@@ -364,3 +366,24 @@ class PointDataCSV(object):
             session.add(sd)
             session.commit()
             bar.update(i)
+
+
+class UploadRaster(object):
+    '''
+    Class for uploading tifs to the database
+    '''
+    def __init__(self, filename):
+        self.log = get_logger(__name__)
+        self.filename = filename
+    def submit(self, session):
+        '''
+        Submit the data to the db using ORM
+        '''
+        s = check_output(['raster2pgsql', self.filename]).decode('utf-8')
+        values = s.split("VALUES ('")[-1]
+        values = values.split("'")[0]
+        raster = RasterElement(values)
+        print(raster)
+        r = RasterData(raster=raster)
+        session.add(r)
+        session.commit()

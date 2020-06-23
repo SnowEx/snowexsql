@@ -17,8 +17,9 @@ Installation
 First ensure you have following prequisites:
 
 * Python3.5 +
-* PostGreSQL_
+* PostGreSQL_ 10 +
 * libpq-dev
+* PostGIS 2.2+
 * Add yourself as a user to postgres
 
 .. _PostGresSQL: https://www.postgresql.org/download/
