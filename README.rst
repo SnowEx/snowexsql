@@ -22,9 +22,34 @@ First ensure you have following prequisites:
 * PostGIS 2.2+
 * Add yourself as a user to postgres
 
+You will need to enable the GDAL Drivers and Raster support which is off by
+default.
+
+Follow the instructions on the `PostGIS installation`_ page under
+'2.2. Configuring raster'
+
+For enabling rasters on Linux:
+
+1: Add the following to the file /etc/postgresql/10/main/environment
+
+.. code-block:: bash
+
+    POSTGIS_ENABLE_OUTDB_RASTERS=1
+    POSTGIS_GDAL_ENABLED_DRIVERS=ENABLE_ALL
+
+
+2. Then restart the PostGIS service
+
+ .. code-block:: bash
+
+   sudo service postgresql restart
+
+
+.. _PostGIS installation: http://postgis.net/docs/postgis_installation.html#install_short_version
 .. _PostGresSQL: https://www.postgresql.org/download/
 
 Then to install the python package:
+
 .. code-block:: bash
 
   pip install -r requirements.txt

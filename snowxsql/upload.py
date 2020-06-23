@@ -383,7 +383,6 @@ class UploadRaster(object):
         values = s.split("VALUES ('")[-1]
         values = values.split("'")[0]
         raster = RasterElement(values)
-        print(raster)
         r = RasterData(raster=raster)
         session.add(r)
         session.commit()

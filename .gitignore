@@ -1,4 +1,4 @@
-build/* 
+build/*
 .eggs/*
 snowxsql.egg-info/*
 dist/*
@@ -9,4 +9,9 @@ dist/*
 *.prj
 *.shp
 *.shx
+
+docs/modules.rst
+docs/snowxsql.rst
+docs/_build/*
+
 
