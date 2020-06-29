@@ -1,0 +1,6 @@
+Projection    UTM
+Zone          12
+Spheroid      GRS80
+Units         METERS
+Zunits        NO
+Parameters    
