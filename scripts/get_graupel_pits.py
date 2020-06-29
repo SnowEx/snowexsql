@@ -26,5 +26,5 @@ northing = [c[1] for c in coords]
 
 # Build a geopandas df, assign utm 12 WGS84 (epsg 32612)
 geometry = gpd.points_from_xy(x=easting, y=northing)
-df = gpd.GeoDataFrame(crs='epsg:32612', geometry=geometry)
+df = gpd.GeoDataFrame(crs='epsg:26912', geometry=geometry)
 df.to_file('graupel_locations.shp')
