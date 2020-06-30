@@ -6,7 +6,8 @@ from .utilities import get_logger
 from subprocess import check_output
 from geoalchemy2.elements import RasterElement, WKTElement
 from geoalchemy2.shape import from_shape
-from shapely.geometry import Point
+import utm
+
 
 class PitHeader(object):
     '''
@@ -34,16 +35,19 @@ class PitHeader(object):
                  files which is basically all one header
     '''
 
-    def __init__(self, filename, timezone):
+    def __init__(self, filename, timezone, northern_hemisphere=True):
         '''
         Class for managing site details information
 
         Args:
             filename: File for a site details file containing
             timezone: Pytz valid timezone abbreviation
+            northern_hemisphere: Bool describing if the pit location is in the
+                                 northern_hemisphere for converting utms coords
         '''
         self.log = get_logger(__name__)
         self.timezone = timezone
+        self.northern_hemisphere = northern_hemisphere
 
         # Read in the header into dictionary and list of columns names
         self.info, self.columns = self._read(filename)
@@ -149,6 +153,10 @@ class PitHeader(object):
 
         1. Aspect is recorded either cardinal directions or degrees from north,
         should be in degrees
+
+        2. Cast UTM attributes to correct types
+
+        3. Convert UTM to lat long, store both
         '''
 
         # Adjust Aspect from Cardinal to degrees from North
@@ -167,6 +175,22 @@ class PitHeader(object):
                 'directions, converting to degrees...'
                 ''.format(self.info['site']))
                 deg = convert_cardinal_to_degree(aspect)
+
+        # Convert utm details to integers
+        self.info['northing'] = float(self.info['northing'])
+        self.info['easting'] = float(self.info['easting'])
+        self.info['utm_zone'] = int(''.join([s for s in self.info['utm_zone'] if s.isnumeric()]))
+
+        # Convert UTM coordinates to Lat long fro database storage
+        if 'latitude' not in self.info.keys():
+            if  'easting' not in self.info.keys():
+                raise(ValueError('No Geographic information was'
+                                 'provided in the pit header.'))
+            else:
+                lat, long = utm.to_latlon(self.info['easting'],
+                                  self.info['northing'],
+                                  self.info['utm_zone'],
+                                  northern=self.northern_hemisphere)
 
 class UploadProfileData():
     '''
@@ -372,6 +396,7 @@ class PointDataCSV(object):
 
             # Add geometry
             data['geom'] = WKTElement('POINT({} {})'.format(data['easting'], data['northing']), srid=self.epsg)
+
             # Create db interaction, pass data as kwargs to class submit data
             sd = PointData(**data)
             session.add(sd)
