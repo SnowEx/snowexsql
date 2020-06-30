@@ -49,7 +49,7 @@ for site_fname in filenames:
         if f != site_fname:
 
             # Read the data and organize it, remap the names
-            profile = UploadProfileData(f, timezone)
+            profile = UploadProfileData(f, timezone, 26912)
 
             # Check the data for any knowable issues
             profile.check(pit.info)

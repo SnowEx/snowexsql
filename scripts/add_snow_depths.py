@@ -24,5 +24,5 @@ fname = abspath(join('..', '..', 'SnowEx2020_SQLdata',
 db_name = 'postgresql+psycopg2:///snowex'
 engine, metadata, session = get_db(db_name)
 
-csv = PointDataCSV(fname, 'snow_depth', 'cm', site_name, timezone)
+csv = PointDataCSV(fname, 'snow_depth', 'cm', site_name, timezone, 26912)
 csv.submit(session)

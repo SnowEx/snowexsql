@@ -31,7 +31,6 @@ class SingleLocationData(SnowData):
     easting = Column(Float)
     elevation = Column(Float)
     utm_zone = Column(String(10))
-    geometry = Column("geom", Geometry("POINT", 4326)),
 
 class RasterData(SnowData, Base):
     '''
@@ -39,7 +38,6 @@ class RasterData(SnowData, Base):
     '''
     __tablename__ = 'images'
     __table_args__ = {"schema": "public"}
-    # geometry = Column("geom", Geometry("POLYGON", 4326)),
     raster = Column(Raster)
 
 class PointData(SingleLocationData, Base):
@@ -55,10 +53,12 @@ class PointData(SingleLocationData, Base):
     equipment = Column(String(50))
     value = Column(Float)
     units = Column(String(50))
+    geom = Column(Geometry("POINT"))
 
     __mapper_args__ = {
         'polymorphic_identity':'Points',
     }
+
 
 class LayerData(SingleLocationData):
     '''
@@ -97,6 +97,7 @@ class BulkLayerData(LayerData, Base):
     '''
     __tablename__ = 'layers'
     __table_args__ = {"schema": "public"}
+    geom = Column(Geometry("POINT"))
 
     bottom_depth = Column(Float)
     comments = Column(String(1000))

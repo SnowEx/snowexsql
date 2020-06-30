@@ -4,7 +4,9 @@ import pandas as pd
 import progressbar
 from .utilities import get_logger
 from subprocess import check_output
-from geoalchemy2.elements import RasterElement
+from geoalchemy2.elements import RasterElement, WKTElement
+from geoalchemy2.shape import from_shape
+from shapely.geometry import Point
 
 class PitHeader(object):
     '''
@@ -32,7 +34,7 @@ class PitHeader(object):
                  files which is basically all one header
     '''
 
-    def __init__(self,filename, timezone):
+    def __init__(self, filename, timezone):
         '''
         Class for managing site details information
 
@@ -194,7 +196,7 @@ class UploadProfileData():
              'dielectric_constant_c':'sample_c'
              }
 
-    def __init__(self, profile_filename, timezone):
+    def __init__(self, profile_filename, timezone, epsg):
         self.log = get_logger(__name__)
 
         self.filename = profile_filename
@@ -204,6 +206,7 @@ class UploadProfileData():
 
         # Read in data
         self.df = self._read(profile_filename)
+        self.epsg = epsg
 
     def _read(self, profile_filename):
         '''
@@ -293,8 +296,12 @@ class UploadProfileData():
                     data['value'] = data['temperature']
                     del data['temperature']
 
+                # Add geometry
+                data['geom'] = WKTElement('POINT({} {})'.format(data['easting'], data['northing']), srid=self.epsg)
+
                 data['type'] = value_type
                 self.log.debug('\tAdding {}'.format(value_type))
+
                 d = BulkLayerData(**data)
                 session.add(d)
                 session.commit()
@@ -310,13 +317,15 @@ class PointDataCSV(object):
     # Remapping for special keywords for snowdepth measurements
     measurement_names = {'MP':'magnaprobe','M2':'mesa', 'PR':'pit ruler'}
 
-    def __init__(self,filename, value_type, units, site_name, timezone):
+    def __init__(self, filename, value_type, units, site_name, timezone, epsg):
         self.log = get_logger(__name__)
         self.df = self._read(filename)
         self.value_type = value_type
         self.units = units
         self.site_name = site_name
         self.timezone = timezone
+        self.epsg = epsg
+
 
     def _read(self, filename):
         '''
@@ -361,6 +370,8 @@ class PointDataCSV(object):
             data['date'] = d.date()
             data['time'] = d.time()
 
+            # Add geometry
+            data['geom'] = WKTElement('POINT({} {})'.format(data['easting'], data['northing']), srid=self.epsg)
             # Create db interaction, pass data as kwargs to class submit data
             sd = PointData(**data)
             session.add(sd)

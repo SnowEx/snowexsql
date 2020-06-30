@@ -18,7 +18,7 @@ class TestPoints(DBSetup):
         super().setup_class()
 
         fname = join(self.data_dir, 'depths.csv' )
-        csv = PointDataCSV(fname, 'snow_depth', 'cm', 'Grand Mesa', 'MST')
+        csv = PointDataCSV(fname, 'snow_depth', 'cm', 'Grand Mesa', 'MST', 26912)
         csv.submit(self.session)
         self.records = self.session.query(PointData).all()
 
@@ -59,5 +59,11 @@ class TestPoints(DBSetup):
         for r in self.records:
             for c, dtype in dtypes.items():
                 db_type = type(getattr(r, c))
-                print(db_type, dtype)
                 assert (db_type == dtype) or (db_type == type(None))
+
+    def test_geom_column(self):
+        '''
+        Test the geometry column works
+        '''
+        records = self.session.query(PointData.geom).limit(1).all()
+        assert hasattr(records[0], 'geom')

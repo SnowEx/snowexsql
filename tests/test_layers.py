@@ -34,7 +34,7 @@ class TestLayers(DBSetup):
         '''
 
         f = join(self.data_dir, csv)
-        profile = UploadProfileData(f, 'MST')
+        profile = UploadProfileData(f, 'MST', 26912)
         profile.submit(self.session, self.pit.info)
         records = self.bulk_q.filter(BulkLayerData.type == value_type).all()
         return records
@@ -134,3 +134,11 @@ class TestLayers(DBSetup):
             for c, dtype in dtypes.items():
                 db_type = type(getattr(r, c))
                 assert (db_type == dtype) or (db_type == type(None))
+
+    def test_geom_column(self):
+        '''
+        Test the geometry column exists
+        '''
+        records = self.session.query(BulkLayerData.geom).limit(1).all()
+        print(records)
+        assert hasattr(records[0], 'geom')
