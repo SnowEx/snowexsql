@@ -8,6 +8,7 @@ Welcome to snowXSQL's documentation!
    readme
    installation
    usage
+   qgis
    modules
    contributing
    authors
