@@ -7,7 +7,8 @@ from subprocess import check_output
 from geoalchemy2.elements import RasterElement, WKTElement
 from geoalchemy2.shape import from_shape
 import utm
-
+import os
+from os.path import join, abspath, expanduser
 
 class PitHeader(object):
     '''
@@ -403,22 +404,62 @@ class PointDataCSV(object):
             session.commit()
             bar.update(i)
 
+class UploadRasterCollection(object):
+    '''
+    Given a folder, looks through and uploads all rasters with the matching
+    the file extension
+    '''
+    def __init__(self, image_dir, date_time=None, description='', site_name=None, units=None, pattern='x.adf', ext='adf'):
+        self.log = get_logger(__name__)
+        self.image_dir = abspath(expanduser(image_dir))
+        self.rasters = []
 
+        self.meta = {'date':date_time.date(),'time':date_time.time(), 'description':description, 'site_name':site_name, 'units':units}
+
+        for r,ds,fs in os.walk(self.image_dir):
+            for f in fs:
+                if f.split('.')[-1] == ext and pattern in f:
+                    self.rasters.append(join(r,f))
+
+        self.log.info('Found {} raster in {} with ext = {} and pattern = {}.'.format(len(self.rasters),self.image_dir, ext, pattern))
+
+    def submit(self, session):
+
+        bar = progressbar.ProgressBar(max_value=len(self.rasters))
+        for i,f in enumerate(self.rasters):
+            r = UploadRaster(f, **self.meta)
+            try:
+                r.submit(session)
+            except Exception as e:
+                self.log.error(e)
+
+            bar.update(i)
 class UploadRaster(object):
     '''
-    Class for uploading tifs to the database
+    Class for uploading a single tifs to the database
     '''
-    def __init__(self, filename):
+    def __init__(self, filename, **kwargs):
         self.log = get_logger(__name__)
         self.filename = filename
+        self.data = kwargs
+
     def submit(self, session):
         '''
         Submit the data to the db using ORM
         '''
-        s = check_output(['raster2pgsql', self.filename]).decode('utf-8')
+        self.log.info('Submitting raster from {}'.format(self.filename))
+
+        # This produces a PSQL command
+        cmd = ['raster2pgsql', self.filename]
+        self.log.debug('Executing: {}'.format(' '.join(cmd)))
+        s = check_output(cmd).decode('utf-8')
+
+        # Split the SQL command at values
         values = s.split("VALUES ('")[-1]
         values = values.split("'")[0]
         raster = RasterElement(values)
-        r = RasterData(raster=raster)
+        self.data['raster'] = raster
+
+        r = RasterData(**self.data)
         session.add(r)
         session.commit()

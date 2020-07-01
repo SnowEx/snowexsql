@@ -4,9 +4,8 @@ import geopandas as gpd
 import pandas as pd
 from sqlalchemy import create_engine
 
-# COnnect to the database we made.
+# Connect to the database we made.
 db_name = 'postgresql+psycopg2:///snowex'
-
 engine, metadata, session = get_db(db_name)
 
 # Query the datbase looking at BulkLayerData, filter on comments containing graupel (case insensitive)
@@ -24,7 +23,7 @@ coords = set(coords)
 easting = [c[0] for c in coords]
 northing = [c[1] for c in coords]
 
-# Build a geopandas df, assign utm 12 WGS84 (epsg 32612)
+# Build a geopandas df, assign utm 12 NAD 83 (epsg 26912)
 geometry = gpd.points_from_xy(x=easting, y=northing)
 df = gpd.GeoDataFrame(crs='epsg:26912', geometry=geometry)
 df.to_file('graupel_locations.shp')

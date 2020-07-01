@@ -1,7 +1,7 @@
 import logging
 import coloredlogs
 
-def get_logger(name, debug=False, ext_logger=None,):
+def get_logger(name, debug=True, ext_logger=None,):
     """
 
     """

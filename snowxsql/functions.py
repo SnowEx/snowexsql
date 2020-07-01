@@ -30,7 +30,7 @@ class ST_Count(gfunc.GenericFunction):
     type = Integer
 
 
-def raster_to_numpy(session, raster, band=1):
+def raster_to_rasterio(session, raster):
     '''
     Retrieve the numpy array of a raster by converting to a temporary file
 
@@ -39,7 +39,7 @@ def raster_to_numpy(session, raster, band=1):
         raster: geoalchemy2.types.Raster
         band: integer of band number (starting with 1)
     Returns:
-        data:numpy array of raster
+        dataset:numpy array of raster
     '''
     r = session.query(func.ST_AsTiff(raster,'GTiff')).all()[0][0]
     print(r)
@@ -48,6 +48,5 @@ def raster_to_numpy(session, raster, band=1):
     with MemoryFile() as tmpfile:
         tmpfile.write(bdata)
         dataset = tmpfile.open()
-    data =  dataset.read(band)
-    dataset.close()
-    return data
+
+    return dataset

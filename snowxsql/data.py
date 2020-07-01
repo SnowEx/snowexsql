@@ -39,7 +39,9 @@ class RasterData(SnowData, Base):
     __tablename__ = 'images'
     __table_args__ = {"schema": "public"}
     raster = Column(Raster)
-
+    units = Column(String(50))
+    description = Column(String(1000))
+    
 class PointData(SingleLocationData, Base):
     '''
     Class for point data
