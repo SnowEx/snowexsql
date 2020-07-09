@@ -309,7 +309,7 @@ class UploadProfileData():
 
                     # Send it to the db
                     self.log.debug('\tAdding {}'.format(value_type))
-                    d = BulkLayerData(**data)
+                    d = LayerData(**data)
                     session.add(d)
                     session.commit()
             else:
@@ -328,7 +328,7 @@ class UploadProfileData():
                 data['type'] = value_type
                 self.log.debug('\tAdding {}'.format(value_type))
 
-                d = BulkLayerData(**data)
+                d = LayerData(**data)
                 session.add(d)
                 session.commit()
 

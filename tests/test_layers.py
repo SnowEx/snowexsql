@@ -19,7 +19,7 @@ class TestLayers(DBSetup):
         site_fname = join(self.data_dir,'site_details.csv' )
         self.pit = PitHeader(site_fname, 'MST')
         self.bulk_q = \
-        self.session.query(BulkLayerData).filter(BulkLayerData.site_id == '1N20')
+        self.session.query(LayerData).filter(LayerData.site_id == '1N20')
 
 
     def get_profile(self, csv, value_type):
@@ -36,7 +36,7 @@ class TestLayers(DBSetup):
         f = join(self.data_dir, csv)
         profile = UploadProfileData(f, 'MST', 26912)
         profile.submit(self.session, self.pit.info)
-        records = self.bulk_q.filter(BulkLayerData.type == value_type).all()
+        records = self.bulk_q.filter(LayerData.type == value_type).all()
         return records
 
     def test_stratigraphy_upload(self):
@@ -53,8 +53,8 @@ class TestLayers(DBSetup):
         Testing a specific comment contains query, value confirmation
         '''
         # Check for cups comment assigned to each profile in a stratigraphy file
-        q = self.session.query(BulkLayerData)
-        records = q.filter(BulkLayerData.comments.contains('Cups')).all()
+        q = self.session.query(LayerData)
+        records = q.filter(LayerData.comments.contains('Cups')).all()
 
         # Should be 1 layer for each grain zise, type, hardness, and wetness
         assert len(records) == 4
@@ -139,6 +139,6 @@ class TestLayers(DBSetup):
         '''
         Test the geometry column exists
         '''
-        records = self.session.query(BulkLayerData.geom).limit(1).all()
+        records = self.session.query(LayerData.geom).limit(1).all()
         print(records)
         assert hasattr(records[0], 'geom')

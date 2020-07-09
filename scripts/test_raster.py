@@ -7,7 +7,7 @@ layers recorded and dem measured
 
 from snowxsql.functions import raster_to_rasterio
 from snowxsql.db import get_db
-from snowxsql.data import BulkLayerData, RasterData, PointData
+from snowxsql.data import LayerData, RasterData, PointData
 from snowxsql.functions import ST_Clip
 import geoalchemy2.functions as gfunc
 
@@ -23,7 +23,7 @@ engine, metadata, session = get_db(db_name)
 
 # Grab our pit layers by site id
 print('Grabbing all layers associated to site {}'.format(site_id))
-q = session.query(BulkLayerData).filter(BulkLayerData.site_id == site_id)
+q = session.query(LayerData).filter(LayerData.site_id == site_id)
 layers = q.all()
 
 # Grab the pit location from a single layer

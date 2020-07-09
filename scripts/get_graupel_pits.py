@@ -12,18 +12,17 @@ noted by snowex data collectors
 
 '''
 
-from snowxsql.data import *
+from snowxsql.data import LayerData
 from snowxsql.db import get_db
 import geopandas as gpd
-import pandas as pd
 from sqlalchemy.dialects import postgresql
 
 # Connect to the database we made.
 db_name = 'postgresql+psycopg2:///snowex'
 engine, metadata, session = get_db(db_name)
 
-# Query the database looking at BulkLayerData, filter on comments containing graupel (case insensitive)
-q = session.query(BulkLayerData).filter(BulkLayerData.comments.contains('graupel'))
+# Query the database looking at LayerData, filter on comments containing graupel (case insensitive)
+q = session.query(LayerData).filter(LayerData.comments.contains('graupel'))
 
 # Fill out the variables in the query
 sql = q.statement.compile(dialect=postgresql.dialect())

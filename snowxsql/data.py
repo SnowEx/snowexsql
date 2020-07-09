@@ -41,7 +41,7 @@ class RasterData(SnowData, Base):
     raster = Column(Raster)
     units = Column(String(50))
     description = Column(String(1000))
-    
+
 class PointData(SingleLocationData, Base):
     '''
     Class for point data
@@ -62,12 +62,15 @@ class PointData(SingleLocationData, Base):
     }
 
 
-class LayerData(SingleLocationData):
+class LayerData(SingleLocationData, Base):
     '''
     Base class for interacting with profile data. This includes anything measured
     as a function of depth as single point. E.g. SMP profiles, Hand hardness,
     temperature etc...
     '''
+    __tablename__ = 'layers'
+    __table_args__ = {"schema": "public"}
+
     depth = Column(Float)
     site_id = Column(String(50))
     pit_id = Column(String(250))
@@ -88,24 +91,9 @@ class LayerData(SingleLocationData):
     site_notes = Column(String(1000))
     type = Column(String(50))
     value = Column(String(50))
-
-
-class BulkLayerData(LayerData, Base):
-    '''
-    Class for holding data that had a known thickness, e.g. density,
-    hand_hardness For layer measurements with thickness. Depth always
-    represents the top depth value
-
-    '''
-    __tablename__ = 'layers'
-    __table_args__ = {"schema": "public"}
     geom = Column(Geometry("POINT"))
-
     bottom_depth = Column(Float)
     comments = Column(String(1000))
     sample_a = Column(String(20))
     sample_b = Column(String(20))
     sample_c = Column(String(20))
-
-    __mapper_args__ = {
-        'polymorphic_identity':'BulkLayers'}

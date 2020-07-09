@@ -2,88 +2,42 @@
 snowXSQL
 ========
 
-Database creation and management software for SnowEx data
+Database creation and management software for SnowEx data. The goal is to
+create a single source (citeable) dataset that is cross queriable for snow
+researchers.
 
 Features
 --------
 
 * Database management for SnowEx Data
 * Manage Point, Profile and Raster Data
-
-
-Installation
-------------
-
-First ensure you have following prequisites:
-
-* Python3.5 +
-* PostGreSQL_ 10 +
-* libpq-dev
-* PostGIS 2.2+
-* Add yourself as a user to postgres
-
-You will need to enable the GDAL Drivers and Raster support which is off by
-default.
-
-Follow the instructions on the `PostGIS installation`_ page under
-'2.2. Configuring raster'
-
-For enabling rasters on Linux:
-
-1: Add the following to the file /etc/postgresql/10/main/environment
-
-.. code-block:: bash
-
-    POSTGIS_ENABLE_OUTDB_RASTERS=1
-    POSTGIS_GDAL_ENABLED_DRIVERS=ENABLE_ALL
-
-
-2. Then restart the PostGIS service
-
- .. code-block:: bash
-
-   sudo service postgresql restart
-
-
-.. _PostGIS installation: http://postgis.net/docs/postgis_installation.html#install_short_version
-.. _PostGresSQL: https://www.postgresql.org/download/
-
-Then to install the python package:
-
-.. code-block:: bash
-
-  pip install -r requirements.txt
-  python setup.py install
+* Populate the snowex database
 
 
 Getting started
 ---------------
 
-If you do not have the database created yet, use:
+After installing the python package, you will want to create the database. Make
+sure your data repo is next to this repo in the directory structure. Any data
+on Gdrive should be downloaded and kept in your downloads folder.
+Then simply use:
 
 .. code-block:: bash
-  cd scripts && python create.py
+  cd scripts && sh run.sh
 
-If you store your snowex data  next to this repo you can simply populate the
-database by running:
-
-  .. code-block:: bash
-
-    cd ./scripts && python add_snow_depths.py
-    cd ./scripts && python add_profiles.py
-
-This will add the whole snow depths csv to a sqlite database named snowex.db
 
 Tests
----------------
+-----
 
-Using the command
+If you do not want to populate the database to see if the installation worked,
+then simply run the tests which builds a small db and then deletes it.
+This is done using the command
 
 .. code-block:: bash
 
   pytest
 
-Will run a series of tests that create a small database and confirm
+This will run a series of tests that create a small database and confirm
 that samples of the data sets in the SnowEx2020_SQLdata folder can be
 uploaded seamlessly. These tests can serve as a nice way to see how to
 interact with the database but also serve to confirm our reproduciblity.
