@@ -6,6 +6,10 @@ Here we demonstrate the power of geopandas coupled with geoalchemy2.
 We construct the query and compile it using postgres. Then submit it to
 geopandas which creates a dataframe for us to use.
 
+The constructed query is searching for pit layers whose comments had the word
+graupel in it. Allowing us to gather locations of all pits where graupel was
+noted by snowex data collectors
+
 '''
 
 from snowxsql.data import *

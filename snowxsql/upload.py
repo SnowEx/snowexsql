@@ -295,6 +295,10 @@ class UploadProfileData():
 
             # For now, tag every layer with site details info
             layer.update(self._pit.info)
+
+            # Add geometry
+            layer['geom'] = WKTElement('POINT({} {})'.format(layer['easting'], layer['northing']), srid=self.epsg)
+
             if 'grain_size' in layer.keys():
                 for value_type in self.stratigraphy_names:
                     # Loop through all important pieces of info and add to db
@@ -320,9 +324,6 @@ class UploadProfileData():
                     value_type = 'temperature'
                     data['value'] = data['temperature']
                     del data['temperature']
-
-                # Add geometry
-                data['geom'] = WKTElement('POINT({} {})'.format(data['easting'], data['northing']), srid=self.epsg)
 
                 data['type'] = value_type
                 self.log.debug('\tAdding {}'.format(value_type))
