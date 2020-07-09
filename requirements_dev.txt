@@ -9,3 +9,5 @@ Sphinx==1.8.5
 twine==1.14.0
 pytest==4.6.5
 pytest-runner==5.1
+nbsphinx==0.7.1
+sphinx-gallery==0.7.0

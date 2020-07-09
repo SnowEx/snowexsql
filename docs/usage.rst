@@ -26,26 +26,28 @@ database.
 
 The SnowEx Database currently is formed of three tables.
 
-1. points - Holds any data which has no other dimension beyond its value.
+1. **points** - Holds any data which has no other dimension beyond its value.
   E.g. Snow Depths, Federal Samplers, etc.
-2. layers - Holds any data collected which was collected at a single point but
-  has a vertical snow component. E.g. Hand hardness, density profiles, SMP, etc.
-3. images - Holds all raster data.
+2. **layers** - Holds any data collected which was collected at a single point but
+  has a vertical snow component. Each entry is at a single location with an assigned depth. E.g. Hand Hardness, Density profiles, SMP, etc.
+3. **images** - Holds all raster data.
+
+Every query will need a session and access to a database via name::
+
+  from snowxsql.db import get_db
+
+  # Connect to the database we made. This may not be named snowex.
+  db_name = 'postgresql+psycopg2:///snowex'
+
+  # Get an engine, metadata and session object for our db
+  engine, metadata, session = get_db(db_name)
 
 
-Each table has a class already built in the snowXSQL. At a minimum you need a
-session instance and a class to interact with.
-
-To use snowXSQL in a project::
+Each table has a class already built in the snowXSQL. At a minimum you need at
+least one of those classes to interact with it using this library. To grab
+all points in the table::
 
     from snowxsql.data import PointData, LayerData, RasterData
-    from snowxsql.db import get_db
-
-    # Connect to the database we made. This may be named something else besides
-    # snowex
-    db_name = 'postgresql+psycopg2:///snowex'
-
-    engine, metadata, session = get_db(db_name)
 
     # Grab all the point data in points table
     points = session.query(PointData).all()
@@ -53,4 +55,16 @@ To use snowXSQL in a project::
     # Close the session
     session.close()
 
-This approach can be done with any other data as well.
+This approach can be done with any other tables as well.
+
+
+To grab all the layers associated to a single pit::
+
+  layers = session.query(LayerData).filter(LayerData.site_id=='5S31').all()
+
+In ORM example shown above, class attributes become column names in the
+database. In the example above, there is a column named `site_id` under our
+table layers (represented here as LayerData).
+
+Checkout our examples for more detail looks at queries with python.
+:ref: `Examples`

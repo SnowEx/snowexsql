@@ -5,7 +5,9 @@ Credits
 Development Lead
 ----------------
 
-* Micah Johnson <micah.johnson150@gmail.com>
+* Micah Johnson <https://github.com/micahjohnson150>
+* HP Marshall <https://github.com/hpmarshall>
+
 
 Contributors
 ------------

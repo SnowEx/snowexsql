@@ -2,12 +2,10 @@ Welcome to snowXSQL's documentation!
 ======================================
 
 .. toctree::
-   :maxdepth: 2
-   :caption: Contents:
-
    readme
    installation
    usage
+   examples
    qgis
    modules
    contributing

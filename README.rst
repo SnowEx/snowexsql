@@ -43,6 +43,16 @@ uploaded seamlessly. These tests can serve as a nice way to see how to
 interact with the database but also serve to confirm our reproduciblity.
 
 
+Documentation
+-------------
+
+To see the documentation in your browser:
+
+.. code-block:: bash
+
+  make docs
+  
+
 Useful tools
 ------------
 
