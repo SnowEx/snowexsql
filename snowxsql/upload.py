@@ -3,7 +3,7 @@ from .string_management import *
 import pandas as pd
 import progressbar
 from .utilities import get_logger
-from subprocess import check_output
+from subprocess import check_output, STDOUT
 from geoalchemy2.elements import RasterElement, WKTElement
 from geoalchemy2.shape import from_shape
 import utm
@@ -409,12 +409,17 @@ class UploadRasterCollection(object):
     Given a folder, looks through and uploads all rasters with the matching
     the file extension
     '''
-    def __init__(self, image_dir, date_time=None, description='', site_name=None, units=None, pattern='x.adf', ext='adf'):
+    def __init__(self, image_dir, date_time=None, description='', site_name=None, units=None, pattern='x.adf', ext='adf', epsg=0):
         self.log = get_logger(__name__)
+        self.log.info('Starting raster collection upload...')
         self.image_dir = abspath(expanduser(image_dir))
         self.rasters = []
 
-        self.meta = {'date':date_time.date(),'time':date_time.time(), 'description':description, 'site_name':site_name, 'units':units}
+        self.meta = {'date':date_time.date(),'time':date_time.time(),
+                     'description':description,
+                     'site_name':site_name,
+                     'units':units}
+        self.epsg = epsg
 
         for r,ds,fs in os.walk(self.image_dir):
             for f in fs:
@@ -424,35 +429,39 @@ class UploadRasterCollection(object):
         self.log.info('Found {} raster in {} with ext = {} and pattern = {}.'.format(len(self.rasters),self.image_dir, ext, pattern))
 
     def submit(self, session):
-
+        fails = []
         bar = progressbar.ProgressBar(max_value=len(self.rasters))
         for i,f in enumerate(self.rasters):
-            r = UploadRaster(f, **self.meta)
+            r = UploadRaster(f, self.epsg, **self.meta)
             try:
                 r.submit(session)
             except Exception as e:
-                self.log.error(e)
-
+                fails.append((f,e))
             bar.update(i)
+
+        # Log errors
+        self.log.error("During the upload of {} raster, {} failed.".format(len(self.rasters), len(fails)))
+        for f,e in fails:
+            self.log.error(e)
+
 class UploadRaster(object):
     '''
     Class for uploading a single tifs to the database
     '''
-    def __init__(self, filename, **kwargs):
+    def __init__(self, filename, epsg,  **kwargs):
         self.log = get_logger(__name__)
         self.filename = filename
         self.data = kwargs
+        self.epsg = epsg
 
     def submit(self, session):
         '''
         Submit the data to the db using ORM
         '''
-        self.log.info('Submitting raster from {}'.format(self.filename))
-
         # This produces a PSQL command
-        cmd = ['raster2pgsql', self.filename]
+        cmd = ['raster2pgsql','-s', str(self.epsg), self.filename]
         self.log.debug('Executing: {}'.format(' '.join(cmd)))
-        s = check_output(cmd).decode('utf-8')
+        s = check_output(cmd, stderr=STDOUT).decode('utf-8')
 
         # Split the SQL command at values
         values = s.split("VALUES ('")[-1]
