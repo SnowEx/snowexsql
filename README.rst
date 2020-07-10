@@ -46,12 +46,16 @@ interact with the database but also serve to confirm our reproduciblity.
 Documentation
 -------------
 
+
 To see the documentation in your browser:
+
+**Warning**: To see the examples/gallery please make sure to populate the
+database before running this command.
 
 .. code-block:: bash
 
   make docs
-  
+
 
 Useful tools
 ------------

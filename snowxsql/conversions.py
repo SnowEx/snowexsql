@@ -8,7 +8,7 @@ from snowxsql.data import PointData
 
 def points_to_geopandas(results):
     '''
-    List result from a successul query
+    Converts a successful query list into a geopandas data frame 
 
     Args:
         results: List of PointData objects
