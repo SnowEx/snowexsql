@@ -42,6 +42,16 @@ snowXSQL could always use more documentation, whether as part of the
 official snowXSQL docs, in docstrings, or even on the web in blog posts,
 articles, and such.
 
+Examples
+~~~~~~~~
+
+This project can always use examples of using the data. To add an example
+simply create a new jupyter notebook under `docs/gallery`. Name the notebook
+`<your_project>_example.ipynb`. Note it must have the `_example` to be found by
+sphinx. Once you have created it, if you produce any figures, add the
+`nbsphinx-thumbnail` tag to that cell to automatically create a nice thumbnail.
+
+
 Submit Feedback
 ~~~~~~~~~~~~~~~
 
