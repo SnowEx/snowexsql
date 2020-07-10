@@ -5,6 +5,9 @@ from sqlalchemy.dialects import postgresql
 from sqlalchemy.types import Integer, Float
 from . data import RasterData
 from rasterio import MemoryFile
+from snowxsql.data import PointData
+import geopandas as gpd
+from geoalchemy2.shape import to_shape
 
 class ST_PixelAsPoint(gfunc.GenericFunction):
     name = 'ST_PixelAsPoint'
@@ -23,12 +26,32 @@ class ST_RasterToWorldCoord(gfunc.GenericFunction):
 class ST_Clip(gfunc.GenericFunction):
     name = 'ST_Clip'
     type = Raster
-    #typemap = {'geom':Geometry, 'val':float, }
 
 class ST_Count(gfunc.GenericFunction):
     name = 'ST_Count'
     type = Integer
 
+def points_to_geopandas(results):
+    '''
+    List result from a successul query
+
+    Args:
+        results: List of PointData objects
+    '''
+    # grab all the attributes of the class to assign
+    if isinstance(results[0], PointData):
+        data = {a:[] for a in dir(PointData) if a[0:1] != '__'}
+
+    for r in results:
+        for k in data.keys():
+            v = getattr(r, k)
+
+            if k=='geom':
+                v = to_shape(v)
+            data[k].append(v)
+
+    df = gpd.GeoDataFrame(data, geometry=data['geom'])
+    return df
 
 def raster_to_rasterio(session, raster):
     '''
@@ -42,7 +65,7 @@ def raster_to_rasterio(session, raster):
         dataset:numpy array of raster
     '''
     r = session.query(func.ST_AsTiff(raster,'GTiff')).all()[0][0]
-    print(r)
+
     bdata = bytes(r)
 
     with MemoryFile() as tmpfile:
