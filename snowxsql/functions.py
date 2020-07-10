@@ -2,9 +2,7 @@ import geoalchemy2.functions as gfunc
 from sqlalchemy.sql import func
 from geoalchemy2.types import Geometry, Raster, CompositeType, RasterElement
 from sqlalchemy.types import Integer, Float
-from . data import RasterData
-from snowxsql.data import PointData
-import geopandas as gpd
+from sqlalchemy.dialects import postgresql
 
 class ST_PixelAsPoint(gfunc.GenericFunction):
     name = 'ST_PixelAsPoint'

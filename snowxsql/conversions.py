@@ -3,6 +3,7 @@ import rasterio
 from sqlalchemy.dialects import postgresql
 from rasterio import MemoryFile
 from geoalchemy2.shape import to_shape
+from snowxsql.data import PointData
 
 
 def points_to_geopandas(results):
@@ -43,7 +44,7 @@ def query_to_geopandas(query, engine):
         df: geopandas.GeoDataFrame instance
     '''
     # Fill out the variables in the query
-    sql = q.statement.compile(dialect=postgresql.dialect())
+    sql = query.statement.compile(dialect=postgresql.dialect())
 
     # Get dataframe from geopandas using the query and engine
     df = gpd.GeoDataFrame.from_postgis(sql, engine)
