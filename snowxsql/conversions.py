@@ -4,11 +4,12 @@ from sqlalchemy.dialects import postgresql
 from rasterio import MemoryFile
 from geoalchemy2.shape import to_shape
 from snowxsql.data import PointData
+from sqlalchemy.sql import func
 
 
 def points_to_geopandas(results):
     '''
-    Converts a successful query list into a geopandas data frame 
+    Converts a successful query list into a geopandas data frame
 
     Args:
         results: List of PointData objects
@@ -45,7 +46,7 @@ def query_to_geopandas(query, engine):
     '''
     # Fill out the variables in the query
     sql = query.statement.compile(dialect=postgresql.dialect())
-
+    
     # Get dataframe from geopandas using the query and engine
     df = gpd.GeoDataFrame.from_postgis(sql, engine)
 
@@ -65,7 +66,7 @@ def raster_to_rasterio(session, raster):
         dataset: rasterio dataset
 
     '''
-    r = session.query(func.ST_AsTiff(raster,'GTiff')).all()[0][0]
+    r = session.query(func.ST_AsTiff(raster.As_Text(),'GTiff')).all()[0][0]
 
     bdata = bytes(r)
 

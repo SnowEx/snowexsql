@@ -55,7 +55,7 @@ class PointData(SingleLocationData, Base):
     equipment = Column(String(50))
     value = Column(Float)
     units = Column(String(50))
-    geom = Column(Geometry("POINT"))
+    geometry = Column(Geometry("POINT"))
 
     __mapper_args__ = {
         'polymorphic_identity':'Points',
@@ -91,7 +91,7 @@ class LayerData(SingleLocationData, Base):
     site_notes = Column(String(1000))
     type = Column(String(50))
     value = Column(String(50))
-    geom = Column(Geometry("POINT"))
+    geometry = Column(Geometry("POINT"))
     bottom_depth = Column(Float)
     comments = Column(String(1000))
     sample_a = Column(String(20))

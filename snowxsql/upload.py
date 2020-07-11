@@ -297,7 +297,7 @@ class UploadProfileData():
             layer.update(self._pit.info)
 
             # Add geometry
-            layer['geom'] = WKTElement('POINT({} {})'.format(layer['easting'], layer['northing']), srid=self.epsg)
+            layer['geometry'] = WKTElement('POINT({} {})'.format(layer['easting'], layer['northing']), srid=self.epsg)
 
             if 'grain_size' in layer.keys():
                 for value_type in self.stratigraphy_names:
@@ -397,7 +397,7 @@ class PointDataCSV(object):
             data['time'] = d.time()
 
             # Add geometry
-            data['geom'] = WKTElement('POINT({} {})'.format(data['easting'], data['northing']), srid=self.epsg)
+            data['geometry'] = WKTElement('POINT({} {})'.format(data['easting'], data['northing']), srid=self.epsg)
 
             # Create db interaction, pass data as kwargs to class submit data
             sd = PointData(**data)

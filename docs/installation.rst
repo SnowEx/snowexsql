@@ -31,7 +31,6 @@ First ensure you have following prequisites:
 * PostGreSQL_ 10 +
 * libpq-dev
 * PostGIS 3.0 +
-* Add yourself as a user to postgres
 
 You will need to enable the GDAL Drivers and Raster support which is off by
 default.
@@ -48,7 +47,6 @@ For enabling rasters on Linux:
     POSTGIS_ENABLE_OUTDB_RASTERS=1
     POSTGIS_GDAL_ENABLED_DRIVERS=ENABLE_ALL
 
-
 2. Then restart the PostGIS service
 
  .. code-block:: bash
@@ -58,6 +56,30 @@ For enabling rasters on Linux:
 
 .. _PostGIS installation: http://postgis.net/docs/postgis_installation.html#install_short_version
 .. _PostGresSQL: https://www.postgresql.org/download/
+
+3. Create your tables, our main one called snowex, and another called test for
+running small unittests on.
+
+.. code-block:: bash
+
+  sudo -u <username> psql -c "CREATE DATABASE snowex; CREATE DATABASE test;"
+
+Test that you made them correctly by logging into them without sudo.
+
+.. code-block:: bash
+
+  psql snowex
+
+This should open up the postgres console.
+
+We need to enable the postgis extensions still. This is what makes it a postgis
+enabled database.
+
+.. code-block:: bash
+
+  psql test -c "CREATE EXTENSION postgis; CREATE EXTENSION postgis_raster;"
+  psql snowex -c "CREATE EXTENSION postgis; CREATE EXTENSION postgis_raster;"
+
 
 Then continue on to install the source code below.
 
