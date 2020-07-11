@@ -32,6 +32,9 @@ First ensure you have following prequisites:
 * libpq-dev
 * PostGIS 3.0 +
 
+Setting up the Database
+-----------------------
+
 You will need to enable the GDAL Drivers and Raster support which is off by
 default.
 
@@ -79,6 +82,15 @@ enabled database.
 
   psql test -c "CREATE EXTENSION postgis; CREATE EXTENSION postgis_raster;"
   psql snowex -c "CREATE EXTENSION postgis; CREATE EXTENSION postgis_raster;"
+
+4. You will also need to increase the working memory postgis has. By Default
+it is 4MB which is tough for rasters. Show it and set it in the postgres
+console using the following statements:
+
+.. code-block:: postgres
+
+  SHOW work_mem;
+  SET work_mem TO '3GB';
 
 
 Then continue on to install the source code below.
