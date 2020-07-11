@@ -3,8 +3,7 @@ from snowxsql.db import get_db
 import os
 import pandas as pd
 
-f = '/home/micah/Downloads/be_gm1_0324/w001001.adf'
-d = '~/Downloads/Bare_Earth_Digital_Elevation_Models-20200624T181104Z-001/Bare_Earth_Digital_Elevation_Models/'
+d = '~/Downloads/Bare_Earth_Digital_Elevation_Models/'
 
 # Start the Database
 db_name = 'postgresql+psycopg2:///snowex'
