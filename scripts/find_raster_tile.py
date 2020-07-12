@@ -1,7 +1,5 @@
 from snowxsql.db import get_db
-from snowxsql.conversions import raster_to_rasterio
 from snowxsql.data import RasterData, LayerData
-from geoalchemy2.types import Raster
 from rasterio.plot import show
 from sqlalchemy.sql import func
 import geoalchemy2.functions as gfunc
