@@ -2,13 +2,15 @@ from . data import *
 from .string_management import *
 import pandas as pd
 import progressbar
-from .utilities import get_logger
+from .utilities import get_logger, kw_in_here, avg_from_multi_sample
 from subprocess import check_output, STDOUT
 from geoalchemy2.elements import RasterElement, WKTElement
 from geoalchemy2.shape import from_shape
 import utm
 import os
 from os.path import join, abspath, expanduser
+import numpy as np
+
 
 class PitHeader(object):
     '''
@@ -299,6 +301,7 @@ class UploadProfileData():
             # Add geometry
             layer['geometry'] = WKTElement('POINT({} {})'.format(layer['easting'], layer['northing']), srid=self.epsg)
 
+            # Handle manual obs
             if 'grain_size' in layer.keys():
                 for value_type in self.stratigraphy_names:
                     # Loop through all important pieces of info and add to db
@@ -312,22 +315,24 @@ class UploadProfileData():
                     d = LayerData(**data)
                     session.add(d)
                     session.commit()
+
+            # Handle tool enable measurements like density cutters
             else:
                 data = remap_data_names(layer, self.rename)
-                if 'dielectric_constant_a' in layer.keys():
-                    value_type = 'dielectric_constant'
 
-                elif 'density_a' in layer.keys():
-                    value_type = 'density'
+                # Handle all multisample obs at once
+                for value_type in ['dielectric_constant', 'density', 'temperature']:
+                    if kw_in_here(value_type, layer):
+                        data['value'] = str(avg_from_multi_sample(layer, value_type))
+                        data['type'] = value_type
 
-                elif 'temperature' in layer.keys():
-                    value_type = 'temperature'
-                    data['value'] = data['temperature']
-                    del data['temperature']
+                        # Make sure we remove the single value of temperature
+                        if value_type == 'temperature':
+                            del data['temperature']
 
-                data['type'] = value_type
+                        break
+
                 self.log.debug('\tAdding {}'.format(value_type))
-
                 d = LayerData(**data)
                 session.add(d)
                 session.commit()

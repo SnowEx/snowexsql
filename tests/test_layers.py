@@ -68,12 +68,36 @@ class TestLayers(DBSetup):
         # Check for 4 samples in the a density profile
         assert(len(records)) == 4
 
+    def test_density_value_assignment(self):
+        '''
+        Confirm a value was calculated for the density
+        '''
+        records = self.get_profile('density.csv','density')
+
+        # Assert values were assigned
+        assert 'nan' not in [r.value for r in records]
+
+    def test_density_average(self):
+        '''
+        Test whether the value of single layer is the average of the samples
+        '''
+        records = self.get_profile('density.csv','density')
+
+        # Grab the value at 35 cm
+        v = [r.value for r in records if r.depth==35][0]
+
+        # Expecting the average of the two density samples
+        expected = str((190.0 + 245.0)/2)
+
+        assert v == expected
+
+
     def test_lwc_upload(self):
         '''
         Test uploading a lwc csv to the db
         '''
         records = self.get_profile('LWC.csv','dielectric_constant')
-
+        print(records)
         # Check for 4 LWC samples
         assert(len(records)) == 4
 
@@ -139,6 +163,5 @@ class TestLayers(DBSetup):
         '''
         Test the geometry column exists
         '''
-        records = self.session.query(LayerData.geom).limit(1).all()
-        print(records)
-        assert hasattr(records[0], 'geom')
+        records = self.session.query(LayerData.geometry).limit(1).all()
+        assert hasattr(records[0], 'geometry')

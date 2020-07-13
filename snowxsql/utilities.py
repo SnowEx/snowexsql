@@ -1,5 +1,6 @@
 import logging
 import coloredlogs
+import numpy as np
 
 def get_logger(name, debug=True, ext_logger=None,):
     """
@@ -53,3 +54,34 @@ def kw_in_here(kw, d, case_insensitive=True):
 
     truth = [True for c in d_keys if k in c]
     return len(truth) > 0
+
+
+def avg_from_multi_sample(layer, value_type):
+    '''
+    Our database entries sometimes have multiple values. We want to extract
+    those, cast them, average them and return the the value to be used as the main
+    value in the database
+
+    e.g.
+        layer = {density_a: 180, density_b: 200, density_c: nan}
+        result = 190
+
+    Args:
+        layer: layer dictionary (a single entry from a vertical profile)
+        value_type: string labeling type of data were looking for (density, dielectric constant..)
+
+    Returns:
+        result: Nan mean of the values found
+    '''
+    values =[]
+
+    for k, v in layer.items():
+        if value_type in k:
+            if str(v).lower() !='nan':
+                values.append(float(v))
+
+    if values:
+        result = np.mean(np.array(values))
+    else:
+        result = np.nan
+    return result
