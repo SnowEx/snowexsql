@@ -38,6 +38,8 @@ circle = to_shape(buffered_pit)
 # Grab all rasters touching the circle, form a single raster, convert to tiff
 print('Grabbing rasters that overlap on the {}m radius centered on {}'.format(buffer_dist, pit))
 rasters = session.query(func.ST_AsTiff(ST_RasterUnion(RasterData.raster))).filter(gfunc.ST_Intersects(RasterData.raster, buffered_pit)).all()
+
+# Create a 
 nearby_pits = session.query(LayerData.geometry).filter(gfunc.ST_Within(LayerData.geometry, buffered_pit))
 nearby_pits = query_to_geopandas(nearby_pits, engine)
 
