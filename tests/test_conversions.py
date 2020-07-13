@@ -40,7 +40,7 @@ class TestConversions(DBSetup):
         assert isinstance(df, gpd.GeoDataFrame)
 
         # Confirm we have geometry
-        assert 'geometry' in df.columns
+        assert 'geom' in df.columns
 
         # Confirm value count
         assert df['value'].count() == 10

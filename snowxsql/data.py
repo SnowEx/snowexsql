@@ -33,7 +33,7 @@ class SingleLocationData(SnowData):
     utm_zone = Column(String(10))
     units = Column(String(50))
     type = Column(String(50))
-    geometry = Column(Geometry("POINT"))
+    geom = Column(Geometry("POINT"))
 
 class RasterData(SnowData, Base):
     '''

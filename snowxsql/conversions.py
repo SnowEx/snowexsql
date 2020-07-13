@@ -24,11 +24,11 @@ def points_to_geopandas(results):
         for k in data.keys():
             v = getattr(r, k)
 
-            if k=='geometry':
+            if k=='geom':
                 v = to_shape(v)
             data[k].append(v)
 
-    df = gpd.GeoDataFrame(data, geometry=data['geometry'])
+    df = gpd.GeoDataFrame(data, geometry=data['geom'])
     return df
 
 

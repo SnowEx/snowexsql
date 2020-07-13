@@ -299,7 +299,7 @@ class UploadProfileData():
             layer.update(self._pit.info)
 
             # Add geometry
-            layer['geometry'] = WKTElement('POINT({} {})'.format(layer['easting'], layer['northing']), srid=self.epsg)
+            layer['geom'] = WKTElement('POINT({} {})'.format(layer['easting'], layer['northing']), srid=self.epsg)
 
             # Handle manual obs
             if 'grain_size' in layer.keys():
@@ -402,7 +402,7 @@ class PointDataCSV(object):
             data['time'] = d.time()
 
             # Add geometry
-            data['geometry'] = WKTElement('POINT({} {})'.format(data['easting'], data['northing']), srid=self.epsg)
+            data['geom'] = WKTElement('POINT({} {})'.format(data['easting'], data['northing']), srid=self.epsg)
 
             # Create db interaction, pass data as kwargs to class submit data
             sd = PointData(**data)

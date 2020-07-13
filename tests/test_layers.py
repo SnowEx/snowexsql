@@ -160,9 +160,11 @@ class TestLayers(DBSetup):
                 db_type = type(getattr(r, c))
                 assert (db_type == dtype) or (db_type == type(None))
 
-    def test_geom_column(self):
+    def test_geopandas_compliance(self):
         '''
         Test the geometry column exists
         '''
-        records = self.session.query(LayerData.geometry).limit(1).all()
-        assert hasattr(records[0], 'geometry')
+        records = self.session.query(LayerData.geom).limit(1).all()
+
+        # To be compliant with Geopandas must be geom not geometry!
+        assert hasattr(records[0], 'geom')

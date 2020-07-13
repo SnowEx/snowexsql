@@ -60,12 +60,12 @@ class TestPoints(DBSetup):
                 db_type = type(getattr(r, c))
                 assert (db_type == dtype) or (db_type == type(None))
 
-    def test_geom_column(self):
+    def test_geopandas_compiance(self):
         '''
         Test the geometry column works
         '''
         records = self.session.query(PointData).limit(1).all()
-        assert hasattr(records[0], 'geometry')
+        assert hasattr(records[0], 'geom')
 
     def test_data_entry(self):
         '''
