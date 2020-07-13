@@ -6,7 +6,6 @@ from geoalchemy2.shape import to_shape
 from snowxsql.data import PointData
 from sqlalchemy.sql import func
 
-
 def points_to_geopandas(results):
     '''
     Converts a successful query list into a geopandas data frame
@@ -25,11 +24,11 @@ def points_to_geopandas(results):
         for k in data.keys():
             v = getattr(r, k)
 
-            if k=='geom':
+            if k=='geometry':
                 v = to_shape(v)
             data[k].append(v)
 
-    df = gpd.GeoDataFrame(data, geometry=data['geom'])
+    df = gpd.GeoDataFrame(data, geometry=data['geometry'])
     return df
 
 
@@ -46,32 +45,30 @@ def query_to_geopandas(query, engine):
     '''
     # Fill out the variables in the query
     sql = query.statement.compile(dialect=postgresql.dialect())
-    
+
     # Get dataframe from geopandas using the query and engine
     df = gpd.GeoDataFrame.from_postgis(sql, engine)
 
     return df
 
 
-def raster_to_rasterio(session, raster):
+def raster_to_rasterio(session, rasters):
     '''
     Retrieve the numpy array of a raster by converting to a temporary file
 
     Args:
         session: sqlalchemy session object
-        raster: geoalchemy2.types.Raster
-        band: integer of band number (starting with 1)
+        raster: list of geoalchemy2.types.Raster
 
     Returns:
-        dataset: rasterio dataset
+        dataset: list of rasterio datasets
 
     '''
-    r = session.query(func.ST_AsTiff(raster.As_Text(),'GTiff')).all()[0][0]
+    datasets = []
+    for r in rasters:
+        bdata = bytes(r[0])
 
-    bdata = bytes(r)
-
-    with MemoryFile() as tmpfile:
-        tmpfile.write(bdata)
-        dataset = tmpfile.open()
-
-    return dataset
+        with MemoryFile() as tmpfile:
+            tmpfile.write(bdata)
+            datasets.append(tmpfile.open())
+    return datasets

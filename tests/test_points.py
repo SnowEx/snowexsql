@@ -26,7 +26,6 @@ class TestPoints(DBSetup):
         '''
         Test uploading snowdepths to db
         '''
-
         # 10 total records
         assert len(self.records) == 10
 
@@ -65,5 +64,15 @@ class TestPoints(DBSetup):
         '''
         Test the geometry column works
         '''
-        records = self.session.query(PointData.geom).limit(1).all()
-        assert hasattr(records[0], 'geom')
+        records = self.session.query(PointData).limit(1).all()
+        assert hasattr(records[0], 'geometry')
+
+    def test_data_entry(self):
+        '''
+        Test that the data was entered successfully
+        '''
+        # Not sure why thie first entry is 100000 but it is and it should be 94 cm
+        records = self.session.query(PointData.value).filter(PointData.id == 100000).all()
+
+        # Confirm the the first entry is 94cm
+        assert records[0][0] == 94
