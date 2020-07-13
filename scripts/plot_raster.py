@@ -10,6 +10,7 @@ import geopandas as gpd
 from snowxsql.conversions import raster_to_rasterio
 from snowxsql.functions import ST_RasterUnion
 from snowxsql.conversions import points_to_geopandas, query_to_geopandas
+import numpy as np
 
 # PIT Site Identifier
 site_id = '5N19'
@@ -27,7 +28,7 @@ q = session.query(LayerData).filter(LayerData.site_id==site_id)
 layers = q.all()
 
 # Grab the pit location from a single layer
-p = layers[0].geometry
+p = layers[0].geom
 pit = to_shape(p)
 
 # Create a polygon buffered by our distance centered on the pit
@@ -40,26 +41,24 @@ print('Grabbing rasters that overlap on the {}m radius centered on {}'.format(bu
 rasters = session.query(func.ST_AsTiff(ST_RasterUnion(RasterData.raster))).filter(gfunc.ST_Intersects(RasterData.raster, buffered_pit)).all()
 
 # Create a
-nearby_pits = session.query(LayerData.geometry).filter(gfunc.ST_Within(LayerData.geometry, buffered_pit))
+nearby_pits = session.query(LayerData.geom).filter(gfunc.ST_Within(LayerData.geom, buffered_pit))
 nearby_pits = query_to_geopandas(nearby_pits, engine)
 
-fig,ax = plt.subplots()
+fig, ax = plt.subplots()
 
 dataset = raster_to_rasterio(session, rasters)[0]
 img = show(dataset.read(1), ax=ax, transform=dataset.transform, cmap='terrain')
-show(dataset.read(1), contour=True, colors='k', ax=ax, transform=dataset.transform)
+show(dataset.read(1), contour=True, levels=[s for s in np.arange(3000,4000, 10)], colors='dimgray', ax=ax, transform=dataset.transform)
 
 gpd.GeoSeries(circle).plot(ax=ax, color='b', alpha=0.4)
 
-for p in nearby_pits:
-    g = to_shape(p[0])
-    gpd.GeoSeries(g).plot(ax=ax, color='purple',  marker='^', label='Nearby pits')
+nearby_pits.plot(ax=ax, color='purple', marker='^', label='Nearby Pits')
 
 gpd.GeoSeries(pit).plot(ax=ax, color='r', marker='^', label=site_id)
 
 ax.set_xlabel('Easting [m]')
 ax.set_ylabel('Northing [m]')
-plt.suptitle('     Pit {} w/ {}m Radius Circle on QSI DEM'.format(site_id, buffer_dist))
+plt.suptitle('          Pit {} w/ {}m Radius Circle on QSI DEM'.format(site_id, buffer_dist))
 plt.tight_layout()
 ax.legend()
 plt.show()
