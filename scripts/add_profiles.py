@@ -29,9 +29,9 @@ engine, metadata, session = get_db(db_name)
 # Grab only site details
 filenames = [f for f in filenames if 'site' in f]
 
-profiles = 0
-errors = 0
-layers_added = 0
+errors = []
+profiles_uploaded = 0
+files_attempts = 0
 
 for site_fname in filenames:
     pit = PitHeader(site_fname, timezone)
@@ -47,23 +47,29 @@ for site_fname in filenames:
 
         # Ignore the site details file
         if f != site_fname:
+            files_attempts += 1
 
-            # Read the data and organize it, remap the names
-            profile = UploadProfileData(f, timezone, 26912)
+            try:
+                # Read the data and organize it, remap the names
+                profile = UploadProfileData(f, timezone, 26912)
 
-            # Check the data for any knowable issues
-            profile.check(pit.info)
+                # Check the data for any knowable issues
+                profile.check(pit.info)
 
-            # Submit the data to the database
-            profile.submit(session, pit.info)
+                # Submit the data to the database
+                profile.submit(session, pit.info)
+                profiles_uploaded += 1
 
-                # except Exception as e:
-                #     print('Error with {}'.format(f))
-                #     print(e)
-                #     errors += 1
-            #     #     success = False
-            # if success:
-            #     profiles += 1
-    # print("Profiles uploaded = {}".format(profiles))
-    # print("Layers uploaded = {}, Layer Errors = {}".format(layers_added, errors))
-    # print('Finished! Elapsed {:d}s'.format(int(time.time() - start)))
+            except Exception as e:
+                log.error('Error with {}'.format(f))
+                log.error(e)
+                errors.append((f,e))
+
+log.info("{} / {} profiles uploaded.".format(profiles_uploaded, files_attempts ))
+
+if len(errors) > 0:
+    log.error('{} Profiles failed to upload.'.format(len(errors)))
+    log.error('The following files failed with their corrsponding errors:')
+    for e in errors:
+        log.error('\t{} - {}'.format(e[0], e[1]))
+log.info('Finished! Elapsed {:d}s'.format(int(time.time() - start)))

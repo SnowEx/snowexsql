@@ -10,7 +10,7 @@ import utm
 import os
 from os.path import join, abspath, expanduser
 import numpy as np
-
+import time
 
 class PitHeader(object):
     '''
@@ -436,19 +436,28 @@ class UploadRasterCollection(object):
 
     def submit(self, session):
         fails = []
+        rasters_uploaded = 0
+        start = time.time()
+
         bar = progressbar.ProgressBar(max_value=len(self.rasters))
         for i,f in enumerate(self.rasters):
             r = UploadRaster(f, self.epsg, **self.meta)
             try:
                 r.submit(session)
+                rasters_uploaded += 1
             except Exception as e:
                 fails.append((f,e))
             bar.update(i)
 
         # Log errors
-        self.log.error("During the upload of {} raster, {} failed.".format(len(self.rasters), len(fails)))
-        for f,e in fails:
-            self.log.error(e)
+        if len(fails) > 0:
+            self.log.error("During the upload of {} raster, {} failed.".format(len(self.rasters), len(fails)))
+            for f,e in fails:
+                self.log.error(e)
+
+        self.log.info("{} / {} Rasters uploaded.".format(rasters_uploaded, len(self.rasters)))
+        self.log.info('Finished! Elapsed {:d}s'.format(int(time.time() - start)))
+
 
 class UploadRaster(object):
     '''

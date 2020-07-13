@@ -1,59 +1,65 @@
 from snowxsql.db import get_db
-from snowxsql.conversions import raster_to_rasterio, query_to_geopandas
-from snowxsql.data import RasterData
-from rasterio import plot
-from rasterio import MemoryFile
+from snowxsql.data import RasterData, LayerData
+from rasterio.plot import show
 from sqlalchemy.sql import func
-from os.path import join
-from snowxsql.upload import PitHeader
-from geoalchemy2.elements import WKTElement
 import geoalchemy2.functions as gfunc
 from geoalchemy2.shape import to_shape
-import geoalchemy2.functions as gfunc
-from snowxsql.functions import ST_Clip
-import geopandas as gpd
+from rasterio import MemoryFile
 import matplotlib.pyplot as plt
+import geopandas as gpd
+from snowxsql.conversions import raster_to_rasterio
+from snowxsql.functions import ST_RasterUnion
+from snowxsql.conversions import points_to_geopandas, query_to_geopandas
 
+# PIT Site Identifier
+site_id = '5N19'
+
+# Distance around the pit to collect data in meters
+buffer_dist = 400
 
 # Connect to the database we made.
 db_name = 'postgresql+psycopg2:///snowex'
 engine, metadata, session = get_db(db_name)
-
-site_fname = join('../tests/data','site_details.csv' )
-pit = PitHeader(site_fname, 'MST')
-
-# Create an element of a point at the pit
-p = WKTElement('POINT({} {})'.format(pit.info['easting'], pit.info['northing'] + 100))
-
-print('Site location centered on {}'.format(p))
-
-# Create a polygon buffered by 1 meters centered on pit
-q = session.query(gfunc.ST_Buffer(p, 100))
-buffered_pit = q.all()[0][0]
-bp = gpd.GeoSeries(to_shape(buffered_pit))
-
-fig, ax = plt.subplots()
-# r = session.query(func.ST_Clip(RasterData.raster, buffered_pit, crop=True)).all()[0]
-
-print('grabbing rasters...')
-print(type(RasterData.raster))
-rasters = session.query(func.ST_AsTiff(RasterData.raster,'GTiff')).limit(10).all()
 datasets = []
 
-print('Adding {} rasters...'.format(len(rasters)))
-for r in rasters:
-    print(type(r[0]))
-    bdata = bytes(r[0])
+# Grab our pit layers by site id
+q = session.query(LayerData).filter(LayerData.site_id==site_id)
+layers = q.all()
 
-    with MemoryFile() as tmpfile:
-        tmpfile.write(bdata)
-        datasets.append(tmpfile.open())
+# Grab the pit location from a single layer
+p = layers[0].geometry
+pit = to_shape(p)
 
-for d in datasets:
-    plot.show(d, ax=ax, cmap='viridis')
+# Create a polygon buffered by our distance centered on the pit
+q = session.query(gfunc.ST_Buffer(p, buffer_dist))
+buffered_pit = q.all()[0][0]
+circle = to_shape(buffered_pit)
 
-bp.plot(color='r', ax=ax)
+# Grab all rasters touching the circle, form a single raster, convert to tiff
+print('Grabbing rasters that overlap on the {}m radius centered on {}'.format(buffer_dist, pit))
+rasters = session.query(func.ST_AsTiff(ST_RasterUnion(RasterData.raster))).filter(gfunc.ST_Intersects(RasterData.raster, buffered_pit)).all()
+nearby_pits = session.query(LayerData.geometry).filter(gfunc.ST_Within(LayerData.geometry, buffered_pit))
+nearby_pits = query_to_geopandas(nearby_pits, engine)
+
+fig,ax = plt.subplots()
+
+dataset = raster_to_rasterio(session, rasters)[0]
+img = show(dataset.read(1), ax=ax, transform=dataset.transform, cmap='terrain')
+show(dataset.read(1), contour=True, colors='k', ax=ax, transform=dataset.transform)
+
+gpd.GeoSeries(circle).plot(ax=ax, color='b', alpha=0.4)
+
+for p in nearby_pits:
+    g = to_shape(p[0])
+    gpd.GeoSeries(g).plot(ax=ax, color='purple',  marker='^', label='Nearby pits')
+
+gpd.GeoSeries(pit).plot(ax=ax, color='r', marker='^', label=site_id)
+
+ax.set_xlabel('Easting [m]')
+ax.set_ylabel('Northing [m]')
+plt.suptitle('     Pit {} w/ {}m Radius Circle on QSI DEM'.format(site_id, buffer_dist))
+plt.tight_layout()
+ax.legend()
 plt.show()
-
-for d in datasets:
-    d.close()
+dataset.close()
+session.close()

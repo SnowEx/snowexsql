@@ -77,7 +77,8 @@ def avg_from_multi_sample(layer, value_type):
 
     for k, v in layer.items():
         if value_type in k:
-            if str(v).lower() !='nan':
+            # If the bool is not nan and is not empty
+            if str(v).lower() !='nan' and bool(str(v).strip()):
                 values.append(float(v))
 
     if values:
