@@ -31,6 +31,9 @@ class SingleLocationData(SnowData):
     easting = Column(Float)
     elevation = Column(Float)
     utm_zone = Column(String(10))
+    units = Column(String(50))
+    type = Column(String(50))
+    geometry = Column(Geometry("POINT"))
 
 class RasterData(SnowData, Base):
     '''
@@ -50,12 +53,9 @@ class PointData(SingleLocationData, Base):
     __table_args__ = {"schema": "public"}
 
     version = Column(Integer)
-    type = Column(String(50))
     measurement_tool = Column(String(50))
     equipment = Column(String(50))
     value = Column(Float)
-    units = Column(String(50))
-    geometry = Column(Geometry("POINT"))
 
     __mapper_args__ = {
         'polymorphic_identity':'Points',
@@ -89,11 +89,9 @@ class LayerData(SingleLocationData, Base):
     vegetation_height = Column(String(50))
     tree_canopy = Column(String(50))
     site_notes = Column(String(1000))
-    type = Column(String(50))
-    value = Column(String(50))
-    geometry = Column(Geometry("POINT"))
     bottom_depth = Column(Float)
     comments = Column(String(1000))
     sample_a = Column(String(20))
     sample_b = Column(String(20))
     sample_c = Column(String(20))
+    value = Column(String(20))

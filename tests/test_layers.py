@@ -97,9 +97,10 @@ class TestLayers(DBSetup):
         Test uploading a lwc csv to the db
         '''
         records = self.get_profile('LWC.csv','dielectric_constant')
-        print(records)
+
         # Check for 4 LWC samples
         assert(len(records)) == 4
+
 
     def test_temperature_upload(self):
         '''
