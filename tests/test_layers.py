@@ -111,6 +111,15 @@ class TestLayers(DBSetup):
         # Assert 5 measurements in the temperature profile
         assert(len(records)) == 5
 
+    def test_ssa_upload(self):
+        '''
+        Test uploading a SSA csv to the db
+        '''
+        records = self.get_profile('SSA.csv','reflectance')
+
+        # Check for 4 LWC samples
+        assert(len(records)) == 16
+
     def test_datatypes(self):
         '''
         Test that all layer attributes in the db are the correct type.
@@ -136,7 +145,7 @@ class TestLayers(DBSetup):
         'slope_angle': int,
         'aspect': int,
         'air_temp': float,
-        'total_depth': float,
+        'total_depth': int,
         'surveyors': str,
         'weather_description': str,
         'precip': str,
@@ -158,6 +167,7 @@ class TestLayers(DBSetup):
         for r in records:
             for c, dtype in dtypes.items():
                 db_type = type(getattr(r, c))
+                print(c)
                 assert (db_type == dtype) or (db_type == type(None))
 
     def test_geopandas_compliance(self):

@@ -95,3 +95,6 @@ class LayerData(SingleLocationData, Base):
     sample_b = Column(String(20))
     sample_c = Column(String(20))
     value = Column(String(20))
+    instrument = Column(String(50))
+    profile_id = Column(String(200))
+    timing = Column(String(100))

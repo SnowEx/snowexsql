@@ -96,6 +96,9 @@ class PitHeader(object):
         # ...places that shouldn't be
         str_data = " ".join(lines).split('#')
 
+        # Keep track of the number of lines with # in it for data opening
+        self.length = len(str_data)
+
         # Key value pairs are comma separated via the first comma.
         data = {}
         for l in str_data:
@@ -204,7 +207,7 @@ class UploadProfileData():
     # Manage stratigraphy
     stratigraphy_names = ['grain_size', 'hand_hardness', 'grain_type',
                          'manual_wetness']
-
+    ssa_names = ['reflectance','sample_signal', 'specific_surface_area', 'deq']
     rename = {'location':'site_name',
              'top': 'depth',
              'height':'depth',
@@ -220,8 +223,12 @@ class UploadProfileData():
              'notes':'site_notes',
              'dielectric_constant_a':'sample_a',
              'dielectric_constant_b':'sample_b',
-             'dielectric_constant_c':'sample_c'
-             }
+             'dielectric_constant_c':'sample_c',
+             'sample_top_height':'depth',
+             'deq':'equivalent_diameter',
+             'operator':'surveyors',
+             'total_snow_depth':'total_depth'
+              }
 
     def __init__(self, profile_filename, timezone, epsg):
         self.log = get_logger(__name__)
@@ -246,12 +253,11 @@ class UploadProfileData():
             site_info:
         '''
         # How many lines to skip due to header
-        header_rows = len(self._pit.info.keys())
+        header_rows = self._pit.length
 
         # header=0 because docs say to if using skiprows and columns
         df = pd.read_csv(profile_filename, header=0, skiprows=header_rows-1,
                                            names=self._pit.columns)
-
         return df
 
     def check(self, site_info):
@@ -279,7 +285,24 @@ class UploadProfileData():
                                  'here and {} from site info.'.format(k,
                                                              self._pit.info[k],
                                                              site_info[k]))
+    def submit_multi_profiles(self, session, layer, names):
+        '''
+        In some files there are multiple profiles we want to submit as the
+        main profile. This function
+        '''
+        for value_type in names:
+            # Loop through all important pieces of info and add to db
+            data = {k:v for k,v in layer.items() if k not in names}
+            data['type'] = value_type
+            data['value'] = layer[value_type]
+            data = remap_data_names(data, self.rename)
 
+            # Send it to the db
+            self.log.debug('\tAdding {}'.format(value_type))
+            d = LayerData(**data)
+            print(data)
+            session.add(d)
+            session.commit()
 
     def submit(self, session, site_info=None):
         '''
@@ -301,26 +324,16 @@ class UploadProfileData():
             # Add geometry
             layer['geom'] = WKTElement('POINT({} {})'.format(layer['easting'], layer['northing']), srid=self.epsg)
 
-            # Handle manual obs
+            # Handle all multisample obs at once
             if 'grain_size' in layer.keys():
-                for value_type in self.stratigraphy_names:
-                    # Loop through all important pieces of info and add to db
-                    data = {k:v for k,v in layer.items() if k not in self.stratigraphy_names}
-                    data['type'] = value_type
-                    data['value'] = layer[value_type]
-                    data = remap_data_names(data, self.rename)
-
-                    # Send it to the db
-                    self.log.debug('\tAdding {}'.format(value_type))
-                    d = LayerData(**data)
-                    session.add(d)
-                    session.commit()
+                self.submit_multi_profiles(session, layer, self.stratigraphy_names)
+            elif 'reflectance' in layer.keys():
+                self.submit_multi_profiles(session, layer, self.ssa_names)
 
             # Handle tool enable measurements like density cutters
             else:
                 data = remap_data_names(layer, self.rename)
 
-                # Handle all multisample obs at once
                 for value_type in ['dielectric_constant', 'density', 'temperature']:
                     if kw_in_here(value_type, layer):
                         data['value'] = str(avg_from_multi_sample(layer, value_type))

@@ -23,6 +23,7 @@ on Gdrive should be downloaded and kept in your downloads folder.
 Then simply use:
 
 .. code-block:: bash
+
   cd scripts && sh run.sh
 
 
