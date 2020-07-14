@@ -55,8 +55,9 @@ previews.
 * `nbsphinx-thumbnail`
 * `nbsphinx-gallery`
 
-*Note: you can assign these pretty easy to other block simultaneously which
-will break the thumbnail generator.*
+*Note: you can assign these tags pretty easy by accident to other blocks simultaneously which
+will break the thumbnail generator. If your thumbnail doesn't show up then check
+which blocks had tags enabled*
 
 Submit Feedback
 ~~~~~~~~~~~~~~~

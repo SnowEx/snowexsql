@@ -12,6 +12,7 @@ from . sql_test_base import DBSetup
 from shapely.geometry import Point
 from geoalchemy2.shape import to_shape
 from geoalchemy2.elements import WKTElement
+from geoalchemy2.types import Raster
 from snowxsql.conversions import raster_to_rasterio
 import matplotlib.pyplot as plt
 from rasterio.plot import show
@@ -57,8 +58,18 @@ class TestRasters(DBSetup):
         '''
 
         # Get the first pixel as a point
-        rasters = self.session.query(func.ST_AsTiff(ST_RasterUnion(RasterData.raster))).all()
+        rasters = self.session.query(func.ST_AsTiff(func.ST_Union(RasterData.raster, type_=Raster))).all()
         assert len(rasters) == 1
+
+    def test_raster_union2(self):
+        '''
+        Test we can retrieve coordinates of a point from the database
+        '''
+
+        # Get the first pixel as a point
+        merged = self.session.query(func.ST_Union(RasterData.raster, type_=Raster)).filter(RasterData.id.in_([1,2])).all()
+        assert len(merged) == 1
+
 
 
     # def test_raster_clip(self):

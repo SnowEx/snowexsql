@@ -8,7 +8,6 @@ from rasterio import MemoryFile
 import matplotlib.pyplot as plt
 import geopandas as gpd
 from snowxsql.conversions import raster_to_rasterio
-from snowxsql.functions import ST_RasterUnion
 from snowxsql.conversions import points_to_geopandas, query_to_geopandas
 import numpy as np
 
@@ -38,7 +37,7 @@ circle = to_shape(buffered_pit)
 
 # Grab all rasters touching the circle, form a single raster, convert to tiff
 print('Grabbing rasters that overlap on the {}m radius centered on {}'.format(buffer_dist, pit))
-rasters = session.query(func.ST_AsTiff(ST_RasterUnion(RasterData.raster))).filter(gfunc.ST_Intersects(RasterData.raster, buffered_pit)).all()
+rasters = session.query(func.ST_AsTiff(func.ST_Union(RasterData.raster, type_=Raster))).filter(gfunc.ST_Intersects(RasterData.raster, buffered_pit)).all()
 
 # Create a
 nearby_pits = session.query(LayerData.geom).filter(gfunc.ST_Within(LayerData.geom, buffered_pit))

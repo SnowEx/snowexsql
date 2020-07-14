@@ -20,7 +20,6 @@ from rasterio import MemoryFile
 import matplotlib.pyplot as plt
 import geopandas as gpd
 from snowxsql.conversions import raster_to_rasterio
-from snowxsql.functions import ST_RasterUnion
 from snowxsql.conversions import points_to_geopandas, query_to_geopandas
 
 # TURNS OUT THIS DRAWS TOO MUCH MEMORY FOR POSTGRES :(
@@ -31,7 +30,7 @@ engine, metadata, session = get_db(db_name)
 datasets = []
 
 # Grab all rasters touching the circle, form a single raster, convert to tiff
-rasters = session.query(func.ST_AsTiff(func.ST_Rescale(ST_RasterUnion(RasterData.raster), 5), 'DEFLATE9')).all()
+rasters = session.query(func.ST_AsTiff(func.ST_Rescale(func.ST_Union(RasterData.raster, type_=Raster), 5), 'DEFLATE9')).all()
 
 
 dataset = raster_to_rasterio(session, rasters)[0]

@@ -25,7 +25,3 @@ class ST_Clip(gfunc.GenericFunction):
 class ST_Count(gfunc.GenericFunction):
     name = 'ST_Count'
     type = Integer
-
-class ST_RasterUnion(gfunc.GenericFunction):
-    name = 'ST_Union'
-    type = Raster
