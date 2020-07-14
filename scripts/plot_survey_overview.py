@@ -21,31 +21,32 @@ import matplotlib.pyplot as plt
 import geopandas as gpd
 from snowxsql.conversions import raster_to_rasterio
 from snowxsql.conversions import points_to_geopandas, query_to_geopandas
-
-# TURNS OUT THIS DRAWS TOO MUCH MEMORY FOR POSTGRES :(
+import rasterio
+from rasterio.merge import merge
+# TURNS OUT THIS DRAWS TOO MUCH MEMORY FOR POSTGRES :( So we have to get creative
 
 # Connect to the database we made.
 db_name = 'postgresql+psycopg2:///snowex'
 engine, metadata, session = get_db(db_name)
 datasets = []
 
-# Grab all rasters touching the circle, form a single raster, convert to tiff
-rasters = session.query(func.ST_AsTiff(func.ST_Rescale(func.ST_Union(RasterData.raster, type_=Raster), 5), 'DEFLATE9')).all()
+# Grab all the raster IDs
+id_nums = session.query(RasterData.id).all()
+id_nums = [idx[0] for idx in id_nums]
+# Loop through and grab all rasters
+datasets = []
+print('Collecting {} rasters...'.format(len(id_nums)))
+for idx in id_nums:
+    raster = session.query(func.ST_AsTiff(func.ST_Resample(RasterData.raster, 50))).filter(RasterData.id == idx).all()
+    datasets.append(raster_to_rasterio(session, raster)[0])
 
-
-dataset = raster_to_rasterio(session, rasters)[0]
-
+print('Merging raster tiles...')
+arr, trans = rasterio.merge.merge(datasets)
 fig,ax = plt.subplots()
 
-img = show(dataset.read(1), ax=ax, transform=dataset.transform, cmap='terrain')
-show(dataset.read(1), contour=True, colors='k', ax=ax, transform=dataset.transform)
-
-
-ax.set_xlabel('Easting [m]')
-ax.set_ylabel('Northing [m]')
-plt.suptitle('     Pit {} w/ {}m Radius Circle on QSI DEM'.format(site_id, buffer_dist))
-plt.tight_layout()
-ax.legend()
-plt.show()
-dataset.close()
+for d in datasets:
+    d.close()
 session.close()
+
+img = show(arr, ax=ax, transform=datasets[0].transform)
+plt.show()
