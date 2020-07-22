@@ -2,6 +2,8 @@ from os.path import abspath, expanduser, join, basename, dirname
 import os
 import numpy as np
 import matplotlib.pyplot as plt
+import utm
+from rasterio.plot import show
 
 def read_UAVSARann(ann_file):
     '''
@@ -69,7 +71,11 @@ def readUAVSARgrd(grd_file):
     '''
     Reads in the UAVSAR .grd files. Also requires a .txt file in the same
     directory to describe the data
+
+    Args:
+        grd_file: File containing the UAVSAR data
     '''
+
     # Grab just the filename and make a list splitting it on periods
     fparts = basename(grd_file).split('.')
     fkey = fparts[0]
@@ -91,36 +97,36 @@ def readUAVSARgrd(grd_file):
 
     desc = read_UAVSARann(ann_file)
 
-    nrow = desc['Ground Range Data Latitude Lines']
-    ncol = desc['Ground Range Data Longitude Samples']
+    nrow = desc['Ground Range Data Latitude Lines']['value']
+    ncol = desc['Ground Range Data Longitude Samples']['value']
 
     # Find starting latitude, longitude
-    lat1 = desc['Ground Range Data Starting Latitude']
-    lon1 = desc['Ground Range Data Starting Longitude']
+    lat1 = desc['Ground Range Data Starting Latitude']['value']
+    lon1 = desc['Ground Range Data Starting Longitude']['value']
 
     # Delta latitude and longitude
-    dlat = desc['Ground Range Data Latitude Spacing']
-    dlon = desc['Ground Range Data Longitude Spacing']
+    dlat = desc['Ground Range Data Latitude Spacing']['value']
+    dlon = desc['Ground Range Data Longitude Spacing']['value']
 
     # Construct data
-    # data_types = np.dtype([np.float32, np.float32]),
-    data_types = np.dtype([('samples',np.float32), ('lines', np.float32)]),
+    z = np.fromfile(grd_file, count=nrow * ncol).reshape(ncol, nrow).T
 
-    Z = np.fromfile(grd_file, dtype=data_types)
-    print(Z)
-    plt.imshow(Z)
+    # # Create spatial coordinates
+    # latitudes = np.arange(lat1, lat1 + dlat * nrow, dlat)
+    # longitudes = np.arange(lon1, lon1 + dlon * nrow, dlon)
+    # [LON,LAT]=meshgrid(longitudes, latitudes)
+    #
+    # # Set zeros to Nan
+    z[z==0] = np.nan
+    #
+    # # Convert to UTM
+    # [X, Y] = utm.from_latlon(LAT, LON)
+
+    # Ix=~np.isnan(z);
+
+    plt.imshow(z)
+    plt.colorbar()
     plt.show()
-# fileID=fopen(dfile,'r');
-# Z=fread(fileID,[Ncol Nrow],'float32',0,'l');
-# Z=Z'; % transpose
-#
-# %% now create spatial coordinates
-# lat=Lat1:dLat:(Lat1+dLat*(Nrow-1));
-# lon=Lon1:dLon:(Lon1+dLon*(Ncol-1));
-# [LON,LAT]=meshgrid(lon,lat);
-# Z(Z==0)=NaN; % set zeros to NaN
-# Ix=~isnan(Z); % indicies to non-nan values
-# %[X,Y]=ll2utm(LAT,LON,zone);
 # r.x=lon; r.y=lat; r.Z=Z; r.name='Grand Mesa, Feb 1, amplitude';
 # crange=[0 0.5];
 # hI=nanimagesc(r,Ix,crange)
