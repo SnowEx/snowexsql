@@ -109,7 +109,9 @@ def readUAVSARgrd(grd_file):
     dlon = desc['Ground Range Data Longitude Spacing']['value']
 
     # Construct data
-    z = np.fromfile(grd_file, count=nrow * ncol).reshape(ncol, nrow).T
+    z = np.fromfile(grd_file, np.int)
+    print(z.shape)
+    z = z.reshape(2, ncol, nrow)
 
     # # Create spatial coordinates
     # latitudes = np.arange(lat1, lat1 + dlat * nrow, dlat)
@@ -124,7 +126,7 @@ def readUAVSARgrd(grd_file):
 
     # Ix=~np.isnan(z);
 
-    plt.imshow(z)
+    plt.imshow(z[0])
     plt.colorbar()
     plt.show()
 # r.x=lon; r.y=lat; r.Z=Z; r.name='Grand Mesa, Feb 1, amplitude';

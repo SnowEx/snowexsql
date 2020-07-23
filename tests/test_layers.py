@@ -117,8 +117,8 @@ class TestLayers(DBSetup):
         '''
         records = self.get_profile('SSA.csv','reflectance')
 
-        # Check for 4 LWC samples
-        assert(len(records)) == 16
+        # Check for 16 samples
+        assert len(records) == 16
 
     def test_datatypes(self):
         '''
