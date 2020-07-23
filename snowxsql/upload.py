@@ -257,7 +257,7 @@ class UploadProfileData():
 
         # header=0 because docs say to if using skiprows and columns
         df = pd.read_csv(profile_filename, header=0, skiprows=header_rows-1,
-                                           names=self._pit.columns)
+                                           names=self._pit.columns, encoding='utf-8')
         return df
 
     def check(self, site_info):
@@ -300,7 +300,6 @@ class UploadProfileData():
             # Send it to the db
             self.log.debug('\tAdding {}'.format(value_type))
             d = LayerData(**data)
-            print(data)
             session.add(d)
             session.commit()
 
