@@ -75,7 +75,7 @@ class PitHeader(object):
                    **columns** - List of clean column names
        '''
 
-        with open(filename) as fp:
+        with open(filename, encoding='latin') as fp:
             lines = fp.readlines()
             fp.close()
 
@@ -257,7 +257,7 @@ class UploadProfileData():
 
         # header=0 because docs say to if using skiprows and columns
         df = pd.read_csv(profile_filename, header=0, skiprows=header_rows-1,
-                                           names=self._pit.columns, encoding='utf-8')
+                                           names=self._pit.columns, encoding='latin')
         return df
 
     def check(self, site_info):
@@ -287,18 +287,21 @@ class UploadProfileData():
                                                              site_info[k]))
     def submit_multi_profiles(self, session, layer, names):
         '''
-        In some files there are multiple profiles we want to submit as the
-        main profile. This function
+        In some files there are multiple profiles we want to submit as a
+        main profile. This function does this when called using the names
         '''
+
+        # Loop through all important pieces of info and add to db
+        data = {k:v for k,v in layer.items() if k not in names}
+        data = remap_data_names(data, self.rename)
+
+        self.log.debug('\tAdding {} for {} at {}cm'.format(', '.join(names), data['site_id'], data['depth']))
+
         for value_type in names:
-            # Loop through all important pieces of info and add to db
-            data = {k:v for k,v in layer.items() if k not in names}
-            data['type'] = value_type
             data['value'] = layer[value_type]
-            data = remap_data_names(data, self.rename)
+            data['type'] = value_type
 
             # Send it to the db
-            self.log.debug('\tAdding {}'.format(value_type))
             d = LayerData(**data)
             session.add(d)
             session.commit()
@@ -324,7 +327,7 @@ class UploadProfileData():
             layer['geom'] = WKTElement('POINT({} {})'.format(layer['easting'], layer['northing']), srid=self.epsg)
 
             # Handle all multisample obs at once
-            if 'grain_size' in layer.keys():
+            if 'hand_hardness' in layer.keys():
                 self.submit_multi_profiles(session, layer, self.stratigraphy_names)
             elif 'reflectance' in layer.keys():
                 self.submit_multi_profiles(session, layer, self.ssa_names)
@@ -344,7 +347,7 @@ class UploadProfileData():
 
                         break
 
-                self.log.debug('\tAdding {}'.format(value_type))
+                self.log.debug('\tAdding {} for {}'.format(value_type, ))
                 d = LayerData(**data)
                 session.add(d)
                 session.commit()

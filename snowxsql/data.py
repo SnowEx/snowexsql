@@ -77,7 +77,7 @@ class LayerData(SingleLocationData, Base):
     slope_angle = Column(Integer)
     aspect = Column(Integer)
     air_temp = Column(Float)
-    total_depth = Column(Integer)
+    total_depth = Column(Float)
     surveyors = Column(String(50))
     weather_description = Column(String(50))
     precip = Column(String(50))
