@@ -347,7 +347,7 @@ class UploadProfileData():
 
                         break
 
-                self.log.debug('\tAdding {} for {}'.format(value_type, ))
+                self.log.debug('\tAdding {} for {} at {}cm'.format(value_type, data['site_id'], data['depth']))
                 d = LayerData(**data)
                 session.add(d)
                 session.commit()

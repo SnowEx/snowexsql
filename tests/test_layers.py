@@ -145,7 +145,7 @@ class TestLayers(DBSetup):
         'slope_angle': int,
         'aspect': int,
         'air_temp': float,
-        'total_depth': int,
+        'total_depth': float,
         'surveyors': str,
         'weather_description': str,
         'precip': str,
