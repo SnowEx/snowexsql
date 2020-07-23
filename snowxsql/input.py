@@ -4,6 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import utm
 from rasterio.plot import show
+from .utilities import get_logger
 
 def read_UAVsARann(ann_file):
     '''
@@ -56,7 +57,7 @@ def read_UAVsARann(ann_file):
             value = value.strip()
 
             ### Cast the values that can be to numbers ###
-            if value.isnumeric():
+            if value.strip('-').replace('.','').isnumeric():
                 if '.' in value:
                     value = float(value)
                 else:
@@ -75,7 +76,7 @@ def readUAVSARgrd(grd_file):
     Args:
         grd_file: File containing the UAVsAR data
     '''
-
+    log = get_logger('UAVSAR')
     # Grab just the filename and make a list splitting it on periods
     fparts = basename(grd_file).split('.')
     fkey = fparts[0]
@@ -108,48 +109,59 @@ def readUAVSARgrd(grd_file):
     dlat = desc['ground range data latitude spacing']['value']
     dlon = desc['ground range data longitude spacing']['value']
 
-    # Construct data
+    # Read in the data as a tuple representing the real and imaginary components
+    log.info('Reading {} and converting file to complex numbers...'.format(basename(grd_file)))
+    # # TODO: CHECK THESE NUMBERS TO MAKE SURE THEYRE WHAT WE THINK THEY ARE (i4, u4 both work with very different outcomes)
     z = np.fromfile(grd_file, dtype=np.dtype([('real', '<i4'), ('imag', '<i4')]))
 
-    # z['real']
-    # print(z.shape, 2* ncol * nrow)
-    # #img = img.reshape(ncol, nrow)
+    # Reshape it to match what the text file says the image is
     z = z.reshape(nrow, ncol)
+
+    # Recast the data as a python complex number data type
     ij = np.array(np.zeros((nrow, ncol)), dtype=complex)
     ij.real = z['real'][:]
     ij.imag = z['imag'][:]
-    rm = ij.real.mean()
-    # plt.imshow(z['real'])
-    fig, axes = plt.subplots(1,2)
 
-    for i, comp in enumerate(['real', 'imag']):
-        im = axes[i].imshow(z[comp])
-        fig.colorbar(im, ax=axes[i])
-        arr = getattr(ij,comp)
-        mu = arr.mean()
-        std = arr.std()
-        axes[i].set_title('{} Component, mu={:2e}, std={:2e}'.format(comp.title(), mu, std))
-    plt.suptitle(basename(grd_file))
-    plt.show()
-    # # Create spatial coordinates
-    # latitudes = np.arange(lat1, lat1 + dlat * nrow, dlat)
-    # longitudes = np.arange(lon1, lon1 + dlon * nrow, dlon)
-    # [lON,lAT]=meshgrid(longitudes, latitudes)
-    #
-    # # set zeros to Nan
+    # Create spatial coordinates
+    latitudes = np.arange(lat1, lat1 + dlat * nrow, dlat)
+    longitudes = np.arange(lon1, lon1 + dlon * ncol, dlon)
+    [LON, LAT] = np.meshgrid(longitudes, latitudes)
+
+    # set zeros to Nan
     # z[z==0] = np.nan
-    #
-    # # Convert to UTM
-    # [X, Y] = utm.from_latlon(lAT, lON)
+
+    # Convert to UTM
+    log.info('Converting SAR Lat/long coordinates to UTM...')
+    X = np.zeros_like(LON)
+    Y = np.zeros_like(LAT)
+
+    for i,j in zip(range(0,LON.shape[0]), range(0, LON.shape[1])):
+        coords = utm.from_latlon(LAT[i,j], LON[i,j])
+        X[i,j] = coords[0]
+        Y[i,j] = coords[1]
 
     # Ix=~np.isnan(z);
 
-# r.x=lon; r.y=lat; r.Z=Z; r.name='Grand Mesa, Feb 1, amplitude';
-# crange=[0 0.5];
-# hI=nanimagesc(r,Ix,crange)
-#
-# %%
-# %figure(1);clf
-# %imagesc(lon,lat,Z,[0 0.5]); colorbar
-# %set(gca,'YDir','normal')
-# %Z(Z==0)=NaN; % set zero values to NaN
+    # fig, axes = plt.subplots(1, 2)
+    #
+    # for i, comp in enumerate(['real', 'imag']):
+    #     im = axes[i].imshow(z[comp])
+    #     fig.colorbar(im, ax=axes[i])
+    #     arr = getattr(ij,comp)
+    #     mu = arr.mean()
+    #     std = arr.std()
+    #     axes[i].set_title('{} Component, mu={:2e}, std={:2e}'.format(comp.title(), mu, std))
+    # plt.suptitle(basename(grd_file))
+    # plt.show()
+
+
+    #
+    # r.x=lon; r.y=lat; r.Z=Z; r.name='Grand Mesa, Feb 1, amplitude';
+    # crange=[0 0.5];
+    # hI=nanimagesc(r,Ix,crange)
+    #
+    # %%
+    # %figure(1);clf
+    # %imagesc(lon,lat,Z,[0 0.5]); colorbar
+    # %set(gca,'YDir','normal')
+    # %Z(Z==0)=NaN; % set zero values to NaN
