@@ -172,6 +172,7 @@ class PitHeader(object):
 
             # Remove any degrees symbols
             aspect = aspect.replace('\u00b0','')
+            aspect = aspect.replace('Â','')
 
             # Check for number of numeric values.
             numeric = len([True for c in aspect if c.isnumeric()])
