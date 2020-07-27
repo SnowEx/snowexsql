@@ -12,10 +12,25 @@ Features
 * Database management for SnowEx Data
 * Manage Point, Profile and Raster Data
 * Populate the snowex database
+* Convenient GIS tools
+* PostGreSQL Database
 
 
-Getting started
----------------
+Installing
+----------
+
+There are two users this package is developed for:
+
+1. Researchers interacting with the database.
+2. Maintainers who populate and manage the database.
+
+The first group of users only need to install the python packages.
+The second group will need to follow the full installation procedure. These
+instructions can be found in the documentation.
+
+
+Getting Started Populating the Database
+---------------------------------------
 
 After installing the python package, you will want to create the database. Make
 sure your data repo is next to this repo in the directory structure. Any data
@@ -47,6 +62,8 @@ interact with the database but also serve to confirm our reproduciblity.
 Documentation
 -------------
 
+There is a whole host of resources for users in the documentation. Its been
+setup for you preview in your browser.
 
 To see the documentation in your browser:
 

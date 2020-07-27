@@ -21,8 +21,17 @@ class TestLayers(DBSetup):
         self.bulk_q = \
         self.session.query(LayerData).filter(LayerData.site_id == '1N20')
 
+    def _get_profile_query(self, value_type, depth=None):
+        '''
+        Construct the query and return it
+        '''
+        q = self.bulk_q.filter(LayerData.type == value_type)
 
-    def get_profile(self, csv, value_type):
+        if depth != None:
+            q = q.filter(LayerData.depth == depth)
+        return q
+
+    def get_profile(self, value_type, depth=None):
         '''
         DRYs out the tests for profile uploading
 
@@ -32,23 +41,71 @@ class TestLayers(DBSetup):
         Returns:
             records: List of Layer objects mapped to the database
         '''
-
-        f = join(self.data_dir, csv)
-        profile = UploadProfileData(f, 'MST', 26912)
-        profile.submit(self.session, self.pit.info)
-        records = self.bulk_q.filter(LayerData.type == value_type).all()
+        q = self._get_profile_query(value_type, depth=depth)
+        records = q.all()
         return records
 
-    def test_stratigraphy_upload(self):
+
+    def assert_upload(self, csv_f, value_type, n_values):
+        '''
+        Test whether the correct number of values were uploaded
+        '''
+        f = join(self.data_dir, csv_f)
+        profile = UploadProfileData(f, 'MST', 26912)
+        profile.submit(self.session, self.pit.info)
+
+        records = self.get_profile(value_type)
+        print(records)
+        # Assert N values in the single profile
+        assert len(records) == n_values
+
+    def assert_value_assignment(self, value_type, depth, correct_value):
+        '''
+        Tes whether the correct number of values were uploaded
+        '''
+        records = self.get_profile(value_type, depth=depth)
+        print(records)
+        # Assert 5 layers in the single hand hardness profile
+        assert getattr(records[0], 'value') == correct_value
+
+
+class TestStratigraphyProfile(TestLayers):
+    '''
+    Tests all stratigraphy uploading and value assigning
+    '''
+
+    def test_upload(self):
         '''
         Test uploading a stratigraphy csv to the db
         '''
-        records = self.get_profile('stratigraphy.csv','hand_hardness')
+        records = self.assert_upload('stratigraphy.csv','hand_hardness', 5)
 
-        # Assert 5 layers in the single hand hardness profile
-        assert(len(records)) == 5
 
-    def test_stratigraphy_comments_search(self):
+    def test_hand_hardness(self):
+        '''
+        Test uploading a stratigraphy csv to the db
+        '''
+        self.assert_value_assignment('hand_hardness', 30, '4F')
+
+    def test_grain_size(self):
+        '''
+        Test uploading a stratigraphy csv to the db
+        '''
+        self.assert_value_assignment('grain_size', 35, '< 1 mm')
+
+    def test_grain_type(self):
+        '''
+        Test grain type was assigned
+        '''
+        self.assert_value_assignment('grain_type', 17, 'FC')
+
+    def test_manual_dampness(self):
+        '''
+        Test manual dampness was assigned
+        '''
+        self.assert_value_assignment('manual_dampness', 17, 'D')
+
+    def test_comments_search(self):
         '''
         Testing a specific comment contains query, value confirmation
         '''
@@ -59,40 +116,35 @@ class TestLayers(DBSetup):
         # Should be 1 layer for each grain zise, type, hardness, and wetness
         assert len(records) == 4
 
-    def test_density_upload(self):
+
+class TestDensityProfile(TestLayers):
+
+    def test_upload(self):
         '''
         Test uploading a density csv to the db
         '''
-        records = self.get_profile('density.csv','density')
+        records = self.assert_upload('density.csv','density', 4)
 
-        # Check for 4 samples in the a density profile
-        assert(len(records)) == 4
-
-    def test_density_value_assignment(self):
-        '''
-        Confirm a value was calculated for the density
-        '''
-        records = self.get_profile('density.csv','density')
-
-        # Assert values were assigned
-        assert 'nan' not in [r.value for r in records]
-
-    def test_density_average(self):
+    def test_density_average_assignment(self):
         '''
         Test whether the value of single layer is the average of the samples
         '''
-        records = self.get_profile('density.csv','density')
-
-        # Grab the value at 35 cm
-        v = [r.value for r in records if r.depth==35][0]
-
         # Expecting the average of the two density samples
         expected = str((190.0 + 245.0)/2)
 
-        assert v == expected
+        self.assert_value_assignment('density', 35, expected)
 
+    def test_sample_a(self):
+        '''
+        Tests sample_a value assignment which is renamed from density_a
+        '''
+        records = self.get_profile('density', depth=25)
 
-    def test_lwc_upload(self):
+        assert getattr(records[0], 'sample_a') == '228.0'
+
+class TestLWCProfile(TestLayers):
+
+    def test_upload(self):
         '''
         Test uploading a lwc csv to the db
         '''
@@ -104,21 +156,30 @@ class TestLayers(DBSetup):
 
     def test_temperature_upload(self):
         '''
-        Test uploading a lwc csv to the db
+        Test uploading a temperature csv to the db
         '''
         records = self.get_profile('temperature.csv','temperature')
 
         # Assert 5 measurements in the temperature profile
         assert(len(records)) == 5
 
+
     def test_ssa_upload(self):
         '''
         Test uploading a SSA csv to the db
         '''
-        records = self.get_profile('SSA.csv','reflectance')
+        records = self.get_profile('SSA.csv','specific_surface_area')
 
         # Check for 16 samples
         assert len(records) == 16
+
+    def test_ssa_value_assignment(self):
+        '''
+        Test uploading a SSA csv to the db
+        '''
+        records = self.get_profile('SSA.csv','specific_surface_area', depth=60)
+
+        assert records[0].value == '27.8'
 
     def test_datatypes(self):
         '''
