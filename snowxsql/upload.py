@@ -38,7 +38,7 @@ class PitHeader(object):
                  files which is basically all one header
     '''
 
-    def __init__(self, filename, timezone, northern_hemisphere=True):
+    def __init__(self, filename, timezone, sep=',', northern_hemisphere=True):
         '''
         Class for managing site details information
 
@@ -51,6 +51,7 @@ class PitHeader(object):
         self.log = get_logger(__name__)
         self.timezone = timezone
         self.northern_hemisphere = northern_hemisphere
+        self.sep = sep
 
         # Read in the header into dictionary and list of columns names
         self.info, self.columns = self._read(filename)
@@ -85,7 +86,7 @@ class PitHeader(object):
         # ...the last one which should be the column header
         if 'site' not in filename.lower():
             lines = [l for l in lines if '#' in l]
-            raw_cols = lines[-1].strip('#').split(',')
+            raw_cols = lines[-1].strip('#').split(self.sep)
             columns = [clean_str(c) for c in raw_cols]
             lines = lines[0:-1]
 
@@ -102,21 +103,33 @@ class PitHeader(object):
         # Key value pairs are comma separated via the first comma.
         data = {}
         for l in str_data:
-            d = l.split(',')
+            print(l)
+            d = l.split(self.sep)
 
             # Key is always the first entry in comma sep list
             k = clean_str(d[0])
-            value = ', '.join(d[1:])
+            if not 'time' in k.lower() or not 'date' in k.lower():
+                value = ':'.join(d[1:])
+            else:
+                value = ', '.join(d[1:])
 
             # Assign non empty strings to dictionary
             if k and value:
                 data[k] = value.strip(' ')
 
         # Extract datetime for separate db entries
-        d = pd.to_datetime(data['date/time'] + self.timezone)
+        if 'date/time' in data.keys():
+            d = pd.to_datetime(data['date/time'] + self.timezone)
+        else:
+            print(data.keys())
+            dstr = ' '.join([data['date'], data['time'],  self.timezone])
+            d = pd.to_datetime(dstr)
+
         data['time'] = d.time()
         data['date'] = d.date()
-        del data['date/time']
+
+        if 'date/time' in data.keys():
+            del data['date/time']
 
         return data, columns
 
@@ -157,13 +170,17 @@ class PitHeader(object):
 
         Adjustments include:
 
-        1. Aspect is recorded either cardinal directions or degrees from north,
+        A: Rename any keys that need to be renamed
+
+        B. Aspect is recorded either cardinal directions or degrees from north,
         should be in degrees
 
-        2. Cast UTM attributes to correct types
-
-        3. Convert UTM to lat long, store both
+        C. Cast UTM attributes to correct types. Convert UTM to lat long, store both
         '''
+        renames = {'lat':'latitude',
+                   'long':'longitude',
+                   'lon':'longitude'}
+        self.info = remap_data_names(self.info, renames)
 
         # Adjust Aspect from Cardinal to degrees from North
         if 'aspect' in self.info.keys():
@@ -183,21 +200,41 @@ class PitHeader(object):
                 ''.format(self.info['site']))
                 deg = convert_cardinal_to_degree(aspect)
 
-        # Convert utm details to integers
-        self.info['northing'] = float(self.info['northing'])
-        self.info['easting'] = float(self.info['easting'])
-        self.info['utm_zone'] = int(''.join([s for s in self.info['utm_zone'] if s.isnumeric()]))
+        keys = self.info.keys()
+
+        # Convert geographic details to floats
+        for numeric_key in ['northing','easting','latitude','longitude']:
+            if numeric_key in keys:
+                self.info[numeric_key] = float(self.info[numeric_key])
+
 
         # Convert UTM coordinates to Lat long fro database storage
-        if 'latitude' not in self.info.keys():
-            if  'easting' not in self.info.keys():
-                raise(ValueError('No Geographic information was'
-                                 'provided in the pit header.'))
-            else:
-                lat, long = utm.to_latlon(self.info['easting'],
-                                  self.info['northing'],
-                                  self.info['utm_zone'],
-                                  northern=self.northern_hemisphere)
+        # if 'latitude' not in keys:
+        #     if  'easting' not in self.info.keys():
+        #         raise(ValueError('No Geographic information was'
+        #                          'provided in the file header.'))
+
+        # Do we have UTM coords? Get Latlong
+
+        if 'northing' in keys:
+            self.info['utm_zone'] = int(''.join([s for s in self.info['utm_zone'] if s.isnumeric()]))
+            lat, long = utm.to_latlon(self.info['easting'],
+                              self.info['northing'],
+                              self.info['utm_zone'],
+                              northern=self.northern_hemisphere)
+            self.info['latitude'] = lat
+            self.info['longitude'] = long
+
+        elif 'latitude' in keys:
+            easting, northing, utm_zone, letter = utm.from_latlon(self.info['latitude'],
+                                                self.info['longitude'])
+            self.info['easting'] = easting
+            self.info['northing'] = northing
+            self.info['utm_zone'] = utm_zone
+        else:
+            raise(ValueError('No Geographic information was'
+                             'provided in the file header.'))
+
 
 class UploadProfileData():
     '''
@@ -231,13 +268,13 @@ class UploadProfileData():
              'total_snow_depth':'total_depth'
               }
 
-    def __init__(self, profile_filename, timezone, epsg):
+    def __init__(self, profile_filename, timezone, epsg, sep=','):
         self.log = get_logger(__name__)
 
         self.filename = profile_filename
 
         # Read in the file header
-        self._pit = PitHeader(profile_filename, timezone)
+        self._pit = PitHeader(profile_filename, timezone, sep=sep)
 
         # Read in data
         self.df = self._read(profile_filename)

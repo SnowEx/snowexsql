@@ -1,20 +1,73 @@
 '''
-Download your data from https://drive.google.com/u/0/uc?export=download&confirm=QqLp&id=1lcST1PrYqhvCD0BvZMAUdgGYlVDSq5ay
+Added smp measurements to the database
 
-Unzip in your downloads
+Download from https://osu.app.box.com/s/7yq08y1mqpl9evgz6rfw8hu771228ryn
 
-run this script
+Unzip to ~/Downloads
 '''
-import os
-from os.path import join, abspath, expanduser
+
+from os.path import join, abspath, basename, relpath, isfile
+from os import listdir
+import glob
+import time
+import snowmicropyn as smp
+from snowxsql.upload import *
+from snowxsql.db import get_db
+from snowxsql.utilities import get_logger
+
+log = get_logger('SMP Profiles')
+
+# Site name
+site_name = 'Grand Mesa'
+timezone = 'MST'
+
+start = time.time()
+
+# Obtain a list of Grand mesa smp files
+directory = abspath(expanduser('~/Downloads/NSIDC-upload/'))
+smp_data = join(directory,'level_1_data', 'csv')
+print(os.listdir(smp_data))
+filenames = [join(smp_data, f) for f in os.listdir(smp_data) if f.split('.')[-1]=='CSV']
+log.info('Adding {} SMP profiles...'.format(len(filenames)))
+
+# grab the file log excel
+smp_log_file = join(directory, 'SMP_level1.csv')
+smp_log = pd.read_csv(smp_log_file, header=9, encoding='latin')
+
+# Grab db
+db_name = 'postgresql+psycopg2:///snowex'
+engine, metadata, session = get_db(db_name)
+
+# Keep track of issues
+errors = []
+profiles_uploaded = 0
+files_attempts = 0
 
 
-d = '~/Downloads/NSIDC-upload/level_1_data/pnt'
-d = abpath(expanduser(d))
+# Loop over all the ssa files and upload them
+for f in filenames[0:5]:
+    # dstr = pd.to_datetime(row['Date']).strftime('%Y%m%d')
+    # f = 'S{}M{}_{}_{}.csv'.format(row['SMP instrument # '], row['Fname sufix'],row['Pit ID'], dstr)
 
-for f in os.listdir(d):
-    path = join(d, f)
+    print(f)
 
-    p = Profile.load(path)
+    # # Read the data and organize it, remap the names
+    profile = UploadProfileData(f, 'UTC', 26912, sep=':')
+    #
+    # # Submit the data to the database
+    # profile.submit(session)
+    # profiles_uploaded += 1
 
-    dir(p)
+# # except Exception as e:
+#     log.error('Error with {}'.format(f))
+#     log.error(e)
+#     errors.append((f,e))
+#
+# log.info("{} / {} profiles uploaded.".format(profiles_uploaded, files_attempts ))
+#
+# if len(errors) > 0:
+#     log.error('{} Profiles failed to upload.'.format(len(errors)))
+#     log.error('The following files failed with their corrsponding errors:')
+#     for e in errors:
+#         log.error('\t{} - {}'.format(e[0], e[1]))
+# log.info('Finished! Elapsed {:d}s'.format(int(time.time() - start)))
