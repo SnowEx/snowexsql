@@ -12,7 +12,7 @@ def clean_str(messy):
         clean: String minus all characters and patterns of no interest
     '''
     clean = messy
-
+    clean = clean.strip(' ')
     # Remove units assuming the first piece is the only important one
     for ch in ['[','(']:
         if ch in clean:

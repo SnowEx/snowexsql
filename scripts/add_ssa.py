@@ -51,7 +51,6 @@ for f in filenames:
     files_attempts += 1
 
     try:
-
         # Read the data and organize it, remap the names
         profile = UploadProfileData(f, timezone=timezone, epsg=26912)
 

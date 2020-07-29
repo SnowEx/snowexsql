@@ -13,7 +13,7 @@ import numpy as np
 import time
 
 
-class PitHeader(object):
+class ProfileHeader(object):
     '''
     Class for managing information stored in files headers about a snow pit
     site.
@@ -63,6 +63,14 @@ class PitHeader(object):
              'smp_serial_number':'instrument',
               }
 
+    # Known possible profile types anything not in here will throw an error
+    available_profile_types = ['density', 'dielectric_constant', 'temperature',
+                     'force', 'reflectance','sample_signal',
+                     'specific_surface_area', 'deq',
+                     'grain_size', 'hand_hardness', 'grain_type',
+                     'manual_wetness']
+
+
     def __init__(self, filename, timezone, epsg, header_sep=',', northern_hemisphere=True, **extra_header):
         '''
         Class for managing site details information
@@ -80,6 +88,12 @@ class PitHeader(object):
         self.northern_hemisphere = northern_hemisphere
         self.header_sep = header_sep
         self.epsg = epsg
+        # Site location files will have no profile_type
+        self.profile_type = None
+
+        # Does our profile type have multiple samples
+        self.multi_sample_profile = False
+
         # Read in the header into dictionary and list of columns names
         self.info, self.columns, self.header_pos = self._read(filename)
 
@@ -123,13 +137,8 @@ class PitHeader(object):
 
         for i,l in enumerate(lines):
             l = l.split(',')
-
             # column count
             n = len(l)
-
-            # Break if we find number in the first position (Assumption #3)
-            if l[0].replace('-','').replace('.','').isnumeric():
-                break
 
             # Grab the columns header if we see one a little bigger
             if n >= n_columns:
@@ -141,15 +150,75 @@ class PitHeader(object):
                 header_lengths[1] = header_lengths[0]
                 header_pos_options[1] = header_pos_options[0]
 
+            # Break if we find number in the first position (Assumption #3)
+            entry = l[0].replace('-','').replace('.','')
+            if entry.isnumeric():
+                self.log.debug('Found end of header at line {}...'.format(i))
+                header_pos_options[1] = i - 1
+                break
+
+
         header_pos = header_pos_options[1]
 
         # Parse the columns header based on the size of the last line
         raw_cols = lines[header_pos].strip('#').split(',')
         columns = [clean_str(c) for c in raw_cols]
 
+        # Detmerine the profile type
+        (self.profile_type, self.multi_sample_profile) = self.determine_profile_type(raw_cols)
+
         # Rename any column names to more standard ones
         columns = remap_data_names(columns, self.rename)
+        self.profile_type = remap_data_names(self.profile_type, self.rename)
         return columns, header_pos
+
+    def determine_profile_type(self, raw_columns):
+        '''
+        Determine the type of the profile from the raw column header. Also
+        determine if this is the type of profile file that will submit more
+        than one main value (e.g. hand_hardness, grain size all in the same
+        file)
+
+        Args:
+            raw_columns: list of Raw text split on commas of the column names
+
+        '''
+        # Names of columns we are going to submit as main values
+        profile_type = []
+        multi_sample_profile = False
+
+        # String of the columns for counting
+        str_cols =  ' '.join(raw_columns).replace(' ',"_").lower()
+
+        for ptype in self.available_profile_types:
+
+            kw_count = str_cols.count(ptype)
+
+            # if we have keyword match in our columns then add the type
+            if kw_count > 0:
+                profile_type.append(ptype)
+
+                if kw_count > 1:
+                    multi_sample_profile = True
+
+        if profile_type:
+            self.log.info('Profile types to be uploaded are: {}'
+                          ''.format(', '.join(profile_type)))
+        else:
+            raise ValueError('Unable to determine profile type from data'
+                             ' columns: {}'.format(str_cols))
+
+        if multi_sample_profile:
+            if len(profile_type) != 1:
+                raise ValueError('Cannot add multi sampled columns where there is'
+                                 ' more than one profile type in the data!'
+                                 '\nProfile_types = {}'.format(', '.join(profile_type)))
+            else:
+                self.log.info('{} profile contains multiple samples for each '
+                              'layer. The main value will be the average of '
+                              'these samples.'.format(profile_type[0].title()))
+
+        return profile_type, multi_sample_profile
 
     def _read(self, filename):
         '''
@@ -179,17 +248,21 @@ class PitHeader(object):
             columns = None
             header_pos = None
 
+            # Site location parses all of the file
+            lines = lines[0:-1]
+
         # Find the column names and where it is in the file
         else:
             columns, header_pos = self.parse_column_names(lines)
             self.log.debug('Column Data found to be {} columns based on Line '
                            '{}'.format(len(columns), header_pos))
 
-        # Clean up the lines from line returns to grab header info
-        lines = [l.strip() for l in lines[0:header_pos]]
+            # Only parse what we know if the header
+            lines = lines[0:header_pos]
 
-        # Every entry is specified by a #, sometimes the line returns in
-        # ...places that shouldn't be
+
+        # Clean up the lines from line returns to grab header info
+        lines = [l.strip() for l in lines]
         str_data = " ".join(lines).split('#')
 
         # Keep track of the number of lines with # in it for data opening
@@ -219,6 +292,7 @@ class PitHeader(object):
         if 'date/time' in data.keys():
             d = pd.to_datetime(data['date/time'] + self.timezone)
         else:
+
             dstr = ' '.join([data['date'], data['time'],  self.timezone])
             d = pd.to_datetime(dstr)
 
@@ -230,9 +304,9 @@ class PitHeader(object):
 
         # Rename the info dictionary keys to more standard ones
         data = remap_data_names(data, self.rename)
-
         self.log.debug('Discovered {} lines of valid header info.'
                        ''.format(len(data.keys())))
+
         return data, columns, header_pos
 
     def check_integrity(self, site_info):
@@ -329,7 +403,8 @@ class PitHeader(object):
 
         # Convert UTM coordinates to Lat long or vice versa for database storage
         if 'northing' in keys:
-            self.info['utm_zone'] = int(''.join([s for s in self.info['utm_zone'] if s.isnumeric()]))
+            self.info['utm_zone'] = \
+               int(''.join([s for s in self.info['utm_zone'] if s.isnumeric()]))
             lat, long = utm.to_latlon(self.info['easting'],
                               self.info['northing'],
                               self.info['utm_zone'],
@@ -338,7 +413,8 @@ class PitHeader(object):
             self.info['longitude'] = long
 
         elif 'latitude' in keys:
-            easting, northing, utm_zone, letter = utm.from_latlon(self.info['latitude'],
+            easting, northing, utm_zone, letter = utm.from_latlon(
+                                                self.info['latitude'],
                                                 self.info['longitude'])
             self.info['easting'] = easting
             self.info['northing'] = northing
@@ -348,7 +424,9 @@ class PitHeader(object):
                              'provided in the file header.'))
 
         # Add a geometry entry
-        self.info['geom'] = WKTElement('POINT({} {})'.format(self.info['easting'], self.info['northing']), srid=self.epsg)
+        self.info['geom'] = WKTElement('POINT({} {})'
+                            ''.format(self.info['easting'],
+                                      self.info['northing']), srid=self.epsg)
 
 
 class UploadProfileData():
@@ -356,6 +434,7 @@ class UploadProfileData():
     Class for submitting a single profile. Since layers are uploaded layer by
     layer this allows for submitting them one file at a time.
     '''
+    expected_attributes = [c for c in dir(LayerData) if c[0] != '_']
 
     def __init__(self, profile_filename, header_sep=',', **extra_header):
         self.log = get_logger(__name__)
@@ -369,16 +448,17 @@ class UploadProfileData():
         del extra_header['epsg']
 
         # Read in the file header
-        self._pit = PitHeader(profile_filename, timezone, epsg,
+        self._pit = ProfileHeader(profile_filename, timezone, epsg,
                               header_sep=header_sep, northern_hemisphere=True,
                               **extra_header)
+
+        # Transfer a couple attributes for brevity
+        for att in ['profile_type', 'multi_sample_profile']:
+            setattr(self, att, getattr(self._pit, att))
 
         # Read in data
         self.df = self._read(profile_filename)
 
-        delta = abs(self.df['depth'].iloc[0] - self.df['depth'].iloc[-1])
-        self.log.info('Snow Profile at {} contains {} Layers across {} cm'
-                      ''.format(self._pit.info['site_id'], len(self.df), delta))
 
     def _read(self, profile_filename):
         '''
@@ -396,6 +476,14 @@ class UploadProfileData():
                                            skiprows= self._pit.header_pos,
                                            names=self._pit.columns,
                                            encoding='latin')
+
+        # If SMP profile convert depth to cm
+        if 'force' in df.columns:
+            df['depth'] = df['depth'].div(10)
+
+        delta = abs(df['depth'].max() - df['depth'].min())
+        self.log.info('Snow Profile at {} contains {} Layers across {} cm'
+                      ''.format(self._pit.info['site_id'], len(df), delta))
         return df
 
     def check(self, site_info):
@@ -423,63 +511,35 @@ class UploadProfileData():
                                  'here and {} from site info.'.format(k,
                                                              self._pit.info[k],
                                                              site_info[k]))
-    def submit_multi_profiles(self, session, layer, names):
-        '''
-        In some files there are multiple profiles we want to submit as a
-        main profile. This function does this when called using the names
 
-        Args:
-            session: db session taken from snowxsql.db.get_db
-            layer: Dictionary of the layer data
-            names: Main values were submitting e.g. reflectance, equivalent_diameter, etc
-        '''
-
-        # Loop through all important pieces of info and add to db
-        data = {k:v for k,v in layer.items() if k not in names}
-
-        # self.log.debug('\tAdding {} for {} at {}cm'
-        #                ''.format(', '.join(names),
-        #                          data['site_id'], data['depth']))
-        for value_type in names:
-            data['value'] = layer[value_type]
-            data['type'] = value_type
-
-            # Send it to the db
-            d = LayerData(**data)
-            session.add(d)
-            session.commit()
-
-    def build_data(self):
+    def build_data(self, profile_type):
         '''
         Build out the original dataframe with the metdata to avoid doing it
         during the submission loop
         '''
+        df = self.df.copy()
+
+        # Assign all meta data to every entry to the data frame
         for k, v in self._pit.info.items():
-            self.df[k] = v
-        # Names of profiles that are single type
-        single_type_profiles = ['dielectric_constant', 'density',
-                                'temperature', 'force']
+            df[k] = v
 
-        data_cols = self.df.columns
+        df['type'] = profile_type
 
-        # Manage stratigraphy
-        if 'hand_hardness' in data_cols:
-            # Columns to submit in the file
-            submit_names = ['grain_size', 'hand_hardness', 'grain_type',
-                            'manual_wetness']
-        # Manage SSA file
+        # Get the average if its multisample profile
+        if self._pit.multi_sample_profile:
+            sample_cols = [c for c in df.columns if 'sample' in c]
+            df['value'] = df[sample_cols].mean().astype(str)
 
-        elif 'reflectance' in data_cols:
+        # Individual
+        else:
+            df['value'] = df[profile_type].astype(str)
+            df = df.drop(columns=self.profile_type)
 
-            # Colums to submit in the file
-            submit_names = ['reflectance','sample_signal',
-                            'specific_surface_area', 'equivalent_diameter']
+        # Drop all columns were not expecting
+        drop_cols = [c for c in df.columns if c not in self.expected_attributes]
+        df = df.drop(columns=drop_cols)
 
-        # Manage single type profile in a file
-        else :
-            submit_names = []
-
-        return submit_names
+        return df
 
     def submit(self, session):
         '''
@@ -490,55 +550,18 @@ class UploadProfileData():
             session: SQLAlchemy session
         '''
         # Construct a dataframe with all metadata
-        submit_names = self.build_data()
+        for pt in self.profile_type:
+            df = self.build_data(pt)
 
-        if len(submit_names) > 0:
-            submitting_multiple_profiles = True
-        else:
-            submitting_multiple_profiles = False
+            # Grab each row, convert it to dict and join it with site info
+            for i,row in df.iterrows():
+                data = row.to_dict()
 
-        # Grab each row, convert it to dict and join it with site info
-        for i,row in self.df.iterrows():
-            layer = row.to_dict()
-
-            # Handle all multisample obs at once
-            if submitting_multiple_profiles:
-                self.submit_multi_profiles(session, layer, submit_names)
-
-            # Handle tool enable measurements like density cutters
-            else:
-                data = layer
-                print(layer)
-                for value_type in ['dielectric_constant', 'density', 'temperature', 'smp']:
-                    # if value_type == 'smp':
-                    #     data['value'] = str(layer['force'])
-                    #     data['units'] = 'newtons'
-                    #
-                    #     # SMP is in mm, for database purposes we put it in
-                    #     data['depth'] = data['depth'] / 10.0
-                    #
-                    #     # Remove uncessary data
-                    #     del data['force']
-                    #     del data['total_samples']
-                    #
-                    #
-                    #     break
-
-                    if kw_in_here(value_type, layer):
-
-                        data['value'] = str(avg_from_multi_sample(layer, value_type))
-
-                        # Make sure we remove the single value of temperature
-                        if value_type == 'temperature':
-                            del data['temperature']
-
-                        break
-
-                data['type'] = value_type
                 # self.log.debug('\tAdding {} for {} at {}cm'.format(value_type, data['site_id'], data['depth']))
                 d = LayerData(**data)
                 session.add(d)
                 session.commit()
+
         self.log.debug('Profile Submitted!\n')
 
 class PointDataCSV(object):

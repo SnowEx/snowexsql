@@ -15,6 +15,7 @@ log = get_logger('profiles')
 # Site name
 site_name = 'Grand Mesa'
 timezone = 'MST'
+epsg = 26912
 
 start = time.time()
 
@@ -34,7 +35,8 @@ profiles_uploaded = 0
 files_attempts = 0
 
 for site_fname in filenames:
-    pit = PitHeader(site_fname, timezone)
+    pit = ProfileHeader(site_fname, timezone, epsg)
+    log.info('')
 
     # Grab all profiles associated this site using unix style wildcard
     pattern = site_fname.replace('siteDetails','*')
@@ -42,28 +44,27 @@ for site_fname in filenames:
 
     # Add all profiles matching this site
     for f in profile_filenames:
-        log.info("Entering in {}".format(relpath(f)))
         f_lower = basename(f).lower()
 
         # Ignore the site details file
         if f != site_fname:
             files_attempts += 1
 
-            try:
-                # Read the data and organize it, remap the names
-                profile = UploadProfileData(f, timezone, 26912)
+            # try:
+            # Read the data and organize it, remap the names
+            profile = UploadProfileData(f, epsg=epsg, timezone=timezone)
 
-                # Check the data for any knowable issues
-                profile.check(pit.info)
+            # Check the data for any knowable issues
+            profile.check(pit.info)
 
-                # Submit the data to the database
-                profile.submit(session, pit.info)
-                profiles_uploaded += 1
+            # Submit the data to the database
+            profile.submit(session)
+            profiles_uploaded += 1
 
-            except Exception as e:
-                log.error('Error with {}'.format(f))
-                log.error(e)
-                errors.append((f,e))
+            # except Exception as e:
+            #     log.error('Error with {}'.format(f))
+            #     log.error(e)
+            #     errors.append((f,e))
 
 log.info("{} / {} profiles uploaded.".format(profiles_uploaded, files_attempts ))
 
