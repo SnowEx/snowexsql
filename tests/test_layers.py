@@ -17,7 +17,7 @@ class TestLayers(DBSetup):
         super().setup_class()
 
         site_fname = join(self.data_dir,'site_details.csv' )
-        self.pit = PitHeader(site_fname, 'MST')
+        self.pit = ProfileHeader(site_fname, 'MST', 26912)
         self.bulk_q = \
         self.session.query(LayerData).filter(LayerData.site_id == '1N20')
 
@@ -68,8 +68,8 @@ class TestLayers(DBSetup):
         Test whether the correct number of values were uploaded
         '''
         f = join(self.data_dir, csv_f)
-        profile = UploadProfileData(f, 'MST', 26912)
-        profile.submit(self.session, self.pit.info)
+        profile = UploadProfileData(f, epsg=26912, timezone='MST')
+        profile.submit(self.session)
 
         records = self.get_profile(value_type)
 
@@ -261,11 +261,11 @@ class TestSSAProfile(TestLayers):
         '''
         self.assert_value_assignment('specific_surface_area', 35, 11.20, precision=2)
 
-    def test_deq(self):
+    def test_equvialent_diameter(self):
         '''
         Test specific_surface_area values at a depth are assigned correctly
         '''
-        self.assert_value_assignment('deq', 80.0, 0.1054, precision=4)
+        self.assert_value_assignment('equivalent_diameter', 80.0, 0.1054, precision=4)
 #
 # class TestDBLayerTables(TestLayers):
 #

@@ -528,7 +528,7 @@ class UploadProfileData():
         # Get the average if its multisample profile
         if self._pit.multi_sample_profile:
             sample_cols = [c for c in df.columns if 'sample' in c]
-            df['value'] = df[sample_cols].mean().astype(str)
+            df['value'] = df[sample_cols].mean(axis=1).astype(str)
 
         # Individual
         else:
