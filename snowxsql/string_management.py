@@ -31,26 +31,41 @@ def clean_str(messy):
     return clean
 
 
-def remap_data_names(layer, rename):
+def remap_data_names(original, rename_map):
     '''
-    Remaps a layer dictionary to more verbose names
+    Remaps keys in a dictionary according to the rename dictionary. Also can be
+    used for lists where the entries in the list can be renamed
 
     Args:
-        layer: Dictionary of layer column names and values
-        rename: Dictionary mapping names (keys) to more verbose names
+        original: list/dictionary of names and values that may need remapping
+        rename: Dictionary mapping names (keys) {old: new}
+
     Returns:
-        new_d: Dictionary containing the names remapped
+        new: List/dictionary containing the names remapped
+
     '''
-    new_d = {}
 
-    for k, v in layer.items():
-        if k in rename.keys():
-            new_k = rename[k]
-        else:
-            new_k = k
+    if type(original) == dict:
+        new = {}
 
-        new_d[new_k] = v
-    return new_d
+        for k, v in original.items():
+            if k in rename_map.keys():
+                new_k = rename_map[k]
+            else:
+                new_k = k
+
+            new[new_k] = v
+
+    elif type(original) == list:
+        new = []
+
+        for i, v in enumerate(original):
+            if v in rename_map.keys():
+                new.append(rename_map[v])
+            else:
+                new.append(v)
+
+    return new
 
 def convert_cardinal_to_degree(cardinal):
     '''

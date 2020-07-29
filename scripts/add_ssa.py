@@ -14,6 +14,7 @@ import time
 from snowxsql.upload import *
 from snowxsql.db import get_db
 from snowxsql.utilities import get_logger
+import profile as cProfile
 
 log = get_logger('SSA Profiles')
 
@@ -39,7 +40,6 @@ files_attempts = 0
 
 # Loop over all the ssa files and upload them
 for f in filenames:
-    log.info('Working on {}'.format(f))
 
     # parse site name and e.g.SnowEx20_SSA_GM_20200205_8C11_IceCubeFMI_v01.csv
     info = basename(f).split('_')
@@ -53,7 +53,7 @@ for f in filenames:
     # try:
 
     # Read the data and organize it, remap the names
-    profile = UploadProfileData(f, timezone, 26912)
+    profile = UploadProfileData(f, timezone=timezone, epsg=26912)
 
     # Submit the data to the database
     profile.submit(session)
@@ -71,4 +71,5 @@ if len(errors) > 0:
     log.error('The following files failed with their corrsponding errors:')
     for e in errors:
         log.error('\t{} - {}'.format(e[0], e[1]))
+
 log.info('Finished! Elapsed {:d}s'.format(int(time.time() - start)))

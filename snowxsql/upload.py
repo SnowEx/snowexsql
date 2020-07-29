@@ -12,6 +12,7 @@ from os.path import join, abspath, expanduser
 import numpy as np
 import time
 
+
 class PitHeader(object):
     '''
     Class for managing information stored in files headers about a snow pit
@@ -38,26 +39,120 @@ class PitHeader(object):
                  files which is basically all one header
     '''
 
-    def __init__(self, filename, timezone, sep=',', northern_hemisphere=True):
+    # Typical names we run into that need renaming
+    rename = {'location':'site_name',
+             'top': 'depth',
+             'height':'depth',
+             'bottom':'bottom_depth',
+             'density_a': 'sample_a',
+             'density_b': 'sample_b',
+             'density_c': 'sample_c',
+             'site': 'site_id',
+             'pitid': 'pit_id',
+             'slope':'slope_angle',
+             'weather':'weather_description',
+             'sky': 'sky_cover',
+             'notes':'site_notes',
+             'dielectric_constant_a':'sample_a',
+             'dielectric_constant_b':'sample_b',
+             'dielectric_constant_c':'sample_c',
+             'sample_top_height':'depth',
+             'deq':'equivalent_diameter',
+             'operator':'surveyors',
+             'total_snow_depth':'total_depth',
+             'smp_serial_number':'instrument',
+              }
+
+    def __init__(self, filename, timezone, epsg, header_sep=',', northern_hemisphere=True, **extra_header):
         '''
         Class for managing site details information
 
         Args:
             filename: File for a site details file containing
             timezone: Pytz valid timezone abbreviation
+            header_sep: key value pairs in header information separtor (: , etc)
             northern_hemisphere: Bool describing if the pit location is in the
                                  northern_hemisphere for converting utms coords
+            extra_header: Extra header information to pass along to self.info
         '''
         self.log = get_logger(__name__)
         self.timezone = timezone
         self.northern_hemisphere = northern_hemisphere
-        self.sep = sep
-
+        self.header_sep = header_sep
+        self.epsg = epsg
         # Read in the header into dictionary and list of columns names
-        self.info, self.columns = self._read(filename)
+        self.info, self.columns, self.header_pos = self._read(filename)
+
+        # Extra key value paris for header information, will overwrite any duplicate information
+        self.extra_header = extra_header
 
         # Interpret any data needing interpretation e.g. aspect
         self.interpret_data()
+
+    def parse_column_names(self, lines):
+        '''
+        A flexible mnethod that attempts to find and standardize column names
+        for csv data. Looks for a comma separated line with N entries == to the
+        last line in the file. If an entry is found with more commas than the
+        last line then we use that. This allows us to have data that doesn't
+        have all the commas in the data (SSA typically missing the comma for
+        veg unless it was notable)
+
+        Assumptions:
+
+        1. There is NOT N commas in the header information prior to the column
+        list
+
+        2. The last line in file is of representative csv data
+
+        3. The first column is numeric
+        Args:
+            lines: Complete list of strings from the file
+
+        Returns:
+            columns: list of column names
+        '''
+
+        # Minimum calumn size should match the last line of data (Assumption #2)
+        n_columns = len(lines[-1].split(','))
+
+        # Use these to monitor if a larger column count is found
+        header_pos_options = [0, 0]
+        header_lengths = [0, 0]
+
+        for i,l in enumerate(lines):
+            l = l.split(',')
+
+            # column count
+            n = len(l)
+
+            # Break if we find number in the first position (Assumption #3)
+            if l[0].replace('-','').replace('.','').isnumeric():
+                break
+
+            # Grab the columns header if we see one a little bigger
+            if n >= n_columns:
+                header_pos_options[0] = i
+                header_lengths[0] = n
+
+            # If we find a column count larger than the current replace it
+            if header_lengths[0] >= header_lengths[1]:
+                header_lengths[1] = header_lengths[0]
+                header_pos_options[1] = header_pos_options[0]
+
+            # End the loop when we see the rest of the columns (Assumption #1)
+            if n == n_columns:
+                break
+
+        header_pos = header_pos_options[1]
+
+        # Parse the columns header based on the size of the last line
+        raw_cols = lines[header_pos].strip('#').split(',')
+        columns = [clean_str(c) for c in raw_cols]
+
+        # Rename any column names to more standard ones
+        columns = remap_data_names(columns, self.rename)
+        return columns, header_pos
 
     def _read(self, filename):
         '''
@@ -74,40 +169,46 @@ class PitHeader(object):
         Returns:
             tuple: **data** - Dictionary containing site details
                    **columns** - List of clean column names
+                   **header_pos** - Index of the columns header for skiprows in read_csv
        '''
 
         with open(filename, encoding='latin') as fp:
             lines = fp.readlines()
             fp.close()
 
-        columns = None
+        # Site description files have no need for column lists
+        if 'site' in filename.lower():
+            self.log.info('Parsing site description header...')
+            columns = None
+            header_pos = None
 
-        # If file is not a site description then grab all commented lines except
-        # ...the last one which should be the column header
-        if 'site' not in filename.lower():
-            lines = [l for l in lines if '#' in l]
-            raw_cols = lines[-1].strip('#').split(self.sep)
-            columns = [clean_str(c) for c in raw_cols]
-            lines = lines[0:-1]
+        # Find the column names and where it is in the file
+        else:
+            columns, header_pos = self.parse_column_names(lines)
+            self.log.debug('Column Data found to be {} columns based on Line '
+                           '{}'.format(len(columns), header_pos))
 
-        # Clean up the lines from line returns
-        lines = [l.strip() for l in lines]
+        # Clean up the lines from line returns to grab header info
+        lines = [l.strip() for l in lines[0:header_pos]]
 
-        # Every entry is specified by a #, sometimes there line returns in
+        # Every entry is specified by a #, sometimes the line returns in
         # ...places that shouldn't be
         str_data = " ".join(lines).split('#')
 
         # Keep track of the number of lines with # in it for data opening
         self.length = len(str_data)
 
-        # Key value pairs are comma separated via the first comma.
+        # Key value pairs are separate by some separator provided.
         data = {}
+
+        # Collect key value pairs from the information above the column header
         for l in str_data:
-            print(l)
-            d = l.split(self.sep)
+            d = l.split(self.header_sep)
 
             # Key is always the first entry in comma sep list
             k = clean_str(d[0])
+
+            # Avoid splitting on times
             if not 'time' in k.lower() or not 'date' in k.lower():
                 value = ':'.join(d[1:])
             else:
@@ -121,7 +222,6 @@ class PitHeader(object):
         if 'date/time' in data.keys():
             d = pd.to_datetime(data['date/time'] + self.timezone)
         else:
-            print(data.keys())
             dstr = ' '.join([data['date'], data['time'],  self.timezone])
             d = pd.to_datetime(dstr)
 
@@ -131,7 +231,12 @@ class PitHeader(object):
         if 'date/time' in data.keys():
             del data['date/time']
 
-        return data, columns
+        # Rename the info dictionary keys to more standard ones
+        data = remap_data_names(data, self.rename)
+
+        self.log.debug('Discovered {} lines of valid header info.'
+                       ''.format(len(data.keys())))
+        return data, columns, header_pos
 
     def check_integrity(self, site_info):
         '''
@@ -170,17 +275,33 @@ class PitHeader(object):
 
         Adjustments include:
 
-        A: Rename any keys that need to be renamed
+        A. Add in any extra info from the extra_header dictionary, defer to info
+        provided by user
 
-        B. Aspect is recorded either cardinal directions or degrees from north,
+        B: Rename any keys that need to be renamed
+
+        C. Aspect is recorded either cardinal directions or degrees from north,
         should be in degrees
 
-        C. Cast UTM attributes to correct types. Convert UTM to lat long, store both
+        D. Cast UTM attributes to correct types. Convert UTM to lat long, store both
         '''
+
+        # Merge information, warn user about overwriting
+        overwrite_keys = [k for k in self.info.keys() if k in self.extra_header.keys()]
+        if overwrite_keys:
+            self.log.warning('Extra header information passed will overwrite '
+                             'the following information found in the file '
+                             'header:\n{}'.format(', '.join(overwrite_keys)))
+
+        self.info.update(self.extra_header)
+
+
+        # Rename any awkward keys we might get
         renames = {'lat':'latitude',
                    'long':'longitude',
                    'lon':'longitude'}
         self.info = remap_data_names(self.info, renames)
+
 
         # Adjust Aspect from Cardinal to degrees from North
         if 'aspect' in self.info.keys():
@@ -202,20 +323,14 @@ class PitHeader(object):
 
         keys = self.info.keys()
 
+
         # Convert geographic details to floats
         for numeric_key in ['northing','easting','latitude','longitude']:
             if numeric_key in keys:
                 self.info[numeric_key] = float(self.info[numeric_key])
 
 
-        # Convert UTM coordinates to Lat long fro database storage
-        # if 'latitude' not in keys:
-        #     if  'easting' not in self.info.keys():
-        #         raise(ValueError('No Geographic information was'
-        #                          'provided in the file header.'))
-
-        # Do we have UTM coords? Get Latlong
-
+        # Convert UTM coordinates to Lat long or vice versa for database storage
         if 'northing' in keys:
             self.info['utm_zone'] = int(''.join([s for s in self.info['utm_zone'] if s.isnumeric()]))
             lat, long = utm.to_latlon(self.info['easting'],
@@ -235,6 +350,9 @@ class PitHeader(object):
             raise(ValueError('No Geographic information was'
                              'provided in the file header.'))
 
+        # Add a geometry entry
+        self.info['geom'] = WKTElement('POINT({} {})'.format(self.info['easting'], self.info['northing']), srid=self.epsg)
+
 
 class UploadProfileData():
     '''
@@ -242,43 +360,28 @@ class UploadProfileData():
     layer this allows for submitting them one file at a time.
     '''
 
-    # Manage stratigraphy
-    stratigraphy_names = ['grain_size', 'hand_hardness', 'grain_type',
-                         'manual_wetness']
-    ssa_names = ['reflectance','sample_signal', 'specific_surface_area', 'deq']
-    rename = {'location':'site_name',
-             'top': 'depth',
-             'height':'depth',
-             'bottom':'bottom_depth',
-             'density_a': 'sample_a',
-             'density_b': 'sample_b',
-             'density_c': 'sample_c',
-             'site': 'site_id',
-             'pitid': 'pit_id',
-             'slope':'slope_angle',
-             'weather':'weather_description',
-             'sky': 'sky_cover',
-             'notes':'site_notes',
-             'dielectric_constant_a':'sample_a',
-             'dielectric_constant_b':'sample_b',
-             'dielectric_constant_c':'sample_c',
-             'sample_top_height':'depth',
-             'deq':'equivalent_diameter',
-             'operator':'surveyors',
-             'total_snow_depth':'total_depth'
-              }
-
-    def __init__(self, profile_filename, timezone, epsg, sep=','):
+    def __init__(self, profile_filename, header_sep=',', **extra_header):
         self.log = get_logger(__name__)
 
         self.filename = profile_filename
+        self.log.info('Working on {}'.format(self.filename))
+
+        timezone = extra_header['timezone']
+        epsg = extra_header['epsg']
+        del extra_header['timezone']
+        del extra_header['epsg']
 
         # Read in the file header
-        self._pit = PitHeader(profile_filename, timezone, sep=sep)
+        self._pit = PitHeader(profile_filename, timezone, epsg,
+                              header_sep=header_sep, northern_hemisphere=True,
+                              **extra_header)
 
         # Read in data
         self.df = self._read(profile_filename)
-        self.epsg = epsg
+
+        delta = abs(self.df['depth'].iloc[0] - self.df['depth'].iloc[-1])
+        self.log.info('Snow Profile at {} contains: {} Layers across {} cm'
+                      ''.format(self._pit.info['site_id'], len(self.df), delta))
 
     def _read(self, profile_filename):
         '''
@@ -286,16 +389,16 @@ class UploadProfileData():
         adjusting column names
 
         Args:
-            profilefilename: Filename containing the a manually measured
+            profile_filename: Filename containing the a manually measured
                              profile
-            site_info:
+        Returns:
+            df: pd.dataframe contain csv data with standardized column names
         '''
-        # How many lines to skip due to header
-        header_rows = self._pit.length
-
         # header=0 because docs say to if using skiprows and columns
-        df = pd.read_csv(profile_filename, header=0, skiprows=header_rows-1,
-                                           names=self._pit.columns, encoding='latin')
+        df = pd.read_csv(profile_filename, header=0,
+                                           skiprows= self._pit.header_pos,
+                                           names=self._pit.columns,
+                                           encoding='latin')
         return df
 
     def check(self, site_info):
@@ -327,14 +430,19 @@ class UploadProfileData():
         '''
         In some files there are multiple profiles we want to submit as a
         main profile. This function does this when called using the names
+
+        Args:
+            session: db session taken from snowxsql.db.get_db
+            layer: Dictionary of the layer data
+            names: Main values were submitting e.g. reflectance, equivalent_diameter, etc
         '''
 
         # Loop through all important pieces of info and add to db
         data = {k:v for k,v in layer.items() if k not in names}
-        data = remap_data_names(data, self.rename)
 
-        self.log.debug('\tAdding {} for {} at {}cm'.format(', '.join(names), data['site_id'], data['depth']))
-
+        # self.log.debug('\tAdding {} for {} at {}cm'
+        #                ''.format(', '.join(names),
+        #                          data['site_id'], data['depth']))
         for value_type in names:
             data['value'] = layer[value_type]
             data['type'] = value_type
@@ -344,40 +452,83 @@ class UploadProfileData():
             session.add(d)
             session.commit()
 
-    def submit(self, session, site_info=None):
+    def build_data(self):
+        '''
+        Build out the original dataframe with the metdata to avoid doing it
+        during the submission loop
+        '''
+        for k, v in self._pit.info.items():
+            self.df[k] = v
+        # Names of profiles that are single type
+        single_type_profiles = ['dielectric_constant', 'density', 'temperature', 'force']
+
+        data_cols = self.df.columns
+
+        # Manage stratigraphy
+        if 'hand_hardness' in data_cols:
+            # Columns to submit in the file
+            submit_names = ['grain_size', 'hand_hardness', 'grain_type',
+                            'manual_wetness']
+        # Manage SSA file
+
+        elif 'reflectance' in data_cols:
+
+            # Colums to submit in the file
+            submit_names = ['reflectance','sample_signal',
+                            'specific_surface_area', 'equivalent_diameter']
+
+        # Manage single type profile in a file
+        else :
+            value_type = [c for c in data_cols if c in single_type_profiles][0]
+            submit_names = []
+
+        return submit_names
+
+    def submit(self, session):
         '''
         Submit values to the db from dictionary. Manage how some profiles have
         multiple values and get submitted individual
 
         Args:
             session: SQLAlchemy session
-            site_info: Additional information to include with the original
-                       header, e.g. site descriptions
         '''
+        # Construct a dataframe with all metadata
+        submit_names = self.build_data()
+
+        if len(submit_names) > 0:
+            submitting_multiple_profiles = True
+        else:
+            submitting_multiple_profiles = False
+
         # Grab each row, convert it to dict and join it with site info
         for i,row in self.df.iterrows():
             layer = row.to_dict()
 
-            # For now, tag every layer with site details info
-            layer.update(self._pit.info)
-
-            # Add geometry
-            layer['geom'] = WKTElement('POINT({} {})'.format(layer['easting'], layer['northing']), srid=self.epsg)
-
             # Handle all multisample obs at once
-            if 'hand_hardness' in layer.keys():
-                self.submit_multi_profiles(session, layer, self.stratigraphy_names)
-            elif 'reflectance' in layer.keys():
-                self.submit_multi_profiles(session, layer, self.ssa_names)
+            if submitting_multiple_profiles:
+                self.submit_multi_profiles(session, layer, submit_names)
 
             # Handle tool enable measurements like density cutters
             else:
                 data = remap_data_names(layer, self.rename)
 
-                for value_type in ['dielectric_constant', 'density', 'temperature']:
-                    if kw_in_here(value_type, layer):
+                for value_type in ['dielectric_constant', 'density', 'temperature', 'smp']:
+                    if value_type == 'smp':
+
+                        data['value'] = str(layer['force'])
+                        data['units'] = 'newtons'
+                        data['depth'] = data['depth'] / 10.0
+                        # SMP is in mm, for database purposes we put it in
+                        # Remove uncessary data
+                        del data['force']
+                        del data['total_samples']
+
+
+                        break
+
+                    elif kw_in_here(value_type, layer):
+
                         data['value'] = str(avg_from_multi_sample(layer, value_type))
-                        data['type'] = value_type
 
                         # Make sure we remove the single value of temperature
                         if value_type == 'temperature':
@@ -385,12 +536,12 @@ class UploadProfileData():
 
                         break
 
-                self.log.debug('\tAdding {} for {} at {}cm'.format(value_type, data['site_id'], data['depth']))
+                data['type'] = value_type
+                # self.log.debug('\tAdding {} for {} at {}cm'.format(value_type, data['site_id'], data['depth']))
                 d = LayerData(**data)
                 session.add(d)
                 session.commit()
-
-        session.close()
+        self.log.debug('Profile Submitted!\n')
 
 class PointDataCSV(object):
     '''
@@ -485,7 +636,7 @@ class UploadRasterCollection(object):
                 if f.split('.')[-1] == ext and pattern in f:
                     self.rasters.append(join(r,f))
 
-        self.log.info('Found {} raster in {} with ext = {} and pattern = {}.'.format(len(self.rasters),self.image_dir, ext, pattern))
+        self.log.info('Found {} raster in {} with ext = {} and pattern = {}.'.format(len(self.rasters), self.image_dir, ext, pattern))
 
     def submit(self, session):
         fails = []
