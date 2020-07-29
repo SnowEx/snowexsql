@@ -100,12 +100,13 @@ class PitHeader(object):
 
         Assumptions:
 
-        1. There is NOT N commas in the header information prior to the column
+        1. There is NOT greater than N commas in the header information prior to the column
         list
 
         2. The last line in file is of representative csv data
 
         3. The first column is numeric
+
         Args:
             lines: Complete list of strings from the file
 
@@ -139,10 +140,6 @@ class PitHeader(object):
             if header_lengths[0] >= header_lengths[1]:
                 header_lengths[1] = header_lengths[0]
                 header_pos_options[1] = header_pos_options[0]
-
-            # End the loop when we see the rest of the columns (Assumption #1)
-            if n == n_columns:
-                break
 
         header_pos = header_pos_options[1]
 
@@ -318,7 +315,7 @@ class PitHeader(object):
             if numeric != len(aspect) and aspect.lower() != 'nan':
                 self.log.warning('Aspect recorded for site {} is in cardinal '
                 'directions, converting to degrees...'
-                ''.format(self.info['site']))
+                ''.format(self.info['site_id']))
                 deg = convert_cardinal_to_degree(aspect)
 
         keys = self.info.keys()
@@ -380,7 +377,7 @@ class UploadProfileData():
         self.df = self._read(profile_filename)
 
         delta = abs(self.df['depth'].iloc[0] - self.df['depth'].iloc[-1])
-        self.log.info('Snow Profile at {} contains: {} Layers across {} cm'
+        self.log.info('Snow Profile at {} contains {} Layers across {} cm'
                       ''.format(self._pit.info['site_id'], len(self.df), delta))
 
     def _read(self, profile_filename):
@@ -460,7 +457,8 @@ class UploadProfileData():
         for k, v in self._pit.info.items():
             self.df[k] = v
         # Names of profiles that are single type
-        single_type_profiles = ['dielectric_constant', 'density', 'temperature', 'force']
+        single_type_profiles = ['dielectric_constant', 'density',
+                                'temperature', 'force']
 
         data_cols = self.df.columns
 
@@ -479,7 +477,6 @@ class UploadProfileData():
 
         # Manage single type profile in a file
         else :
-            value_type = [c for c in data_cols if c in single_type_profiles][0]
             submit_names = []
 
         return submit_names
@@ -510,23 +507,24 @@ class UploadProfileData():
 
             # Handle tool enable measurements like density cutters
             else:
-                data = remap_data_names(layer, self.rename)
-
+                data = layer
+                print(layer)
                 for value_type in ['dielectric_constant', 'density', 'temperature', 'smp']:
-                    if value_type == 'smp':
+                    # if value_type == 'smp':
+                    #     data['value'] = str(layer['force'])
+                    #     data['units'] = 'newtons'
+                    #
+                    #     # SMP is in mm, for database purposes we put it in
+                    #     data['depth'] = data['depth'] / 10.0
+                    #
+                    #     # Remove uncessary data
+                    #     del data['force']
+                    #     del data['total_samples']
+                    #
+                    #
+                    #     break
 
-                        data['value'] = str(layer['force'])
-                        data['units'] = 'newtons'
-                        data['depth'] = data['depth'] / 10.0
-                        # SMP is in mm, for database purposes we put it in
-                        # Remove uncessary data
-                        del data['force']
-                        del data['total_samples']
-
-
-                        break
-
-                    elif kw_in_here(value_type, layer):
+                    if kw_in_here(value_type, layer):
 
                         data['value'] = str(avg_from_multi_sample(layer, value_type))
 

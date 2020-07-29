@@ -50,19 +50,19 @@ for f in filenames:
     site_fname = join(directory, 'PITS', 'COGM{}_{}_siteDetails.csv'.format(site, d_str))
     files_attempts += 1
 
-    # try:
+    try:
 
-    # Read the data and organize it, remap the names
-    profile = UploadProfileData(f, timezone=timezone, epsg=26912)
+        # Read the data and organize it, remap the names
+        profile = UploadProfileData(f, timezone=timezone, epsg=26912)
 
-    # Submit the data to the database
-    profile.submit(session)
-    profiles_uploaded += 1
+        # Submit the data to the database
+        profile.submit(session)
+        profiles_uploaded += 1
 
-# # except Exception as e:
-#     log.error('Error with {}'.format(f))
-#     log.error(e)
-#     errors.append((f,e))
+    except Exception as e:
+        log.error('Error with {}'.format(f))
+        log.error(e)
+        errors.append((f,e))
 
 log.info("{} / {} profiles uploaded.".format(profiles_uploaded, files_attempts ))
 
