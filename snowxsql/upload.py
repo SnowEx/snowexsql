@@ -88,6 +88,9 @@ class ProfileHeader(object):
         self.northern_hemisphere = northern_hemisphere
         self.header_sep = header_sep
         self.epsg = epsg
+
+        self.log.info('Interpretting {}'.format(filename))
+
         # Site location files will have no profile_type
         self.profile_type = None
 
@@ -440,7 +443,6 @@ class UploadProfileData():
         self.log = get_logger(__name__)
 
         self.filename = profile_filename
-        self.log.info('Working on {}'.format(self.filename))
 
         timezone = extra_header['timezone']
         epsg = extra_header['epsg']
