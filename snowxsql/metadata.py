@@ -1,0 +1,552 @@
+'''
+Place where header classes and meta file interpeters are located.
+'''
+from .string_management import clean_str, remap_data_names
+from .utilities import get_logger
+import utm
+import pandas as pd
+from geoalchemy2.elements import WKTElement
+
+
+class SMPMeasurementLog(object):
+    '''
+    Opens and processes the log that describes the SMP measurments. This file
+    contains notes on all the measurements taken.
+
+    This class build a dataframe from this file. It also reorganizes the
+    file contents to be more standardized with our database.
+    Some of this includes merging information in the comments.
+
+    File should have the headers:
+              Date,
+              Pit ID
+              SMP instrument #
+              Fname sufix
+              Orientation
+              Snow depth
+              Flag
+              Observer
+              Comments
+    '''
+
+
+    def __init__(self, filename):
+        self.df = self._read(filename)
+
+        # Cardinal map to interpet the orientation
+        self.orientation_map = {'N':'North','E':'East', 'S':'South', 'W':'West','C':'Center'}
+
+    def _read(self, filename):
+        '''
+        Read the CSV file thet contains
+        '''
+        header = []
+        header_pos = 9
+
+        with open(f,'r'):
+            for i,line in enumerate(fp):
+                if i < header_pos:
+                    header.append(line)
+                else:
+                    break
+            fp.close()
+
+        df = pd.read_csv(filename, header=header_pos, encoding='latin', parse_dates=[0])
+        return header, df
+
+    def interpret_header(self, header):
+        '''
+        Interprets the header of the smp file log
+        '''
+        self.log.info('Reading SMP file log header')
+        # Map for observer names and their
+        self.observer_map = {}
+
+        for line in header:
+            ll = line.lower()
+
+            # Create a name map for the observers and there initials
+            if 'observer' in ll:
+                data = line.split(':')[-1].split(',')
+
+                for d in data:
+                    info = data.split('(')
+                    name = info[0].strip().strip(' ')
+                    observer_map[name] = info[1].strip(')').strip()
+
+    def interpret_orientation(self, abbreviation, strategy='A'):
+        '''
+        Provides a more verbose str regarding the orientation of an smp
+        measurement orientation to the pit location
+
+        The orientation is referencing a transect on centered on the pit and
+        aligned with cardinal directions. Two strategies were implemented.
+
+        Both strategies involved transect that move each direction 50m from the
+        center of the pit and the E-W transect for both contain 10 measurements
+        The two strategies vary in how many measurements were taken in the N-S
+        transect.
+
+        Strategy A: N-S transect has 6 measurments
+        Strategy B: N-S transect has 10 measurments
+
+        This function auto applies these strategies to generate a more verbose
+        string to be used as a comment for the data entry
+
+        Args:
+            abbreviation: Abbreviated orientation
+            strategy: Sampling strategy used for the N-S transect
+        Returns:
+            note: A more verbose string describing the orientation
+        '''
+
+        # Orientation Map sampling strategy A ( North and South have 6 measurement across the whole transect)
+        orientation_map = {}
+
+        # Manage pit references:
+        if 'pit' in abbreviation.lower():
+            note = abbreviation
+        else:
+            letter = abbreviation[0]
+            direction = cardinal_map[letter]
+
+            if letter != 'C':
+                position = int(abbreviation[1:])
+
+                if strategy == 'A' and letter in ['N','S']:
+                    dist_map = {3:10, 2:30, 1:50}
+
+                elif strategy == 'B':
+                    dist_map = {5:10, 4:20, 3:30, 2:40, 1:50}
+                    dist = dist_map[position]
+
+                else:
+                    raise ValueError('Invalid strategy, please use A or B.'
+                                     ' See docs for more info.')
+
+
+class ProfileHeader(object):
+    '''
+    Class for managing information stored in files headers about a snow pit
+    site.
+
+    Format of such file headers should be
+    1. Each line of importance is preceded by a #
+    2. Key values should be comma separated.
+
+    e.g.
+        `# PitID,COGM1C8_20200131`
+        `# Date/Time,2020-01-31-15:10`
+
+    If the file is not determined to be a site details file as indicated by the
+    word site in the filename, then the all header lines except the last line
+    is interpretted as header. In profile files the last line should be the
+    column header which is also interpretted and stored as a class attribute
+
+    Attributes:
+        info: Dictionary containing all header information, stripped of
+              unnecesary chars, all lower case, and all spaces replaced with
+              underscores
+        columns: Column names of data stored in csv. None for site description
+                 files which is basically all one header
+        profile_type: List of profile names to be upload
+        multi_sample_profile: Boolean describing single profile types that
+                              have multiple samples (e.g. density). This
+                              triggers calculating the mean of the profiles
+                              for the main value
+        extra_header: Dictionary containing supplemental information to write
+                      into the .info dictionary after its genrerated. Any
+                      duplicate keys will be overwritten with this info.
+    '''
+
+    # Typical names we run into that need renaming
+    rename = {'location':'site_name',
+             'top': 'depth',
+             'height':'depth',
+             'bottom':'bottom_depth',
+             'density_a': 'sample_a',
+             'density_b': 'sample_b',
+             'density_c': 'sample_c',
+             'site': 'site_id',
+             'pitid': 'pit_id',
+             'slope':'slope_angle',
+             'weather':'weather_description',
+             'sky': 'sky_cover',
+             'notes':'site_notes',
+             'dielectric_constant_a':'sample_a',
+             'dielectric_constant_b':'sample_b',
+             'dielectric_constant_c':'sample_c',
+             'sample_top_height':'depth',
+             'deq':'equivalent_diameter',
+             'operator':'surveyors',
+             'total_snow_depth':'total_depth',
+             'smp_serial_number':'instrument',
+              }
+
+    # Known possible profile types anything not in here will throw an error
+    available_profile_types = ['density', 'dielectric_constant', 'temperature',
+                     'force', 'reflectance','sample_signal',
+                     'specific_surface_area', 'deq',
+                     'grain_size', 'hand_hardness', 'grain_type',
+                     'manual_wetness']
+
+
+    def __init__(self, filename, timezone='MST', epsg=26912, header_sep=',', northern_hemisphere=True, **extra_header):
+        '''
+        Class for managing site details information
+
+        Args:
+            filename: File for a site details file containing
+            timezone: Pytz valid timezone abbreviation
+            header_sep: key value pairs in header information separtor (: , etc)
+            northern_hemisphere: Bool describing if the pit location is in the
+                                 northern_hemisphere for converting utms coords
+            extra_header: Extra header information to pass along to self.info
+        '''
+        self.log = get_logger(__name__)
+        self.timezone = timezone
+        self.northern_hemisphere = northern_hemisphere
+        self.header_sep = header_sep
+        self.epsg = epsg
+
+        self.log.info('Interpretting {}'.format(filename))
+
+        # Site location files will have no profile_type
+        self.profile_type = None
+
+        # Does our profile type have multiple samples
+        self.multi_sample_profile = False
+
+        # Read in the header into dictionary and list of columns names
+        self.info, self.columns, self.header_pos = self._read(filename)
+
+        # Extra key value paris for header information, will overwrite any duplicate information
+        self.extra_header = extra_header
+
+        # Interpret any data needing interpretation e.g. aspect
+        self.interpret_data()
+
+    def parse_column_names(self, lines):
+        '''
+        A flexible mnethod that attempts to find and standardize column names
+        for csv data. Looks for a comma separated line with N entries == to the
+        last line in the file. If an entry is found with more commas than the
+        last line then we use that. This allows us to have data that doesn't
+        have all the commas in the data (SSA typically missing the comma for
+        veg unless it was notable)
+
+        Assumptions:
+
+        1. There is NOT greater than N commas in the header information prior to the column
+        list
+
+        2. The last line in file is of representative csv data
+
+        3. The first column is numeric
+
+        Args:
+            lines: Complete list of strings from the file
+
+        Returns:
+            columns: list of column names
+        '''
+
+        # Minimum calumn size should match the last line of data (Assumption #2)
+        n_columns = len(lines[-1].split(','))
+
+        # Use these to monitor if a larger column count is found
+        header_pos_options = [0, 0]
+        header_lengths = [0, 0]
+
+        for i,l in enumerate(lines):
+            l = l.split(',')
+            # column count
+            n = len(l)
+
+            # Grab the columns header if we see one a little bigger
+            if n >= n_columns:
+                header_pos_options[0] = i
+                header_lengths[0] = n
+
+            # If we find a column count larger than the current replace it
+            if header_lengths[0] >= header_lengths[1]:
+                header_lengths[1] = header_lengths[0]
+                header_pos_options[1] = header_pos_options[0]
+
+            # Break if we find number in the first position (Assumption #3)
+            entry = l[0].replace('-','').replace('.','')
+            if entry.isnumeric():
+                self.log.debug('Found end of header at line {}...'.format(i))
+                header_pos_options[1] = i - 1
+                break
+
+
+        header_pos = header_pos_options[1]
+
+        # Parse the columns header based on the size of the last line
+        raw_cols = lines[header_pos].strip('#').split(',')
+        columns = [clean_str(c) for c in raw_cols]
+
+        # Detmerine the profile type
+        (self.profile_type, self.multi_sample_profile) = self.determine_profile_type(raw_cols)
+
+        # Rename any column names to more standard ones
+        columns = remap_data_names(columns, self.rename)
+        self.profile_type = remap_data_names(self.profile_type, self.rename)
+        return columns, header_pos
+
+    def determine_profile_type(self, raw_columns):
+        '''
+        Determine the type of the profile from the raw column header. Also
+        determine if this is the type of profile file that will submit more
+        than one main value (e.g. hand_hardness, grain size all in the same
+        file)
+
+        Args:
+            raw_columns: list of Raw text split on commas of the column names
+
+        '''
+        # Names of columns we are going to submit as main values
+        profile_type = []
+        multi_sample_profile = False
+
+        # String of the columns for counting
+        str_cols =  ' '.join(raw_columns).replace(' ',"_").lower()
+
+        for ptype in self.available_profile_types:
+
+            kw_count = str_cols.count(ptype)
+
+            # if we have keyword match in our columns then add the type
+            if kw_count > 0:
+                profile_type.append(ptype)
+
+                if kw_count > 1:
+                    multi_sample_profile = True
+
+        if profile_type:
+            self.log.info('Profile types to be uploaded are: {}'
+                          ''.format(', '.join(profile_type)))
+        else:
+            raise ValueError('Unable to determine profile type from data'
+                             ' columns: {}'.format(str_cols))
+
+        if multi_sample_profile:
+            if len(profile_type) != 1:
+                raise ValueError('Cannot add multi sampled columns where there is'
+                                 ' more than one profile type in the data!'
+                                 '\nProfile_types = {}'.format(', '.join(profile_type)))
+            else:
+                self.log.info('{} profile contains multiple samples for each '
+                              'layer. The main value will be the average of '
+                              'these samples.'.format(profile_type[0].title()))
+
+        return profile_type, multi_sample_profile
+
+    def _read(self, filename):
+        '''
+        Read in all site details file from the PITS folder under
+        SnowEx2020_SQLdata If the filename has the word site in it then we
+        read everything in the file. Otherwise we use this to read all the site
+        data up to the header of the profile.
+
+        E.g. Read all commented data until we see a column descriptor.
+
+        Args:
+            filename: Path to a csv containing # leading lines with site details
+
+        Returns:
+            tuple: **data** - Dictionary containing site details
+                   **columns** - List of clean column names
+                   **header_pos** - Index of the columns header for skiprows in read_csv
+       '''
+
+        with open(filename, encoding='latin') as fp:
+            lines = fp.readlines()
+            fp.close()
+
+        # Site description files have no need for column lists
+        if 'site' in filename.lower():
+            self.log.info('Parsing site description header...')
+            columns = None
+            header_pos = None
+
+            # Site location parses all of the file
+            lines = lines[0:-1]
+
+        # Find the column names and where it is in the file
+        else:
+            columns, header_pos = self.parse_column_names(lines)
+            self.log.debug('Column Data found to be {} columns based on Line '
+                           '{}'.format(len(columns), header_pos))
+
+            # Only parse what we know if the header
+            lines = lines[0:header_pos]
+
+
+        # Clean up the lines from line returns to grab header info
+        lines = [l.strip() for l in lines]
+        str_data = " ".join(lines).split('#')
+
+        # Keep track of the number of lines with # in it for data opening
+        self.length = len(str_data)
+
+        # Key value pairs are separate by some separator provided.
+        data = {}
+
+        # Collect key value pairs from the information above the column header
+        for l in str_data:
+            d = l.split(self.header_sep)
+
+            # Key is always the first entry in comma sep list
+            k = clean_str(d[0])
+
+            # Avoid splitting on times
+            if not 'time' in k.lower() or not 'date' in k.lower():
+                value = ':'.join(d[1:])
+            else:
+                value = ', '.join(d[1:])
+
+            # Assign non empty strings to dictionary
+            if k and value:
+                data[k] = value.strip(' ')
+
+        # Extract datetime for separate db entries
+        if 'date/time' in data.keys():
+            d = pd.to_datetime(data['date/time'] + self.timezone)
+        else:
+
+            dstr = ' '.join([data['date'], data['time'],  self.timezone])
+            d = pd.to_datetime(dstr)
+
+        data['time'] = d.time()
+        data['date'] = d.date()
+
+        if 'date/time' in data.keys():
+            del data['date/time']
+
+        # Rename the info dictionary keys to more standard ones
+        data = remap_data_names(data, self.rename)
+        self.log.debug('Discovered {} lines of valid header info.'
+                       ''.format(len(data.keys())))
+
+        return data, columns, header_pos
+
+    def check_integrity(self, site_info):
+        '''
+        Compare the attritbute info to the site dictionary to insure integrity
+        between datasets. Comparisons are only done as strings currently.
+
+        In theory the site details header should contain identical info
+        to the profile header, it should only have more info than the profile
+        header.
+
+        Args:
+            site_info: Dictionary containing the site details file header
+
+        Returns:
+            mismatch: Dictionary with a message about how a piece of info is
+                      mismatched
+
+        '''
+        mismatch = {}
+
+        for k, v in self.info.items():
+            if k not in site_info.keys():
+                mismatch[k] = 'Key not found in site details'
+
+            else:
+                if v != site_info[k]:
+                    mismatch[k] = 'Profile header != Site details header'
+
+        return mismatch
+
+
+    def interpret_data(self):
+        '''
+        Some data inside the headers is inconsistently noted. This function
+        adjusts such data to the correct format.
+
+        Adjustments include:
+
+        A. Add in any extra info from the extra_header dictionary, defer to info
+        provided by user
+
+        B: Rename any keys that need to be renamed
+
+        C. Aspect is recorded either cardinal directions or degrees from north,
+        should be in degrees
+
+        D. Cast UTM attributes to correct types. Convert UTM to lat long, store both
+        '''
+
+        # Merge information, warn user about overwriting
+        overwrite_keys = [k for k in self.info.keys() if k in self.extra_header.keys()]
+        if overwrite_keys:
+            self.log.warning('Extra header information passed will overwrite '
+                             'the following information found in the file '
+                             'header:\n{}'.format(', '.join(overwrite_keys)))
+
+        self.info.update(self.extra_header)
+
+
+        # Rename any awkward keys we might get
+        renames = {'lat':'latitude',
+                   'long':'longitude',
+                   'lon':'longitude'}
+        self.info = remap_data_names(self.info, renames)
+
+
+        # Adjust Aspect from Cardinal to degrees from North
+        if 'aspect' in self.info.keys():
+
+            aspect = self.info['aspect']
+
+            # Remove any degrees symbols
+            aspect = aspect.replace('\u00b0','')
+            aspect = aspect.replace('Â','')
+
+            # Check for number of numeric values.
+            numeric = len([True for c in aspect if c.isnumeric()])
+
+            if numeric != len(aspect) and aspect.lower() != 'nan':
+                self.log.warning('Aspect recorded for site {} is in cardinal '
+                'directions, converting to degrees...'
+                ''.format(self.info['site_id']))
+                deg = convert_cardinal_to_degree(aspect)
+
+        keys = self.info.keys()
+
+
+        # Convert geographic details to floats
+        for numeric_key in ['northing','easting','latitude','longitude']:
+            if numeric_key in keys:
+                self.info[numeric_key] = float(self.info[numeric_key])
+
+
+        # Convert UTM coordinates to Lat long or vice versa for database storage
+        if 'northing' in keys:
+            self.info['utm_zone'] = \
+               int(''.join([s for s in self.info['utm_zone'] if s.isnumeric()]))
+            lat, long = utm.to_latlon(self.info['easting'],
+                              self.info['northing'],
+                              self.info['utm_zone'],
+                              northern=self.northern_hemisphere)
+            self.info['latitude'] = lat
+            self.info['longitude'] = long
+
+        elif 'latitude' in keys:
+            easting, northing, utm_zone, letter = utm.from_latlon(
+                                                self.info['latitude'],
+                                                self.info['longitude'])
+            self.info['easting'] = easting
+            self.info['northing'] = northing
+            self.info['utm_zone'] = utm_zone
+        else:
+            raise(ValueError('No Geographic information was'
+                             'provided in the file header.'))
+
+        # Add a geometry entry
+        self.info['geom'] = WKTElement('POINT({} {})'
+                            ''.format(self.info['easting'],
+                                      self.info['northing']), srid=self.epsg)

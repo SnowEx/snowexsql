@@ -30,9 +30,9 @@ def test_cardinal_to_degrees():
 
 def test_clean_str():
     '''
-    Test whether we can clean out the column header from csv and standardize them
+    Test whether we can clean out the column header from a csv and standardize them
     '''
-    # Test whether we replace spaces with underscores
+    # Test whether we replace spaces with underscores, all lowercase, removed units
     test = ['SMP instrument #', 'Dielectric Constant A', 'Specific surface area (m^2/kg)']
     result = ['smp_instrument_#', 'dielectric_constant_a', 'specific_surface_area']
 
