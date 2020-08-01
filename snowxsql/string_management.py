@@ -2,33 +2,56 @@ import warnings
 
 def clean_str(messy):
     '''
-    Removes things encapsulated in [] or () we do assume these come after the
-    important info, removes front and back spaces e.g. " depth", also removes
-    '\n' and finally removes and :
+    Removes unwanted character in a str that we encounter alot
+    '''
+    clean = messy
+    clean = clean.strip(' ')
+
+    # Strip of any chars are beginning and end
+    for ch in [' ', '\n','[',']']:
+        clean = clean.strip(ch)
+
+    # Remove colons but not when its between numbers (e.g time)
+    if ':' in clean:
+        work = clean.split(' ')
+        result = []
+
+        for w in work:
+            s = w.replace(':', '')
+            if s.isnumeric():
+                result.append(w)
+
+            else:
+                result.append(s)
+
+        clean = ' '.join(result)
+
+    # Remove characters anywhere in string that is undesireable
+    for ch in ["'","'"]:
+        if ch in clean:
+            clean = clean.replace(ch, '')
+
+    return clean
+
+def standardize_key(messy):
+    '''
+    Preps a key for use in dataframe columns or dictionary. Makes everything
+    lowercase, removes units, replaces spaces with underscores.
 
     Args:
         messy: string to be cleaned
     Returns:
         clean: String minus all characters and patterns of no interest
     '''
-    clean = messy
-    clean = clean.strip(' ')
+    key = clean_str(messy)
+
     # Remove units assuming the first piece is the only important one
     for ch in ['[','(']:
-        if ch in clean:
-            clean = clean.split(ch)[0]
+        if ch in key:
+            key = key.split(ch)[0].strip(' ')
 
-    # Strip of any chars are beginning and end
-    for ch in [' ', '\n']:
-        clean = clean.strip(ch)
-
-    # Remove characters anywhere in string that is undesireable
-    for ch in [':']:
-        if ch in clean:
-            clean = clean.replace(ch, '')
-
-    clean = clean.lower().replace(' ','_')
-    return clean
+    key = key.lower().replace(' ','_')
+    return key
 
 
 def remap_data_names(original, rename_map):

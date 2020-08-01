@@ -1,7 +1,9 @@
 '''
-Place where header classes and meta file interpeters are located.
+Place where header classes and metadata interpeters are located.
+This includes interpetting data file headers or dedicated files to describing
+data
 '''
-from .string_management import clean_str, remap_data_names
+from .string_management import standardize_key, clean_str, remap_data_names, convert_cardinal_to_degree
 from .utilities import get_logger
 import utm
 import pandas as pd
@@ -179,6 +181,7 @@ class ProfileHeader(object):
              'sample_top_height':'depth',
              'deq':'equivalent_diameter',
              'operator':'surveyors',
+             'observers':'surveyors',
              'total_snow_depth':'total_depth',
              'smp_serial_number':'instrument',
               }
@@ -191,7 +194,8 @@ class ProfileHeader(object):
                      'manual_wetness']
 
 
-    def __init__(self, filename, timezone='MST', epsg=26912, header_sep=',', northern_hemisphere=True, **extra_header):
+    def __init__(self, filename, timezone='MST', epsg=26912, header_sep=',',
+                       northern_hemisphere=True, **extra_header):
         '''
         Class for managing site details information
 
@@ -285,7 +289,7 @@ class ProfileHeader(object):
 
         # Parse the columns header based on the size of the last line
         raw_cols = lines[header_pos].strip('#').split(',')
-        columns = [clean_str(c) for c in raw_cols]
+        columns = [standardize_key(c) for c in raw_cols]
 
         # Detmerine the profile type
         (self.profile_type, self.multi_sample_profile) = self.determine_profile_type(raw_cols)
@@ -372,7 +376,7 @@ class ProfileHeader(object):
             header_pos = None
 
             # Site location parses all of the file
-            lines = lines[0:-1]
+
 
         # Find the column names and where it is in the file
         else:
@@ -399,25 +403,30 @@ class ProfileHeader(object):
             d = l.split(self.header_sep)
 
             # Key is always the first entry in comma sep list
-            k = clean_str(d[0])
+            k = standardize_key(d[0])
 
             # Avoid splitting on times
             if not 'time' in k.lower() or not 'date' in k.lower():
-                value = ':'.join(d[1:])
-            else:
                 value = ', '.join(d[1:])
+            else:
+                value = ': '.join(d[1:])
+
+            value = clean_str(value)
 
             # Assign non empty strings to dictionary
             if k and value:
-                data[k] = value.strip(' ')
+                data[k] = value.strip(' ').replace('"','').replace('  ',' ')
 
         # Extract datetime for separate db entries
         if 'date/time' in data.keys():
             d = pd.to_datetime(data['date/time'] + self.timezone)
-        else:
 
+        elif 'date' in data.keys() and 'time' in data.keys():
             dstr = ' '.join([data['date'], data['time'],  self.timezone])
             d = pd.to_datetime(dstr)
+
+        else:
+            raise ValueError('Header is mIssing date/time info!\n{}'.format(data))
 
         data['time'] = d.time()
         data['date'] = d.date()
@@ -479,9 +488,11 @@ class ProfileHeader(object):
 
         D. Cast UTM attributes to correct types. Convert UTM to lat long, store both
         '''
+        keys = self.info.keys()
 
         # Merge information, warn user about overwriting
         overwrite_keys = [k for k in self.info.keys() if k in self.extra_header.keys()]
+
         if overwrite_keys:
             self.log.warning('Extra header information passed will overwrite '
                              'the following information found in the file '
@@ -496,15 +507,19 @@ class ProfileHeader(object):
                    'lon':'longitude'}
         self.info = remap_data_names(self.info, renames)
 
+        # Manage degrees
+        for k in ['aspect','slope_angle']:
+            if k in keys:
+                v = self.info[k]
 
-        # Adjust Aspect from Cardinal to degrees from North
-        if 'aspect' in self.info.keys():
+                # Remove any degrees symbols
+                v = v.replace('\u00b0','')
+                v = v.replace('Â','')
+                self.info[k] = v
 
+        # Manage cardinal directions
+        if 'aspect' in keys:
             aspect = self.info['aspect']
-
-            # Remove any degrees symbols
-            aspect = aspect.replace('\u00b0','')
-            aspect = aspect.replace('Â','')
 
             # Check for number of numeric values.
             numeric = len([True for c in aspect if c.isnumeric()])
@@ -515,8 +530,7 @@ class ProfileHeader(object):
                 ''.format(self.info['site_id']))
                 deg = convert_cardinal_to_degree(aspect)
 
-        keys = self.info.keys()
-
+            self.info['aspect'] = deg
 
         # Convert geographic details to floats
         for numeric_key in ['northing','easting','latitude','longitude']:
@@ -532,6 +546,7 @@ class ProfileHeader(object):
                               self.info['northing'],
                               self.info['utm_zone'],
                               northern=self.northern_hemisphere)
+
             self.info['latitude'] = lat
             self.info['longitude'] = long
 

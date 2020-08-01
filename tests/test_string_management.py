@@ -28,7 +28,7 @@ def test_cardinal_to_degrees():
     with pytest.raises(ValueError):
         d = convert_cardinal_to_degree('')
 
-def test_clean_str():
+def test_standardize_key():
     '''
     Test whether we can clean out the column header from a csv and standardize them
     '''
@@ -37,4 +37,4 @@ def test_clean_str():
     result = ['smp_instrument_#', 'dielectric_constant_a', 'specific_surface_area']
 
     for i,t in enumerate(test):
-        assert clean_str(t)== result[i]
+        assert standardize_key(t)== result[i]
