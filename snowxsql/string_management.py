@@ -7,7 +7,7 @@ def clean_str(messy):
     clean = messy
     clean = clean.strip(' ')
 
-    # Strip of any chars are beginning and end
+    # Strip of any chars that are beginning and end
     for ch in [' ', '\n','[',']']:
         clean = clean.strip(ch)
 
@@ -27,7 +27,7 @@ def clean_str(messy):
         clean = ' '.join(result)
 
     # Remove characters anywhere in string that is undesireable
-    for ch in ["'","'"]:
+    for ch in ['"',"'"]:
         if ch in clean:
             clean = clean.replace(ch, '')
 

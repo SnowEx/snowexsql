@@ -191,6 +191,12 @@ class TestSMPMeasurementLog():
     def setup_class(self):
         self.data = abspath(join(dirname(__file__), 'data'))
         self.smp_log = SMPMeasurementLog(join(self.data, 'smp_log.csv'))
+        self.df = self.smp_log.df
 
-    def test_header(self):
-        pass
+    def test_observers(self):
+        '''
+        Test we rename observer initials correctly
+        '''
+        assert self.df['observer'].iloc[-1] == 'Megan Mason'
+        assert self.df['observer'].iloc[0] == 'Ioanna Merkouriadi'
+        assert self.df['observer'].iloc[48] == 'HP Marshall'
