@@ -29,19 +29,36 @@ class SMPMeasurementLog(object):
               Flag
               Observer
               Comments
+
+    Attributes:
+        observer_map: Dictionary mapping name initials to full verbose names
+        orientation_map: Dictionary mapping the measurement locations relative
+                         to the pit
+        header: Dictionary containing other header information regarding the
+                details of measurements
+        df: Dataframe containing rows of details describing each measurement
+
     '''
 
 
     def __init__(self, filename):
-        self.header, self.df = self._read(filename)
+        self.log = get_logger(__name__)
 
+        self.header, self.df = self._read(filename)
         # Cardinal map to interpet the orientation
-        self.orientation_map = {'N':'North','E':'East', 'S':'South', 'W':'West','C':'Center'}
+        self.cardinal_map = {'N':'North', 'NE':'Northeast', 'E':'East',
+                             'SE':'Southeast', 'S':'South', 'SW':'Southwest',
+                             'W':'West', 'NW':'Northwest', 'C':'Center'}
 
     def _read(self, filename):
         '''
-        Read the CSV file thet contains
+        Read the CSV file thet contains SMP log inforamtion. Also reads in the
+        header and creates a few attributes from that information:
+            1. observer_map
+            2. orientation_map
         '''
+        self.log.info('Reading SMP file log header')
+
         header = []
         header_pos = 9
 
@@ -53,11 +70,22 @@ class SMPMeasurementLog(object):
                     break
             fp.close()
 
-        # parse column names
-        str_cols = line.split(',')
+        self.observer_map = self._build_observers(header)
+        # self. orientation_map = self.interpret_orientation(header)
+
+        # parse/rename column names
+        str_cols = [standardize_key(col) for col in line.lower().split(',') if col.strip()]
+
+        # Assume columns are populated left to right so if we have empty ones they are assumed at the end
+        n_cols = len(str_cols)
         str_cols = remap_data_names(str_cols, ProfileHeader.rename)
 
-        df = pd.read_csv(filename, header=header_pos, names=str_cols, encoding='latin', parse_dates=[0])
+        df = pd.read_csv(filename, header=header_pos, names=str_cols,
+                                   usecols=range(n_cols), encoding='latin',
+                                   parse_dates=[0])
+
+        df = self.interpret_dataframe(df)
+
         return header, df
 
     def interpret_dataframe(self, df):
@@ -67,36 +95,85 @@ class SMPMeasurementLog(object):
 
         Args:
             df: pandas.Dataframe
+
         Returns:
             new_df: pandas.Dataframe with modifications
         '''
+        # interpret sampling strategy
+        # df = self.interpret_sample_strategy(df)
+
+        # Apply observer map
+        df = self.interpret_observers(df)
+
+        # Apply orientation map
+        return df
 
 
-
-    def interpret_observers(self, header):
+    def _build_observers(self, header):
         '''
-        Interprets the header of the smp file log
+        Interprets the header of the smp file log which has a map to the
+        names of the oberservers names. This creates a dictionary mapping those
+        string names
         '''
-        self.log.info('Reading SMP file log header')
         # Map for observer names and their
-        self.observer_map = {}
+        observer_map = {}
 
         for line in header:
             ll = line.lower()
 
             # Create a name map for the observers and there initials
             if 'observer' in ll:
-                data = line.split(':')[-1].split(',')
+                data = [d.strip() for d in line.split(':')[-1].split(',')]
+                data = [d for d in data if d]
 
                 for d in data:
-                    info = data.split('(')
-                    name = info[0].strip().strip(' ')
-                    observer_map[name] = info[1].strip(')').strip()
+                    info = [clean_str(s).strip(')') for s in d.split('(')]
+                    name = info[0]
+                    initials = info[1]
+                    observer_map[initials] = name
+
+        return observer_map
+
+    def interpret_observers(self, df):
+        '''
+        Rename all the observers with initials in the observer_map which is
+        interpeted from the header
+
+        Args:
+            df: dataframe containing a column observer
+        Return:
+            new_df: df with the observers column replaced with more verbose
+                    names
+        '''
+        new_df = df.copy()
+        new_df['observer'] = \
+                        new_df['observer'].apply(lambda x: self.observer_map[x])
+        return new_df
+
+    def interpret_sample_strategy(self, df):
+        '''
+        Look through all the measurements posted by site and attempt to
+        determine the sample strategy
+
+        Args:
+            df: Dataframe containing all the data from the dataframe
+        Returns:
+            new_df: Same dataframe with a new column containing the sampling
+                    strategy
+        '''
+
+        pits = pd.unique(df['pit_id'])
+
+        for p in pits:
+            ind = df['pit_id'] == p
+            temp = df.loc[ind]
+            orientations = pd.unique(temp['orientation'])
 
     def interpret_orientation(self, abbreviation, strategy='A'):
         '''
-        Provides a more verbose str regarding the orientation of an smp
-        measurement orientation to the pit location
+        Using the orietation information in the header of the SMP log file,
+        this functions generates a map of the orientation abbreviations to a
+        more verbose regarding the measurement orientation to the pit location
 
         The orientation is referencing a transect on centered on the pit and
         aligned with cardinal directions. Two strategies were implemented.
@@ -119,8 +196,8 @@ class SMPMeasurementLog(object):
             note: A more verbose string describing the orientation
         '''
 
-        # Orientation Map sampling strategy A ( North and South have 6 measurement across the whole transect)
-        orientation_map = {}
+        portion = {'p': 'pitwall measurement', 'p_top': 'top portion of pit',
+                  'p_mid': 'mid portion', 'p_bot': 'bottom portion'}
 
         # Manage pit references:
         if 'pit' in abbreviation.lower():
@@ -129,7 +206,11 @@ class SMPMeasurementLog(object):
             letter = abbreviation[0]
             direction = cardinal_map[letter]
 
-            if letter != 'C':
+            if letter == 'C':
+                note = ('Located at the center of the transects using sample '
+                       'strategy {}'.format(strategy))
+
+            else:
                 position = int(abbreviation[1:])
 
                 if strategy == 'A' and letter in ['N','S']:
@@ -142,6 +223,11 @@ class SMPMeasurementLog(object):
                 else:
                     raise ValueError('Invalid strategy, please use A or B.'
                                      ' See docs for more info.')
+
+                note = ('Located {}m {} of the center of the transect'
+                       ''.format(direction, dist))
+
+        return note
 
 
 class ProfileHeader(object):
