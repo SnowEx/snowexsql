@@ -59,7 +59,7 @@ class UploadProfileData():
             df['depth'] = df['depth'].div(10)
 
         delta = abs(df['depth'].max() - df['depth'].min())
-        self.log.info('Snow Profile at {} contains {} Layers across {} cm'
+        self.log.info('Snow Profile at {} contains {} Layers across {:0.2f} cm'
                       ''.format(self._pit.info['site_id'], len(df), delta))
         return df
 

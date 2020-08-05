@@ -6,6 +6,8 @@ from os.path import join, dirname
 
 from snowxsql.create_db import *
 from snowxsql.upload import *
+from snowxsql.metadata import SMPMeasurementLog
+
 from  .sql_test_base import DBSetup
 
 class TestLayers(DBSetup):
@@ -58,17 +60,17 @@ class TestLayers(DBSetup):
         Returns:
             records: List of Layer objects mapped to the database
         '''
+
         q = self._get_profile_query(value_type, depth=depth)
         records = q.all()
         return records
 
-
-    def assert_upload(self, csv_f, value_type, n_values):
+    def assert_upload(self, csv_f, value_type, n_values, timezone='MST', sep=','):
         '''
         Test whether the correct number of values were uploaded
         '''
         f = join(self.data_dir, csv_f)
-        profile = UploadProfileData(f, epsg=26912, timezone='MST')
+        profile = UploadProfileData(f, epsg=26912, timezone=timezone, header_sep=sep)
         profile.submit(self.session)
 
         records = self.get_profile(value_type)
@@ -76,7 +78,8 @@ class TestLayers(DBSetup):
         # Assert N values in the single profile
         assert len(records) == n_values
 
-    def assert_value_assignment(self, value_type, depth, correct_value, precision=3):
+    def assert_value_assignment(self, value_type, depth, correct_value,
+                                                         precision=3):
         '''
         Test whether the correct number of values were uploaded
         '''
@@ -261,12 +264,44 @@ class TestSSAProfile(TestLayers):
         '''
         self.assert_value_assignment('specific_surface_area', 35, 11.20, precision=2)
 
+
     def test_equvialent_diameter(self):
         '''
         Test specific_surface_area values at a depth are assigned correctly
         '''
         self.assert_value_assignment('equivalent_diameter', 80.0, 0.1054, precision=4)
-#
+
+class TestSMPProfile(DBSetup):
+
+    def setup_class(self):
+        '''
+        '''
+        super().setup_class()
+
+        self.smp_log = SMPMeasurementLog(join(self.data_dir,'smp_log.csv'))
+
+    def assert_upload(self, f, r_count):
+        '''
+        Test uploading a SMP csv to the db
+        '''
+        smp_f = join(self.data_dir, f)
+        extra_header = self.smp_log.get_metadata(smp_f)
+        profile = UploadProfileData(smp_f, timezone='UTC', header_sep=':',
+                                                           **extra_header)
+        profile.submit(self.session)
+        site = profile._pit.info['site_id']
+
+        q = self.session.query(LayerData).filter(LayerData.site_id == site)
+        records = q.all()
+
+        assert len(records) == r_count
+
+
+    def test_upload_A(self):
+        self.assert_upload('S06M0874_2N12_20200131.CSV', 62)
+
+    def test_upload_B(self):
+        self.assert_upload('S19M1013_5S21_20200201.CSV', 46)
 # class TestDBLayerTables(TestLayers):
 #
 #     def test_datatypes(self):

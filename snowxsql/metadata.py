@@ -3,12 +3,14 @@ Place where header classes and metadata interpeters are located.
 This includes interpetting data file headers or dedicated files to describing
 data
 '''
+
 from .string_management import standardize_key, clean_str, remap_data_names, convert_cardinal_to_degree
 from .utilities import get_logger
 import utm
 import pandas as pd
 from geoalchemy2.elements import WKTElement
 
+from os.path import basename
 
 class SMPMeasurementLog(object):
     '''
@@ -45,6 +47,8 @@ class SMPMeasurementLog(object):
         self.log = get_logger(__name__)
 
         self.header, self.df = self._read(filename)
+        self.df.set_index('fname_sufix',inplace=True)
+
         # Cardinal map to interpet the orientation
         self.cardinal_map = {'N':'North', 'NE':'Northeast', 'E':'East',
                              'SE':'Southeast', 'S':'South', 'SW':'Southwest',
@@ -79,10 +83,10 @@ class SMPMeasurementLog(object):
         # Assume columns are populated left to right so if we have empty ones they are assumed at the end
         n_cols = len(str_cols)
         str_cols = remap_data_names(str_cols, ProfileHeader.rename)
-
+        dtype = {k:str for k in str_cols}
         df = pd.read_csv(filename, header=header_pos, names=str_cols,
                                    usecols=range(n_cols), encoding='latin',
-                                   parse_dates=[0])
+                                   parse_dates=[0], dtype=dtype)
 
         df = self.interpret_dataframe(df)
 
@@ -106,6 +110,10 @@ class SMPMeasurementLog(object):
         df = self.interpret_observers(df)
 
         # Apply orientation map
+
+        # Pit ID is actually the Site ID here at least in comparison to the
+        df['site_id'] = df['pit_id'].copy()
+
         return df
 
 
@@ -229,6 +237,18 @@ class SMPMeasurementLog(object):
 
         return note
 
+    def get_metadata(self, smp_file):
+        '''
+        Builds a dictionary of extra header information useful for SMP
+        files which lack some info regarding submission to the db
+
+        S06M0874_2N12_20200131.CSV, 0874 is the in
+
+        '''
+        s = basename(smp_file).split('.')[0].split('_')
+        suffix = s[0].split('M')[-1]
+        meta = self.df.loc[suffix].to_dict()
+        return meta
 
 class ProfileHeader(object):
     '''
@@ -287,7 +307,10 @@ class ProfileHeader(object):
              'observers':'surveyors',
              'total_snow_depth':'total_depth',
              'smp_serial_number':'instrument',
-              }
+             'lat':'latitude',
+             'long':'longitude',
+             'lon':'longitude',
+             }
 
     # Known possible profile types anything not in here will throw an error
     available_profile_types = ['density', 'dielectric_constant', 'temperature',
@@ -509,10 +532,10 @@ class ProfileHeader(object):
             k = standardize_key(d[0])
 
             # Avoid splitting on times
-            if not 'time' in k.lower() or not 'date' in k.lower():
-                value = ', '.join(d[1:])
+            if 'time' in k or 'date' in k:
+                value = ':'.join(d[1:])
             else:
-                value = ': '.join(d[1:])
+                value = ', '.join(d[1:])
 
             value = clean_str(value)
 
@@ -520,7 +543,7 @@ class ProfileHeader(object):
             if k and value:
                 data[k] = value.strip(' ').replace('"','').replace('  ',' ')
 
-        # Extract datetime for separate db entries
+        # Extract datetime for separate db entriesd
         if 'date/time' in data.keys():
             d = pd.to_datetime(data['date/time'] + self.timezone)
 
@@ -529,7 +552,7 @@ class ProfileHeader(object):
             d = pd.to_datetime(dstr)
 
         else:
-            raise ValueError('Header is mIssing date/time info!\n{}'.format(data))
+            raise ValueError('Header is missing date/time info!\n{}'.format(data))
 
         data['time'] = d.time()
         data['date'] = d.date()
@@ -604,11 +627,8 @@ class ProfileHeader(object):
         self.info.update(self.extra_header)
 
 
-        # Rename any awkward keys we might get
-        renames = {'lat':'latitude',
-                   'long':'longitude',
-                   'lon':'longitude'}
-        self.info = remap_data_names(self.info, renames)
+        # # Rename any awkward keys we might get
+        # self.info = remap_data_names(self.info, renames)
 
         # Manage degrees  type entries
         for k in ['aspect','slope_angle']:

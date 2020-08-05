@@ -195,7 +195,7 @@ class TestSMPMeasurementLog():
 
     def test_observers(self):
         '''
-        Test we rename observer initials correctly
+        Test observers initials are renamed correctly
         '''
         assert self.df['observer'].iloc[-1] == 'Megan Mason'
         assert self.df['observer'].iloc[0] == 'Ioanna Merkouriadi'
