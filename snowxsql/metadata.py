@@ -154,8 +154,8 @@ class SMPMeasurementLog(object):
                     names
         '''
         new_df = df.copy()
-        new_df['observer'] = \
-                        new_df['observer'].apply(lambda x: self.observer_map[x])
+        new_df['surveyors'] = \
+                        new_df['surveyors'].apply(lambda x: self.observer_map[x])
         return new_df
 
     def interpret_sample_strategy(self, df):
@@ -304,7 +304,7 @@ class ProfileHeader(object):
              'sample_top_height':'depth',
              'deq':'equivalent_diameter',
              'operator':'surveyors',
-             'observers':'surveyors',
+             'observer':'surveyors',
              'total_snow_depth':'total_depth',
              'smp_serial_number':'instrument',
              'lat':'latitude',

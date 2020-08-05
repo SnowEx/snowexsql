@@ -9,9 +9,10 @@ from snowxsql.upload import *
 from snowxsql.metadata import SMPMeasurementLog
 
 from  .sql_test_base import DBSetup
+import pytest
 
-class TestLayers(DBSetup):
-
+class LayersBase(DBSetup):
+    site_id = '1N20'
     def setup_class(self):
         '''
         Setup the database one time for testing
@@ -19,9 +20,9 @@ class TestLayers(DBSetup):
         super().setup_class()
 
         site_fname = join(self.data_dir,'site_details.csv' )
-        self.pit = ProfileHeader(site_fname, 'MST', 26912)
+        self.pit = ProfileHeader(site_fname, timezone='MST', epsg=26912)
         self.bulk_q = \
-        self.session.query(LayerData).filter(LayerData.site_id == '1N20')
+        self.session.query(LayerData).filter(LayerData.site_id == self.site_id)
 
     def get_str_value(self, value, precision=3):
         '''
@@ -40,32 +41,32 @@ class TestLayers(DBSetup):
 
         return expected
 
-    def _get_profile_query(self, value_type, depth=None):
+    def _get_profile_query(self, profile_type, depth=None):
         '''
         Construct the query and return it
         '''
-        q = self.bulk_q.filter(LayerData.type == value_type)
+        q = self.bulk_q.filter(LayerData.type == profile_type)
 
         if depth != None:
             q = q.filter(LayerData.depth == depth)
         return q
 
-    def get_profile(self, value_type, depth=None):
+    def get_profile(self, profile_type, depth=None):
         '''
         DRYs out the tests for profile uploading
 
         Args:
             csv: str to path of a csv in the snowex format
-            value_type: Type of profile were accessing
+            profile_type: Type of profile were accessing
         Returns:
             records: List of Layer objects mapped to the database
         '''
 
-        q = self._get_profile_query(value_type, depth=depth)
+        q = self._get_profile_query(profile_type, depth=depth)
         records = q.all()
         return records
 
-    def assert_upload(self, csv_f, value_type, n_values, timezone='MST', sep=','):
+    def assert_upload(self, csv_f, profile_type, n_values, timezone='MST', sep=','):
         '''
         Test whether the correct number of values were uploaded
         '''
@@ -73,33 +74,33 @@ class TestLayers(DBSetup):
         profile = UploadProfileData(f, epsg=26912, timezone=timezone, header_sep=sep)
         profile.submit(self.session)
 
-        records = self.get_profile(value_type)
+        records = self.get_profile(profile_type)
 
         # Assert N values in the single profile
         assert len(records) == n_values
 
-    def assert_value_assignment(self, value_type, depth, correct_value,
+    def assert_value_assignment(self, profile_type, depth, correct_value,
                                                          precision=3):
         '''
         Test whether the correct number of values were uploaded
         '''
         expected = self.get_str_value(correct_value, precision=precision)
 
-        records = self.get_profile(value_type, depth=depth)
+        records = self.get_profile(profile_type, depth=depth)
         value = getattr(records[0], 'value')
         received = self.get_str_value(value, precision=precision)
 
         # Assert the value with considerations to precision
         assert received == expected
 
-    def assert_attr_value(self, value_type, attribute_name, depth,
+    def assert_attr_value(self, profile_type, attribute_name, depth,
                             correct_value, precision=3):
         '''
         Tests attribute value assignment, these are any non-main attributes
         regarding the value itself. e.g. individual samples, location, etc
         '''
 
-        records = self.get_profile(value_type, depth=depth)
+        records = self.get_profile(profile_type, depth=depth)
         expected = self.get_str_value(correct_value, precision=precision)
 
         db_value = getattr(records[0], attribute_name)
@@ -107,7 +108,7 @@ class TestLayers(DBSetup):
 
         assert received == correct_value
 
-    def assert_samples_assignment(self, value_type, depth, correct_values, precision=3):
+    def assert_samples_assignment(self, profile_type, depth, correct_values, precision=3):
         '''
         Asserts all samples are assigned correctly
         '''
@@ -115,9 +116,9 @@ class TestLayers(DBSetup):
 
         for i, v in enumerate(correct_values):
             str_v = self.get_str_value(v, precision=precision)
-            self.assert_attr_value(value_type, samples[i], depth, str_v, precision=precision)
+            self.assert_attr_value(profile_type, samples[i], depth, str_v, precision=precision)
 
-    def assert_avg_assignment(self, value_type, depth, avg_lst, precision=3):
+    def assert_avg_assignment(self, profile_type, depth, avg_lst, precision=3):
         '''
         In cases of profiles with mulit profiles, the average of the samples
         are assigned to the value attribute of the layer. This asserts those
@@ -131,9 +132,9 @@ class TestLayers(DBSetup):
 
         expected = self.get_str_value(avg, precision=precision)
 
-        self.assert_value_assignment(value_type, depth, expected)
+        self.assert_value_assignment(profile_type, depth, expected)
 
-class TestStratigraphyProfile(TestLayers):
+class TestStratigraphyProfile(LayersBase):
     '''
     Tests all stratigraphy uploading and value assigning
     '''
@@ -180,7 +181,7 @@ class TestStratigraphyProfile(TestLayers):
         # Should be 1 layer for each grain zise, type, hardness, and wetness
         assert len(records) == 4
 
-class TestDensityProfile(TestLayers):
+class TestDensityProfile(LayersBase):
 
     def test_upload(self):
         '''
@@ -203,7 +204,7 @@ class TestDensityProfile(TestLayers):
 
         self.assert_samples_assignment('density', 35, [190.0, 245.0], precision=1)
 
-class TestLWCProfile(TestLayers):
+class TestLWCProfile(LayersBase):
     dname = 'dielectric_constant'
 
     def test_upload(self):
@@ -227,7 +228,7 @@ class TestLWCProfile(TestLayers):
         self.assert_samples_assignment(self.dname, 17, [1.384, 1.354])
 
 
-class TestTemperatureProfile(TestLayers):
+class TestTemperatureProfile(LayersBase):
     dname = 'temperature'
 
     def test_upload(self):
@@ -243,7 +244,7 @@ class TestTemperatureProfile(TestLayers):
         self.assert_value_assignment('temperature', 10, -5.9)
 
 
-class TestSSAProfile(TestLayers):
+class TestSSAProfile(LayersBase):
 
     def test_upload(self):
         '''
@@ -271,20 +272,20 @@ class TestSSAProfile(TestLayers):
         '''
         self.assert_value_assignment('equivalent_diameter', 80.0, 0.1054, precision=4)
 
-class TestSMPProfile(DBSetup):
-
+class SMPBase(LayersBase):
+    fname = ''
     def setup_class(self):
         '''
         '''
-        super().setup_class()
+        super().setup_class(self)
 
         self.smp_log = SMPMeasurementLog(join(self.data_dir,'smp_log.csv'))
 
-    def assert_upload(self, f, r_count):
+    def assert_upload(self, r_count):
         '''
         Test uploading a SMP csv to the db
         '''
-        smp_f = join(self.data_dir, f)
+        smp_f = join(self.data_dir, self.fname)
         extra_header = self.smp_log.get_metadata(smp_f)
         profile = UploadProfileData(smp_f, timezone='UTC', header_sep=':',
                                                            **extra_header)
@@ -296,67 +297,86 @@ class TestSMPProfile(DBSetup):
 
         assert len(records) == r_count
 
+class TestSMPProfile(SMPBase):
+    fname = 'S06M0874_2N12_20200131.CSV'
+    site_id = '2N12'
 
-    def test_upload_A(self):
-        self.assert_upload('S06M0874_2N12_20200131.CSV', 62)
+    def test_upload(self):
+        self.assert_upload(62)
 
-    def test_upload_B(self):
-        self.assert_upload('S19M1013_5S21_20200201.CSV', 46)
-# class TestDBLayerTables(TestLayers):
-#
-#     def test_datatypes(self):
-#         '''
-#         Test that all layer attributes in the db are the correct type.
-#         '''
-#         dtypes = {'id': int,
-#         'site_name': str,
-#         'date': datetime.date,
-#         'time': datetime.time,
-#         'time_created': datetime.datetime,
-#         'time_updated': datetime.datetime,
-#         'latitude': float,
-#         'longitude': float,
-#         'northing': float,
-#         'easting': float,
-#         'utm_zone': str,
-#         'elevation': float,
-#         'type': str,
-#         'value': str,
-#         'depth': float,
-#         'bottom_depth': float,
-#         'site_id': str,
-#         'pit_id': str,
-#         'slope_angle': int,
-#         'aspect': int,
-#         'air_temp': float,
-#         'total_depth': float,
-#         'surveyors': str,
-#         'weather_description': str,
-#         'precip': str,
-#         'sky_cover': str,
-#         'wind': str,
-#         'ground_condition': str,
-#         'ground_roughness': str,
-#         'ground_vegetation': str,
-#         'vegetation_height': str,
-#         'tree_canopy': str,
-#         'site_notes': str,
-#         'sample_a': str,
-#         'sample_b': str,
-#         'sample_c': str,
-#         'comments': str}
-#
-#         records = self.bulk_q.all()
-#
-#         for r in records:
-#             for c, dtype in dtypes.items():
-#                 db_type = type(getattr(r, c))
-#                 assert (db_type == dtype) or (db_type == type(None))
-#
-#     def test_geopandas_compliance(self):
-#         '''
-#         Test the geometry column exists
-#         '''
-#         records = self.session.query(LayerData.geom).limit(1).all()
-#         # To be compliant with Geopandas must be geom not geometry!
-#         assert hasattr(records[0], 'geom')
+    def test_surveyors_assigment(self):
+        '''
+        Tests that the surveyors was assigned to the database
+        '''
+        obs = self.bulk_q.limit(1).one()
+        assert obs.surveyors == 'Ioanna Merkouriadi'
+
+    @pytest.mark.skip('Unable to determine depth precision to gather records...')
+    def test_force_assignment(self):
+        '''
+        Confirm we submitted the values correctly
+        '''
+        records = self.get_profile('force')
+        print([type(r.depth) for r in records])
+        self.assert_value_assignment('force', 30.656350976508100, 0.8441290259361267, precision=3)
+
+# @pytest.mark.skip('Unable to determine depth precision to gather records...')
+class TestDBLayerTables(LayersBase):
+
+    def test_datatypes(self):
+        '''
+        Test that all layer attributes in the db are the correct type.
+        '''
+        dtypes = {'id': int,
+        'site_name': str,
+        'date': datetime.date,
+        'time': datetime.time,
+        'time_created': datetime.datetime,
+        'time_updated': datetime.datetime,
+        'latitude': float,
+        'longitude': float,
+        'northing': float,
+        'easting': float,
+        'utm_zone': str,
+        'elevation': float,
+        'type': str,
+        'value': str,
+        'depth': float,
+        'bottom_depth': float,
+        'site_id': str,
+        'pit_id': str,
+        'slope_angle': int,
+        'aspect': int,
+        'air_temp': float,
+        'total_depth': float,
+        'surveyors': str,
+        'weather_description': str,
+        'precip': str,
+        'sky_cover': str,
+        'wind': str,
+        'ground_condition': str,
+        'ground_roughness': str,
+        'ground_vegetation': str,
+        'vegetation_height': str,
+        'tree_canopy': str,
+        'site_notes': str,
+        'sample_a': str,
+        'sample_b': str,
+        'sample_c': str,
+        'comments': str}
+
+        records = self.bulk_q.all()
+
+        for r in records:
+            for c, dtype in dtypes.items():
+                db_type = type(getattr(r, c))
+                assert (db_type == dtype) or (db_type == type(None))
+
+    @pytest.mark.skip('Skipping since nothing is uploaded for the this...')
+    def test_geopandas_compliance(self):
+        '''
+        Test the geometry column exists
+        '''
+        records = self.session.query(LayerData.geom).limit(1).all()
+        # To be compliant with Geopandas must be geom not geometry!
+        assert hasattr(records[0], 'geom')

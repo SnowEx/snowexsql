@@ -193,10 +193,10 @@ class TestSMPMeasurementLog():
         self.smp_log = SMPMeasurementLog(join(self.data, 'smp_log.csv'))
         self.df = self.smp_log.df
 
-    def test_observers(self):
+    def test_surveyorss(self):
         '''
-        Test observers initials are renamed correctly
+        Test surveyorss initials are renamed correctly
         '''
-        assert self.df['observer'].iloc[-1] == 'Megan Mason'
-        assert self.df['observer'].iloc[0] == 'Ioanna Merkouriadi'
-        assert self.df['observer'].iloc[48] == 'HP Marshall'
+        assert self.df['surveyors'].iloc[-1] == 'Megan Mason'
+        assert self.df['surveyors'].iloc[0] == 'Ioanna Merkouriadi'
+        assert self.df['surveyors'].iloc[48] == 'HP Marshall'
