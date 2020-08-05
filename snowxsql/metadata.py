@@ -33,7 +33,7 @@ class SMPMeasurementLog(object):
 
 
     def __init__(self, filename):
-        self.df = self._read(filename)
+        self.header, self.df = self._read(filename)
 
         # Cardinal map to interpet the orientation
         self.orientation_map = {'N':'North','E':'East', 'S':'South', 'W':'West','C':'Center'}
@@ -45,7 +45,7 @@ class SMPMeasurementLog(object):
         header = []
         header_pos = 9
 
-        with open(f,'r'):
+        with open(filename,'r') as fp:
             for i,line in enumerate(fp):
                 if i < header_pos:
                     header.append(line)
@@ -53,10 +53,27 @@ class SMPMeasurementLog(object):
                     break
             fp.close()
 
-        df = pd.read_csv(filename, header=header_pos, encoding='latin', parse_dates=[0])
+        # parse column names
+        str_cols = line.split(',')
+        str_cols = remap_data_names(str_cols, ProfileHeader.rename)
+
+        df = pd.read_csv(filename, header=header_pos, names=str_cols, encoding='latin', parse_dates=[0])
         return header, df
 
-    def interpret_header(self, header):
+    def interpret_dataframe(self, df):
+        '''
+        Using various info collected from the dataframe header modify the data
+        frame entries to be more verbose and standardize the database
+
+        Args:
+            df: pandas.Dataframe
+        Returns:
+            new_df: pandas.Dataframe with modifications
+        '''
+
+
+
+    def interpret_observers(self, header):
         '''
         Interprets the header of the smp file log
         '''
@@ -507,7 +524,7 @@ class ProfileHeader(object):
                    'lon':'longitude'}
         self.info = remap_data_names(self.info, renames)
 
-        # Manage degrees
+        # Manage degrees  type entries
         for k in ['aspect','slope_angle']:
             if k in keys:
                 v = self.info[k]
@@ -517,20 +534,20 @@ class ProfileHeader(object):
                 v = v.replace('Â','')
                 self.info[k] = v
 
-        # Manage cardinal directions
-        if 'aspect' in keys:
-            aspect = self.info['aspect']
+                # Manage cardinal directions
+                if k == 'aspect':
+                    aspect = self.info['aspect']
 
-            # Check for number of numeric values.
-            numeric = len([True for c in aspect if c.isnumeric()])
+                    # Check for number of numeric values.
+                    numeric = len([True for c in aspect if c.isnumeric()])
 
-            if numeric != len(aspect) and aspect.lower() != 'nan':
-                self.log.warning('Aspect recorded for site {} is in cardinal '
-                'directions, converting to degrees...'
-                ''.format(self.info['site_id']))
-                deg = convert_cardinal_to_degree(aspect)
+                    if numeric != len(aspect) and aspect.lower() != 'nan':
+                        self.log.warning('Aspect recorded for site {} is in cardinal '
+                        'directions, converting to degrees...'
+                        ''.format(self.info['site_id']))
+                        deg = convert_cardinal_to_degree(aspect)
 
-            self.info['aspect'] = deg
+                    self.info[k] = deg
 
         # Convert geographic details to floats
         for numeric_key in ['northing','easting','latitude','longitude']:

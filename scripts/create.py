@@ -12,9 +12,8 @@ engine, metadata, session = get_db(db_name)
 
 a = input('\nWARNING! You are about to overwrite the entire database! Press Y to continue, press any other key to abort:\n')
 if a.lower() == 'y':
-    log.warning('Clearing Database...')
     initialize(engine)
-    log.info('Complete!')
+    log.warning('Database cleared!')
 
 else:
     log.warning('Aborted. Database has not been modified.')

@@ -183,7 +183,14 @@ class TestSiteDetailseHeader(ProfileHeaderTestBase):
 
         super().setup_class(self)
 
-class TestSMPLogFile():
+
+class TestSMPMeasurementLog():
     '''
+    Class for testing the snowxsql.metadata.SMPMeasurementLog class.
     '''
-    pass
+    def setup_class(self):
+        self.data = abspath(join(dirname(__file__), 'data'))
+        self.smp_log = SMPMeasurementLog(join(self.data, 'smp_log.csv'))
+
+    def test_header(self):
+        pass
