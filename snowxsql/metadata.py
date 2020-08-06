@@ -535,22 +535,7 @@ class ProfileHeader(object):
             if k and value:
                 data[k] = value.strip(' ').replace('"','').replace('  ',' ')
 
-        # Extract datetime for separate db entriesd
-        if 'date/time' in data.keys():
-            d = pd.to_datetime(data['date/time'] + self.timezone)
-
-        elif 'date' in data.keys() and 'time' in data.keys():
-            dstr = ' '.join([data['date'], data['time'],  self.timezone])
-            d = pd.to_datetime(dstr)
-
-        else:
-            raise ValueError('Header is missing date/time info!\n{}'.format(data))
-
-        data['time'] = d.time()
-        data['date'] = d.date()
-
-        if 'date/time' in data.keys():
-            del data['date/time']
+        data = add_date_time_keys(data, timezone=self.timezone)
 
         # Rename the info dictionary keys to more standard ones
         data = remap_data_names(data, self.rename)

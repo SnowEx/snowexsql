@@ -1,4 +1,6 @@
 import warnings
+import pandas as pd
+import datetime
 
 def clean_str(messy):
     '''
@@ -112,3 +114,51 @@ def convert_cardinal_to_degree(cardinal):
         raise ValueError('Invalid cardinal direction {}!'.format(cardinal))
 
     return degrees
+
+
+def add_date_time_keys(data, timezone='MST'):
+    '''
+    Convert string info from a date/time keys in a dictionary to date and time
+    objects and assign it back to the dictionary as date and time
+
+    Args:
+        data: dictionary containing either the keys date/time or two keys date
+              and time
+        timezone: String representing Pytz valid timezone
+
+    Returns:
+        d: Python Datetime object
+    '''
+    keys = data.keys()
+
+    # Extract datetime for separate db entries
+    if 'date/time' in keys:
+        d = pd.to_datetime(data['date/time'] + timezone)
+        del data['date/time']
+
+    # Handle SMP data dates and times
+    elif 'date' in keys and 'time' in keys:
+        dstr = ' '.join([data['date'], data['time'], timezone])
+        d = pd.to_datetime(dstr)
+
+    # Handle gpr data dates
+    elif 'utcyear' in keys and 'utcdoy' in keys and 'utctod' in keys:
+        base = pd.to_datetime('{}-01-01 00:00:00 '.format(data['utcyear']) + timezone)
+        subsecond = str(data['utctod']).split('.')[0]
+        ms = int(subsecond[0])
+        mus = int(subsecond[1])
+        d = int(data['utcdoy'])
+        delta = datetime.timedelta(days=d, milliseconds=ms, microseconds=mus)
+        d = base + delta
+
+        # Remove them
+        for v in ['utcyear', 'utcdoy', 'utctod']:
+            del data[v]
+
+    else:
+        raise ValueError('Data is missing date/time info!\n{}'.format(data))
+
+    data['date'] = d.date()
+    data['time'] = d.time()
+
+    return data

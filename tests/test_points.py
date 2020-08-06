@@ -8,8 +8,11 @@ from snowxsql.upload import *
 from  .sql_test_base import DBSetup
 import datetime
 
-class TestPoints(DBSetup):
-
+class PointsBase(DBSetup):
+    fname = ''
+    point_type = ''
+    units = ''
+    timezone = 'MST'
     @classmethod
     def setup_class(self):
         '''
@@ -17,20 +20,44 @@ class TestPoints(DBSetup):
         '''
         super().setup_class()
 
-        fname = join(self.data_dir, 'depths.csv' )
-        csv = PointDataCSV(fname, 'snow_depth', 'cm', 'Grand Mesa', 'MST', 26912)
+        fname = join(self.data_dir, self.fname)
+        csv = PointDataCSV(fname, self.variable, self.units, 'Grand Mesa', self.timezone, 26912)
         csv.submit(self.session)
-        self.records = self.session.query(PointData).all()
+        self.base_query = self.session.query(PointData).filter(PointData.type == self.variable)
 
-    def test_snowdepth_counts(self):
+    # def get_query(self, )
+    def assert_record_count(self, count, unique=False, attr='value'):
         '''
-        Test uploading snowdepths to db
+        Assert the main query returns a certain number of records.
+        If the unique is used then assert that there is a certain count of
+        unique records from the database, useful for dates counting or
+        other attributes
         '''
-        # 10 total records
-        assert len(self.records) == 10
 
-        # 5 unique dates
-        assert len(set([d.date for d in self.records])) == 5
+        records = self.base_query.all()
+
+        if unique:
+            assert len(set([getattr(d, attr) for d in records]))
+        else:
+            assert len(records) == count
+
+    def assert_value_assignment(self, query, expected):
+        '''
+        Provide a query and assert its expected value
+        '''
+        records = query.all()
+        assert records[0][0] == expected
+
+
+class TestPoints(PointsBase):
+    '''
+    Class to test general behavior for the database, checking datatypes, and
+    geopandas compliance
+    '''
+
+    fname = 'depths.csv'
+    variable = 'snowdepth'
+    units = 'cm'
 
     def test_point_datatypes(self):
         '''
@@ -55,24 +82,67 @@ class TestPoints(DBSetup):
         'equipment': str,
         'value': float}
 
-        for r in self.records:
-            for c, dtype in dtypes.items():
-                db_type = type(getattr(r, c))
-                assert (db_type == dtype) or (db_type == type(None))
+        r = self.base_query.limit(1).one()
+        for c, dtype in dtypes.items():
+            db_type = type(getattr(r, c))
+            assert (db_type == dtype) or (db_type == type(None))
 
-    def test_geopandas_compiance(self):
+    def test_geopandas_compliance(self):
         '''
         Test the geometry column works
         '''
         records = self.session.query(PointData).limit(1).all()
         assert hasattr(records[0], 'geom')
 
+
+class TestSnowDepths(PointsBase):
+    fname = 'depths.csv'
+    variable = 'snowdepth'
+    units = 'cm'
+
     def test_data_entry(self):
         '''
         Test that the data was entered successfully
         '''
         # Not sure why thie first entry is 100000 but it is and it should be 94 cm
-        records = self.session.query(PointData.value).filter(PointData.id == 100000).all()
+        q = self.session.query(PointData.value).filter(PointData.id == 100000)
+        self.assert_value_assignment(q, 94)
 
-        # Confirm the the first entry is 94cm
-        assert records[0][0] == 94
+    def test_snowdepth_counts(self):
+        '''
+        Test uploading snowdepths to db
+        '''
+        # Assert there are 10 snowdepths entered
+        self.assert_record_count(10)
+
+    def test_unique_dates(self):
+        # 5 unique dates
+        self.assert_record_count(5, unique=True, attr='date')
+
+
+class TestGPRTWT(PointsBase):
+    fname = 'gpr_twt.csv'
+    variable = 'twt'
+    units = 'ns'
+    timezone = 'UTC'
+    # def test_data_entry(self):
+    #     '''
+    #     Test that the data was entered successfully
+    #     '''
+    #     # Not sure why thie first entry is 100000 but it is and it should be 94 cm
+    #     q = self.session.query(PointData.value).filter(PointData.id == 100000)
+    #     self.assert_value_assignment(q, 94)
+
+    def test_snowdepth_counts(self):
+        '''
+        Test uploading snowdepths to db
+        '''
+        # Assert there are 10 snowdepths entered
+        self.assert_record_count(10)
+
+    # def test_unique_dates(self):
+    #     '''
+    #     Test the correct dates were assigned
+    #     '''
+    #     # 5 unique dates
+    #     self.assert_record_count(5, unique=True, attr='date')

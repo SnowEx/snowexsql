@@ -156,7 +156,6 @@ class UploadProfileData():
 class PointDataCSV(object):
     '''
     Class for submitting whole files of point data in csv format
-
     '''
 
     # Remapping for special keywords for snowdepth measurements
@@ -209,11 +208,7 @@ class PointDataCSV(object):
 
                 data[name] = value
 
-            # Modify date and time to reflect the timezone and then split again
-            dt_str = ' '.join([str(data['date']), str(data['time']), self.timezone])
-            d = pd.to_datetime(dt_str)
-            data['date'] = d.date()
-            data['time'] = d.time()
+            data = add_date_time_keys(data, timezone=self.timezone)
 
             # Add geometry
             data['geom'] = WKTElement('POINT({} {})'.format(data['easting'], data['northing']), srid=self.epsg)

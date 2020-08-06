@@ -17,7 +17,7 @@ def main():
 
     # Obtain a list of Grand mesa smp files
     directory = abspath(expanduser('~/Downloads/NSIDC-upload/'))
-    smp_data = join(directory,'level_1_data', 'resampled_csv')
+    smp_data = join(directory,'level_1_data', 'csv_resampled')
     filenames = [join(smp_data, f) for f in listdir(smp_data) if f.split('.')[-1]=='CSV']
     log.info('Adding {} SMP profiles...'.format(len(filenames)))
 
