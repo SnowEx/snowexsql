@@ -160,6 +160,7 @@ class PointDataCSV(object):
 
     # Remapping for special keywords for snowdepth measurements
     measurement_names = {'MP':'magnaprobe','M2':'mesa', 'PR':'pit ruler'}
+    cleanup_keys = ['utmzone']
 
     def __init__(self, filename, value_type, units, site_name, timezone, epsg):
         self.log = get_logger(__name__)
@@ -177,6 +178,10 @@ class PointDataCSV(object):
         '''
         self.log.info('Reading in CSV data from {}'.format(filename))
         df = pd.read_csv(filename)
+        for c in df.columns:
+            if c.lower() in self.cleanup_keys:
+                del df[c]
+        print(df.columns)
         return df
 
     def submit(self, session):

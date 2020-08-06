@@ -162,3 +162,28 @@ def add_date_time_keys(data, timezone='MST'):
     data['time'] = d.time()
 
     return data
+
+def strip_encapsulated(str_line, encapusulator):
+    '''
+    Removes from a string all things encapusulated by characters
+
+    Args:
+        str_line: String that has encapusulated info we want removed
+        encapusulator: string of characters encapusulating info to be removed
+    Returns:
+        result: String without anything between encapusulators
+    '''
+    result = str_line
+    if len(encapusulator) > 2:
+        raise ValueError('Encapusulator can only be 1 or 2 chars long!')
+    elif len(encapusulator) == 2:
+        lcap = encapusulator[0]
+        rcap = encapusulator[1]
+    else:
+        lcap = rcap = encapusulator
+    
+    while lcap in result and rcap in result:
+        result = result.replace(result[result.index(lcap):result.index(rcap) + 1], '')
+
+    # Make sure we remove the last one
+    return result.replace(')','')
