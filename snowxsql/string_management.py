@@ -133,12 +133,12 @@ def add_date_time_keys(data, timezone='MST'):
 
     # Extract datetime for separate db entries
     if 'date/time' in keys:
-        d = pd.to_datetime(data['date/time'] + timezone)
+        d = pd.to_datetime(str(data['date/time']) + timezone)
         del data['date/time']
 
     # Handle SMP data dates and times
     elif 'date' in keys and 'time' in keys:
-        dstr = ' '.join([data['date'], data['time'], timezone])
+        dstr = ' '.join([str(data['date']), str(data['time']), timezone])
         d = pd.to_datetime(dstr)
 
     # Handle gpr data dates

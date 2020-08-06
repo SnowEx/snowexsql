@@ -162,11 +162,6 @@ class PointDataCSV(object):
     measurement_names = {'mp':'magnaprobe','m2':'mesa', 'pr':'pit ruler'}
     cleanup_keys = ['utmzone']
 
-    available_types = ['depth','two_way_travel']
-
-    rename = {'depth':'snow_depth',
-              'twt':'two_way_travel'}
-
     def __init__(self, filename, units, site_name, timezone, epsg):
         self.log = get_logger(__name__)
         self.units = units
@@ -180,45 +175,44 @@ class PointDataCSV(object):
         '''
         Read in the csv
         '''
+        
         self.log.info('Reading in CSV data from {}'.format(filename))
         self.p = DataHeader(filename, timezone=self.timezone, epsg=self.epsg)
         self.value_type = self.p.data_names[0]
 
-        df = pd.read_csv(filename, names=self.p.columns)
+        df = pd.read_csv(filename, header=self.p.header_pos,
+                                   names=self.p.columns)
 
         for c in df.columns:
             if c.lower() in self.cleanup_keys:
                 del df[c]
         return df
 
+    def build_data(self, data_name):
+        # Assign our main value to the value column
+        self.df['value'] = self.df[data_name].copy()
+        del self.df[data_name]
+
+        # Assign the measurement tool verbose name
+        self.df['measurement_tool'] = \
+            self.df['measurement_tool'].apply(lambda x: self.measurement_names[x.lower()])
+
+        # Assign other meta data
+        self.df['site_name'] = self.site_name
+        self.df['type'] = self.value_type
+        self.df['units'] = self.units
+
     def submit(self, session):
         # Loop through all the entries and add them to the db
+        self.build_data(self.value_type)
         self.log.info('Submitting {} rows to database...'.format(len(self.df.index)))
 
         bar = progressbar.ProgressBar(max_value=len(self.df.index))
+
         for i,row in self.df.iterrows():
 
             # Create the data structure to pass into the interacting class attributes
-            data = {'site_name':self.site_name,
-                    'type':self.value_type,
-                    'units':self.units}
-
-            for k, v in row.items():
-                name = k.lower()
-                # Rename the tool name to work for class attributes
-                if 'measurement' in name:
-                    name = 'measurement_tool'
-                    value = self.measurement_names[row[k]]
-
-                # Isolate only the main name not the notes associated in header.
-                else:
-                    name = name.split(' ')[0]
-                    value = v
-
-                if name == self.p.data_names:
-                    name = 'value'
-
-                data[name] = value
+            data = row.copy()
 
             data = add_date_time_keys(data, timezone=self.timezone)
 

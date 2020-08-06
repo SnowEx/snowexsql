@@ -52,7 +52,7 @@ class PointData(SingleLocationData, Base):
     __tablename__ = 'points'
     __table_args__ = {"schema": "public"}
 
-    version = Column(Integer)
+    version_number = Column(Integer)
     measurement_tool = Column(String(50))
     equipment = Column(String(50))
     value = Column(Float)

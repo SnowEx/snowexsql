@@ -41,32 +41,32 @@ class LayersBase(DBSetup):
 
         return expected
 
-    def _get_profile_query(self, profile_type, depth=None):
+    def _get_profile_query(self, data_name, depth=None):
         '''
         Construct the query and return it
         '''
-        q = self.bulk_q.filter(LayerData.type == profile_type)
+        q = self.bulk_q.filter(LayerData.type == data_name)
 
         if depth != None:
             q = q.filter(LayerData.depth == depth)
         return q
 
-    def get_profile(self, profile_type, depth=None):
+    def get_profile(self, data_name, depth=None):
         '''
         DRYs out the tests for profile uploading
 
         Args:
             csv: str to path of a csv in the snowex format
-            profile_type: Type of profile were accessing
+            data_name: Type of profile were accessing
         Returns:
             records: List of Layer objects mapped to the database
         '''
 
-        q = self._get_profile_query(profile_type, depth=depth)
+        q = self._get_profile_query(data_name, depth=depth)
         records = q.all()
         return records
 
-    def assert_upload(self, csv_f, profile_type, n_values, timezone='MST', sep=','):
+    def assert_upload(self, csv_f, data_name, n_values, timezone='MST', sep=','):
         '''
         Test whether the correct number of values were uploaded
         '''
@@ -74,33 +74,33 @@ class LayersBase(DBSetup):
         profile = UploadProfileData(f, epsg=26912, timezone=timezone, header_sep=sep)
         profile.submit(self.session)
 
-        records = self.get_profile(profile_type)
+        records = self.get_profile(data_name)
 
         # Assert N values in the single profile
         assert len(records) == n_values
 
-    def assert_value_assignment(self, profile_type, depth, correct_value,
+    def assert_value_assignment(self, data_name, depth, correct_value,
                                                          precision=3):
         '''
         Test whether the correct number of values were uploaded
         '''
         expected = self.get_str_value(correct_value, precision=precision)
 
-        records = self.get_profile(profile_type, depth=depth)
+        records = self.get_profile(data_name, depth=depth)
         value = getattr(records[0], 'value')
         received = self.get_str_value(value, precision=precision)
 
         # Assert the value with considerations to precision
         assert received == expected
 
-    def assert_attr_value(self, profile_type, attribute_name, depth,
+    def assert_attr_value(self, data_name, attribute_name, depth,
                             correct_value, precision=3):
         '''
         Tests attribute value assignment, these are any non-main attributes
         regarding the value itself. e.g. individual samples, location, etc
         '''
 
-        records = self.get_profile(profile_type, depth=depth)
+        records = self.get_profile(data_name, depth=depth)
         expected = self.get_str_value(correct_value, precision=precision)
 
         db_value = getattr(records[0], attribute_name)
@@ -108,7 +108,7 @@ class LayersBase(DBSetup):
 
         assert received == correct_value
 
-    def assert_samples_assignment(self, profile_type, depth, correct_values, precision=3):
+    def assert_samples_assignment(self, data_name, depth, correct_values, precision=3):
         '''
         Asserts all samples are assigned correctly
         '''
@@ -116,9 +116,9 @@ class LayersBase(DBSetup):
 
         for i, v in enumerate(correct_values):
             str_v = self.get_str_value(v, precision=precision)
-            self.assert_attr_value(profile_type, samples[i], depth, str_v, precision=precision)
+            self.assert_attr_value(data_name, samples[i], depth, str_v, precision=precision)
 
-    def assert_avg_assignment(self, profile_type, depth, avg_lst, precision=3):
+    def assert_avg_assignment(self, data_name, depth, avg_lst, precision=3):
         '''
         In cases of profiles with mulit profiles, the average of the samples
         are assigned to the value attribute of the layer. This asserts those
@@ -132,7 +132,7 @@ class LayersBase(DBSetup):
 
         expected = self.get_str_value(avg, precision=precision)
 
-        self.assert_value_assignment(profile_type, depth, expected)
+        self.assert_value_assignment(data_name, depth, expected)
 
 class TestStratigraphyProfile(LayersBase):
     '''
