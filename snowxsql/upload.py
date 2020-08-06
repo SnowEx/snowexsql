@@ -59,8 +59,8 @@ class UploadProfileData():
             df['depth'] = df['depth'].div(10)
 
         delta = abs(df['depth'].max() - df['depth'].min())
-        self.log.info('Snow Profile at {} contains {} Layers across {:0.2f} cm'
-                      ''.format(self._pit.info['site_id'], len(df), delta))
+        self.log.info('File contains {} profiles each with {} layers across {:0.2f} cm'
+                      ''.format(len(self._pit.profile_type), len(df), delta))
         return df
 
     def check(self, site_info):
@@ -126,9 +126,18 @@ class UploadProfileData():
         Args:
             session: SQLAlchemy session
         '''
+        long_upload = False
+
         # Construct a dataframe with all metadata
         for pt in self.profile_type:
             df = self.build_data(pt)
+
+            if len(df.index) > 1000:
+                long_upload = True
+                bar = progressbar.ProgressBar(max_value=len(df.index))
+
+            else:
+                long_upload = False
 
             # Grab each row, convert it to dict and join it with site info
             for i,row in df.iterrows():
@@ -138,6 +147,9 @@ class UploadProfileData():
                 d = LayerData(**data)
                 session.add(d)
                 session.commit()
+
+                if long_upload:
+                    bar.update(i)
 
         self.log.debug('Profile Submitted!\n')
 

@@ -4,12 +4,12 @@ Location for managing common upload script structures
 '''
 
 from snowxsql.utilities import get_logger
-from snowxsql.upload import UploadProfileData, ProfileHeader
+from snowxsql.upload import UploadProfileData
 from snowxsql.db import get_db
 import time
 import pandas as pd
 from os.path import basename
-
+from snowxsql.metadata import ProfileHeader, SMPMeasurementLog
 
 class UploadProfileBatch():
     '''
@@ -28,7 +28,7 @@ class UploadProfileBatch():
             'log_name': 'batch',
             'epsg': 26912,
             'n_files': -1,
-            'file_log': None,
+            'smp_log': None,
             }
 
     def __init__(self, profile_filenames, **kwargs):
@@ -82,9 +82,9 @@ class UploadProfileBatch():
 
         # Manage the site files and the file log
         self.sites = []
-        self.file_log_df = None
+        self.smp_log_f = None
 
-        if not isinstance(self.file_log, type(None)) and self.site_filenames:
+        if not isinstance(self.smp_log_f, type(None)) and self.site_filenames:
             raise ValueError('Batch Uploader is not able to digest info from a'
                              ' log file and site files, please choose one.')
 
@@ -92,8 +92,10 @@ class UploadProfileBatch():
         if self.site_filenames:
             self.open_sites()
 
-        elif self.file_log != None:
-            self.read_file_log(self.file_log)
+        elif self.smp_log_f != None:
+            self.smp_log = SMPMeasurementLog(self.smp_log_f)
+        else:
+            self.smp_log = None
 
     def open_sites(self):
         '''
@@ -102,41 +104,6 @@ class UploadProfileBatch():
         self.log.info('Reading {} site descriptor files...'.format(len(self.site_filenames)))
         for f in self.site_filenames:
             self.sites.append(ProfileHeader(f, **self.kwargs))
-
-    def read_file_log(self, filename):
-        '''
-        Reads in a csv where each entry contains metadata for each file.
-        This function reads those entries in as a pandas dataframe
-        '''
-
-        self.file_log_df = pd.read_csv(filename, header=9, encoding='latin', parse_dates=[0])
-
-    def apply_file_log_meta(self, filename, **kwargs):
-        '''
-        Adds info to the kwargs after finding a match from the filename. Currently
-        only written for SMP and SMP log file
-
-        SMP files follow the following format
-        S< SMP ID >M< SMP INSTRUMENT NUMBER >_< SITE ID >_<Date>.CSV
-
-        Args:
-            filename: Path to a file containing a profile to submit
-            kwargs: keyword arguments to be recevied by snowxsql.upload.UploadProfileData
-        Return:
-            kwargs: keyword aruments modfied with info from the log file if a filename match was found
-        '''
-        f = basename(filename)
-        info = f.split('_')
-        device = info[0].split('M')
-        device_id = device[0]
-        model = device[0]
-        site_id = info[1]
-        d_str = info[2].split('.')[0]
-        date = pd.to_datetime(d_str)
-
-        ind = ((self.file_log_df['Date']==date) & (self.file_log_df['Pit ID']==site_id))
-        entry = self.file_log_df.loc[ind]
-
 
     def push(self):
         '''
@@ -150,7 +117,7 @@ class UploadProfileBatch():
         # Loop over all the ssa files and upload them
         for i,f in enumerate(self.profile_filenames[0:self.n_files]):
 
-            # If were not debugging script allow exceptions
+            # If were not debugging script allow exceptions and report them later
             if not self.debug:
                 try:
                     self._push_one(f)
@@ -187,8 +154,9 @@ class UploadProfileBatch():
             f: valid file to upload
         '''
         # Read the data and organize it, remap the names
-        if isinstance(self.file_log_df, pd.DataFrame):
-            self.apply_file_log_meta(basename(f))
+        if isinstance(self.smp_log, pd.DataFrame):
+            extras = self.smp_log.get_metadata(f)
+            self.kwargs.update(extras)
 
         profile = UploadProfileData(f, **self.kwargs)
 
