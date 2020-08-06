@@ -18,7 +18,7 @@ info = {'site_name':'Grand Mesa',
          'longitude':-108.18948133421802
          }
 
-class ProfileHeaderTestBase():
+class DataHeaderTestBase():
 
     def setup_class(self):
         '''
@@ -27,14 +27,14 @@ class ProfileHeaderTestBase():
 
         columns: list of column names
         multi_sample_profile: Boolean indicating whether to average samples
-        profile_type: list of names of profiles to upload
+        data_names: list of names of profiles to upload
         header_pos: int of the index in the lines of the file where the columns are found
         info: Dictionary of the header information
         file: Basename of the file were testing in the data folder
         '''
 
         data = abspath(join(dirname(__file__), 'data'))
-        self.header = ProfileHeader(join(data, self.file))
+        self.header = DataHeader(join(data, self.file))
         self.name = self.file.split('.')[0]
 
     def assert_header_attribute(self, attr):
@@ -73,11 +73,11 @@ class ProfileHeaderTestBase():
         '''
         self.assert_header_attribute('columns')
 
-    def test_profile_type(self):
+    def test_data_names(self):
         '''
         Test the csv column names were correctly interpretted
         '''
-        self.assert_header_attribute('profile_type')
+        self.assert_header_attribute('data_names')
 
     def test_info(self):
         self.assert_header_attribute('info')
@@ -92,20 +92,20 @@ class ProfileHeaderTestBase():
         self.assert_header_attribute('multi_sample_profile')
 
 
-class TestDensityHeader(ProfileHeaderTestBase):
+class TestDensityHeader(DataHeaderTestBase):
     def setup_class(self):
         self.file = 'density.csv'
-        self.profile_type = ['density']
+        self.data_names = ['density']
         self.columns = ['depth','bottom_depth', 'sample_a', 'sample_b', 'sample_c']
         self.multi_sample_profile = True
         self.info = info.copy()
         super().setup_class(self)
 
 
-class TestLWCHeader(ProfileHeaderTestBase):
+class TestLWCHeader(DataHeaderTestBase):
     def setup_class(self):
         self.file = 'LWC.csv'
-        self.profile_type = ['dielectric_constant']
+        self.data_names = ['dielectric_constant']
         self.columns = ['depth','bottom_depth', 'sample_a', 'sample_b']
         self.multi_sample_profile = True
         self.info = info.copy()
@@ -113,33 +113,33 @@ class TestLWCHeader(ProfileHeaderTestBase):
         super().setup_class(self)
 
 
-class TestStratigraphyHeader(ProfileHeaderTestBase):
+class TestStratigraphyHeader(DataHeaderTestBase):
     def setup_class(self):
         self.file = 'stratigraphy.csv'
-        self.profile_type = ['hand_hardness','grain_size','grain_type','manual_wetness']
-        self.columns = ['depth','bottom_depth', 'comments'] + self.profile_type
+        self.data_names = ['hand_hardness','grain_size','grain_type','manual_wetness']
+        self.columns = ['depth','bottom_depth', 'comments'] + self.data_names
         self.multi_sample_profile = False
         self.info = info.copy()
 
         super().setup_class(self)
 
 
-class TestTemperatureHeader(ProfileHeaderTestBase):
+class TestTemperatureHeader(DataHeaderTestBase):
     def setup_class(self):
         self.file = 'temperature.csv'
-        self.profile_type = ['temperature']
-        self.columns = ['depth'] + self.profile_type
+        self.data_names = ['temperature']
+        self.columns = ['depth'] + self.data_names
         self.multi_sample_profile = False
         self.info = info.copy()
 
         super().setup_class(self)
 
 
-class TestSSAHeader(ProfileHeaderTestBase):
+class TestSSAHeader(DataHeaderTestBase):
     def setup_class(self):
         self.file = 'SSA.csv'
-        self.profile_type = ['specific_surface_area','reflectance','sample_signal','equivalent_diameter']
-        self.columns = ['depth','comments'] + self.profile_type
+        self.data_names = ['specific_surface_area','reflectance','sample_signal','equivalent_diameter']
+        self.columns = ['depth','comments'] + self.data_names
         self.multi_sample_profile = False
         self.info = info.copy()
         self.info['instrument'] = 'IS3-SP-11-01F'
@@ -152,10 +152,10 @@ class TestSSAHeader(ProfileHeaderTestBase):
         super().setup_class(self)
 
 
-class TestSiteDetailseHeader(ProfileHeaderTestBase):
+class TestSiteDetailseHeader(DataHeaderTestBase):
     def setup_class(self):
         self.file = 'site_details.csv'
-        self.profile_type = None
+        self.data_names = None
         self.columns = None
         self.multi_sample_profile = False
         self.info = info.copy()
@@ -183,6 +183,18 @@ class TestSiteDetailseHeader(ProfileHeaderTestBase):
 
         super().setup_class(self)
 
+class TestDepthsHeader(DataHeaderTestBase):
+    def setup_class(self):
+        self.file = 'depths.csv'
+        self.data_names = ['snow_depth']
+        self.columns = ['measurement_tool', 'id', 'date', 'time', 'longitude',
+                        'latitude','easting', 'northing', 'elevation',
+                        'equipment', 'version number'] + self.data_names
+
+        self.multi_sample_profile = False
+        self.info = info.copy()
+
+        super().setup_class(self)
 
 class TestSMPMeasurementLog():
     '''

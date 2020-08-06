@@ -25,7 +25,7 @@ class TestConversions(DBSetup):
 
         # Upload some point data
         fname = join(self.data_dir, 'depths.csv' )
-        csv = PointDataCSV(fname, 'snow_depth', 'cm', 'Grand Mesa', 'MST', 26912)
+        csv = PointDataCSV(fname, 'cm', 'Grand Mesa', 'MST', 26912)
         csv.submit(self.session)
 
 

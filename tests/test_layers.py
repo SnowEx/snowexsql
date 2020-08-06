@@ -20,7 +20,7 @@ class LayersBase(DBSetup):
         super().setup_class()
 
         site_fname = join(self.data_dir,'site_details.csv' )
-        self.pit = ProfileHeader(site_fname, timezone='MST', epsg=26912)
+        self.pit = DataHeader(site_fname, timezone='MST', epsg=26912)
         self.bulk_q = \
         self.session.query(LayerData).filter(LayerData.site_id == self.site_id)
 

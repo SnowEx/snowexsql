@@ -48,9 +48,8 @@ def standardize_key(messy):
     key = clean_str(messy)
 
     # Remove units assuming the first piece is the only important one
-    for ch in ['[','(']:
-        if ch in key:
-            key = key.split(ch)[0].strip(' ')
+    for ch in ['[]','()']:
+        key = strip_encapsulated(key, ch).strip(' ')
 
     key = key.lower().replace(' ','_')
     return key
@@ -181,7 +180,7 @@ def strip_encapsulated(str_line, encapusulator):
         rcap = encapusulator[1]
     else:
         lcap = rcap = encapusulator
-    
+
     while lcap in result and rcap in result:
         result = result.replace(result[result.index(lcap):result.index(rcap) + 1], '')
 

@@ -9,7 +9,7 @@ from snowxsql.db import get_db
 import time
 import pandas as pd
 from os.path import basename
-from snowxsql.metadata import ProfileHeader, SMPMeasurementLog
+from snowxsql.metadata import DataHeader, SMPMeasurementLog
 
 class UploadProfileBatch():
     '''
@@ -103,7 +103,7 @@ class UploadProfileBatch():
         '''
         self.log.info('Reading {} site descriptor files...'.format(len(self.site_filenames)))
         for f in self.site_filenames:
-            self.sites.append(ProfileHeader(f, **self.kwargs))
+            self.sites.append(DataHeader(f, **self.kwargs))
 
     def push(self):
         '''

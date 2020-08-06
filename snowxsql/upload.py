@@ -1,10 +1,10 @@
 from . data import *
 from .string_management import *
-from .metadata import ProfileHeader
+from .metadata import DataHeader
+from .utilities import *
 
 import pandas as pd
 import progressbar
-from .utilities import get_logger, kw_in_here, avg_from_multi_sample
 from subprocess import check_output, STDOUT
 from geoalchemy2.elements import RasterElement, WKTElement
 from geoalchemy2.shape import from_shape
@@ -27,7 +27,7 @@ class UploadProfileData():
         self.filename = profile_filename
 
         # Read in the file header
-        self._pit = ProfileHeader(profile_filename, **kwargs)
+        self._pit = DataHeader(profile_filename, **kwargs)
 
         # Transfer a couple attributes for brevity
         for att in ['profile_type', 'multi_sample_profile']:
@@ -60,7 +60,7 @@ class UploadProfileData():
 
         delta = abs(df['depth'].max() - df['depth'].min())
         self.log.info('File contains {} profiles each with {} layers across {:0.2f} cm'
-                      ''.format(len(self._pit.profile_type), len(df), delta))
+                      ''.format(len(self._pit.date_type), len(df), delta))
         return df
 
     def check(self, site_info):
@@ -110,7 +110,7 @@ class UploadProfileData():
         # Individual
         else:
             df['value'] = df[profile_type].astype(str)
-            df = df.drop(columns=self.profile_type)
+            df = df.drop(columns=self.date_type)
 
         # Drop all columns were not expecting
         drop_cols = [c for c in df.columns if c not in self.expected_attributes]
@@ -129,7 +129,7 @@ class UploadProfileData():
         long_upload = False
 
         # Construct a dataframe with all metadata
-        for pt in self.profile_type:
+        for pt in self.date_type:
             df = self.build_data(pt)
 
             if len(df.index) > 1000:
@@ -159,17 +159,21 @@ class PointDataCSV(object):
     '''
 
     # Remapping for special keywords for snowdepth measurements
-    measurement_names = {'MP':'magnaprobe','M2':'mesa', 'PR':'pit ruler'}
+    measurement_names = {'mp':'magnaprobe','m2':'mesa', 'pr':'pit ruler'}
     cleanup_keys = ['utmzone']
 
-    def __init__(self, filename, value_type, units, site_name, timezone, epsg):
+    available_types = ['snow_depth','two_way_travel']
+
+    rename = {'depth':'snow_depth',
+              'twt':'two_way_travel'}
+
+    def __init__(self, filename, units, site_name, timezone, epsg):
         self.log = get_logger(__name__)
-        self.df = self._read(filename)
-        self.value_type = value_type
         self.units = units
         self.site_name = site_name
         self.timezone = timezone
         self.epsg = epsg
+        self.df = self._read(filename)
 
 
     def _read(self, filename):
@@ -177,11 +181,14 @@ class PointDataCSV(object):
         Read in the csv
         '''
         self.log.info('Reading in CSV data from {}'.format(filename))
-        df = pd.read_csv(filename)
+        self.p = DataHeader(filename, timezone=self.timezone, epsg=self.epsg)
+        self.value_type = self.p.data_names[0]
+
+        df = pd.read_csv(filename, names=self.p.columns)
+
         for c in df.columns:
             if c.lower() in self.cleanup_keys:
                 del df[c]
-        print(df.columns)
         return df
 
     def submit(self, session):
@@ -195,9 +202,9 @@ class PointDataCSV(object):
             data = {'site_name':self.site_name,
                     'type':self.value_type,
                     'units':self.units}
+
             for k, v in row.items():
                 name = k.lower()
-
                 # Rename the tool name to work for class attributes
                 if 'measurement' in name:
                     name = 'measurement_tool'
@@ -208,7 +215,7 @@ class PointDataCSV(object):
                     name = name.split(' ')[0]
                     value = v
 
-                if name == 'depth':
+                if name == self.p.date_type:
                     name = 'value'
 
                 data[name] = value

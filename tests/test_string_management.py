@@ -63,10 +63,9 @@ def test_strip_encapsulated():
     '''
     Test where we can remove chars in a string
     '''
-    s = 'success(fail)'
-    r = strip_encapsulated(s, '()')
-    assert r == 'success'
 
-    s = 'Force (Newtons), Depth (mm)'
+    s = 'Measurement Tool (MP = Magnaprobe; M2 = Mesa 2; PR = Pit Ruler),ID,Date (yyyymmdd)'
     r = strip_encapsulated(s, '()')
-    assert r == 'Force , Depth '
+    assert r == 'Measurement Tool ,ID,Date '
+
+    s = ''

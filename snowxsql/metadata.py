@@ -4,7 +4,7 @@ This includes interpetting data file headers or dedicated files to describing
 data
 '''
 
-from .string_management import standardize_key, clean_str, remap_data_names, convert_cardinal_to_degree, add_date_time_keys
+from .string_management import *
 from .utilities import get_logger, read_n_lines
 import utm
 import pandas as pd
@@ -74,7 +74,7 @@ class SMPMeasurementLog(object):
 
         # Assume columns are populated left to right so if we have empty ones they are assumed at the end
         n_cols = len(str_cols)
-        str_cols = remap_data_names(str_cols, ProfileHeader.rename)
+        str_cols = remap_data_names(str_cols, DataHeader.rename)
         dtype = {k:str for k in str_cols}
         df = pd.read_csv(filename, header=header_pos, names=str_cols,
                                    usecols=range(n_cols), encoding='latin',
@@ -242,7 +242,7 @@ class SMPMeasurementLog(object):
         meta = self.df.loc[suffix].to_dict()
         return meta
 
-class ProfileHeader(object):
+class DataHeader(object):
     '''
     Class for managing information stored in files headers about a snow pit
     site.
@@ -266,7 +266,7 @@ class ProfileHeader(object):
               underscores
         columns: Column names of data stored in csv. None for site description
                  files which is basically all one header
-        profile_type: List of profile names to be upload
+        data_names: List of data names to be uploaded
         multi_sample_profile: Boolean describing single profile types that
                               have multiple samples (e.g. density). This
                               triggers calculating the mean of the profiles
@@ -302,14 +302,16 @@ class ProfileHeader(object):
              'lat':'latitude',
              'long':'longitude',
              'lon':'longitude',
+             'twt':'two_way_travel',
+             'depth': 'snow_depth',
              }
 
     # Known possible profile types anything not in here will throw an error
-    available_profile_types = ['density', 'dielectric_constant', 'temperature',
+    available_data_names = ['density', 'dielectric_constant', 'temperature',
                      'force', 'reflectance','sample_signal',
                      'specific_surface_area', 'deq',
                      'grain_size', 'hand_hardness', 'grain_type',
-                     'manual_wetness']
+                     'manual_wetness', 'twt', 'depth']
 
 
     def __init__(self, filename, timezone='MST', epsg=26912, header_sep=',',
@@ -330,11 +332,12 @@ class ProfileHeader(object):
         self.northern_hemisphere = northern_hemisphere
         self.header_sep = header_sep
         self.epsg = epsg
+        self.is_point_data = False
 
         self.log.info('Interpretting {}'.format(filename))
 
-        # Site location files will have no profile_type
-        self.profile_type = None
+        # Site location files will have no data_name
+        self.data_names = None
 
         # Does our profile type have multiple samples
         self.multi_sample_profile = False
@@ -381,7 +384,12 @@ class ProfileHeader(object):
         header_lengths = [0, 0]
 
         for i,l in enumerate(lines):
+            # Get rid of things in parenthese.
+            for c in ['()','[]']:
+                l = strip_encapsulated(l, c)
+
             l = l.split(',')
+            print(l)
             # column count
             n = len(l)
 
@@ -391,12 +399,13 @@ class ProfileHeader(object):
                 header_lengths[0] = n
 
             # If we find a column count larger than the current replace it
-            if header_lengths[0] >= header_lengths[1]:
+            if header_lengths[0] > header_lengths[1]:
                 header_lengths[1] = header_lengths[0]
                 header_pos_options[1] = header_pos_options[0]
 
             # Break if we find number in the first position (Assumption #3)
             entry = l[0].replace('-','').replace('.','')
+
             if entry.isnumeric():
                 self.log.debug('Found end of header at line {}...'.format(i))
                 header_pos_options[1] = i - 1
@@ -410,60 +419,65 @@ class ProfileHeader(object):
         columns = [standardize_key(c) for c in raw_cols]
 
         # Detmerine the profile type
-        (self.profile_type, self.multi_sample_profile) = self.determine_profile_type(raw_cols)
+        (self.data_names, self.multi_sample_profile) = self.determine_data_names(columns)
 
         # Rename any column names to more standard ones
         columns = remap_data_names(columns, self.rename)
-        self.profile_type = remap_data_names(self.profile_type, self.rename)
+
+        self.data_names = remap_data_names(self.data_names, self.rename)
+
         return columns, header_pos
 
-    def determine_profile_type(self, raw_columns):
+    def determine_data_names(self, raw_columns):
         '''
-        Determine the type of the profile from the raw column header. Also
-        determine if this is the type of profile file that will submit more
-        than one main value (e.g. hand_hardness, grain size all in the same
-        file)
+        Determine the names of the data to be uploaded from the raw column
+        header. Also determine if this is the type of profile file that will
+        submit more than one main value (e.g. hand_hardness, grain size all in
+        the same file)
 
         Args:
-            raw_columns: list of Raw text split on commas of the column names
+            raw_columns: list of raw text split on commas of the column names
 
+        Returns:
+            type: **data_names** - list of column names that will be uploaded as a main value
+                  **multi_sample_profile** - boolean representing if we will average the samples for a main value (e.g. density)
         '''
         # Names of columns we are going to submit as main values
-        profile_type = []
+        data_names = []
         multi_sample_profile = False
 
         # String of the columns for counting
         str_cols =  ' '.join(raw_columns).replace(' ',"_").lower()
 
-        for ptype in self.available_profile_types:
+        for dname in self.available_data_names:
 
-            kw_count = str_cols.count(ptype)
+            kw_count = str_cols.count(dname)
 
             # if we have keyword match in our columns then add the type
             if kw_count > 0:
-                profile_type.append(ptype)
+                data_names.append(dname)
 
                 if kw_count > 1:
                     multi_sample_profile = True
 
-        if profile_type:
-            self.log.info('Profile types to be uploaded are: {}'
-                          ''.format(', '.join(profile_type)))
+        if data_names:
+            self.log.info('Names to be uploaded as main data are: {}'
+                          ''.format(', '.join(data_names)))
         else:
-            raise ValueError('Unable to determine profile type from data'
-                             ' columns: {}'.format(str_cols))
+            raise ValueError('Unable to determine data names from'
+                            ' header/columns columns: {}'.format(", ".join(raw_columns)))
 
         if multi_sample_profile:
-            if len(profile_type) != 1:
-                raise ValueError('Cannot add multi sampled columns where there is'
-                                 ' more than one profile type in the data!'
-                                 '\nProfile_types = {}'.format(', '.join(profile_type)))
+            if len(data_names) != 1:
+                raise ValueError('Cannot add multi sampled columns where there'
+                                 ' is more than one data name in file!'
+                                 '\ndata_names = {}'.format(', '.join(data_names)))
             else:
-                self.log.info('{} profile contains multiple samples for each '
+                self.log.info('{} data contains multiple samples for each '
                               'layer. The main value will be the average of '
-                              'these samples.'.format(profile_type[0].title()))
+                              'these samples.'.format(data_names[0].title()))
 
-        return profile_type, multi_sample_profile
+        return data_names, multi_sample_profile
 
     def _read(self, filename):
         '''
@@ -480,7 +494,8 @@ class ProfileHeader(object):
         Returns:
             tuple: **data** - Dictionary containing site details
                    **columns** - List of clean column names
-                   **header_pos** - Index of the columns header for skiprows in read_csv
+                   **header_pos** - Index of the columns header for skiprows in
+                                    read_csv
        '''
 
         with open(filename, encoding='latin') as fp:
@@ -534,8 +549,8 @@ class ProfileHeader(object):
             # Assign non empty strings to dictionary
             if k and value:
                 data[k] = value.strip(' ').replace('"','').replace('  ',' ')
-
-        data = add_date_time_keys(data, timezone=self.timezone)
+        if data:
+            data = add_date_time_keys(data, timezone=self.timezone)
 
         # Rename the info dictionary keys to more standard ones
         data = remap_data_names(data, self.rename)
@@ -656,11 +671,17 @@ class ProfileHeader(object):
             self.info['easting'] = easting
             self.info['northing'] = northing
             self.info['utm_zone'] = utm_zone
+
+        # Check for point data which will contain this in the data not the header
+        elif 'latitude' in self.columns or 'easting' in self.columns:
+            self.is_point_data = True
+
         else:
             raise(ValueError('No Geographic information was'
                              'provided in the file header.'))
 
-        # Add a geometry entry
-        self.info['geom'] = WKTElement('POINT({} {})'
-                            ''.format(self.info['easting'],
+        if not self.is_point_data:
+            # Add a geometry entry
+            self.info['geom'] = WKTElement('POINT({} {})'
+                                ''.format(self.info['easting'],
                                       self.info['northing']), srid=self.epsg)
