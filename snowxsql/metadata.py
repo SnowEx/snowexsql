@@ -258,8 +258,9 @@ class DataHeader(object):
 
     If the file is not determined to be a site details file as indicated by the
     word site in the filename, then the all header lines except the last line
-    is interpretted as header. In profile files the last line should be the
-    column header which is also interpretted and stored as a class attribute
+    is interpretted as header. In csv files the last line of the
+    header should be the column header which is also interpretted and stored
+    as a class attribute
 
     Attributes:
         info: Dictionary containing all header information, stripped of
@@ -304,7 +305,6 @@ class DataHeader(object):
              'long':'longitude',
              'lon':'longitude',
              'twt':'two_way_travel',
-             'depth': 'snow_depth',
              }
 
     # Known possible profile types anything not in here will throw an error
@@ -424,6 +424,9 @@ class DataHeader(object):
         # Detmerine the profile type
         (self.data_names, self.multi_sample_profile) = \
                                              self.determine_data_names(columns)
+        # Depth is never submitted with anything else otherwise it is a support variable
+        if len(self.data_names) > 1 and 'depth' in self.data_names:
+            self.data_names.pop(self.data_names.index('depth'))
 
         # Rename any column names to more standard ones
         columns = remap_data_names(columns, self.rename)

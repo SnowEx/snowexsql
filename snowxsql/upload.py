@@ -30,7 +30,7 @@ class UploadProfileData():
         self._pit = DataHeader(profile_filename, **kwargs)
 
         # Transfer a couple attributes for brevity
-        for att in ['profile_type', 'multi_sample_profile']:
+        for att in ['data_names', 'multi_sample_profile']:
             setattr(self, att, getattr(self._pit, att))
 
         # Read in data
@@ -60,7 +60,7 @@ class UploadProfileData():
 
         delta = abs(df['depth'].max() - df['depth'].min())
         self.log.info('File contains {} profiles each with {} layers across {:0.2f} cm'
-                      ''.format(len(self._pit.date_type), len(df), delta))
+                      ''.format(len(self._pit.data_names), len(df), delta))
         return df
 
     def check(self, site_info):
@@ -89,7 +89,7 @@ class UploadProfileData():
                                                              self._pit.info[k],
                                                              site_info[k]))
 
-    def build_data(self, profile_type):
+    def build_data(self, data_name):
         '''
         Build out the original dataframe with the metdata to avoid doing it
         during the submission loop
@@ -100,7 +100,7 @@ class UploadProfileData():
         for k, v in self._pit.info.items():
             df[k] = v
 
-        df['type'] = profile_type
+        df['type'] = data_name
 
         # Get the average if its multisample profile
         if self._pit.multi_sample_profile:
@@ -109,8 +109,8 @@ class UploadProfileData():
 
         # Individual
         else:
-            df['value'] = df[profile_type].astype(str)
-            df = df.drop(columns=self.date_type)
+            df['value'] = df[data_name].astype(str)
+            df = df.drop(columns=self.data_names)
 
         # Drop all columns were not expecting
         drop_cols = [c for c in df.columns if c not in self.expected_attributes]
@@ -129,7 +129,7 @@ class UploadProfileData():
         long_upload = False
 
         # Construct a dataframe with all metadata
-        for pt in self.date_type:
+        for pt in self.data_names:
             df = self.build_data(pt)
 
             if len(df.index) > 1000:
@@ -162,7 +162,7 @@ class PointDataCSV(object):
     measurement_names = {'mp':'magnaprobe','m2':'mesa', 'pr':'pit ruler'}
     cleanup_keys = ['utmzone']
 
-    available_types = ['snow_depth','two_way_travel']
+    available_types = ['depth','two_way_travel']
 
     rename = {'depth':'snow_depth',
               'twt':'two_way_travel'}
@@ -215,7 +215,7 @@ class PointDataCSV(object):
                     name = name.split(' ')[0]
                     value = v
 
-                if name == self.p.date_type:
+                if name == self.p.data_names:
                     name = 'value'
 
                 data[name] = value
