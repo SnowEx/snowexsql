@@ -47,7 +47,7 @@ class SMPMeasurementLog(object):
         self.log = get_logger(__name__)
 
         self.header, self.df = self._read(filename)
-        self.df.set_index('fname_sufix',inplace=True)
+        self.df.set_index('fname_sufix', inplace=True)
 
         # Cardinal map to interpet the orientation
         self.cardinal_map = {'N':'North', 'NE':'Northeast', 'E':'East',
@@ -64,17 +64,17 @@ class SMPMeasurementLog(object):
         self.log.info('Reading SMP file log header')
 
         header_pos = 9
-        header = read_n_lines(filename, header_pos)
-
+        header = read_n_lines(filename, header_pos + 1)
         self.observer_map = self._build_observers(header)
-        # self. orientation_map = self.interpret_orientation(header)
 
         # parse/rename column names
+        line = header[header_pos]
         str_cols = [standardize_key(col) for col in line.lower().split(',') if col.strip()]
 
         # Assume columns are populated left to right so if we have empty ones they are assumed at the end
         n_cols = len(str_cols)
         str_cols = remap_data_names(str_cols, DataHeader.rename)
+
         dtype = {k:str for k in str_cols}
         df = pd.read_csv(filename, header=header_pos, names=str_cols,
                                    usecols=range(n_cols), encoding='latin',
@@ -131,6 +131,7 @@ class SMPMeasurementLog(object):
                     name = info[0]
                     initials = info[1]
                     observer_map[initials] = name
+                break
 
         return observer_map
 
@@ -385,13 +386,10 @@ class DataHeader(object):
 
         for i,l in enumerate(lines):
             # Get rid of things in parenthese.
-            for c in ['()','[]']:
-                l = strip_encapsulated(l, c)
+            clean_line = l.split(',')
 
-            l = l.split(',')
-            print(l)
             # column count
-            n = len(l)
+            n = len(clean_line)
 
             # Grab the columns header if we see one a little bigger
             if n >= n_columns:
@@ -404,7 +402,7 @@ class DataHeader(object):
                 header_pos_options[1] = header_pos_options[0]
 
             # Break if we find number in the first position (Assumption #3)
-            entry = l[0].replace('-','').replace('.','')
+            entry = clean_line[0].replace('-','').replace('.','')
 
             if entry.isnumeric():
                 self.log.debug('Found end of header at line {}...'.format(i))
@@ -415,15 +413,20 @@ class DataHeader(object):
         header_pos = header_pos_options[1]
 
         # Parse the columns header based on the size of the last line
-        raw_cols = lines[header_pos].strip('#').split(',')
+        str_line = lines[header_pos]
+        # Remove units
+        for c in ['()','[]']:
+            str_line = strip_encapsulated(str_line, c)
+
+        raw_cols = str_line.strip('#').split(',')
         columns = [standardize_key(c) for c in raw_cols]
 
         # Detmerine the profile type
-        (self.data_names, self.multi_sample_profile) = self.determine_data_names(columns)
+        (self.data_names, self.multi_sample_profile) = \
+                                             self.determine_data_names(columns)
 
         # Rename any column names to more standard ones
         columns = remap_data_names(columns, self.rename)
-
         self.data_names = remap_data_names(self.data_names, self.rename)
 
         return columns, header_pos
@@ -549,6 +552,8 @@ class DataHeader(object):
             # Assign non empty strings to dictionary
             if k and value:
                 data[k] = value.strip(' ').replace('"','').replace('  ',' ')
+
+        # If there is not header data then don't bother (useful for point data)
         if data:
             data = add_date_time_keys(data, timezone=self.timezone)
 
@@ -673,8 +678,9 @@ class DataHeader(object):
             self.info['utm_zone'] = utm_zone
 
         # Check for point data which will contain this in the data not the header
-        elif 'latitude' in self.columns or 'easting' in self.columns:
-            self.is_point_data = True
+        elif self.columns != None:
+            if 'latitude' in self.columns or 'easting' in self.columns:
+                self.is_point_data = True
 
         else:
             raise(ValueError('No Geographic information was'

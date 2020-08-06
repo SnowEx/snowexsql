@@ -52,7 +52,6 @@ class DataHeaderTestBase():
             for k,v in data.items():
                 # Skip geom for now
                 if k != 'geom':
-                    print(k,v,expected[k] )
                     self.assert_single_value(data[k], expected[k])
 
         else:
@@ -167,7 +166,7 @@ class TestSiteDetailseHeader(DataHeaderTestBase):
         self.info['Wind'] = 'Moderate'
         self.info['ground_condition'] = 'Frozen'
         self.info['ground_roughness'] = 'Rough'
-        self.info['ground_vegetation'] = 'Grass'
+        self.info['ground_vegetation'] = '[Grass]'
         self.info['vegetation_height'] = '5, nan'
         self.info['wind'] = 'Moderate'
 
@@ -189,7 +188,7 @@ class TestDepthsHeader(DataHeaderTestBase):
         self.data_names = ['snow_depth']
         self.columns = ['measurement_tool', 'id', 'date', 'time', 'longitude',
                         'latitude','easting', 'northing', 'elevation',
-                        'equipment', 'version number'] + self.data_names
+                        'equipment', 'version_number'] + self.data_names
 
         self.multi_sample_profile = False
         self.info = info.copy()

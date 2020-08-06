@@ -7,10 +7,9 @@ def clean_str(messy):
     Removes unwanted character in a str that we encounter alot
     '''
     clean = messy
-    clean = clean.strip(' ')
 
     # Strip of any chars that are beginning and end
-    for ch in [' ', '\n','[',']']:
+    for ch in [' ', '\n']:
         clean = clean.strip(ch)
 
     # Remove colons but not when its between numbers (e.g time)
@@ -30,9 +29,9 @@ def clean_str(messy):
 
     # Remove characters anywhere in string that is undesireable
     for ch in ['"',"'"]:
-        if ch in clean:
-            clean = clean.replace(ch, '')
+        clean = clean.replace(ch, '')
 
+    clean = clean.strip(' ')
     return clean
 
 def standardize_key(messy):
@@ -45,13 +44,15 @@ def standardize_key(messy):
     Returns:
         clean: String minus all characters and patterns of no interest
     '''
-    key = clean_str(messy)
+    key = messy
 
-    # Remove units assuming the first piece is the only important one
-    for ch in ['[]','()']:
-        key = strip_encapsulated(key, ch).strip(' ')
+    # Remove units
+    for c in ['()','[]']:
+        key = strip_encapsulated(key, c)
 
+    key = clean_str(key)
     key = key.lower().replace(' ','_')
+
     return key
 
 
