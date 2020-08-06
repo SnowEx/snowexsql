@@ -58,3 +58,15 @@ def test_add_date_time_keys():
 
     assert d['date'] == datetime.date(year=2020, month=2, day=5)
     assert d['time'] == datetime.time(hour=9, minute=45)
+
+def test_strip_encapsulated():
+    '''
+    Test where we can remove chars in a string
+    '''
+    s = 'success(fail)'
+    r = strip_encapsulated(s, '()')
+    assert r == 'success'
+
+    s = 'Force (Newtons), Depth (mm)'
+    r = strip_encapsulated(s, '()')
+    assert r == 'Force , Depth '
