@@ -1,6 +1,6 @@
 from snowxsql.string_management import *
 import pytest
-
+import datetime
 
 @pytest.mark.filterwarnings('ignore:Assuming')
 def test_cardinal_to_degrees():
@@ -38,3 +38,23 @@ def test_standardize_key():
 
     for i,t in enumerate(test):
         assert standardize_key(t)== result[i]
+
+
+def test_add_date_time_keys():
+    '''
+    Test we capture all the scenarios with converting dates from dictionary
+    '''
+    # Test that we can separate the datetime like in the stratigraphy files
+    data = {'date/time': '2020-02-05-09:45'}
+    d = add_date_time_keys(data, timezone='MST')
+
+    assert d['date'] == datetime.date(year=2020, month=2, day=5)
+    assert d['time'] == datetime.time(hour=9, minute=45)
+
+    # Test when theyre separated like in SMP data
+    data = {'date':'2020-02-05',
+            'time':'09:45'}
+    d = add_date_time_keys(data, timezone='MST')
+
+    assert d['date'] == datetime.date(year=2020, month=2, day=5)
+    assert d['time'] == datetime.time(hour=9, minute=45)

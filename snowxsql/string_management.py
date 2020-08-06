@@ -143,7 +143,7 @@ def add_date_time_keys(data, timezone='MST'):
 
     # Handle gpr data dates
     elif 'utcyear' in keys and 'utcdoy' in keys and 'utctod' in keys:
-        base = pd.to_datetime('{}-01-01 00:00:00 '.format(data['utcyear']) + timezone)
+        base = pd.to_datetime('{:d}-01-01 00:00:00 '.format(int(data['utcyear'])) + timezone)
         subsecond = str(data['utctod']).split('.')[0]
         ms = int(subsecond[0])
         mus = int(subsecond[1])
