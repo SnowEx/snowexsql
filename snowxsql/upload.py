@@ -175,7 +175,7 @@ class PointDataCSV(object):
         '''
         Read in the csv
         '''
-        
+
         self.log.info('Reading in CSV data from {}'.format(filename))
         self.p = DataHeader(filename, timezone=self.timezone, epsg=self.epsg)
         self.value_type = self.p.data_names[0]
@@ -194,8 +194,9 @@ class PointDataCSV(object):
         del self.df[data_name]
 
         # Assign the measurement tool verbose name
-        self.df['measurement_tool'] = \
-            self.df['measurement_tool'].apply(lambda x: self.measurement_names[x.lower()])
+        if 'measurement_tool' in self.df.columns:
+            self.df['measurement_tool'] = \
+                self.df['measurement_tool'].apply(lambda x: self.measurement_names[x.lower()])
 
         # Assign other meta data
         self.df['site_name'] = self.site_name

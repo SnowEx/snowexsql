@@ -24,7 +24,7 @@ class TestDB(DBSetup):
         columns = [m.key for m in t.columns]
         shouldbe = ['id', 'site_name', 'date', 'time', 'time_created',
                     'time_updated', 'latitude', 'longitude', 'northing',
-                    'easting', 'elevation', 'version', 'type',
+                    'easting', 'elevation', 'version_number', 'type',
                     'measurement_tool', 'equipment', 'value']
 
         for c in shouldbe:

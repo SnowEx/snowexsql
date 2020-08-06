@@ -21,7 +21,7 @@ class PointsBase(DBSetup):
         super().setup_class()
 
         fname = join(self.data_dir, self.fname)
-        csv = PointDataCSV(fname, self.variable, self.units, 'Grand Mesa', self.timezone, 26912)
+        csv = PointDataCSV(fname, self.units, 'Grand Mesa', self.timezone, 26912)
         csv.submit(self.session)
         self.base_query = self.session.query(PointData).filter(PointData.type == self.variable)
 
@@ -56,7 +56,7 @@ class TestPoints(PointsBase):
     '''
 
     fname = 'depths.csv'
-    variable = 'snowdepth'
+    variable = 'depth'
     units = 'cm'
 
     def test_point_datatypes(self):
@@ -75,7 +75,7 @@ class TestPoints(PointsBase):
         'easting': float,
         'elevation': float,
         'utm_zone': float,
-        'version': int,
+        'version_number': int,
         'type': str,
         'units': str,
         'measurement_tool': str,
@@ -97,7 +97,7 @@ class TestPoints(PointsBase):
 
 class TestSnowDepths(PointsBase):
     fname = 'depths.csv'
-    variable = 'snowdepth'
+    variable = 'depth'
     units = 'cm'
 
     def test_data_entry(self):
@@ -122,9 +122,9 @@ class TestSnowDepths(PointsBase):
 
 class TestGPRTWT(PointsBase):
     fname = 'gpr_twt.csv'
-    variable = 'twt'
     units = 'ns'
     timezone = 'UTC'
+    variable = 'two_way_travel'
     # def test_data_entry(self):
     #     '''
     #     Test that the data was entered successfully
