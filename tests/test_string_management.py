@@ -68,4 +68,6 @@ def test_strip_encapsulated():
     r = strip_encapsulated(s, '()')
     assert r == 'Measurement Tool ,ID,Date '
 
-    s = ''
+    s = 'Date (What is happening)'
+    r = strip_encapsulated(s, '()')
+    assert r == 'Date '
