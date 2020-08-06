@@ -4,7 +4,7 @@ This includes interpetting data file headers or dedicated files to describing
 data
 '''
 
-from .string_management import standardize_key, clean_str, remap_data_names, convert_cardinal_to_degree
+from .string_management import standardize_key, clean_str, remap_data_names, convert_cardinal_to_degree, add_date_time_keys
 from .utilities import get_logger, read_n_lines
 import utm
 import pandas as pd
@@ -629,8 +629,7 @@ class ProfileHeader(object):
                         'directions, converting to degrees...'
                         ''.format(self.info['site_id']))
                         deg = convert_cardinal_to_degree(aspect)
-
-                    self.info[k] = deg
+                        self.info[k] = deg
 
         # Convert geographic details to floats
         for numeric_key in ['northing','easting','latitude','longitude']:
