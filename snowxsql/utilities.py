@@ -19,6 +19,29 @@ def get_logger(name, debug=True, ext_logger=None,):
     coloredlogs.install(fmt=fmt, level=level, logger=log)
     return log
 
+def read_n_lines(f, nlines):
+    '''
+    Opens and reads nlines from a file to avoid reading an entire file.
+    Useful for reading headers
+
+    Args:
+        f: filename to open
+        n_lines: number of lines to read in
+    Returns:
+        lines: list of lines from file nlines long
+    '''
+    lines = []
+
+    with open(f,'r') as fp:
+        for i,line in enumerate(fp):
+            if i < nlines:
+                lines.append(line)
+            else:
+                break
+        fp.close()
+
+    return lines
+
 
 def kw_in_here(kw, d, case_insensitive=True):
     '''

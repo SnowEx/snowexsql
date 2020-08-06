@@ -5,7 +5,7 @@ data
 '''
 
 from .string_management import standardize_key, clean_str, remap_data_names, convert_cardinal_to_degree
-from .utilities import get_logger
+from .utilities import get_logger, read_n_lines
 import utm
 import pandas as pd
 from geoalchemy2.elements import WKTElement
@@ -63,16 +63,8 @@ class SMPMeasurementLog(object):
         '''
         self.log.info('Reading SMP file log header')
 
-        header = []
         header_pos = 9
-
-        with open(filename,'r') as fp:
-            for i,line in enumerate(fp):
-                if i < header_pos:
-                    header.append(line)
-                else:
-                    break
-            fp.close()
+        header = read_n_lines(filename, header_pos)
 
         self.observer_map = self._build_observers(header)
         # self. orientation_map = self.interpret_orientation(header)
