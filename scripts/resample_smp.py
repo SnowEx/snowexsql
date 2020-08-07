@@ -13,7 +13,6 @@ import pandas as pd
 import shutil
 import matplotlib.pyplot as plt
 from snowxsql.utilities import read_n_lines
-import sys
 
 def open_df(smp_f, header_pos=6):
     '''
@@ -82,6 +81,61 @@ def make_comparison(f):
     ax.set_title('Original Precision'.format(d_p, f_p))
     plt.show()
 
+
+def resample_batch(filenames, output, downsample, header_pos=6):
+    '''
+    Resample all the file names and save to the output dir
+
+    Args:
+        filenames: List of smp csv files needed to be subsampled
+        output: directory to output files to
+        downsample: Number of samples to subsample at (e.g. downsample=100 is subsampled to every 100th sample)
+
+    '''
+    log = get_logger('SMP Resample')
+
+    shutil.rmtree(output)
+
+    log.info('Resampling {} SMP profiles...'.format(len(filenames)))
+
+    log.info('Making output folder {}'.format(output))
+    mkdir(output)
+
+    # Loop over all the files, name them using the same name just using a different folder
+    for f in filenames:
+        base_f = basename(f)
+
+        log.info('Resampling {}'.format(base_f))
+
+        # Open the file for the header and grab it as a list
+        header = read_n_lines(f, header_pos)
+
+        # Open the file as a dataframe excluding the header
+        df = open_df(f, header_pos=header_pos)
+
+        # Grab every 100th sample
+        new_df = subsample(df, downsample)
+
+        # Reduce the precision of the original data without much effect
+        new_df = new_df.round({'Depth (mm)':1, 'Force (N)':3})
+        out_f = join(output, base_f)
+
+        # Write out the original header add some information
+        with open(out_f,'w') as fp:
+
+            # Rename the original total samples
+            original_samples = header[-1].split(":")[-1]
+            header[-1] = '# Original Total Samples: {}'.format(original_samples)
+
+            # Add a header for the fact this data is subsampled
+            header.append('# Data Subsampled To: Every {:d}th\n'.format(downsample))
+            lines = ''.join(header)
+            fp.write(lines)
+            fp.close()
+
+        new_df.to_csv(out_f, index_label='Original Index', mode='a')
+
+
 def main():
 
     # comparison flag produces the figures to show the impact of the resampling
@@ -109,51 +163,10 @@ def main():
                         'located at {}!\nType Y to continue and any other '
                         'key to abort: \n'.format(len(filenames), output))
 
-            if ans.lower() != 'y':
-                log.warning('Aborting overwriting of resampled files...')
-                sys.exit()
-
-            shutil.rmtree(output)
-
-        log.info('Resampling {} SMP profiles...'.format(len(filenames)))
-
-        log.info('Making output folder {}'.format(output))
-        mkdir(output)
-
-        # Loop over all the files, name them using the same name just using a different folder
-        for f in filenames:
-            base_f = basename(f)
-
-            log.info('Resampling {}'.format(base_f))
-
-            # Open the file for the header and grab it as a list
-            header = read_n_lines(f, header_pos)
-
-            # Open the file as a dataframe excluding the header
-            df = open_df(f, header_pos=header_pos)
-
-            # Grab every 100th sample
-            new_df = subsample(df, downsample)
-
-            # Reduce the precision of the original data without much effect
-            new_df = new_df.round({'Depth (mm)':1, 'Force (N)':3})
-            out_f = join(output, base_f)
-
-            # Write out the original header add some information
-            with open(out_f,'w') as fp:
-
-                # Rename the original total samples
-                original_samples = header[-1].split(":")[-1]
-                header[-1] = '# Original Total Samples: {}'.format(original_samples)
-
-                # Add a header for the fact this data is subsampled
-                header.append('# Data Subsampled To: Every {:d}th\n'.format(downsample))
-                lines = ''.join(header)
-                fp.write(lines)
-                fp.close()
-
-            new_df.to_csv(out_f, index_label='Original Index', mode='a')
-
+            if ans.lower() == 'y':
+                resample_batch(filenames, output, downsample, header_pos=header_pos)
+            else:
+                log.warning('Skipping resample and overwriting of resampled files...')
 
 if __name__ == '__main__':
     main()
