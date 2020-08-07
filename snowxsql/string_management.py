@@ -144,11 +144,20 @@ def add_date_time_keys(data, timezone='MST'):
     # Handle gpr data dates
     elif 'utcyear' in keys and 'utcdoy' in keys and 'utctod' in keys:
         base = pd.to_datetime('{:d}-01-01 00:00:00 '.format(int(data['utcyear'])) + timezone)
-        subsecond = str(data['utctod']).split('.')[0]
-        ms = int(subsecond[0])
-        mus = int(subsecond[1])
-        d = int(data['utcdoy'])
-        delta = datetime.timedelta(days=d, milliseconds=ms, microseconds=mus)
+
+        # Number of days since january 1
+        d = int(data['utcdoy'])-1
+        print(d)
+
+        # Zulu time (time without colons)
+        time = str(data['utctod'])
+        hr = int(time[0:2])
+        mm = int(time[2:4])
+        ss = int(time[4:6])
+        ms = int(time.split('.')[-1])
+
+        delta = datetime.timedelta(days=d, hours=hr, minutes=mm, seconds=ss,
+                                                                milliseconds=ms)
         d = base + delta
 
         # Remove them
@@ -162,6 +171,7 @@ def add_date_time_keys(data, timezone='MST'):
     data['time'] = d.time()
 
     return data
+
 
 def strip_encapsulated(str_line, encapusulator):
     '''

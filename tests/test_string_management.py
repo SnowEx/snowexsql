@@ -40,9 +40,9 @@ def test_standardize_key():
         assert standardize_key(t)== result[i]
 
 
-def test_add_date_time_keys():
+def test_add_date_time_keys_from_joined():
     '''
-    Test we capture all the scenarios with converting dates from dictionary
+    Test adding a correct interpretation of joined date and time entry
     '''
     # Test that we can separate the datetime like in the stratigraphy files
     data = {'date/time': '2020-02-05-09:45'}
@@ -51,6 +51,14 @@ def test_add_date_time_keys():
     assert d['date'] == datetime.date(year=2020, month=2, day=5)
     assert d['time'] == datetime.time(hour=9, minute=45)
 
+    # Ensure the date/time key is always removed
+    assert 'datetime' not in d.keys()
+
+def test_add_date_time_keys_from_separated():
+    '''
+    Test adding a correct interpretation of a separated date and time to the
+    data dict
+    '''
     # Test when theyre separated like in SMP data
     data = {'date':'2020-02-05',
             'time':'09:45'}
@@ -58,6 +66,22 @@ def test_add_date_time_keys():
 
     assert d['date'] == datetime.date(year=2020, month=2, day=5)
     assert d['time'] == datetime.time(hour=9, minute=45)
+
+def test_add_date_time_keys_from_zulu():
+    '''
+    Test adding a correct interpretation of a zulu time to the data dict
+    '''
+    # Test when theyre provided in utcdoy, tod
+    data = {'utcyear': 2020, 'utcdoy': 28, 'utctod': 161549.557}
+
+    d = add_date_time_keys(data, timezone='MST')
+    print(d['date'])
+    assert d['date'] == datetime.date(year=2020, month=1, day=28)
+    assert d['time'] == datetime.time(hour=16, minute=15, second=49, microsecond=557000)
+
+    # Ensure we always remove the original keys used to interpret
+    for k in ['utcdoy','utctod']:
+        assert k not in d.keys()
 
 def test_strip_encapsulated():
     '''
