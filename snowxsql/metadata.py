@@ -314,26 +314,41 @@ class DataHeader(object):
                      'grain_size', 'hand_hardness', 'grain_type',
                      'manual_wetness', 'twt', 'depth']
 
+    # Defaults to keywords arguments
+    defaults = {'timezone': 'MST',
+                'epsg':26912,
+                'header_sep': ',',
+                'northern_hemisphere':True}
 
-    def __init__(self, filename, timezone='MST', epsg=26912, header_sep=',',
-                       northern_hemisphere=True, **extra_header):
+    # Keywords that are only used in the class and not passed on to metdata
+    _class_atts = ['northern_hemisphere','header_sep', 'timezone']
+
+    def __init__(self, filename, **kwargs):
         '''
         Class for managing site details information
 
         Args:
             filename: File for a site details file containing
-            timezone: Pytz valid timezone abbreviation
             header_sep: key value pairs in header information separtor (: , etc)
             northern_hemisphere: Bool describing if the pit location is in the
                                  northern_hemisphere for converting utms coords
-            extra_header: Extra header information to pass along to self.info
+            kwargs: keyword values to pass to the database as metadata
         '''
         self.log = get_logger(__name__)
-        self.timezone = timezone
-        self.northern_hemisphere = northern_hemisphere
-        self.header_sep = header_sep
-        self.epsg = epsg
+
+        # Populate the kwargs with defaults values if they are not provided
+        for k,v in self.defaults.items():
+            if k not in kwargs.keys():
+                kwargs[k] = v
+
+        # Assign useful class attributes and remove them from the kwargs
+        for k in self._class_atts:
+            setattr(self, k, kwargs[k])
+            del kwargs[k]
+
         self.is_point_data = False
+
+        self.extra_header = kwargs
 
         self.log.info('Interpretting {}'.format(filename))
 
@@ -345,9 +360,6 @@ class DataHeader(object):
 
         # Read in the header into dictionary and list of columns names
         self.info, self.columns, self.header_pos = self._read(filename)
-
-        # Extra key value paris for header information, will overwrite any duplicate information
-        self.extra_header = extra_header
 
         # Interpret any data needing interpretation e.g. aspect
         self.interpret_data()
@@ -424,6 +436,7 @@ class DataHeader(object):
         # Detmerine the profile type
         (self.data_names, self.multi_sample_profile) = \
                                              self.determine_data_names(columns)
+
         # Depth is never submitted with anything else otherwise it is a support variable
         if len(self.data_names) > 1 and 'depth' in self.data_names:
             self.data_names.pop(self.data_names.index('depth'))
@@ -445,8 +458,10 @@ class DataHeader(object):
             raw_columns: list of raw text split on commas of the column names
 
         Returns:
-            type: **data_names** - list of column names that will be uploaded as a main value
-                  **multi_sample_profile** - boolean representing if we will average the samples for a main value (e.g. density)
+            type: **data_names** - list of column names that will be uploaded
+                   as a main value
+                  **multi_sample_profile** - boolean representing if we will
+                    average the samples for a main value (e.g. density)
         '''
         # Names of columns we are going to submit as main values
         data_names = []
@@ -626,10 +641,6 @@ class DataHeader(object):
 
         self.info.update(self.extra_header)
 
-
-        # # Rename any awkward keys we might get
-        # self.info = remap_data_names(self.info, renames)
-
         # Manage degrees  type entries
         for k in ['aspect','slope_angle']:
             if k in keys:
@@ -693,4 +704,4 @@ class DataHeader(object):
             # Add a geometry entry
             self.info['geom'] = WKTElement('POINT({} {})'
                                 ''.format(self.info['easting'],
-                                      self.info['northing']), srid=self.epsg)
+                                      self.info['northing']), srid=self.extra_header['epsg'])

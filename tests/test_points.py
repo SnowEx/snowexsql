@@ -3,16 +3,18 @@ from sqlalchemy import MetaData, inspect
 from os import remove
 from os.path import join, dirname
 
-from snowxsql.create_db import *
-from snowxsql.upload import *
+from snowxsql.upload import PointDataCSV
+from snowxsql.data import PointData
+
 from  .sql_test_base import DBSetup
 import datetime
 
 class PointsBase(DBSetup):
     fname = ''
-    point_type = ''
+    variable = ''
     units = ''
     timezone = 'MST'
+
     @classmethod
     def setup_class(self):
         '''
@@ -21,7 +23,7 @@ class PointsBase(DBSetup):
         super().setup_class()
 
         fname = join(self.data_dir, self.fname)
-        csv = PointDataCSV(fname, self.units, 'Grand Mesa', self.timezone, 26912)
+        csv = PointDataCSV(fname, type=self.variable, units=self.units, site_name='Grand Mesa', timezone=self.timezone, epsg=26912, surveyors='TEST')
         csv.submit(self.session)
         self.base_query = self.session.query(PointData).filter(PointData.type == self.variable)
 
@@ -64,23 +66,23 @@ class TestPoints(PointsBase):
         Confirm that all data is stored in the correct type
         '''
         dtypes = {'id': int,
-        'site_name': str,
-        'date': datetime.date,
-        'time': datetime.time,
-        'time_created': datetime.datetime,
-        'time_updated': datetime.datetime,
-        'latitude': float,
-        'longitude': float,
-        'northing': float,
-        'easting': float,
-        'elevation': float,
-        'utm_zone': float,
-        'version_number': int,
-        'type': str,
-        'units': str,
-        'measurement_tool': str,
-        'equipment': str,
-        'value': float}
+                'site_name': str,
+                'date': datetime.date,
+                'time': datetime.time,
+                'time_created': datetime.datetime,
+                'time_updated': datetime.datetime,
+                'latitude': float,
+                'longitude': float,
+                'northing': float,
+                'easting': float,
+                'elevation': float,
+                'utm_zone': float,
+                'version_number': int,
+                'type': str,
+                'units': str,
+                'measurement_tool': str,
+                'equipment': str,
+                'value': float}
 
         r = self.base_query.limit(1).one()
         for c, dtype in dtypes.items():
@@ -155,3 +157,11 @@ class TestGPRTWT(PointsBase):
         # Not sure why thie first entry is 100000 but it is and it should be 94 cm
         q = self.session.query(PointData.type).filter(PointData.elevation==3058.903)
         self.assert_value_assignment(q, 'two_way_travel')
+
+    def test_surveyor_pass_through(self):
+        '''
+        Test we can pass surveyors through the class instantiation
+        '''
+        # Not sure why thie first entry is 100000 but it is and it should be 94 cm
+        q = self.session.query(PointData.surveyors).filter(PointData.elevation==3058.903)
+        self.assert_value_assignment(q, 'TEST')

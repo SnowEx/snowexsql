@@ -4,9 +4,8 @@ import datetime
 from os import remove
 from os.path import join, dirname
 
-from snowxsql.create_db import *
 from snowxsql.upload import *
-from snowxsql.functions import *
+from snowxsql.functions import ST_PixelAsPoint
 from . sql_test_base import DBSetup
 
 from shapely.geometry import Point
@@ -14,9 +13,9 @@ from geoalchemy2.shape import to_shape
 from geoalchemy2.elements import WKTElement
 from geoalchemy2.types import Raster
 from snowxsql.conversions import raster_to_rasterio
-import matplotlib.pyplot as plt
-from rasterio.plot import show
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
+# from rasterio.plot import show
+# import matplotlib.pyplot as plt
 
 class TestRasters(DBSetup):
 

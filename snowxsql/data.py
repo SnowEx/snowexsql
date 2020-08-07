@@ -19,6 +19,7 @@ class SnowData(object):
     time_created = Column(DateTime(timezone=True), server_default=func.now())
     time_updated = Column(DateTime(timezone=True), onupdate=func.now())
     id = Column(Integer, primary_key=True)
+    surveyors = Column(String(50))
 
 
 class SingleLocationData(SnowData):
@@ -78,7 +79,6 @@ class LayerData(SingleLocationData, Base):
     aspect = Column(Integer)
     air_temp = Column(Float)
     total_depth = Column(Float)
-    surveyors = Column(String(50))
     weather_description = Column(String(50))
     precip = Column(String(50))
     sky_cover = Column(String(50))

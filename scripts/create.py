@@ -1,7 +1,7 @@
 '''
 Script used to create the database and tables for the first time
 '''
-from snowxsql.create_db import initialize
+from snowxsql.db import initialize
 from snowxsql.db import get_db
 from snowxsql.utilities import get_logger
 

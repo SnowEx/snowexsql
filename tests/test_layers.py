@@ -4,9 +4,9 @@ import datetime
 from os import remove
 from os.path import join, dirname
 
-from snowxsql.create_db import *
-from snowxsql.upload import *
-from snowxsql.metadata import SMPMeasurementLog
+from snowxsql.upload import UploadProfileData
+from snowxsql.data import LayerData
+from snowxsql.metadata import SMPMeasurementLog, DataHeader
 
 from  .sql_test_base import DBSetup
 import pytest
@@ -20,7 +20,7 @@ class LayersBase(DBSetup):
         super().setup_class()
 
         site_fname = join(self.data_dir,'site_details.csv' )
-        self.pit = DataHeader(site_fname, timezone='MST', epsg=26912)
+        self.pit = DataHeader(site_fname, db_type=None, timezone='MST', epsg=26912)
         self.bulk_q = \
         self.session.query(LayerData).filter(LayerData.site_id == self.site_id)
 
@@ -290,7 +290,7 @@ class SMPBase(LayersBase):
         profile = UploadProfileData(smp_f, timezone='UTC', header_sep=':',
                                                            **extra_header)
         profile.submit(self.session)
-        site = profile._pit.info['site_id']
+        site = profile.hdr.info['site_id']
 
         q = self.session.query(LayerData).filter(LayerData.site_id == site)
         records = q.all()

@@ -4,8 +4,7 @@ from sqlalchemy.engine import reflection
 import os
 from os.path import join, dirname
 
-from snowxsql.create_db import *
-from snowxsql.db import get_db
+from snowxsql.db import get_db, initialize
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker

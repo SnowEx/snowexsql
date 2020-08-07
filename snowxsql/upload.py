@@ -2,6 +2,7 @@ from . data import *
 from .string_management import *
 from .metadata import DataHeader
 from .utilities import *
+from .db import get_table_attributes
 
 import pandas as pd
 import progressbar
@@ -13,6 +14,7 @@ import os
 from os.path import join, abspath, expanduser
 import numpy as np
 import time
+
 
 class UploadProfileData():
     '''
@@ -27,11 +29,11 @@ class UploadProfileData():
         self.filename = profile_filename
 
         # Read in the file header
-        self._pit = DataHeader(profile_filename, **kwargs)
+        self.hdr = DataHeader(profile_filename, **kwargs)
 
         # Transfer a couple attributes for brevity
         for att in ['data_names', 'multi_sample_profile']:
-            setattr(self, att, getattr(self._pit, att))
+            setattr(self, att, getattr(self.hdr, att))
 
         # Read in data
         self.df = self._read(profile_filename)
@@ -50,8 +52,8 @@ class UploadProfileData():
         '''
         # header=0 because docs say to if using skiprows and columns
         df = pd.read_csv(profile_filename, header=0,
-                                           skiprows= self._pit.header_pos,
-                                           names=self._pit.columns,
+                                           skiprows= self.hdr.header_pos,
+                                           names=self.hdr.columns,
                                            encoding='latin')
 
         # If SMP profile convert depth to cm
@@ -60,7 +62,7 @@ class UploadProfileData():
 
         delta = abs(df['depth'].max() - df['depth'].min())
         self.log.info('File contains {} profiles each with {} layers across {:0.2f} cm'
-                      ''.format(len(self._pit.data_names), len(df), delta))
+                      ''.format(len(self.hdr.data_names), len(df), delta))
         return df
 
     def check(self, site_info):
@@ -77,7 +79,7 @@ class UploadProfileData():
         '''
 
         # Ensure information matches between site details and profile headers
-        mismatch = self._pit.check_integrity(site_info)
+        mismatch = self.hdr.check_integrity(site_info)
 
         if len(mismatch.keys()) > 0:
             self.log.error('Header Error with {}'.format(self.filename))
@@ -86,7 +88,7 @@ class UploadProfileData():
                 raise ValueError('Site Information Header and Profile Header '
                                  'do not agree!\n Key: {} does yields {} from '
                                  'here and {} from site info.'.format(k,
-                                                             self._pit.info[k],
+                                                             self.hdr.info[k],
                                                              site_info[k]))
 
     def build_data(self, data_name):
@@ -97,13 +99,13 @@ class UploadProfileData():
         df = self.df.copy()
 
         # Assign all meta data to every entry to the data frame
-        for k, v in self._pit.info.items():
+        for k, v in self.hdr.info.items():
             df[k] = v
 
         df['type'] = data_name
 
         # Get the average if its multisample profile
-        if self._pit.multi_sample_profile:
+        if self.hdr.multi_sample_profile:
             sample_cols = [c for c in df.columns if 'sample' in c]
             df['value'] = df[sample_cols].mean(axis=1).astype(str)
 
@@ -155,21 +157,31 @@ class UploadProfileData():
 
 class PointDataCSV(object):
     '''
-    Class for submitting whole files of point data in csv format
+    Class for submitting whole csv files of point data
     '''
 
     # Remapping for special keywords for snowdepth measurements
     measurement_names = {'mp':'magnaprobe','m2':'mesa', 'pr':'pit ruler'}
     cleanup_keys = ['utmzone']
 
-    def __init__(self, filename, units, site_name, timezone, epsg, debug=True):
+    defaults = {'debug':True}
+
+    def __init__(self, filename, **kwargs):
         self.log = get_logger(__name__)
-        self.units = units
-        self.site_name = site_name
-        self.timezone = timezone
-        self.epsg = epsg
+
+        # Assign defaults for this class
+        for k in ['debug']:
+            if k not in kwargs.keys():
+                setattr(self, k, self.defaults[k])
+            else:
+                setattr(self, k, kwargs[k])
+                del kwargs[k]
+
+        # Kwargs to pass through to metdata
+        self.kwargs = kwargs
+
+        self.hdr = DataHeader(filename, **self.kwargs)
         self.df = self._read(filename)
-        self.debug = debug
 
         # Performance tracking
         self.errors = []
@@ -181,11 +193,10 @@ class PointDataCSV(object):
         '''
 
         self.log.info('Reading in CSV data from {}'.format(filename))
-        self.p = DataHeader(filename, timezone=self.timezone, epsg=self.epsg)
-        self.value_type = self.p.data_names[0]
+        self.value_type = self.hdr.data_names[0]
 
-        df = pd.read_csv(filename, header=self.p.header_pos,
-                                   names=self.p.columns)
+        df = pd.read_csv(filename, header=self.hdr.header_pos,
+                                   names=self.hdr.columns)
 
         for c in df.columns:
             if c.lower() in self.cleanup_keys:
@@ -193,6 +204,9 @@ class PointDataCSV(object):
         return df
 
     def build_data(self, data_name):
+        '''
+        Pad the dataframe with metdata or make info more verbose
+        '''
         # Assign our main value to the value column
         self.df['value'] = self.df[data_name].copy()
         del self.df[data_name]
@@ -202,10 +216,11 @@ class PointDataCSV(object):
             self.df['measurement_tool'] = \
                 self.df['measurement_tool'].apply(lambda x: self.measurement_names[x.lower()])
 
-        # Assign other meta data
-        self.df['site_name'] = self.site_name
-        self.df['type'] = self.value_type
-        self.df['units'] = self.units
+        # only submit valid  keys to db
+        valid = get_table_attributes('point')
+        for k,v in self.kwargs.items():
+            if k in valid:
+                self.df[k] = v
 
     def submit(self, session):
         # Loop through all the entries and add them to the db
@@ -244,10 +259,10 @@ class PointDataCSV(object):
         # Create the data structure to pass into the interacting class attributes
         data = row.copy()
 
-        data = add_date_time_keys(data, timezone=self.timezone)
+        data = add_date_time_keys(data, timezone=self.hdr.timezone)
 
         # Add geometry
-        data['geom'] = WKTElement('POINT({} {})'.format(data['easting'],data['northing']), srid=self.epsg)
+        data['geom'] = WKTElement('POINT({} {})'.format(data['easting'],data['northing']), srid=self.hdr.info['epsg'])
 
         # Create db interaction, pass data as kwargs to class submit data
         sd = PointData(**data)

@@ -15,7 +15,9 @@ info = {'site_name':'Grand Mesa',
          'easting':743281.0,
          'northing':4324005.0,
          'latitude': 39.03126190934254,
-         'longitude':-108.18948133421802
+         'longitude':-108.18948133421802,
+         'timezone':'MST',
+         'epsg': 26912
          }
 
 class DataHeaderTestBase():
@@ -39,6 +41,7 @@ class DataHeaderTestBase():
 
     def assert_header_attribute(self, attr):
         '''
+        Assert that the header class has an specific attribute
         '''
         data = getattr(self.header, attr)
         expected = getattr(self, attr)
@@ -59,6 +62,7 @@ class DataHeaderTestBase():
 
     def assert_single_value(self, value, expected):
         '''
+        Handle assert on floats and everything else
         '''
         dtype = type(expected)
         if dtype == float:
