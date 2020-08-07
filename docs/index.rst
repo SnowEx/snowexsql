@@ -5,6 +5,7 @@ Welcome to snowXSQL's documentation!
    readme
    installation
    usage
+   data_notes
    examples
    qgis
    modules

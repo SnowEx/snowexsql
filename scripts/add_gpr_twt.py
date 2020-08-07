@@ -25,7 +25,11 @@ def main():
     db_name = 'postgresql+psycopg2:///snowex'
     engine, metadata, session = get_db(db_name)
 
-    csv = PointDataCSV(fname, units='cm', site_name=site_name, timezone=timezone, epsg=26912, )
+    csv = PointDataCSV(fname, units='ns', site_name=site_name,
+                                          timezone=timezone,
+                                          epsg=26912,
+                                          surveyors='Tate Meehan', 
+                                          instrument='Pulse Ekko Pro')
     csv.submit(session)
 
 if __name__ == '__main__':
