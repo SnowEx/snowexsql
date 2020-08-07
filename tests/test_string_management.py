@@ -75,7 +75,6 @@ def test_add_date_time_keys_from_zulu():
     data = {'utcyear': 2020, 'utcdoy': 28, 'utctod': 161549.557}
 
     d = add_date_time_keys(data, timezone='MST')
-    print(d['date'])
     assert d['date'] == datetime.date(year=2020, month=1, day=28)
     assert d['time'] == datetime.time(hour=16, minute=15, second=49, microsecond=557000)
 

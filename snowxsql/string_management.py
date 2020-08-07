@@ -146,8 +146,7 @@ def add_date_time_keys(data, timezone='MST'):
         base = pd.to_datetime('{:d}-01-01 00:00:00 '.format(int(data['utcyear'])) + timezone)
 
         # Number of days since january 1
-        d = int(data['utcdoy'])-1
-        print(d)
+        d = int(data['utcdoy']) - 1
 
         # Zulu time (time without colons)
         time = str(data['utctod'])
