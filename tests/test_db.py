@@ -19,7 +19,7 @@ class TestDB(DBSetup):
         self.point_atts = ['id', 'site_name', 'date', 'time', 'time_created',
                             'time_updated', 'latitude', 'longitude', 'northing',
                             'easting', 'elevation', 'version_number', 'type',
-                            'measurement_tool', 'surveyors', 'equipment', 'value']
+                            'instrument', 'surveyors', 'equipment', 'value']
 
         self.layer_atts = ['depth', 'site_id', 'pit_id', 'slope_angle', 'aspect',
                             'air_temp', 'total_depth', 'surveyors', 'weather_description',

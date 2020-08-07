@@ -190,7 +190,7 @@ class TestDepthsHeader(DataHeaderTestBase):
     def setup_class(self):
         self.file = 'depths.csv'
         self.data_names = ['depth']
-        self.columns = ['measurement_tool', 'id', 'date', 'time', 'longitude',
+        self.columns = ['instrument', 'id', 'date', 'time', 'longitude',
                         'latitude','easting', 'northing', 'elevation',
                         'equipment', 'version_number'] + self.data_names
 
