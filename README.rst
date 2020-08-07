@@ -39,6 +39,11 @@ on Gdrive should be downloaded and kept in your downloads folder.
 Downloads from GitHub:
   * SnowEx2020_SQLdata repo (Pits, GPR, SSA)
 
+Downloads from Google Drive:
+  * Quantum Spatial Bare Earth DEM and Vegetation Loaded
+  * SMP profiles (Soon to be Sourced from NSDIC)
+  *
+
 Then simply use:
 
 .. code-block:: bash
@@ -53,7 +58,7 @@ Tests
 
 If you do not want to populate the database to see if the installation worked,
 then simply run the tests which builds a small db and then deletes it.
-This is done using the command
+This is done using the command:
 
 .. code-block:: bash
 

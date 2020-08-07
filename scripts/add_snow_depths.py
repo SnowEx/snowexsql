@@ -27,6 +27,6 @@ def main():
     csv = PointDataCSV(fname, 'cm', site_name, timezone, 26912)
     csv.submit(session)
     return len(csv.errors)
-    
+
 if __name__ == '__main__':
     main()

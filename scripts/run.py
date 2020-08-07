@@ -23,7 +23,7 @@ from resample_smp import main as resample_smp
 
 start = time.time()
 log = get_logger('Populate')
-log.info('')
+log.info('============= SNOWEX DATABASE BUILDER ==================')
 log.info('Starting script to populate entire database...')
 
 # dictionary for holding module names and their main functions
@@ -52,14 +52,21 @@ for f in os.listdir('.'):
 
 # Clear out the database
 create()
+
+# Offer to resample the smp data
 resample_smp()
 
 # Run all the upload scripts
 total_errors = 0
 for name, fn in addition_scripts.items():
-    n_errors = fn()
-    total_errors += n_errors
-    errors[name] = n_errors
+    try:
+        n_errors = fn()
+        total_errors += n_errors
+        errors[name] = n_errors
+
+    except Exception as e:
+        log.error('{} failed reporting -->  {}'.format(name, e))
+        errors[name] = 'FAILED'
 
 # End reporting of errors
 log.info('')
@@ -74,13 +81,18 @@ if total_errors == 0:
 else:
     log.warn(msg)
 
-log.info('\t* {:0.0f}s total elapsed time'.format(time.time() - start))
-
 for n, e in errors.items():
+
     msg = '\t* {} errors from {}.py'.format(e, n)
 
-    if e == 0:
+    if str(e).lower() == 'failed':
+        log.error('\t* {}.py had a total failure!'.format(n))
+
+    elif e == 0:
         log.info(msg)
+
     else:
         log.warn(msg)
+log.info('\t* {:0.0f}s total elapsed time'.format(time.time() - start))
+
 log.info('')

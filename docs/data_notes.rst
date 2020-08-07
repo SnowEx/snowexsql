@@ -19,6 +19,9 @@ and is required for uploading these measurements to the database.
 4. **The time from the original PNT files is not correct**. Please use the time
 recorded in the CSV data
 
+5. Profiles Resampled to every 100th sample to expedite uploads. Metadata in the
+database contains the original sample id
+
 
 UAVSAR
 ------
@@ -26,6 +29,47 @@ UAVSAR
 Interferogram (.int.grd)
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-1. The data is a complex format. Each component is 4 bits (8 total). Set in a
+* The data is a complex format. Each component is 4 bits (8 total). Set in a
 standard real + imaginary j format. STILL DETERMINING WHETHER THESE ARE SIGNED
 OR NOT (e.g. uint4 or int4)
+
+
+Ground Penetrating Radar
+------------------------
+
+Amplitude
+~~~~~~~~~
+(Coming SOON)
+
+* Stored as a vertical profile (Layers table).
+
+Two Way Travel Time
+~~~~~~~~~~~~~~~~~~~
+
+* Labeled at `twt` in the CSV and renamed to `two_way_travel` in database
+* Exists as point data (e.g. single value with lat long and other metadata)
+
+
+Stratigraphy
+------------
+
+Any profile that has multiple samples are averaged and that data is used as the
+main value. The subsequent profiles representing a single sample are renamed from
+there original label to sample_<letter> in the database
+e.g. Density A --> sample_a
+
+Multisample profiles are:
+
+  * Density
+  * LWC (Dielectric Constant)
+
+Density
+~~~~~~~
+1. Density profiles all have multiple profiles. The value assigned is the average of the
+profiles.
+
+LWC
+---
+LWC files contain dielectric constant data
+
+* Dielectric constants have multiple samples. The main value is the average of these values horizontally

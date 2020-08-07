@@ -160,8 +160,8 @@ def main():
 
         if isdir(output):
             ans = input('\nWARNING! You are about overwrite {} previously resampled files '
-                        'located at {}!\nType Y to continue and any other '
-                        'key to abort: \n'.format(len(filenames), output))
+                        'located at {}!\nPress Y to continue and any other '
+                        'key to abort: '.format(len(filenames), output))
 
             if ans.lower() == 'y':
                 resample_batch(filenames, output, downsample, header_pos=header_pos)

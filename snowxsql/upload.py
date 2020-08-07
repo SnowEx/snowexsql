@@ -169,6 +169,7 @@ class PointDataCSV(object):
         self.timezone = timezone
         self.epsg = epsg
         self.df = self._read(filename)
+        self.debug = debug
 
         # Performance tracking
         self.errors = []
@@ -216,10 +217,10 @@ class PointDataCSV(object):
         for i,row in self.df.iterrows():
 
             if self.debug:
-                self.add_one(row)
+                self.add_one(session, row)
             else:
                 try:
-                    self.add_one(row)
+                    self.add_one(session, row)
 
                 except Exception as e:
                     self.errors.append(e)
@@ -236,7 +237,7 @@ class PointDataCSV(object):
             for e in self.errors:
                 self.log.error('\t{} - {}'.format(e[0], e[1]))
 
-    def add_one(self, row):
+    def add_one(self, session, row):
         '''
         Uploads one point
         '''
