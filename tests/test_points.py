@@ -132,7 +132,6 @@ class TestGPRTWT(PointsBase):
         '''
         # Not sure why thie first entry is 100000 but it is and it should be 94 cm
         q = self.session.query(PointData.value).filter(PointData.elevation==3058.903)
-        print(q.all())
         self.assert_value_assignment(q, 9.1)
 
     def test_upload_count(self):
@@ -142,9 +141,17 @@ class TestGPRTWT(PointsBase):
         # Assert there are 10 snowdepths entered
         self.assert_record_count(10)
 
-    # def test_unique_dates(self):
-    #     '''
-    #     Test the correct dates were assigned
-    #     '''
-    #     # 5 unique dates
-    #     self.assert_record_count(5, unique=True, attr='date')
+    def test_unique_dates(self):
+        '''
+        Test the correct dates were assigned
+        '''
+        # 1 unique dates
+        self.assert_record_count(1, unique=True, attr='date')
+
+    def test_value_type(self):
+        '''
+        Test that column twt is renamed to two_way_travel
+        '''
+        # Not sure why thie first entry is 100000 but it is and it should be 94 cm
+        q = self.session.query(PointData.type).filter(PointData.elevation==3058.903)
+        self.assert_value_assignment(q, 'two_way_travel')
