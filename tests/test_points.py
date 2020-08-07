@@ -125,15 +125,17 @@ class TestGPRTWT(PointsBase):
     units = 'ns'
     timezone = 'UTC'
     variable = 'two_way_travel'
-    # def test_data_entry(self):
-    #     '''
-    #     Test that the data was entered successfully
-    #     '''
-    #     # Not sure why thie first entry is 100000 but it is and it should be 94 cm
-    #     q = self.session.query(PointData.value).filter(PointData.id == 100000)
-    #     self.assert_value_assignment(q, 94)
 
-    def test_snowdepth_counts(self):
+    def test_value_assignment(self):
+        '''
+        Test that the data was entered successfully
+        '''
+        # Not sure why thie first entry is 100000 but it is and it should be 94 cm
+        q = self.session.query(PointData.value).filter(PointData.elevation==3058.903)
+        print(q.all())
+        self.assert_value_assignment(q, 9.1)
+
+    def test_upload_count(self):
         '''
         Test uploading snowdepths to db
         '''
