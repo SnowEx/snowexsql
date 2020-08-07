@@ -162,7 +162,7 @@ class PointDataCSV(object):
     measurement_names = {'mp':'magnaprobe','m2':'mesa', 'pr':'pit ruler'}
     cleanup_keys = ['utmzone']
 
-    def __init__(self, filename, units, site_name, timezone, epsg):
+    def __init__(self, filename, units, site_name, timezone, epsg, debug=True):
         self.log = get_logger(__name__)
         self.units = units
         self.site_name = site_name
@@ -170,6 +170,9 @@ class PointDataCSV(object):
         self.epsg = epsg
         self.df = self._read(filename)
 
+        # Performance tracking
+        self.errors = []
+        self.points_uploaded = 0
 
     def _read(self, filename):
         '''
@@ -212,19 +215,45 @@ class PointDataCSV(object):
 
         for i,row in self.df.iterrows():
 
-            # Create the data structure to pass into the interacting class attributes
-            data = row.copy()
+            if self.debug:
+                self.add_one(row)
+            else:
+                try:
+                    self.add_one(row)
 
-            data = add_date_time_keys(data, timezone=self.timezone)
+                except Exception as e:
+                    self.errors.append(e)
+                    self.log.error((i, e))
 
-            # Add geometry
-            data['geom'] = WKTElement('POINT({} {})'.format(data['easting'], data['northing']), srid=self.epsg)
-
-            # Create db interaction, pass data as kwargs to class submit data
-            sd = PointData(**data)
-            session.add(sd)
-            session.commit()
             bar.update(i)
+
+        # Error reporting
+        if len(self.errors) > 0:
+            self.log.error('{} points failed to upload.'.format(len(self.errors)))
+            self.log.error('The following point indicies failed with '
+                           'their corresponding errors:')
+
+            for e in self.errors:
+                self.log.error('\t{} - {}'.format(e[0], e[1]))
+
+    def add_one(self, row):
+        '''
+        Uploads one point
+        '''
+        # Create the data structure to pass into the interacting class attributes
+        data = row.copy()
+
+        data = add_date_time_keys(data, timezone=self.timezone)
+
+        # Add geometry
+        data['geom'] = WKTElement('POINT({} {})'.format(data['easting'],data['northing']), srid=self.epsg)
+
+        # Create db interaction, pass data as kwargs to class submit data
+        sd = PointData(**data)
+        session.add(sd)
+        session.commit()
+        self.points_uploaded += 1
+
 
 class UploadRasterCollection(object):
     '''

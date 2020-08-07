@@ -27,6 +27,7 @@ def main():
     b = UploadProfileBatch(profile_filenames=filenames, debug=True,
                         header_sep=':', timezone='UTC', smp_log=smp_log_file)
     b.push()
-
+    return len(b.errors)
+    
 if __name__ == '__main__':
     main()

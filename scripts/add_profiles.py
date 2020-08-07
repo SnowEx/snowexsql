@@ -24,6 +24,7 @@ def main():
     b = UploadProfileBatch(profile_filenames=profile_filenames,
                            site_filenames=site_filenames, debug=False)
     b.push()
-
+    return len(b.errors)
+    
 if __name__ == '__main__':
     main()

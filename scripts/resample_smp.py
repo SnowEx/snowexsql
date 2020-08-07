@@ -89,12 +89,12 @@ def main():
     downsample = 100
     header_pos = 6
     log = get_logger('SMP Resample')
+    log.info('Preparing to resample smp profiles for uploading...')
 
     # Obtain a list of Grand mesa smp files
     directory = abspath(expanduser('~/Downloads/NSIDC-upload/'))
     smp_data = join(directory,'level_1_data', 'csv')
     filenames = [join(smp_data, f) for f in listdir(smp_data) if f.split('.')[-1]=='CSV']
-    log.info('Resampling {} SMP profiles...'.format(len(filenames)))
 
     # Are we making the plot to show the comparison of the effects?
     if making_comparison:
@@ -105,15 +105,17 @@ def main():
         output = join(dirname(smp_data),'csv_resampled')
 
         if isdir(output):
-            ans = input('You are about overwrite previously resampled files '
-                        'located at {}!\nType yes to continue and any other '
-                        'button to cancel: \n'.format(output))
+            ans = input('\nWARNING! You are about overwrite {} previously resampled files '
+                        'located at {}!\nType Y to continue and any other '
+                        'key to abort: \n'.format(len(filenames), output))
 
-            if ans.lower() != 'yes':
+            if ans.lower() != 'y':
                 log.warning('Aborting overwriting of resampled files...')
                 sys.exit()
 
             shutil.rmtree(output)
+
+        log.info('Resampling {} SMP profiles...'.format(len(filenames)))
 
         log.info('Making output folder {}'.format(output))
         mkdir(output)

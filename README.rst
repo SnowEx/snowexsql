@@ -35,12 +35,18 @@ Getting Started Populating the Database
 After installing the python package, you will want to create the database. Make
 sure your data repo is next to this repo in the directory structure. Any data
 on Gdrive should be downloaded and kept in your downloads folder.
+
+Downloads from GitHub:
+  * SnowEx2020_SQLdata repo (Pits, GPR, SSA)
+
 Then simply use:
 
 .. code-block:: bash
 
-  cd scripts && sh run.sh
+  cd scripts
+  python run.py
 
+**NOTE:** Expect the run.py script to take more than an hour to complete.
 
 Tests
 -----
