@@ -35,6 +35,7 @@ class SingleLocationData(SnowData):
     units = Column(String(50))
     type = Column(String(50))
     geom = Column(Geometry("POINT"))
+    instrument = Column(String(50))
 
 class RasterData(SnowData, Base):
     '''
@@ -54,7 +55,6 @@ class PointData(SingleLocationData, Base):
     __table_args__ = {"schema": "public"}
 
     version_number = Column(Integer)
-    measurement_tool = Column(String(50))
     equipment = Column(String(50))
     value = Column(Float)
 
@@ -95,6 +95,5 @@ class LayerData(SingleLocationData, Base):
     sample_b = Column(String(20))
     sample_c = Column(String(20))
     value = Column(String(50))
-    instrument = Column(String(50))
     profile_id = Column(String(200))
     timing = Column(String(100))

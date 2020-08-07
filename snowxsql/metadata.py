@@ -305,6 +305,7 @@ class DataHeader(object):
              'long':'longitude',
              'lon':'longitude',
              'twt':'two_way_travel',
+             'measurement_tool':'instrument'
              }
 
     # Known possible profile types anything not in here will throw an error

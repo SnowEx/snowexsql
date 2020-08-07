@@ -212,9 +212,9 @@ class PointDataCSV(object):
         del self.df[data_name]
 
         # Assign the measurement tool verbose name
-        if 'measurement_tool' in self.df.columns:
-            self.df['measurement_tool'] = \
-                self.df['measurement_tool'].apply(lambda x: self.measurement_names[x.lower()])
+        if 'instrument' in self.df.columns:
+            self.df['instrument'] = \
+                self.df['instrument'].apply(lambda x: remap_data_names(x, self.measurement_names))
 
         # only submit valid  keys to db
         valid = get_table_attributes('point')

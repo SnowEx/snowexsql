@@ -89,6 +89,10 @@ def remap_data_names(original, rename_map):
                 new.append(rename_map[v])
             else:
                 new.append(v)
+    else:
+        new = original.lower()
+        if new in rename_map.keys():
+            new = rename_map[new]
 
     return new
 

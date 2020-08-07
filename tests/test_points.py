@@ -80,7 +80,7 @@ class TestPoints(PointsBase):
                 'version_number': int,
                 'type': str,
                 'units': str,
-                'measurement_tool': str,
+                'instrument': str,
                 'equipment': str,
                 'value': float}
 
@@ -121,6 +121,13 @@ class TestSnowDepths(PointsBase):
         # 5 unique dates
         self.assert_record_count(5, unique=True, attr='date')
 
+    def test_instrument_name(self):
+        '''
+        Test measurement tool is renamed to instrument
+        '''
+        # Not sure why thie first entry is 100000 but it is and it should be 94 cm
+        q = self.session.query(PointData.instrument).filter(PointData.id == 100000)
+        self.assert_value_assignment(q, 'magnaprobe')
 
 class TestGPRTWT(PointsBase):
     fname = 'gpr_twt.csv'
