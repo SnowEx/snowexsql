@@ -277,13 +277,14 @@ class UploadRasterCollection(object):
     Given a folder, looks through and uploads all rasters with the matching
     the file extension
     '''
-    def __init__(self, image_dir, date_time=None, description='', site_name=None, units=None, pattern='x.adf', ext='adf', epsg=0):
+    def __init__(self, image_dir, date=None, surveyors=None, instrument=None, type=None, description='', site_name=None, units=None, pattern='x.adf', ext='adf', epsg=0):
         self.log = get_logger(__name__)
         self.log.info('Starting raster collection upload...')
         self.image_dir = abspath(expanduser(image_dir))
         self.rasters = []
+        self.errors = []
 
-        self.meta = {'date':date_time.date(),'time':date_time.time(),
+        self.meta = {'date':date,
                      'description':description,
                      'site_name':site_name,
                      'units':units}
@@ -297,7 +298,6 @@ class UploadRasterCollection(object):
         self.log.info('Found {} raster in {} with ext = {} and pattern = {}.'.format(len(self.rasters), self.image_dir, ext, pattern))
 
     def submit(self, session):
-        fails = []
         rasters_uploaded = 0
         start = time.time()
 
@@ -308,13 +308,13 @@ class UploadRasterCollection(object):
                 r.submit(session)
                 rasters_uploaded += 1
             except Exception as e:
-                fails.append((f,e))
+                self.errors.append((f,e))
             bar.update(i)
 
         # Log errors
-        if len(fails) > 0:
-            self.log.error("During the upload of {} raster, {} failed.".format(len(self.rasters), len(fails)))
-            for f,e in fails:
+        if len(self.errors) > 0:
+            self.log.error("During the upload of {} raster, {} failed.".format(len(self.rasters), len(self.errors)))
+            for f,e in self.errors:
                 self.log.error(e)
 
         self.log.info("{} / {} Rasters uploaded.".format(rasters_uploaded, len(self.rasters)))
