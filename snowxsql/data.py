@@ -15,11 +15,13 @@ class SnowData(object):
     '''
     site_name = Column(String(250))
     date = Column(Date)
-    time = Column(Time(timezone=True))
     time_created = Column(DateTime(timezone=True), server_default=func.now())
     time_updated = Column(DateTime(timezone=True), onupdate=func.now())
     id = Column(Integer, primary_key=True)
     surveyors = Column(String(50))
+    instrument = Column(String(50))
+    type = Column(String(50))
+    units = Column(String(50))
 
 
 class SingleLocationData(SnowData):
@@ -32,10 +34,8 @@ class SingleLocationData(SnowData):
     easting = Column(Float)
     elevation = Column(Float)
     utm_zone = Column(String(10))
-    units = Column(String(50))
-    type = Column(String(50))
     geom = Column(Geometry("POINT"))
-    instrument = Column(String(50))
+    time = Column(Time(timezone=True))
 
 class RasterData(SnowData, Base):
     '''
@@ -44,7 +44,6 @@ class RasterData(SnowData, Base):
     __tablename__ = 'images'
     __table_args__ = {"schema": "public"}
     raster = Column(Raster)
-    units = Column(String(50))
     description = Column(String(1000))
 
 class PointData(SingleLocationData, Base):
