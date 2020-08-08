@@ -283,18 +283,18 @@ class DataHeader(object):
              'top': 'depth',
              'height':'depth',
              'bottom':'bottom_depth',
-             'density_a': 'sample_a',
-             'density_b': 'sample_b',
-             'density_c': 'sample_c',
+             # 'density_a': 'sample_a',
+             # 'density_b': 'sample_b',
+             # 'density_c': 'sample_c',
              'site': 'site_id',
              'pitid': 'pit_id',
              'slope':'slope_angle',
              'weather':'weather_description',
              'sky': 'sky_cover',
              'notes':'site_notes',
-             'dielectric_constant_a':'sample_a',
-             'dielectric_constant_b':'sample_b',
-             'dielectric_constant_c':'sample_c',
+             # 'dielectric_constant_a':'sample_a',
+             # 'dielectric_constant_b':'sample_b',
+             # 'dielectric_constant_c':'sample_c',
              'sample_top_height':'depth',
              'deq':'equivalent_diameter',
              'operator':'surveyors',
@@ -311,9 +311,9 @@ class DataHeader(object):
     # Known possible profile types anything not in here will throw an error
     available_data_names = ['density', 'dielectric_constant', 'temperature',
                      'force', 'reflectance','sample_signal',
-                     'specific_surface_area', 'deq',
+                     'specific_surface_area', 'equivalent_diameter',
                      'grain_size', 'hand_hardness', 'grain_type',
-                     'manual_wetness', 'twt', 'depth']
+                     'manual_wetness', 'two_way_travel', 'depth']
 
     # Defaults to keywords arguments
     defaults = {'timezone': 'MST',
@@ -364,6 +364,21 @@ class DataHeader(object):
 
         # Interpret any data needing interpretation e.g. aspect
         self.interpret_data()
+
+    def rename_sample_profiles(self, columns, data_name):
+        '''
+        Rename columns like density_a to sample_a
+        '''
+        result = []
+        for c in columns:
+            v = c
+
+            if data_name in c:
+                v = c.replace(data_name, 'sample')
+
+            result.append(v)
+
+        return result
 
     def parse_column_names(self, lines):
         '''
@@ -434,17 +449,17 @@ class DataHeader(object):
         raw_cols = str_line.strip('#').split(',')
         columns = [standardize_key(c) for c in raw_cols]
 
+        # Rename any column names to more standard ones
+        columns = remap_data_names(columns, self.rename)
+
         # Detmerine the profile type
         (self.data_names, self.multi_sample_profile) = \
                                              self.determine_data_names(columns)
 
-        # Depth is never submitted with anything else otherwise it is a support variable
-        if len(self.data_names) > 1 and 'depth' in self.data_names:
-            self.data_names.pop(self.data_names.index('depth'))
-
-        # Rename any column names to more standard ones
-        columns = remap_data_names(columns, self.rename)
         self.data_names = remap_data_names(self.data_names, self.rename)
+
+        if self.multi_sample_profile:
+            columns = self.rename_sample_profiles(columns, self.data_names[0])
 
         return columns, header_pos
 
@@ -474,13 +489,17 @@ class DataHeader(object):
         for dname in self.available_data_names:
 
             kw_count = str_cols.count(dname)
-
+            print(str_cols, dname, kw_count)
             # if we have keyword match in our columns then add the type
             if kw_count > 0:
                 data_names.append(dname)
 
-                if kw_count > 1:
+                if kw_count > 1 and dname != 'depth':
                     multi_sample_profile = True
+
+        # Depth is never submitted with anything else otherwise it is a support variable
+        if len(data_names) > 1 and 'depth' in data_names:
+            data_names.pop(data_names.index('depth'))
 
         if data_names:
             self.log.info('Names to be uploaded as main data are: {}'

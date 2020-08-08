@@ -41,17 +41,21 @@ class LayersBase(DBSetup):
 
         return expected
 
-    def _get_profile_query(self, data_name, depth=None):
+    def _get_profile_query(self, data_name=None, depth=None):
         '''
         Construct the query and return it
         '''
-        q = self.bulk_q.filter(LayerData.type == data_name)
+
+        q = self.bulk_q
+
+        if data_name != None:
+            q = self.bulk_q.filter(LayerData.type == data_name)
 
         if depth != None:
             q = q.filter(LayerData.depth == depth)
         return q
 
-    def get_profile(self, data_name, depth=None):
+    def get_profile(self, data_name=None, depth=None):
         '''
         DRYs out the tests for profile uploading
 
@@ -62,11 +66,11 @@ class LayersBase(DBSetup):
             records: List of Layer objects mapped to the database
         '''
 
-        q = self._get_profile_query(data_name, depth=depth)
+        q = self._get_profile_query(data_name=data_name, depth=depth)
         records = q.all()
         return records
 
-    def assert_upload(self, csv_f, data_name, n_values, timezone='MST', sep=','):
+    def assert_upload(self, csv_f, n_values, timezone='MST', sep=','):
         '''
         Test whether the correct number of values were uploaded
         '''
@@ -74,10 +78,11 @@ class LayersBase(DBSetup):
         profile = UploadProfileData(f, epsg=26912, timezone=timezone, header_sep=sep)
         profile.submit(self.session)
 
-        records = self.get_profile(data_name)
+        for d in self.data_names:
+            records = self.get_profile(data_name=d)
 
-        # Assert N values in the single profile
-        assert len(records) == n_values
+            # Assert N values in the single profile
+            assert len(records) == n_values
 
     def assert_value_assignment(self, data_name, depth, correct_value,
                                                          precision=3):
@@ -139,11 +144,15 @@ class TestStratigraphyProfile(LayersBase):
     Tests all stratigraphy uploading and value assigning
     '''
 
+    data_names = ['hand_hardness', 'grain_size', 'grain_type',
+                  'manual_wetness']
+
     def test_upload(self):
         '''
         Test uploading a stratigraphy csv to the db
         '''
-        records = self.assert_upload('stratigraphy.csv','hand_hardness', 5)
+
+        records = self.assert_upload('stratigraphy.csv', 5)
 
 
     def test_hand_hardness(self):
@@ -183,11 +192,12 @@ class TestStratigraphyProfile(LayersBase):
 
 class TestDensityProfile(LayersBase):
 
+    data_names = ['density']
     def test_upload(self):
         '''
         Test uploading a density csv to the db
         '''
-        records = self.assert_upload('density.csv','density', 4)
+        records = self.assert_upload('density.csv', 4)
 
     def test_avg_value(self):
         '''
@@ -205,37 +215,37 @@ class TestDensityProfile(LayersBase):
         self.assert_samples_assignment('density', 35, [190.0, 245.0], precision=1)
 
 class TestLWCProfile(LayersBase):
-    dname = 'dielectric_constant'
+    data_names = ['dielectric_constant']
 
     def test_upload(self):
         '''
         Test uploading a lwc csv to the db
         '''
-        self.assert_upload('LWC.csv', self.dname, 4)
+        self.assert_upload('LWC.csv', 4)
 
     def test_avg_value(self):
         '''
         Test whether the value of single layer is the average of the samples
         '''
         # Expecting the average of the two density samples
-        self.assert_avg_assignment(self.dname, 27, [1.372, 1.35])
+        self.assert_avg_assignment(self.data_names[0], 27, [1.372, 1.35])
 
     def test_samples(self):
         '''
         Tests dielectric_constant_a, dielectric_constant_b, assigned correctly
         to sample_a, sample_b
         '''
-        self.assert_samples_assignment(self.dname, 17, [1.384, 1.354])
+        self.assert_samples_assignment(self.data_names[0], 17, [1.384, 1.354])
 
 
 class TestTemperatureProfile(LayersBase):
-    dname = 'temperature'
+    data_names = ['temperature']
 
     def test_upload(self):
         '''
         Test uploading a temperature csv to the db
         '''
-        self.assert_upload('temperature.csv', self.dname, 5)
+        self.assert_upload('temperature.csv', 5)
 
     def test_value(self):
         '''
@@ -245,12 +255,13 @@ class TestTemperatureProfile(LayersBase):
 
 
 class TestSSAProfile(LayersBase):
-
+    data_names = ['specific_surface_area', 'reflectance',
+                  'equivalent_diameter', 'sample_signal']
     def test_upload(self):
         '''
         Test uploading a SSA csv to the db
         '''
-        records = self.assert_upload('SSA.csv','specific_surface_area', 16)
+        records = self.assert_upload('SSA.csv', 16)
 
     def test_reflectance(self):
         '''
@@ -320,7 +331,6 @@ class TestSMPProfile(SMPBase):
         print([type(r.depth) for r in records])
         self.assert_value_assignment('force', 30.656350976508100, 0.8441290259361267, precision=3)
 
-# @pytest.mark.skip('Unable to determine depth precision to gather records...')
 class TestDBLayerTables(LayersBase):
 
     def test_datatypes(self):

@@ -11,7 +11,6 @@ import datetime
 
 class PointsBase(DBSetup):
     fname = ''
-    variable = ''
     units = ''
     timezone = 'MST'
 
@@ -23,7 +22,8 @@ class PointsBase(DBSetup):
         super().setup_class()
 
         fname = join(self.data_dir, self.fname)
-        csv = PointDataCSV(fname, type=self.variable, units=self.units, site_name='Grand Mesa', timezone=self.timezone, epsg=26912, surveyors='TEST')
+        csv = PointDataCSV(fname, units=self.units, site_name='Grand Mesa', timezone=self.timezone, epsg=26912, surveyors='TEST')
+        print(csv.hdr.data_names)
         csv.submit(self.session)
         self.base_query = self.session.query(PointData).filter(PointData.type == self.variable)
 
@@ -157,7 +157,7 @@ class TestGPRTWT(PointsBase):
         # 1 unique dates
         self.assert_record_count(1, unique=True, attr='date')
 
-    def test_value_type(self):
+    def test_value_type_assignment(self):
         '''
         Test that column twt is renamed to two_way_travel
         '''

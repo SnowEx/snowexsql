@@ -209,6 +209,7 @@ class PointDataCSV(object):
         '''
         # Assign our main value to the value column
         self.df['value'] = self.df[data_name].copy()
+        self.df['type'] = data_name
         del self.df[data_name]
 
         # Assign the measurement tool verbose name
