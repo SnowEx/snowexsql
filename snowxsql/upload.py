@@ -223,6 +223,10 @@ class PointDataCSV(object):
             if k in valid:
                 self.df[k] = v
 
+        # Remove any ID fields
+        if 'id' in self.df.columns:
+            self.df = self.df.drop(columns=['id'])
+
     def submit(self, session):
         # Loop through all the entries and add them to the db
         self.build_data(self.value_type)

@@ -106,8 +106,7 @@ class TestSnowDepths(PointsBase):
         '''
         Test that the data was entered successfully
         '''
-        # Not sure why thie first entry is 100000 but it is and it should be 94 cm
-        q = self.session.query(PointData.value).filter(PointData.id == 100000)
+        q = self.session.query(PointData.value).filter(PointData.id == 1)
         self.assert_value_assignment(q, 94)
 
     def test_snowdepth_counts(self):
@@ -125,8 +124,7 @@ class TestSnowDepths(PointsBase):
         '''
         Test measurement tool is renamed to instrument
         '''
-        # Not sure why thie first entry is 100000 but it is and it should be 94 cm
-        q = self.session.query(PointData.instrument).filter(PointData.id == 100000)
+        q = self.session.query(PointData.instrument).filter(PointData.id == 1)
         self.assert_value_assignment(q, 'magnaprobe')
 
 class TestGPRTWT(PointsBase):
