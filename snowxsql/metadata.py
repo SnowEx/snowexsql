@@ -489,7 +489,7 @@ class DataHeader(object):
         for dname in self.available_data_names:
 
             kw_count = str_cols.count(dname)
-            print(str_cols, dname, kw_count)
+
             # if we have keyword match in our columns then add the type
             if kw_count > 0:
                 data_names.append(dname)

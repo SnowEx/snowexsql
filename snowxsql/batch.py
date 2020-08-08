@@ -162,8 +162,8 @@ class UploadProfileBatch():
 
         # Find a pit header if the site details were provided
         if self.sites:
-            site = profile._pit.info['site_id']
-            date = profile._pit.info['date']
+            site = profile.hdr.info['site_id']
+            date = profile.hdr.info['date']
             pits = [s for s in self.sites if s.info['site_id'] == site]
             pits = [p for p in pits if p.info['date'] == date]
 
