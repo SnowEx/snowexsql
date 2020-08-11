@@ -43,6 +43,7 @@ def main():
                                           surveyors='Tate Meehan',
                                           instrument='Pulse Ekko Pro')
     csv.submit(session)
-
+    return len(csv.errors)
+    
 if __name__ == '__main__':
     main()
