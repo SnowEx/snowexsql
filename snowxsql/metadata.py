@@ -235,7 +235,7 @@ class SMPMeasurementLog(object):
         Builds a dictionary of extra header information useful for SMP
         files which lack some info regarding submission to the db
 
-        S06M0874_2N12_20200131.CSV, 0874 is the in
+        S06M0874_2N12_20200131.CSV, 0874 is the suffix
 
         '''
         s = basename(smp_file).split('.')[0].split('_')
@@ -360,10 +360,10 @@ class DataHeader(object):
         self.multi_sample_profile = False
 
         # Read in the header into dictionary and list of columns names
-        self.info, self.columns, self.header_pos = self._read(filename)
+        info, self.columns, self.header_pos = self._read(filename)
 
         # Interpret any data needing interpretation e.g. aspect
-        self.interpret_data()
+        self.info = self.interpret_data(info)
 
     def rename_sample_profiles(self, columns, data_name):
         '''
@@ -632,7 +632,7 @@ class DataHeader(object):
         return mismatch
 
 
-    def interpret_data(self):
+    def interpret_data(self,  raw_info):
         '''
         Some data inside the headers is inconsistently noted. This function
         adjusts such data to the correct format.
@@ -648,32 +648,39 @@ class DataHeader(object):
         should be in degrees
 
         D. Cast UTM attributes to correct types. Convert UTM to lat long, store both
+
+
+        Args:
+            raw_info: Dictionary containing information to be parsed
+        Returns:
+            info: Dictionary of the raw_info containing interpetted info
+
         '''
-        keys = self.info.keys()
+        info = raw_info.copy()
+        keys = info.keys()
 
         # Merge information, warn user about overwriting
-        overwrite_keys = [k for k in self.info.keys() if k in self.extra_header.keys()]
+        overwrite_keys = [k for k in info.keys() if k in self.extra_header.keys()]
 
         if overwrite_keys:
             self.log.warning('Extra header information passed will overwrite '
                              'the following information found in the file '
                              'header:\n{}'.format(', '.join(overwrite_keys)))
 
-        self.info.update(self.extra_header)
-
+        info.update(self.extra_header)
         # Manage degrees  type entries
         for k in ['aspect','slope_angle']:
             if k in keys:
-                v = self.info[k]
+                v = info[k]
 
                 # Remove any degrees symbols
                 v = v.replace('\u00b0','')
                 v = v.replace('Â','')
-                self.info[k] = v
+                info[k] = v
 
                 # Manage cardinal directions
                 if k == 'aspect':
-                    aspect = self.info['aspect']
+                    aspect = info['aspect']
 
                     # Check for number of numeric values.
                     numeric = len([True for c in aspect if c.isnumeric()])
@@ -681,35 +688,35 @@ class DataHeader(object):
                     if numeric != len(aspect) and aspect.lower() != 'nan':
                         self.log.warning('Aspect recorded for site {} is in cardinal '
                         'directions, converting to degrees...'
-                        ''.format(self.info['site_id']))
+                        ''.format(info['site_id']))
                         deg = convert_cardinal_to_degree(aspect)
-                        self.info[k] = deg
+                        info[k] = deg
 
         # Convert geographic details to floats
         for numeric_key in ['northing','easting','latitude','longitude']:
             if numeric_key in keys:
-                self.info[numeric_key] = float(self.info[numeric_key])
+                info[numeric_key] = float(info[numeric_key])
 
 
         # Convert UTM coordinates to Lat long or vice versa for database storage
         if 'northing' in keys:
-            self.info['utm_zone'] = \
-               int(''.join([s for s in self.info['utm_zone'] if s.isnumeric()]))
-            lat, long = utm.to_latlon(self.info['easting'],
-                              self.info['northing'],
-                              self.info['utm_zone'],
+            info['utm_zone'] = \
+               int(''.join([s for s in info['utm_zone'] if s.isnumeric()]))
+            lat, long = utm.to_latlon(info['easting'],
+                              info['northing'],
+                              info['utm_zone'],
                               northern=self.northern_hemisphere)
 
-            self.info['latitude'] = lat
-            self.info['longitude'] = long
+            info['latitude'] = lat
+            info['longitude'] = long
 
         elif 'latitude' in keys:
             easting, northing, utm_zone, letter = utm.from_latlon(
-                                                self.info['latitude'],
-                                                self.info['longitude'])
-            self.info['easting'] = easting
-            self.info['northing'] = northing
-            self.info['utm_zone'] = utm_zone
+                                                info['latitude'],
+                                                info['longitude'])
+            info['easting'] = easting
+            info['northing'] = northing
+            info['utm_zone'] = utm_zone
 
         # Check for point data which will contain this in the data not the header
         elif self.columns != None:
@@ -722,6 +729,7 @@ class DataHeader(object):
 
         if not self.is_point_data:
             # Add a geometry entry
-            self.info['geom'] = WKTElement('POINT({} {})'
-                                ''.format(self.info['easting'],
-                                      self.info['northing']), srid=self.extra_header['epsg'])
+            info['geom'] = WKTElement('POINT({} {})'
+                                ''.format(info['easting'], info['northing']),
+                                          srid=self.extra_header['epsg'])
+        return info

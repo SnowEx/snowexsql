@@ -119,7 +119,7 @@ class LayersBase(DBSetup):
         records = q.all()
         return records
 
-    def test_upload(self, csv_f, n_values, timezone='MST', sep=','):
+    def test_upload(self, csv_f, names, n_values, timezone='MST', sep=','):
         '''
         Test whether the correct number of values were uploaded
         '''
@@ -127,40 +127,26 @@ class LayersBase(DBSetup):
         profile = UploadProfileData(f, epsg=26912, timezone=timezone, header_sep=sep)
         profile.submit(self.session)
 
-        for d in self.data_names:
-            records = self.get_profile(data_name=d)
+        for n in names:
+            records = self.get_profile(data_name=n)
 
             # Assert N values in the single profile
             assert len(records) == n_values
 
-    def test_value(self, data_name, depth, correct_value,
-                                                         precision=3):
-        '''
-        Test whether the correct number of values were uploaded
-        '''
-        expected = self.get_str_value(correct_value, precision=precision)
-
-        records = self.get_profile(data_name, depth=depth)
-        value = getattr(records[0], 'value')
-        received = self.get_str_value(value, precision=precision)
-
-        # Assert the value with considerations to precision
-        assert received == expected
-
-    def test_attr_value(self, data_name, attribute_name, depth,
-                            correct_value, precision=3):
+    def test_attr_value(self, name, attribute, depth,
+                            expected, precision=3):
         '''
         Tests attribute value assignment, these are any non-main attributes
         regarding the value itself. e.g. individual samples, location, etc
         '''
 
-        expected = self.get_str_value(correct_value, precision=precision)
+        str_expected = self.get_str_value(expected, precision=precision)
 
-        records = self.get_profile(data_name, depth=depth)
-        db_value = getattr(records[0], attribute_name)
+        records = self.get_profile(name, depth=depth)
+        db_value = getattr(records[0], attribute)
         received = self.get_str_value(db_value, precision=precision)
-        print(attribute_name, repr(received), repr(expected))
-        assert received == expected
+        print(received, str_expected)
+        assert received == str_expected
 
     # def a_samples_assignment(self, data_name, depth, correct_values, precision=3):
     #     '''

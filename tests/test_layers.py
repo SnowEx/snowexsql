@@ -6,7 +6,7 @@ from datetime import date, time
 import pandas as pd
 import pytz
 import datetime
-
+import numpy as np
 
 class TestStratigraphyProfile(LayersBase):
     '''
@@ -15,27 +15,34 @@ class TestStratigraphyProfile(LayersBase):
     Only examine the data in the file were uploading
     '''
 
-    data_names = ['hand_hardness', 'grain_size', 'grain_type',
+    names = ['hand_hardness', 'grain_size', 'grain_type',
                   'manual_wetness']
     dt = datetime.datetime(2020, 2, 5, 13, 30, 0, 0, pytz.timezone('MST'))
 
     params = {
-    'test_upload':[dict(csv_f='stratigraphy.csv', n_values=5)],
 
-    'test_value': [dict(data_name='hand_hardness', depth=30, correct_value='4F'),
-                   dict(data_name='grain_size', depth=35, correct_value='< 1 mm'),
-                   dict(data_name='grain_type', depth=17, correct_value='FC'),
-                   dict(data_name='manual_wetness', depth=17, correct_value='D')],
+    'test_upload':[
+                # test uploading each main profile from the file
+                dict(csv_f='stratigraphy.csv', names=names, n_values=5)],
 
-    'test_attr_value': [dict(data_name='hand_hardness', depth=30, attribute_name='site_id', correct_value='1N20'),
-                        dict(data_name='hand_hardness', depth=30, attribute_name='pit_id', correct_value='COGM1N20_20200205'),
-                        dict(data_name='hand_hardness', depth=30, attribute_name='date', correct_value=dt.date()),
-                        dict(data_name='hand_hardness', depth=30, attribute_name='time', correct_value=dt.timetz()),
-                        dict(data_name='hand_hardness', depth=30, attribute_name='site_name', correct_value='Grand Mesa'),
-                        dict(data_name='hand_hardness', depth=30, attribute_name='easting', correct_value=743281),
-                        dict(data_name='hand_hardness', depth=30, attribute_name='northing', correct_value=4324005),
-                        ]
-                    }
+    'test_attr_value': [
+        # Test a single value to all main profiles
+        dict(name='hand_hardness', depth=30, attribute='value', expected='4F'),
+        dict(name='grain_size', depth=35, attribute='value', expected='< 1 mm'),
+        dict(name='grain_type', depth=17, attribute='value', expected='FC'),
+        dict(name='manual_wetness', depth=17, attribute='value', expected='D'),
+
+        # Test that meta data from the header only is assigned
+        dict(name='hand_hardness', depth=30, attribute='site_id', expected='1N20'),
+        dict(name='hand_hardness', depth=30, attribute='pit_id', expected='COGM1N20_20200205'),
+        dict(name='hand_hardness', depth=30, attribute='date', expected=dt.date()),
+        dict(name='hand_hardness', depth=30, attribute='time', expected=dt.timetz()),
+        dict(name='hand_hardness', depth=30, attribute='site_name', expected='Grand Mesa'),
+        dict(name='hand_hardness', depth=30, attribute='easting', expected=743281),
+        dict(name='hand_hardness', depth=30, attribute='northing', expected=4324005),
+            ]
+        }
+
 
     # def test_comments_search(self):
     #     '''
@@ -49,31 +56,44 @@ class TestStratigraphyProfile(LayersBase):
     #     assert len(records) == 4
 
 class TestDensityProfile(LayersBase):
+    '''
+    Tests all stratigraphy uploading and value assigning
 
-    data_names = ['density']
-    def test_upload(self):
-        '''
-        Test uploading a density csv to the db
-        '''
-        records = self.assert_upload('density.csv', 4)
+    Only examine the data in the file were uploading
+    '''
 
-    def test_avg_value(self):
-        '''
-        Test whether the value of single layer is the average of the samples
-        '''
-        # Expecting the average of the two density samples
-        self.assert_avg_assignment('density', 35, [190, 245], precision=1)
+    names = ['density']
 
-    def test_samples(self):
-        '''
-        Tests Density A, Density B, and Density C are assigned correctly
-        to sample_a, sample_b, sample_c
-        '''
+    dt = datetime.datetime(2020, 2, 5, 13, 30, 0, 0, pytz.timezone('MST'))
 
-        self.assert_samples_assignment('density', 35, [190.0, 245.0], precision=1)
+    params = {
+
+    'test_upload':[
+                # test uploading each main profile from the file
+                dict(csv_f='density.csv', names=names, n_values=4)],
+
+    'test_attr_value': [
+        # Test a single value to all main profiles
+        dict(name='density', depth=35, attribute='value', expected=np.mean([190, 245])),
+
+        # Test samples are renamed and assigned
+        dict(name='density', depth=35, attribute='sample_a', expected=190),
+        dict(name='density', depth=35, attribute='sample_b', expected=245),
+        dict(name='density', depth=35, attribute='sample_c', expected='NaN'),
+
+        # Test that meta data from the header only is assigned
+        dict(name='density', depth=35, attribute='site_id', expected='1N20'),
+        dict(name='density', depth=35, attribute='pit_id', expected='COGM1N20_20200205'),
+        dict(name='density', depth=35, attribute='date', expected=dt.date()),
+        dict(name='density', depth=35, attribute='time', expected=dt.timetz()),
+        dict(name='density', depth=35, attribute='site_name', expected='Grand Mesa'),
+        dict(name='density', depth=35, attribute='easting', expected=743281),
+        dict(name='density', depth=35, attribute='northing', expected=4324005),
+            ]
+        }
 
 class TestLWCProfile(LayersBase):
-    data_names = ['dielectric_constant']
+    names = ['dielectric_constant']
 
     def test_upload(self):
         '''
@@ -86,18 +106,18 @@ class TestLWCProfile(LayersBase):
         Test whether the value of single layer is the average of the samples
         '''
         # Expecting the average of the two density samples
-        self.assert_avg_assignment(self.data_names[0], 27, [1.372, 1.35])
+        self.assert_avg_assignment(self.names[0], 27, [1.372, 1.35])
 
     def test_samples(self):
         '''
         Tests dielectric_constant_a, dielectric_constant_b, assigned correctly
         to sample_a, sample_b
         '''
-        self.assert_samples_assignment(self.data_names[0], 17, [1.384, 1.354])
+        self.assert_samples_assignment(self.names[0], 17, [1.384, 1.354])
 
 
 class TestTemperatureProfile(LayersBase):
-    data_names = ['temperature']
+    names = ['temperature']
 
     def test_upload(self):
         '''
@@ -113,7 +133,7 @@ class TestTemperatureProfile(LayersBase):
 
 
 class TestSSAProfile(LayersBase):
-    data_names = ['specific_surface_area', 'reflectance',
+    names = ['specific_surface_area', 'reflectance',
                   'equivalent_diameter', 'sample_signal']
     def test_upload(self):
         '''
