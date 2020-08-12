@@ -134,9 +134,9 @@ class TestTemperatureProfile(LayersBase):
         dict(name=names[0], depth=10, attribute='value', expected=-5.9),
 
         # Test samples are not assigned
-        dict(name=names[0], depth=27, attribute='sample_a', expected=None),
-        dict(name=names[0], depth=27, attribute='sample_b', expected=None),
-        dict(name=names[0], depth=27, attribute='sample_c', expected=None),
+        dict(name=names[0], depth=35, attribute='sample_a', expected=None),
+        dict(name=names[0], depth=35, attribute='sample_b', expected=None),
+        dict(name=names[0], depth=35, attribute='sample_c', expected=None),
             ]
         }
 
@@ -171,7 +171,7 @@ class TestSSAProfile(LayersBase):
         dict(name=names[0], depth=5, attribute='comments', expected='brush')
             ]
         }
-#
+
 # class TestDBLayerTables(LayersBase):
 #
 #     def test_datatypes(self):

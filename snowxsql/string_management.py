@@ -220,8 +220,8 @@ def parse_none(value):
     if type(value) == str:
         if value.lower() in ['nan', 'none'] or not value:
             result = None
-
-    elif np.isnan(value):
-        result = None
+    elif type(value) == float:
+        if np.isnan(value):
+            result = None
 
     return result

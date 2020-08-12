@@ -3,14 +3,16 @@ Test all
 '''
 from snowxsql.metadata import *
 from os.path import join, dirname, abspath
-import datetime as dt
+import datetime
 import numpy as np
+import pytz
 
+dt = datetime.datetime(2020, 2, 5, 13, 30, 0, 0, pytz.timezone('MST'))
 info = {'site_name':'Grand Mesa',
          'site_id':'1N20',
          'pit_id':'COGM1N20_20200205',
-         'date':dt.date(2020, 2, 5),
-         'time':dt.time(13, 30),
+         'date':dt.date(),
+         'time':dt.timetz(),
          'utm_zone':12,
          'easting':743281.0,
          'northing':4324005.0,
@@ -140,6 +142,8 @@ class TestTemperatureHeader(DataHeaderTestBase):
 
 class TestSSAHeader(DataHeaderTestBase):
     def setup_class(self):
+        dt = datetime.datetime(2020, 2, 5, 13, 40, 0, 0, pytz.timezone('MST'))
+
         self.file = 'SSA.csv'
         self.data_names = ['specific_surface_area','reflectance','sample_signal','equivalent_diameter']
         self.columns = ['depth','comments'] + self.data_names
@@ -151,7 +155,7 @@ class TestSSAHeader(DataHeaderTestBase):
         self.info['timing'] = 'N/A'
         self.info['site_notes'] = 'layer at 15 and 20 cm had exact same SSA'
         self.info['total_depth'] = '80'
-        self.info['time'] = dt.time(13, 40)
+        self.info['time'] = dt.timetz()
         super().setup_class(self)
 
 
@@ -208,10 +212,9 @@ class TestSMPMeasurementLog():
         self.smp_log = SMPMeasurementLog(join(self.data, 'smp_log.csv'))
         self.df = self.smp_log.df
 
-    def test_surveyorss(self):
+    def test_surveyors(self):
         '''
         Test surveyorss initials are renamed correctly
         '''
-        assert self.df['surveyors'].iloc[-1] == 'Megan Mason'
+        assert self.df['surveyors'].iloc[-1] == 'HP Marshall'
         assert self.df['surveyors'].iloc[0] == 'Ioanna Merkouriadi'
-        assert self.df['surveyors'].iloc[48] == 'HP Marshall'

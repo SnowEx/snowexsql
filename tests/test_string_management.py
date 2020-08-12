@@ -2,7 +2,7 @@ from snowxsql.string_management import *
 import pytest
 import datetime
 import numpy as np
-
+import pytz
 
 @pytest.mark.filterwarnings('ignore:Assuming')
 def test_cardinal_to_degrees():
@@ -51,7 +51,7 @@ def test_add_date_time_keys_from_joined():
     d = add_date_time_keys(data, timezone='MST')
 
     assert d['date'] == datetime.date(year=2020, month=2, day=5)
-    assert d['time'] == datetime.time(hour=9, minute=45)
+    assert d['time'] == datetime.time(hour=9, minute=45, tzinfo=pytz.timezone('MST'))
 
     # Ensure the date/time key is always removed
     assert 'datetime' not in d.keys()
@@ -67,7 +67,7 @@ def test_add_date_time_keys_from_separated():
     d = add_date_time_keys(data, timezone='MST')
 
     assert d['date'] == datetime.date(year=2020, month=2, day=5)
-    assert d['time'] == datetime.time(hour=9, minute=45)
+    assert d['time'] == datetime.time(hour=9, minute=45, tzinfo=pytz.timezone('MST'))
 
 def test_add_date_time_keys_from_zulu():
     '''
@@ -78,7 +78,7 @@ def test_add_date_time_keys_from_zulu():
 
     d = add_date_time_keys(data, timezone='MST')
     assert d['date'] == datetime.date(year=2020, month=1, day=28)
-    assert d['time'] == datetime.time(hour=16, minute=15, second=49, microsecond=557000)
+    assert d['time'] == datetime.time(hour=16, minute=15, second=49, microsecond=557000, tzinfo=pytz.timezone('MST'))
 
     # Ensure we always remove the original keys used to interpret
     for k in ['utcdoy','utctod']:

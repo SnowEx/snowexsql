@@ -145,7 +145,6 @@ class LayersBase(DBSetup):
         records = self.get_profile(name, depth=depth)
         db_value = getattr(records[0], attribute)
         received = self.get_str_value(db_value, precision=precision)
-        print(received, str_expected)
         assert received == str_expected
 
     # def a_samples_assignment(self, data_name, depth, correct_values, precision=3):
