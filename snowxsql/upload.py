@@ -118,6 +118,15 @@ class UploadProfileData():
         drop_cols = [c for c in df.columns if c not in self.expected_attributes]
         df = df.drop(columns=drop_cols)
 
+        # Manage nans and nones
+        for c in df.columns:
+            df[c] = df[c].apply(lambda x: parse_none(x))
+            if 'sample' in c:
+                print(df[c])
+        # Clean up comments a bit
+        if 'comments' in df.columns:
+            df['comments'] = df['comments'].apply(lambda x: x.strip(' ') if type(x) == str else x)
+
         return df
 
     def submit(self, session):
@@ -228,7 +237,7 @@ class PointDataCSV(object):
             self.df = self.df.drop(columns=['id'])
 
         # replace all nans or string nones with None (none type)
-        self.df = self.df.apply(lambda a: parse_none(x))
+        self.df = self.df.apply(lambda x: parse_none(x))
 
     def submit(self, session):
         # Loop through all the entries and add them to the db

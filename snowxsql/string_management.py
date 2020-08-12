@@ -1,6 +1,8 @@
 import warnings
 import pandas as pd
 import datetime
+import numpy as np
+
 
 def clean_str(messy):
     '''
@@ -218,5 +220,8 @@ def parse_none(value):
     if type(value) == str:
         if value.lower() in ['nan', 'none'] or not value:
             result = None
+
+    elif np.isnan(value):
+        result = None
 
     return result

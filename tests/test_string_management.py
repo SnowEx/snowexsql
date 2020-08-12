@@ -1,6 +1,8 @@
 from snowxsql.string_management import *
 import pytest
 import datetime
+import numpy as np
+
 
 @pytest.mark.filterwarnings('ignore:Assuming')
 def test_cardinal_to_degrees():
@@ -102,7 +104,7 @@ def test_parse_none():
     else.
     '''
     # Assert these are converted to None
-    for v in ['NaN', '', 'NONE']:
+    for v in ['NaN', '', 'NONE', np.nan]:
         assert parse_none(v) == None
 
     # Assert these are unaffected by function
