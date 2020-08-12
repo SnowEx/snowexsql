@@ -200,3 +200,23 @@ def strip_encapsulated(str_line, encapusulator):
 
     # Make sure we remove the last one
     return result.replace(')','')
+
+def parse_none(value):
+    '''
+    parses values looking for NANs, Nones, etc...
+
+    Args:
+        value: Value potentially containing a none or nan
+
+    Returns:
+        result: If string value is nan or none, then return None type otherwise
+                return original value
+    '''
+    result = value
+
+    # If its a nan or none or the string is empty
+    if type(value) == str:
+        if value.lower() in ['nan', 'none'] or not value:
+            result = None
+
+    return result

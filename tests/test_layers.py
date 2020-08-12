@@ -33,13 +33,13 @@ class TestStratigraphyProfile(LayersBase):
         dict(name='manual_wetness', depth=17, attribute='value', expected='D'),
 
         # Test that meta data from the header only is assigned
-        dict(name='hand_hardness', depth=30, attribute='site_id', expected='1N20'),
-        dict(name='hand_hardness', depth=30, attribute='pit_id', expected='COGM1N20_20200205'),
-        dict(name='hand_hardness', depth=30, attribute='date', expected=dt.date()),
-        dict(name='hand_hardness', depth=30, attribute='time', expected=dt.timetz()),
-        dict(name='hand_hardness', depth=30, attribute='site_name', expected='Grand Mesa'),
-        dict(name='hand_hardness', depth=30, attribute='easting', expected=743281),
-        dict(name='hand_hardness', depth=30, attribute='northing', expected=4324005),
+        dict(name=names[0], depth=30, attribute='site_id', expected='1N20'),
+        dict(name=names[0], depth=30, attribute='pit_id', expected='COGM1N20_20200205'),
+        dict(name=names[0], depth=30, attribute='date', expected=dt.date()),
+        dict(name=names[0], depth=30, attribute='time', expected=dt.timetz()),
+        dict(name=names[0], depth=30, attribute='site_name', expected='Grand Mesa'),
+        dict(name=names[0], depth=30, attribute='easting', expected=743281),
+        dict(name=names[0], depth=30, attribute='northing', expected=4324005),
             ]
         }
 
@@ -57,7 +57,7 @@ class TestStratigraphyProfile(LayersBase):
 
 class TestDensityProfile(LayersBase):
     '''
-    Tests all stratigraphy uploading and value assigning
+    Tests all density uploading and value assigning
 
     Only examine the data in the file were uploading
     '''
@@ -74,47 +74,62 @@ class TestDensityProfile(LayersBase):
 
     'test_attr_value': [
         # Test a single value to all main profiles
-        dict(name='density', depth=35, attribute='value', expected=np.mean([190, 245])),
+        dict(name=names[0], depth=35, attribute='value', expected=np.mean([190, 245])),
 
         # Test samples are renamed and assigned
-        dict(name='density', depth=35, attribute='sample_a', expected=190),
-        dict(name='density', depth=35, attribute='sample_b', expected=245),
-        dict(name='density', depth=35, attribute='sample_c', expected='NaN'),
+        dict(name=names[0], depth=35, attribute='sample_a', expected=190),
+        dict(name=names[0], depth=35, attribute='sample_b', expected=245),
+        # Tests that NaN is converted to None
+        dict(name=names[0], depth=35, attribute='sample_c', expected=None),
 
         # Test that meta data from the header only is assigned
-        dict(name='density', depth=35, attribute='site_id', expected='1N20'),
-        dict(name='density', depth=35, attribute='pit_id', expected='COGM1N20_20200205'),
-        dict(name='density', depth=35, attribute='date', expected=dt.date()),
-        dict(name='density', depth=35, attribute='time', expected=dt.timetz()),
-        dict(name='density', depth=35, attribute='site_name', expected='Grand Mesa'),
-        dict(name='density', depth=35, attribute='easting', expected=743281),
-        dict(name='density', depth=35, attribute='northing', expected=4324005),
+        dict(name=names[0], depth=35, attribute='site_id', expected='1N20'),
+        dict(name=names[0], depth=35, attribute='pit_id', expected='COGM1N20_20200205'),
+        dict(name=names[0], depth=35, attribute='date', expected=dt.date()),
+        dict(name=names[0], depth=35, attribute='time', expected=dt.timetz()),
+        dict(name=names[0], depth=35, attribute='site_name', expected='Grand Mesa'),
+        dict(name=names[0], depth=35, attribute='easting', expected=743281),
+        dict(name=names[0], depth=35, attribute='northing', expected=4324005),
             ]
         }
 
+
 class TestLWCProfile(LayersBase):
+    '''
+    Tests all LWC uploading and value assigning
+
+    Only examine the data in the file were uploading
+    '''
+
     names = ['dielectric_constant']
 
-    def test_upload(self):
-        '''
-        Test uploading a lwc csv to the db
-        '''
-        self.assert_upload('LWC.csv', 4)
+    dt = datetime.datetime(2020, 2, 5, 13, 30, 0, 0, pytz.timezone('MST'))
 
-    def test_avg_value(self):
-        '''
-        Test whether the value of single layer is the average of the samples
-        '''
-        # Expecting the average of the two density samples
-        self.assert_avg_assignment(self.names[0], 27, [1.372, 1.35])
+    params = {
 
-    def test_samples(self):
-        '''
-        Tests dielectric_constant_a, dielectric_constant_b, assigned correctly
-        to sample_a, sample_b
-        '''
-        self.assert_samples_assignment(self.names[0], 17, [1.384, 1.354])
+    'test_upload':[
+                # test uploading each main profile from the file
+                dict(csv_f='LWC.csv', names=names, n_values=4)],
 
+    'test_attr_value': [
+        # Test a single value to all main profiles
+        dict(name=names[0], depth=27, attribute='value', expected=np.mean([1.372, 1.35])),
+
+        # Test samples are renamed and assigned
+        dict(name=names[0], depth=27, attribute='sample_a', expected=1.372),
+        dict(name=names[0], depth=27, attribute='sample_b', expected=1.35),
+        dict(name=names[0], depth=27, attribute='sample_c', expected=None),
+
+        # Test that meta data from the header only is assigned
+        dict(name=names[0], depth=27, attribute='site_id', expected='1N20'),
+        dict(name=names[0], depth=27, attribute='pit_id', expected='COGM1N20_20200205'),
+        dict(name=names[0], depth=27, attribute='date', expected=dt.date()),
+        dict(name=names[0], depth=27, attribute='time', expected=dt.timetz()),
+        dict(name=names[0], depth=27, attribute='site_name', expected='Grand Mesa'),
+        dict(name=names[0], depth=27, attribute='easting', expected=743281),
+        dict(name=names[0], depth=27, attribute='northing', expected=4324005),
+            ]
+        }
 
 class TestTemperatureProfile(LayersBase):
     names = ['temperature']

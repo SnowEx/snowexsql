@@ -94,3 +94,17 @@ def test_strip_encapsulated():
     s = 'Date (What is happening)'
     r = strip_encapsulated(s, '()')
     assert r == 'Date '
+
+
+def test_parse_none():
+    '''
+    Test we can convert nones and nans to None and still pass through everything
+    else.
+    '''
+    # Assert these are converted to None
+    for v in ['NaN', '', 'NONE']:
+        assert parse_none(v) == None
+
+    # Assert these are unaffected by function
+    for v in [10.5, 'Comment']:
+        assert parse_none(v) == v

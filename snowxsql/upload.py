@@ -227,6 +227,9 @@ class PointDataCSV(object):
         if 'id' in self.df.columns:
             self.df = self.df.drop(columns=['id'])
 
+        # replace all nans or string nones with None (none type)
+        self.df = self.df.apply(lambda a: parse_none(x))
+
     def submit(self, session):
         # Loop through all the entries and add them to the db
         self.build_data(self.value_type)
