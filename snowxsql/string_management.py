@@ -171,7 +171,7 @@ def add_date_time_keys(data, timezone='MST'):
         raise ValueError('Data is missing date/time info!\n{}'.format(data))
 
     data['date'] = d.date()
-    data['time'] = d.time()
+    data['time'] = d.timetz()
 
     return data
 

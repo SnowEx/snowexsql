@@ -1,17 +1,30 @@
-from sqlalchemy import MetaData
+from sqlalchemy import MetaData, create_engine
 from sqlalchemy.engine import reflection
+from sqlalchemy.orm import sessionmaker
 
 import os
 from os.path import join, dirname
 
 from snowxsql.db import get_db, initialize
+from snowxsql.upload import UploadProfileData
+from snowxsql.data import LayerData
+from snowxsql.metadata import SMPMeasurementLog, DataHeader
 
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
+import pytest
 
+def pytest_generate_tests(metafunc):
+    # called once per each test function
+    funcarglist = metafunc.cls.params[metafunc.function.__name__]
+    argnames = sorted(funcarglist[0])
+    metafunc.parametrize(
+        argnames, [[funcargs[name] for name in argnames] for funcargs in funcarglist]
+    )
 
 class DBSetup:
-
+    '''
+    Base class for all our tests. Ensures that we clean up after every class
+    thats run
+    '''
     @classmethod
     def setup_class(self):
         '''
@@ -37,3 +50,147 @@ class DBSetup:
     def teardown(self):
         self.session.flush()
         self.session.rollback()
+
+
+class LayersBase(DBSetup):
+    '''
+    Base Class to testing layers in the database
+    '''
+
+    # Dictionary of test names and their inputs for parametrization
+    params = {}
+
+    site_id = '1N20'
+    def setup_class(self):
+        '''
+        Setup the database one time for testing
+        '''
+        super().setup_class()
+
+        site_fname = join(self.data_dir,'site_details.csv' )
+        self.pit = DataHeader(site_fname, db_type=None, timezone='MST', epsg=26912)
+        self.bulk_q = \
+        self.session.query(LayerData).filter(LayerData.site_id == self.site_id)
+
+    def get_str_value(self, value, precision=3):
+        '''
+        Because all values are checked as strings, managing floats can be
+        tricky. Use this to format the float values into strings with the
+        correct precision
+        '''
+        # Due to the unknown nature of values we store everything as a string
+        if str(value).strip('-').replace('.','').isnumeric():
+            s = ':0.{}f'.format(precision)
+            strft = '{' + s + '}'
+            expected = strft.format(float(value))
+
+        else:
+            expected = value
+
+        return expected
+
+    def _get_profile_query(self, data_name=None, depth=None):
+        '''
+        Construct the query and return it
+        '''
+
+        q = self.bulk_q
+
+        if data_name != None:
+            q = self.bulk_q.filter(LayerData.type == data_name)
+
+        if depth != None:
+            q = q.filter(LayerData.depth == depth)
+        return q
+
+    def get_profile(self, data_name=None, depth=None):
+        '''
+        DRYs out the tests for profile uploading
+
+        Args:
+            csv: str to path of a csv in the snowex format
+            data_name: Type of profile were accessing
+
+        Returns:
+            records: List of Layer objects mapped to the database
+        '''
+
+        q = self._get_profile_query(data_name=data_name, depth=depth)
+        records = q.all()
+        return records
+
+    def test_upload(self, csv_f, n_values, timezone='MST', sep=','):
+        '''
+        Test whether the correct number of values were uploaded
+        '''
+        f = join(self.data_dir, csv_f)
+        profile = UploadProfileData(f, epsg=26912, timezone=timezone, header_sep=sep)
+        profile.submit(self.session)
+
+        for d in self.data_names:
+            records = self.get_profile(data_name=d)
+
+            # Assert N values in the single profile
+            assert len(records) == n_values
+
+    def test_value(self, data_name, depth, correct_value,
+                                                         precision=3):
+        '''
+        Test whether the correct number of values were uploaded
+        '''
+        expected = self.get_str_value(correct_value, precision=precision)
+
+        records = self.get_profile(data_name, depth=depth)
+        value = getattr(records[0], 'value')
+        received = self.get_str_value(value, precision=precision)
+
+        # Assert the value with considerations to precision
+        assert received == expected
+
+    def test_attr_value(self, data_name, attribute_name, depth,
+                            correct_value, precision=3):
+        '''
+        Tests attribute value assignment, these are any non-main attributes
+        regarding the value itself. e.g. individual samples, location, etc
+        '''
+
+        expected = self.get_str_value(correct_value, precision=precision)
+
+        records = self.get_profile(data_name, depth=depth)
+        db_value = getattr(records[0], attribute_name)
+        received = self.get_str_value(db_value, precision=precision)
+        print(attribute_name, repr(received), repr(expected))
+        assert received == expected
+
+    # def a_samples_assignment(self, data_name, depth, correct_values, precision=3):
+    #     '''
+    #     Asserts all samples are assigned correctly
+    #     '''
+    #     samples = ['sample_a', 'sample_b', 'sample_c']
+    #
+    #     for i, v in enumerate(correct_values):
+    #         str_v = self.get_str_value(v, precision=precision)
+    #         self.assert_attr_value(data_name, samples[i], depth, str_v, precision=precision)
+
+    # def assert_avg_assignment(self, data_name, depth, avg_lst, precision=3):
+    #     '''
+    #     In cases of profiles with mulit profiles, the average of the samples
+    #     are assigned to the value attribute of the layer. This asserts those
+    #     are being assigned correctly
+    #     '''
+    #     # Expecting the average of the samples
+    #     avg = 0
+    #     for v in avg_lst:
+    #         avg += v
+    #     avg = avg / len(avg_lst)
+    #
+    #     expected = self.get_str_value(avg, precision=precision)
+    #
+    #     self.assert_value_assignment(data_name, depth, expected)
+
+    # def test_(self,data_name, depth, correct_values):
+    #     '''
+    #     Test values are correclty assigned
+    #     '''
+    #     self.assert_value_assignment(data_name, depth, correct_value,
+    #                                                    precision=3)

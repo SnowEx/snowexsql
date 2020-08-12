@@ -1,194 +1,52 @@
-from sqlalchemy import MetaData
+
+from  .sql_test_base import LayersBase, pytest_generate_tests
+import pytest
+from snowxsql.data import LayerData
+from datetime import date, time
+import pandas as pd
+import pytz
 import datetime
 
-from os import remove
-from os.path import join, dirname
-
-from snowxsql.upload import UploadProfileData
-from snowxsql.data import LayerData
-from snowxsql.metadata import SMPMeasurementLog, DataHeader
-
-from  .sql_test_base import DBSetup
-import pytest
-
-class LayersBase(DBSetup):
-    site_id = '1N20'
-    def setup_class(self):
-        '''
-        Setup the database one time for testing
-        '''
-        super().setup_class()
-
-        site_fname = join(self.data_dir,'site_details.csv' )
-        self.pit = DataHeader(site_fname, db_type=None, timezone='MST', epsg=26912)
-        self.bulk_q = \
-        self.session.query(LayerData).filter(LayerData.site_id == self.site_id)
-
-    def get_str_value(self, value, precision=3):
-        '''
-        Because all values are checked as strings, managing floats can be
-        tricky. Use this to format the float values into strings with the
-        correct precision
-        '''
-        # Due to the unknown nature of values we store everything as a string
-        if str(value).strip('-').replace('.','').isnumeric():
-            s = ':0.{}f'.format(precision)
-            strft = '{' + s + '}'
-            expected = strft.format(float(value))
-
-        else:
-            expected = value
-
-        return expected
-
-    def _get_profile_query(self, data_name=None, depth=None):
-        '''
-        Construct the query and return it
-        '''
-
-        q = self.bulk_q
-
-        if data_name != None:
-            q = self.bulk_q.filter(LayerData.type == data_name)
-
-        if depth != None:
-            q = q.filter(LayerData.depth == depth)
-        return q
-
-    def get_profile(self, data_name=None, depth=None):
-        '''
-        DRYs out the tests for profile uploading
-
-        Args:
-            csv: str to path of a csv in the snowex format
-            data_name: Type of profile were accessing
-        Returns:
-            records: List of Layer objects mapped to the database
-        '''
-
-        q = self._get_profile_query(data_name=data_name, depth=depth)
-        records = q.all()
-        return records
-
-    def assert_upload(self, csv_f, n_values, timezone='MST', sep=','):
-        '''
-        Test whether the correct number of values were uploaded
-        '''
-        f = join(self.data_dir, csv_f)
-        profile = UploadProfileData(f, epsg=26912, timezone=timezone, header_sep=sep)
-        profile.submit(self.session)
-
-        for d in self.data_names:
-            records = self.get_profile(data_name=d)
-
-            # Assert N values in the single profile
-            assert len(records) == n_values
-
-    def assert_value_assignment(self, data_name, depth, correct_value,
-                                                         precision=3):
-        '''
-        Test whether the correct number of values were uploaded
-        '''
-        expected = self.get_str_value(correct_value, precision=precision)
-
-        records = self.get_profile(data_name, depth=depth)
-        value = getattr(records[0], 'value')
-        received = self.get_str_value(value, precision=precision)
-
-        # Assert the value with considerations to precision
-        assert received == expected
-
-    def assert_attr_value(self, data_name, attribute_name, depth,
-                            correct_value, precision=3):
-        '''
-        Tests attribute value assignment, these are any non-main attributes
-        regarding the value itself. e.g. individual samples, location, etc
-        '''
-
-        records = self.get_profile(data_name, depth=depth)
-        expected = self.get_str_value(correct_value, precision=precision)
-
-        db_value = getattr(records[0], attribute_name)
-        received = self.get_str_value(db_value, precision=precision)
-
-        assert received == correct_value
-
-    def assert_samples_assignment(self, data_name, depth, correct_values, precision=3):
-        '''
-        Asserts all samples are assigned correctly
-        '''
-        samples = ['sample_a', 'sample_b', 'sample_c']
-
-        for i, v in enumerate(correct_values):
-            str_v = self.get_str_value(v, precision=precision)
-            self.assert_attr_value(data_name, samples[i], depth, str_v, precision=precision)
-
-    def assert_avg_assignment(self, data_name, depth, avg_lst, precision=3):
-        '''
-        In cases of profiles with mulit profiles, the average of the samples
-        are assigned to the value attribute of the layer. This asserts those
-        are being assigned correctly
-        '''
-        # Expecting the average of the samples
-        avg = 0
-        for v in avg_lst:
-            avg += v
-        avg = avg / len(avg_lst)
-
-        expected = self.get_str_value(avg, precision=precision)
-
-        self.assert_value_assignment(data_name, depth, expected)
 
 class TestStratigraphyProfile(LayersBase):
     '''
     Tests all stratigraphy uploading and value assigning
+
+    Only examine the data in the file were uploading
     '''
 
     data_names = ['hand_hardness', 'grain_size', 'grain_type',
                   'manual_wetness']
+    dt = datetime.datetime(2020, 2, 5, 13, 30, 0, 0, pytz.timezone('MST'))
 
-    def test_upload(self):
-        '''
-        Test uploading a stratigraphy csv to the db
-        '''
+    params = {
+    'test_upload':[dict(csv_f='stratigraphy.csv', n_values=5)],
 
-        records = self.assert_upload('stratigraphy.csv', 5)
+    'test_value': [dict(data_name='hand_hardness', depth=30, correct_value='4F'),
+                   dict(data_name='grain_size', depth=35, correct_value='< 1 mm'),
+                   dict(data_name='grain_type', depth=17, correct_value='FC'),
+                   dict(data_name='manual_wetness', depth=17, correct_value='D')],
 
+    'test_attr_value': [dict(data_name='hand_hardness', depth=30, attribute_name='site_id', correct_value='1N20'),
+                        dict(data_name='hand_hardness', depth=30, attribute_name='pit_id', correct_value='COGM1N20_20200205'),
+                        dict(data_name='hand_hardness', depth=30, attribute_name='date', correct_value=dt.date()),
+                        dict(data_name='hand_hardness', depth=30, attribute_name='time', correct_value=dt.timetz()),
+                        dict(data_name='hand_hardness', depth=30, attribute_name='site_name', correct_value='Grand Mesa'),
+                        dict(data_name='hand_hardness', depth=30, attribute_name='easting', correct_value=743281),
+                        dict(data_name='hand_hardness', depth=30, attribute_name='northing', correct_value=4324005),
+                        ]
+                    }
 
-    def test_hand_hardness(self):
-        '''
-        Test uploading a stratigraphy csv to the db
-        '''
-        self.assert_value_assignment('hand_hardness', 30, '4F')
-
-    def test_grain_size(self):
-        '''
-        Test uploading a stratigraphy csv to the db
-        '''
-        self.assert_value_assignment('grain_size', 35, '< 1 mm')
-
-    def test_grain_type(self):
-        '''
-        Test grain type was assigned
-        '''
-        self.assert_value_assignment('grain_type', 17, 'FC')
-
-    def test_manual_wetness(self):
-        '''
-        Test manual wetness was assigned
-        '''
-        self.assert_value_assignment('manual_wetness', 17, 'D')
-
-    def test_comments_search(self):
-        '''
-        Testing a specific comment contains query, value confirmation
-        '''
-        # Check for cups comment assigned to each profile in a stratigraphy file
-        q = self.session.query(LayerData)
-        records = q.filter(LayerData.comments.contains('Cups')).all()
-
-        # Should be 1 layer for each grain zise, type, hardness, and wetness
-        assert len(records) == 4
+    # def test_comments_search(self):
+    #     '''
+    #     Testing a specific comment contains query, value confirmation
+    #     '''
+    #     # Check for cups comment assigned to each profile in a stratigraphy file
+    #     q = self.session.query(LayerData)
+    #     records = q.filter(LayerData.comments.contains('Cups')).all()
+    #
+    #     # Should be 1 layer for each grain zise, type, hardness, and wetness
+    #     assert len(records) == 4
 
 class TestDensityProfile(LayersBase):
 
@@ -282,54 +140,6 @@ class TestSSAProfile(LayersBase):
         Test specific_surface_area values at a depth are assigned correctly
         '''
         self.assert_value_assignment('equivalent_diameter', 80.0, 0.1054, precision=4)
-
-class SMPBase(LayersBase):
-    fname = ''
-    def setup_class(self):
-        '''
-        '''
-        super().setup_class(self)
-
-        self.smp_log = SMPMeasurementLog(join(self.data_dir,'smp_log.csv'))
-
-    def assert_upload(self, r_count):
-        '''
-        Test uploading a SMP csv to the db
-        '''
-        smp_f = join(self.data_dir, self.fname)
-        extra_header = self.smp_log.get_metadata(smp_f)
-        profile = UploadProfileData(smp_f, timezone='UTC', header_sep=':',
-                                                           **extra_header)
-        profile.submit(self.session)
-        site = profile.hdr.info['site_id']
-
-        q = self.session.query(LayerData).filter(LayerData.site_id == site)
-        records = q.all()
-
-        assert len(records) == r_count
-
-class TestSMPProfile(SMPBase):
-    fname = 'S06M0874_2N12_20200131.CSV'
-    site_id = '2N12'
-
-    def test_upload(self):
-        self.assert_upload(62)
-
-    def test_surveyors_assigment(self):
-        '''
-        Tests that the surveyors was assigned to the database
-        '''
-        obs = self.bulk_q.limit(1).one()
-        assert obs.surveyors == 'Ioanna Merkouriadi'
-
-    @pytest.mark.skip('Unable to determine depth precision to gather records...')
-    def test_force_assignment(self):
-        '''
-        Confirm we submitted the values correctly
-        '''
-        records = self.get_profile('force')
-        print([type(r.depth) for r in records])
-        self.assert_value_assignment('force', 30.656350976508100, 0.8441290259361267, precision=3)
 
 class TestDBLayerTables(LayersBase):
 
