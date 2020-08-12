@@ -136,7 +136,6 @@ def add_date_time_keys(data, timezone='MST'):
         d: Python Datetime object
     '''
     keys = data.keys()
-
     # Extract datetime for separate db entries
     if 'date/time' in keys:
         d = pd.to_datetime(str(data['date/time']) + timezone)

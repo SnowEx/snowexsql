@@ -172,6 +172,38 @@ class TestSSAProfile(LayersBase):
             ]
         }
 
+class TestSMPProfile(LayersBase):
+    '''
+    Tests all SSA uploading and value assigning
+
+    Only examine the data in the file were uploading
+    '''
+
+    names = ['force']
+
+    dt = datetime.datetime(2020, 1, 31, 22, 42, 14, 0, pytz.timezone('UTC'))
+    sep=':'
+    timezone = 'UTC'
+    site_id = None
+    params = {
+
+    'test_upload':[
+                # test uploading each main profile from the file
+                dict(csv_f='S06M0874_2N12_20200131.CSV', names=names, n_values=10)],
+
+    'test_attr_value': [
+        # Test a single value to all main profiles
+        dict(name='force', depth=0.4, attribute='value', expected=0.11),
+
+        # # Test samples are renamed and assigned
+        dict(name=names[0], depth=0.4, attribute='date', expected=dt.date()),
+        dict(name=names[0], depth=0.4, attribute='time', expected=dt.timetz()),
+        dict(name=names[0], depth=0.4, attribute='latitude', expected= 39.03013229370117),
+        dict(name=names[0], depth=0.4, attribute='longitude', expected=-108.16268920898438)
+            ]
+        }
+
+
 # class TestDBLayerTables(LayersBase):
 #
 #     def test_datatypes(self):

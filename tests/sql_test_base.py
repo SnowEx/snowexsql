@@ -59,15 +59,15 @@ class LayersBase(DBSetup):
 
     # Dictionary of test names and their inputs for parametrization
     params = {}
-
+    timezone = 'MST'
+    sep = ','
     site_id = '1N20'
+
     def setup_class(self):
         '''
         Setup the database one time for testing
         '''
         super().setup_class()
-        self.bulk_q = \
-        self.session.query(LayerData).filter(LayerData.site_id == self.site_id)
 
     def get_str_value(self, value, precision=3):
         '''
@@ -90,14 +90,14 @@ class LayersBase(DBSetup):
         '''
         Construct the query and return it
         '''
-
-        q = self.bulk_q
+        q = self.session.query(LayerData).filter(LayerData.site_id == self.site_id)
 
         if data_name != None:
-            q = self.bulk_q.filter(LayerData.type == data_name)
+            q = q.filter(LayerData.type == data_name)
 
         if depth != None:
             q = q.filter(LayerData.depth == depth)
+
         return q
 
     def get_profile(self, data_name=None, depth=None):
@@ -116,12 +116,17 @@ class LayersBase(DBSetup):
         records = q.all()
         return records
 
-    def test_upload(self, csv_f, names, n_values, timezone='MST', sep=','):
+    def test_upload(self, csv_f, names, n_values):
         '''
         Test whether the correct number of values were uploaded
+
+        Args:
+            csv_f: String path to a valid csv
+            names: list of Main profile names to upload
+            n_values: Number of excepted data values
         '''
         f = join(self.data_dir, csv_f)
-        profile = UploadProfileData(f, epsg=26912, timezone=timezone, header_sep=sep)
+        profile = UploadProfileData(f, epsg=26912, timezone=self.timezone, header_sep=self.sep)
         profile.submit(self.session)
 
         for n in names:
@@ -136,7 +141,6 @@ class LayersBase(DBSetup):
         Tests attribute value assignment, these are any non-main attributes
         regarding the value itself. e.g. individual samples, location, etc
         '''
-
         str_expected = self.get_str_value(expected, precision=precision)
 
         records = self.get_profile(name, depth=depth)

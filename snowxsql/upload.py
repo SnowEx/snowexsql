@@ -74,6 +74,7 @@ class UploadProfileData():
 
         Args:
             site_info: Dictionary containing all site information
+
         Raises:
             ValueError: If any mismatches are found
         '''
@@ -94,8 +95,16 @@ class UploadProfileData():
     def build_data(self, data_name):
         '''
         Build out the original dataframe with the metdata to avoid doing it
-        during the submission loop
+        during the submission loop. Removes all other main profile columns and
+        assigns data_name as the value column
+
+        Args:
+            data_name: Name of a the main profile
+
+        Returns:
+            df: Dataframe ready for submission
         '''
+
         df = self.df.copy()
 
         # Assign all meta data to every entry to the data frame
@@ -121,12 +130,10 @@ class UploadProfileData():
         # Manage nans and nones
         for c in df.columns:
             df[c] = df[c].apply(lambda x: parse_none(x))
-            if 'sample' in c:
-                print(df[c])
+
         # Clean up comments a bit
         if 'comments' in df.columns:
             df['comments'] = df['comments'].apply(lambda x: x.strip(' ') if type(x) == str else x)
-
         return df
 
     def submit(self, session):
@@ -275,7 +282,6 @@ class PointDataCSV(object):
         '''
         # Create the data structure to pass into the interacting class attributes
         data = row.copy()
-
         data = add_date_time_keys(data, timezone=self.hdr.timezone)
 
         # Add geometry
