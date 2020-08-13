@@ -21,7 +21,8 @@ class ProfileBatchBase(DBSetup):
         for att in ['sites','profiles']:
             fnames = [join(self.data_dir, f) for f in getattr(self, att)]
             setattr(self, att, fnames)
-
+        if self.smp_log_f != None:
+            self.smp_log_f = join(self.data_dir, self.smp_log_f)
         # Upload two profiles with the same site details
         b = UploadProfileBatch(self.profiles, db_name='test',
                                               site_filenames=self.sites,
@@ -94,34 +95,19 @@ class TestSMPBatch(ProfileBatchBase):
     Test whether we can assign meta info from an smp log to 2 profiles
     '''
 
-    sites = ['site_details.csv']
-    profiles = ['density.csv','temperature.csv']
-
+    profiles = ['S19M1013_5S21_20200201.CSV','S06M0874_2N12_20200131.CSV']
+    smp_log_f = 'smp_log.csv'
     params = {
 
     'test_upload':[
             # test uploading each main profile from the file
-            dict(name='density', count=4),
-            dict(name='temperature', count=5)
+            dict(name='force', count=20),
             ],
     'test_attr_value': [
-        # Test all the attributes from the site details files
-        dict(dtype='density', depth=35, attribute='tree_canopy', expected='No Trees'),
-        dict(dtype='density', depth=35, attribute='pit_id', expected='COGM1N20_20200205'),
-        dict(dtype='density', depth=35, attribute='slope_angle', expected=5),
-        dict(dtype='density', depth=35, attribute='aspect', expected=180),
-        dict(dtype='density', depth=35, attribute='air_temp', expected=None),
-        dict(dtype='density', depth=35, attribute='total_depth', expected=35),
-        dict(dtype='density', depth=35, attribute='surveyors', expected='Chris Hiemstra, Hans Lievens'),
-        dict(dtype='density', depth=35, attribute='weather_description', expected='Sunny, cold, gusts'),
-        dict(dtype='density', depth=35, attribute='ground_roughness', expected='rough, rocks in places'),
-        dict(dtype='density', depth=35, attribute='precip', expected=None),
-        dict(dtype='density', depth=35, attribute='sky_cover', expected='Few (< 1/4 of sky)'),
-        dict(dtype='density', depth=35, attribute='wind', expected='Moderate'),
-        dict(dtype='density', depth=35, attribute='ground_condition', expected='Frozen'),
-        dict(dtype='density', depth=35, attribute='ground_vegetation', expected="[Grass]"),
-        dict(dtype='density', depth=35, attribute='vegetation_height', expected="5, nan"),
-        dict(dtype='density', depth=35, attribute='tree_canopy', expected='No Trees'),
-        dict(dtype='density', depth=35, attribute='comments',expected="Start temperature measurements (top) 13:48 End temperature measurements (bottom) 13:53 LWC sampler broke, no measurements were possible"),
+        # # Test all the attributes from the SMP Log details files
+        dict(dtype='force', depth=100, attribute='site_id', expected='5S21'),
+        dict(dtype='force', depth=0.4, attribute='site_id', expected='2N12'),
+        dict(dtype='force', depth=0.4, attribute='comments', expected='started 1-2 cm below surface'),
+
             ]
         }

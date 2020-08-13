@@ -131,11 +131,13 @@ class UploadProfileBatch():
 
         # Keep track of whether we using a site details file for each profile
         individual_meta_files = False
+        smp_file = False
 
         # Read the data and organize it, remap the names
-        if isinstance(self.smp_log, pd.DataFrame):
-            extras = self.smp_log.get_metadata(f)
-            self.kwargs.update(extras)
+        if not isinstance(self.smp_log, type(None)):
+            self.log.info('Processing SMP profiles with SMP measurement log...')
+            smp_file = True
+            self.kwargs['header_sep'] = ':'
 
         elif len(self.sites) == 1:
             self.log.info('Using {} for metadata for all profiles being uploaded...'
@@ -155,6 +157,10 @@ class UploadProfileBatch():
 
             if individual_meta_files:
                 kwargs.update(self.sites[i].info)
+
+            elif smp_file:
+                extras = self.smp_log.get_metadata(f)
+                kwargs.update(extras)
 
             # If were not debugging script allow exceptions and report them later
             if not self.debug:

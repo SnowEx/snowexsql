@@ -351,7 +351,7 @@ class DataHeader(object):
 
         self.extra_header = kwargs
 
-        self.log.info('Interpretting {}'.format(filename))
+        self.log.info('Interpretting metdata in {}'.format(filename))
 
         # Site location files will have no data_name
         self.data_names = None
@@ -726,8 +726,8 @@ class DataHeader(object):
                 self.is_point_data = True
 
         else:
-            raise(ValueError('No Geographic information was'
-                             'provided in the file header.'))
+            raise(ValueError('No geographic information was provided in the'
+                            ' file header or via keyword arguments.'))
 
         if not self.is_point_data:
             # Add a geometry entry
