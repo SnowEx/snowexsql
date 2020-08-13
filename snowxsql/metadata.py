@@ -47,7 +47,6 @@ class SMPMeasurementLog(object):
         self.log = get_logger(__name__)
 
         self.header, self.df = self._read(filename)
-        self.df.set_index('fname_sufix', inplace=True)
 
         # Cardinal map to interpet the orientation
         self.cardinal_map = {'N':'North', 'NE':'Northeast', 'E':'East',
@@ -80,8 +79,11 @@ class SMPMeasurementLog(object):
                                    usecols=range(n_cols), encoding='latin',
                                    parse_dates=[0], dtype=dtype)
 
-        df = self.interpret_dataframe(df)
+        # Insure all values are 4 digits. Seems like some were not by accident
+        df['fname_sufix'] = df['fname_sufix'].apply(lambda v: v.zfill(4))
 
+        df = self.interpret_dataframe(df)
+        df = df.set_index('fname_sufix')
         return header, df
 
     def interpret_dataframe(self, df):
