@@ -61,8 +61,8 @@ class UploadProfileData():
             df['depth'] = df['depth'].div(10)
 
         delta = abs(df['depth'].max() - df['depth'].min())
-        self.log.info('File contains {} profiles each with {} layers across {:0.2f} cm'
-                      ''.format(len(self.hdr.data_names), len(df), delta))
+        self.log.info('File contains {} profiles each with {} layers across '
+                     '{:0.2f} cm'.format(len(self.hdr.data_names), len(df), delta))
         return df
 
     def check(self, site_info):

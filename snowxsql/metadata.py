@@ -672,25 +672,25 @@ class DataHeader(object):
         for k in ['aspect','slope_angle']:
             if k in keys:
                 v = info[k]
+                if type(v) == str:
+                    # Remove any degrees symbols
+                    v = v.replace('\u00b0','')
+                    v = v.replace('Â','')
+                    info[k] = v
 
-                # Remove any degrees symbols
-                v = v.replace('\u00b0','')
-                v = v.replace('Â','')
-                info[k] = v
+                    # Manage cardinal directions
+                    if k == 'aspect':
+                        aspect = info['aspect']
 
-                # Manage cardinal directions
-                if k == 'aspect':
-                    aspect = info['aspect']
+                        # Check for number of numeric values.
+                        numeric = len([True for c in aspect if c.isnumeric()])
 
-                    # Check for number of numeric values.
-                    numeric = len([True for c in aspect if c.isnumeric()])
-
-                    if numeric != len(aspect) and aspect.lower() != 'nan':
-                        self.log.warning('Aspect recorded for site {} is in cardinal '
-                        'directions, converting to degrees...'
-                        ''.format(info['site_id']))
-                        deg = convert_cardinal_to_degree(aspect)
-                        info[k] = deg
+                        if numeric != len(aspect) and aspect.lower() != 'nan':
+                            self.log.warning('Aspect recorded for site {} is in cardinal '
+                            'directions, converting to degrees...'
+                            ''.format(info['site_id']))
+                            deg = convert_cardinal_to_degree(aspect)
+                            info[k] = deg
 
         # Convert geographic details to floats
         for numeric_key in ['northing','easting','latitude','longitude']:
@@ -700,8 +700,10 @@ class DataHeader(object):
 
         # Convert UTM coordinates to Lat long or vice versa for database storage
         if 'northing' in keys:
-            info['utm_zone'] = \
-               int(''.join([s for s in info['utm_zone'] if s.isnumeric()]))
+            if type(info['utm_zone']) == str:
+                info['utm_zone'] = \
+                   int(''.join([s for s in info['utm_zone'] if s.isnumeric()]))
+
             lat, long = utm.to_latlon(info['easting'],
                               info['northing'],
                               info['utm_zone'],

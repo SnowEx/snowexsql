@@ -13,7 +13,7 @@ from snowxsql.metadata import DataHeader, SMPMeasurementLog
 
 class UploadProfileBatch():
     '''
-    Class for submitting mulitple files of profile type data
+    Class for submitting mulitple files of profile type data.
 
     Attributes:
         defaults: Dictionary containing keyword arguments
@@ -22,13 +22,13 @@ class UploadProfileBatch():
         push: Wraps snowxsql.upload.UploadProfileData to submit data. Use debug=False to allow exceptions
 
     '''
-    defaults = {'site_name': 'Grand Mesa',
-            'site_filenames': [],
-            'debug': True,
-            'log_name': 'batch',
-            'epsg': 26912,
-            'n_files': -1,
-            'smp_log': None,
+
+    defaults = { 'site_filenames': [],
+                 'debug': True,
+                 'log_name': 'batch',
+                 'n_files': -1,
+                 'smp_log_f': None,
+                 'db_name': 'snowex'
             }
 
     def __init__(self, profile_filenames, **kwargs):
@@ -38,6 +38,8 @@ class UploadProfileBatch():
 
         Args:
             profile_filenames: List of valid files to be uploaded to the database
+            db_name: String name of database this will interact with, default=snowex
+
             debug: Boolean that allows exceptions when uploading files, when
                  True no exceptions are allowed. Default=True
             log_name: String for the logger name, useful for reading logs.
@@ -49,6 +51,8 @@ class UploadProfileBatch():
             site_filenames: List of files containing site description headers
                             which provides metadata for profile_filenames.
                             Cannot be used with file_log.
+            kwargs: Any keywords that can be passed along to the Profile Class.
+                    Any kwargs not recognized will be merged into a comment.
         '''
 
         self.profile_filenames = profile_filenames
@@ -66,6 +70,8 @@ class UploadProfileBatch():
 
 
             setattr(self, attr, vv)
+        # Grab logger
+        self.log = get_logger(self.log_name)
 
         self.kwargs = kwargs
 
@@ -73,26 +79,19 @@ class UploadProfileBatch():
         self.errors = []
         self.profiles_uploaded = 0
 
-        # Grab logger
-        self.log = get_logger(self.log_name)
-
         # Grab db
-        db_name = 'postgresql+psycopg2:///snowex'
-        engine, metadata, self.session = get_db(db_name)
+        self.db_name = 'postgresql+psycopg2:///{}'.format(self.db_name)
+        self.log.info('Accessing Database {}'.format(self.db_name))
+        engine, metadata, self.session = get_db(self.db_name)
 
         # Manage the site files and the file log
-        self.sites = []
-        self.smp_log_f = None
-
         if not isinstance(self.smp_log_f, type(None)) and self.site_filenames:
             raise ValueError('Batch Uploader is not able to digest info from a'
-                             ' log file and site files, please choose one.')
+                             ' smp log file and site files, please choose one.')
 
-        # Open the site files
-        if self.site_filenames:
-            self.open_sites()
+        self.sites = self.open_sites()
 
-        elif self.smp_log_f != None:
+        if self.smp_log_f != None:
             self.smp_log = SMPMeasurementLog(self.smp_log_f)
         else:
             self.smp_log = None
@@ -101,9 +100,25 @@ class UploadProfileBatch():
         '''
         If site files names are provided  open them all for use later
         '''
+        sites = []
         self.log.info('Reading {} site descriptor files...'.format(len(self.site_filenames)))
+
+        if self.site_filenames:
+
+            n_sites = len(self.site_filenames)
+            # We can manage either 1 site file for all or an equal number
+            if n_sites != len(self.profile_filenames) and n_sites != 1:
+                raise ValueError('Number of site files must be either the '
+                                 'same length as the number of profile files '
+                                 ' or must be len=1 which is used for all. '
+                                 'Currentl site files length = {} and '
+                                 'profile_filenames = '
+                                 '{}'.format(n_sites,len(self.profile_filenames)))
+
         for f in self.site_filenames:
-            self.sites.append(DataHeader(f, **self.kwargs))
+            sites.append(DataHeader(f, **self.kwargs))
+
+        return sites
 
     def push(self):
         '''
@@ -114,13 +129,37 @@ class UploadProfileBatch():
 
         start = time.time()
 
+        # Keep track of whether we using a site details file for each profile
+        individual_meta_files = False
+
+        # Read the data and organize it, remap the names
+        if isinstance(self.smp_log, pd.DataFrame):
+            extras = self.smp_log.get_metadata(f)
+            self.kwargs.update(extras)
+
+        elif len(self.sites) == 1:
+            self.log.info('Using {} for metadata for all profiles being uploaded...'
+                     ''.format(self.site_filenames[0]))
+
+            self.kwargs.update(self.sites[0].info)
+
+        elif len(self.sites) == len(self.profile_filenames):
+            individual_meta_files = True
+
         # Loop over all the ssa files and upload them
-        for i,f in enumerate(self.profile_filenames[0:self.n_files]):
+        if self.n_files != -1:
+            self.profile_filenames[0:self.n_files]
+
+        for i,f in enumerate(self.profile_filenames):
+            kwargs = self.kwargs.copy()
+
+            if individual_meta_files:
+                kwargs.update(self.sites[i].info)
 
             # If were not debugging script allow exceptions and report them later
             if not self.debug:
                 try:
-                    self._push_one(f)
+                    self._push_one(f, **kwargs)
 
                 except Exception as e:
                     self.log.error('Error with {}'.format(f))
@@ -128,7 +167,7 @@ class UploadProfileBatch():
                     self.errors.append((f, e))
 
             else:
-                self._push_one(f)
+                self._push_one(f, **kwargs)
 
 
         files_attempted = i + 1
@@ -146,29 +185,15 @@ class UploadProfileBatch():
         self.session.close()
 
 
-    def _push_one(self, f):
+    def _push_one(self, f, **kwargs):
         '''
         Manage what pushing a single file is to use with debug options.
 
         Args:
             f: valid file to upload
         '''
-        # Read the data and organize it, remap the names
-        if isinstance(self.smp_log, pd.DataFrame):
-            extras = self.smp_log.get_metadata(f)
-            self.kwargs.update(extras)
 
-        profile = UploadProfileData(f, **self.kwargs)
-
-        # Find a pit header if the site details were provided
-        if self.sites:
-            site = profile.hdr.info['site_id']
-            date = profile.hdr.info['date']
-            pits = [s for s in self.sites if s.info['site_id'] == site]
-            pits = [p for p in pits if p.info['date'] == date]
-
-            # Check the data for any knowable issues
-            profile.check(pits[0].info)
+        profile = UploadProfileData(f, **kwargs)
 
         # Submit the data to the database
         profile.submit(self.session)
