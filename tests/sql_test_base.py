@@ -148,6 +148,27 @@ class LayersBase(DBSetup):
         received = self.get_str_value(db_value, precision=precision)
         assert received == str_expected
 
+    def test_kw_search(self, attribute, kw, n_values):
+        '''
+        Search an attribute for a keyword or value within a record and asserts
+        a number of occurrances.
+
+        e.g. attribute=comments, kw='cups', record_count=4
+        will assert that there are 4 record with comments containing the word cups
+
+        Args:
+            attribute: Attribute to access to check if the kw exists in.
+            kw: Keyword to search for
+            n_values: Expected number of records containing kw
+
+        '''
+        # Check for cups comment assigned to each profile in a stratigraphy file
+        records = self.session.query(LayerData).all()
+        matches = [r for r in records if str(kw) in str(getattr(r, attribute))]
+        #records = q.filter(LayerData.comments.contains('Cups')).all()
+
+        assert len(matches) == n_values
+
     # def a_samples_assignment(self, data_name, depth, correct_values, precision=3):
     #     '''
     #     Asserts all samples are assigned correctly

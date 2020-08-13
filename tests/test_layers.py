@@ -40,20 +40,14 @@ class TestStratigraphyProfile(LayersBase):
         dict(name=names[0], depth=30, attribute='site_name', expected='Grand Mesa'),
         dict(name=names[0], depth=30, attribute='easting', expected=743281),
         dict(name=names[0], depth=30, attribute='northing', expected=4324005),
-            ]
+            ],
+
+    'test_kw_search': [
+        # Test there are 4 references to cups
+        dict(attribute='comments', kw='Cups', n_values=4),
+        ]
         }
 
-
-    # def test_comments_search(self):
-    #     '''
-    #     Testing a specific comment contains query, value confirmation
-    #     '''
-    #     # Check for cups comment assigned to each profile in a stratigraphy file
-    #     q = self.session.query(LayerData)
-    #     records = q.filter(LayerData.comments.contains('Cups')).all()
-    #
-    #     # Should be 1 layer for each grain zise, type, hardness, and wetness
-    #     assert len(records) == 4
 
 class TestDensityProfile(LayersBase):
     '''
