@@ -13,12 +13,17 @@ from snowxsql.metadata import SMPMeasurementLog, DataHeader
 import pytest
 
 def pytest_generate_tests(metafunc):
-    # called once per each test function
-    funcarglist = metafunc.cls.params[metafunc.function.__name__]
-    argnames = sorted(funcarglist[0])
-    metafunc.parametrize(
-        argnames, [[funcargs[name] for name in argnames] for funcargs in funcarglist]
-    )
+    '''
+    Function used to parametrize functions. If the function is in the
+    params keys then run it. Otherwise run all the tests normally.
+    '''
+
+    if metafunc.function.__name__ in metafunc.cls.params.keys():
+        funcarglist = metafunc.cls.params[metafunc.function.__name__]
+        argnames = sorted(funcarglist[0])
+        metafunc.parametrize(
+            argnames, [[funcargs[name] for name in argnames] for funcargs in funcarglist]
+        )
 
 class DBSetup:
     '''
@@ -147,57 +152,3 @@ class LayersBase(DBSetup):
         db_value = getattr(records[0], attribute)
         received = self.get_str_value(db_value, precision=precision)
         assert received == str_expected
-
-    def test_kw_search(self, attribute, kw, n_values):
-        '''
-        Search an attribute for a keyword or value within a record and asserts
-        a number of occurrances.
-
-        e.g. attribute=comments, kw='cups', record_count=4
-        will assert that there are 4 record with comments containing the word cups
-
-        Args:
-            attribute: Attribute to access to check if the kw exists in.
-            kw: Keyword to search for
-            n_values: Expected number of records containing kw
-
-        '''
-        # Check for cups comment assigned to each profile in a stratigraphy file
-        records = self.session.query(LayerData).all()
-        matches = [r for r in records if str(kw) in str(getattr(r, attribute))]
-        #records = q.filter(LayerData.comments.contains('Cups')).all()
-
-        assert len(matches) == n_values
-
-    # def a_samples_assignment(self, data_name, depth, correct_values, precision=3):
-    #     '''
-    #     Asserts all samples are assigned correctly
-    #     '''
-    #     samples = ['sample_a', 'sample_b', 'sample_c']
-    #
-    #     for i, v in enumerate(correct_values):
-    #         str_v = self.get_str_value(v, precision=precision)
-    #         self.assert_attr_value(data_name, samples[i], depth, str_v, precision=precision)
-
-    # def assert_avg_assignment(self, data_name, depth, avg_lst, precision=3):
-    #     '''
-    #     In cases of profiles with mulit profiles, the average of the samples
-    #     are assigned to the value attribute of the layer. This asserts those
-    #     are being assigned correctly
-    #     '''
-    #     # Expecting the average of the samples
-    #     avg = 0
-    #     for v in avg_lst:
-    #         avg += v
-    #     avg = avg / len(avg_lst)
-    #
-    #     expected = self.get_str_value(avg, precision=precision)
-    #
-    #     self.assert_value_assignment(data_name, depth, expected)
-
-    # def test_(self,data_name, depth, correct_values):
-    #     '''
-    #     Test values are correclty assigned
-    #     '''
-    #     self.assert_value_assignment(data_name, depth, correct_value,
-    #                                                    precision=3)

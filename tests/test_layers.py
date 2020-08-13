@@ -41,13 +41,7 @@ class TestStratigraphyProfile(LayersBase):
         dict(name=names[0], depth=30, attribute='site_name', expected='Grand Mesa'),
         dict(name=names[0], depth=30, attribute='easting', expected=743281),
         dict(name=names[0], depth=30, attribute='northing', expected=4324005),
-            ],
-
-    'test_kw_search': [
-        # Test there are 4 references to cups
-        dict(attribute='comments', kw='Cups', n_values=4),
-        ]
-        }
+            ],}
 
 
 class TestDensityProfile(LayersBase):
@@ -76,7 +70,8 @@ class TestDensityProfile(LayersBase):
         dict(name=names[0], depth=35, attribute='sample_b', expected=245),
         # Tests that NaN is converted to None
         dict(name=names[0], depth=35, attribute='sample_c', expected=None),
-            ]
+            ],
+
         }
 
 
@@ -198,63 +193,60 @@ class TestSMPProfile(LayersBase):
             ]
         }
 
-
-# class TestDBLayerTables(LayersBase):
-#
-#     def test_datatypes(self):
-#         '''
-#         Test that all layer attributes in the db are the correct type.
-#         '''
-#         dtypes = {'id': int,
-#         'site_name': str,
-#         'date': datetime.date,
-#         'time': datetime.time,
-#         'time_created': datetime.datetime,
-#         'time_updated': datetime.datetime,
-#         'latitude': float,
-#         'longitude': float,
-#         'northing': float,
-#         'easting': float,
-#         'utm_zone': str,
-#         'elevation': float,
-#         'type': str,
-#         'value': str,
-#         'depth': float,
-#         'bottom_depth': float,
-#         'site_id': str,
-#         'pit_id': str,
-#         'slope_angle': int,
-#         'aspect': int,
-#         'air_temp': float,
-#         'total_depth': float,
-#         'surveyors': str,
-#         'weather_description': str,
-#         'precip': str,
-#         'sky_cover': str,
-#         'wind': str,
-#         'ground_condition': str,
-#         'ground_roughness': str,
-#         'ground_vegetation': str,
-#         'vegetation_height': str,
-#         'tree_canopy': str,
-#         'site_notes': str,
-#         'sample_a': str,
-#         'sample_b': str,
-#         'sample_c': str,
-#         'comments': str}
-#
-#         records = self.bulk_q.all()
-#
-#         for r in records:
-#             for c, dtype in dtypes.items():
-#                 db_type = type(getattr(r, c))
-#                 assert (db_type == dtype) or (db_type == type(None))
-#
-#     @pytest.mark.skip('Skipping since nothing is uploaded for the this...')
-#     def test_geopandas_compliance(self):
-#         '''
-#         Test the geometry column exists
-#         '''
-#         records = self.session.query(LayerData.geom).limit(1).all()
-#         # To be compliant with Geopandas must be geom not geometry!
-#         assert hasattr(records[0], 'geom')
+## TODO: Move this to test_db.py 
+    # def test_datatypes(self):
+    #     '''
+    #     Test that all layer attributes in the db are the correct type.
+    #     '''
+    #     dtypes = {'id': int,
+    #     'site_name': str,
+    #     'date': datetime.date,
+    #     'time': datetime.time,
+    #     'time_created': datetime.datetime,
+    #     'time_updated': datetime.datetime,
+    #     'latitude': float,
+    #     'longitude': float,
+    #     'northing': float,
+    #     'easting': float,
+    #     'utm_zone': str,
+    #     'elevation': float,
+    #     'type': str,
+    #     'value': str,
+    #     'depth': float,
+    #     'bottom_depth': float,
+    #     'site_id': str,
+    #     'pit_id': str,
+    #     'slope_angle': int,
+    #     'aspect': int,
+    #     'air_temp': float,
+    #     'total_depth': float,
+    #     'surveyors': str,
+    #     'weather_description': str,
+    #     'precip': str,
+    #     'sky_cover': str,
+    #     'wind': str,
+    #     'ground_condition': str,
+    #     'ground_roughness': str,
+    #     'ground_vegetation': str,
+    #     'vegetation_height': str,
+    #     'tree_canopy': str,
+    #     'site_notes': str,
+    #     'sample_a': str,
+    #     'sample_b': str,
+    #     'sample_c': str,
+    #     'comments': str}
+    #
+    #     records = get_profile(self, data_name=force, depth=0.4):
+    #
+    #     for r in records:
+    #         for c, dtype in dtypes.items():
+    #             db_type = type(getattr(r, c))
+    #             assert (db_type == dtype) or (db_type == type(None))
+    #
+    # def test_geopandas_compliance(self):
+    #     '''
+    #     Test the geometry column exists
+    #     '''
+    #     records = self.session.query(LayerData.geom).limit(1).all()
+    #     # To be compliant with Geopandas must be geom not geometry!
+    #     assert hasattr(records[0], 'geom')

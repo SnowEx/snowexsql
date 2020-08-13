@@ -173,7 +173,6 @@ class TestSiteDetailseHeader(DataHeaderTestBase):
         self.info['sky_cover'] = 'Few (< 1/4 of sky)'
         self.info['Wind'] = 'Moderate'
         self.info['ground_condition'] = 'Frozen'
-        self.info['ground_roughness'] = 'Rough'
         self.info['ground_vegetation'] = '[Grass]'
         self.info['vegetation_height'] = '5, nan'
         self.info['wind'] = 'Moderate'
