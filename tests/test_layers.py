@@ -23,7 +23,8 @@ class TestStratigraphyProfile(LayersBase):
 
     'test_upload':[
                 # test uploading each main profile from the file
-                dict(csv_f='stratigraphy.csv', names=names, n_values=5)],
+                dict(csv_f='stratigraphy.csv', names=names, n_values=5),
+                ],
 
     'test_attr_value': [
         # Test a single value to all main profiles
