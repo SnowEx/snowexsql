@@ -109,6 +109,7 @@ class UploadProfileData():
 
         # Assign all meta data to every entry to the data frame
         for k, v in self.hdr.info.items():
+            # print(v)
             df[k] = v
 
         df['type'] = data_name

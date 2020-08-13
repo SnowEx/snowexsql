@@ -83,7 +83,7 @@ class SMPMeasurementLog(object):
         df['fname_sufix'] = df['fname_sufix'].apply(lambda v: v.zfill(4))
 
         df = self.interpret_dataframe(df)
-        df = df.set_index('fname_sufix')
+
         return header, df
 
     def interpret_dataframe(self, df):
@@ -242,8 +242,9 @@ class SMPMeasurementLog(object):
         '''
         s = basename(smp_file).split('.')[0].split('_')
         suffix = s[0].split('M')[-1]
-        meta = self.df.loc[suffix].to_dict()
-        return meta
+        ind = self.df['fname_sufix'] == suffix
+        meta = self.df.loc[ind]
+        return meta.iloc[0].to_dict()
 
 class DataHeader(object):
     '''

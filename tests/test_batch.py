@@ -7,9 +7,10 @@ from snowxsql.data import LayerData
 
 class ProfileBatchBase(DBSetup):
     '''
-    The base batch testing class does the actually uploading and merging of extra data
+    The base batch testing class does the actually uploading and merging of
+    extra data
     '''
-    
+
     sites = []
     profiles = []
     smp_log_f = None
@@ -25,9 +26,10 @@ class ProfileBatchBase(DBSetup):
         if self.smp_log_f != None:
             self.smp_log_f = join(self.data_dir, self.smp_log_f)
         # Upload two profiles with the same site details
-        b = UploadProfileBatch(self.profiles, db_name='test',
+        b = UploadProfileBatch(self.profiles, db_name='test', timezone='UTC',
                                               site_filenames=self.sites,
                                               smp_log_f=self.smp_log_f)
+
         b.push()
 
 

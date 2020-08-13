@@ -24,10 +24,10 @@ def main():
     # grab the file log excel
     smp_log_file = join(directory, 'SMP_level1.csv')
 
-    b = UploadProfileBatch(profile_filenames=filenames, debug=True,
-                        header_sep=':', timezone='UTC', smp_log=smp_log_file)
+    b = UploadProfileBatch(filenames, debug=True,
+                           timezone='UTC', smp_log_f=smp_log_file)
     b.push()
     return len(b.errors)
-    
+
 if __name__ == '__main__':
     main()
