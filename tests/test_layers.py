@@ -35,7 +35,6 @@ class TestStratigraphyProfile(LayersBase):
 
         # Test that meta data from the header only is assigned
         dict(name=names[0], depth=30, attribute='site_id', expected='1N20'),
-        dict(name=names[0], depth=30, attribute='pit_id', expected='COGM1N20_20200205'),
         dict(name=names[0], depth=30, attribute='date', expected=dt.date()),
         dict(name=names[0], depth=30, attribute='time', expected=dt.timetz()),
         dict(name=names[0], depth=30, attribute='site_name', expected='Grand Mesa'),
@@ -193,7 +192,7 @@ class TestSMPProfile(LayersBase):
             ]
         }
 
-## TODO: Move this to test_db.py 
+## TODO: Move this to test_db.py
     # def test_datatypes(self):
     #     '''
     #     Test that all layer attributes in the db are the correct type.

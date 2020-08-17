@@ -705,7 +705,11 @@ class DataHeader(object):
 
         # If columns or info does not have coordinates raise an error
         important = ['northing', 'latitude']
-        cols_have_coords = [c for c in self.columns if c in important]
+
+        cols_have_coords = []
+        if self.columns != None:
+            cols_have_coords = [c for c in self.columns if c in important]
+
         hdr_has_coords = [c for c in info if c in important]
 
         if not cols_have_coords and not hdr_has_coords:

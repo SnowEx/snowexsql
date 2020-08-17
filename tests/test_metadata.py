@@ -1,5 +1,5 @@
 '''
-Test all
+Test all things from the metadata.py file
 '''
 from snowxsql.metadata import *
 from os.path import join, dirname, abspath
@@ -169,7 +169,7 @@ class TestSiteDetailseHeader(DataHeaderTestBase):
         self.info['surveyors'] = "Chris Hiemstra, Hans Lievens"
         self.info['weather_description'] = 'Sunny, cold, gusts'
         self.info['ground_roughness'] = 'rough, rocks in places'
-        self.info['precip'] = 'None'
+        self.info['precip'] = None
         self.info['sky_cover'] = 'Few (< 1/4 of sky)'
         self.info['Wind'] = 'Moderate'
         self.info['ground_condition'] = 'Frozen'
@@ -182,9 +182,9 @@ class TestSiteDetailseHeader(DataHeaderTestBase):
                                 ' End temperature measurements (bottom) 13:53'
                                 ' LWC sampler broke, no measurements were'
                                 ' possible')
-        self.info['slope_angle'] = '5'
+        self.info['slope_angle'] = 5.0
         self.info['aspect'] = 180
-        self.info['air_temp'] = 'NaN'
+        self.info['air_temp'] = None
         self.info['total_depth'] = '35'
 
         super().setup_class(self)
