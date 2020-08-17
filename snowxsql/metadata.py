@@ -700,10 +700,15 @@ class DataHeader(object):
         info = reproject_point_in_dict(info, is_northern=self.northern_hemisphere)
 
         # Check for point data which will contain this in the data not the header
-        if is_point_data(self.columns):
+        if not is_point_data(self.columns):
             info = add_geom(info, self.extra_header['epsg'])
 
-        elif 'northing' not in info.keys() and 'latitude' not in info.keys():
+        # If columns or info does not have coordinates raise an error
+        important = ['northing', 'latitude']
+        cols_have_coords = [c for c in self.columns if c in important]
+        hdr_has_coords = [c for c in info if c in important]
+
+        if not cols_have_coords and not hdr_has_coords:
             raise(ValueError('No geographic information was provided in the'
                             ' file header or via keyword arguments.'))
         return info

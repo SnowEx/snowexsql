@@ -45,7 +45,7 @@ class SingleLocationData(SnowData):
 class SiteData(SingleLocationData, Base):
     '''
     Table for storing pit site meta data, This table doesn't represent any
-    main data record but only support data fro each site
+    main data record but only support data for each site
     '''
     __tablename__ = 'sites'
     __table_args__ = {"schema": "public"}

@@ -1,7 +1,9 @@
 from . data import *
 from .string_management import *
-from .metadata import DataHeader
+from .interpretation import *
 from .utilities import *
+
+from .metadata import DataHeader
 from .db import get_table_attributes
 
 import pandas as pd
