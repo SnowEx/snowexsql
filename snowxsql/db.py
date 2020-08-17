@@ -28,23 +28,11 @@ def get_db(db_str):
     return engine, metadata, session
 
 
-def get_table_attributes(db_type):
+def get_table_attributes(DataCls):
     '''
     Returns a list of all the table columns to be used for each entry
     '''
-    if db_type == 'layer':
-        data_class = LayerData
 
-    elif db_type == 'point':
-        data_class = PointData
-
-    elif db_type == 'raster':
-        data_class = RasterData
-
-    else:
-        raise ValueError('database type is not currently accepted in the'
-                        ' DataHeader class.')
-
-    valid_attributes = [att for att in dir(data_class) if att[0] !='_']
+    valid_attributes = [att for att in dir(DataCls) if att[0] !='_']
 
     return valid_attributes

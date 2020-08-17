@@ -18,11 +18,16 @@ class SnowData(object):
     time_created = Column(DateTime(timezone=True), server_default=func.now())
     time_updated = Column(DateTime(timezone=True), onupdate=func.now())
     id = Column(Integer, primary_key=True)
-    surveyors = Column(String(50))
+    site_id = Column(String(50))
+
+class Measurement(object):
+    '''
+    Attributes required for a measurement of any kind
+    '''
     instrument = Column(String(50))
     type = Column(String(50))
     units = Column(String(50))
-
+    surveyors = Column(String(100))
 
 class SingleLocationData(SnowData):
     '''
@@ -37,18 +42,42 @@ class SingleLocationData(SnowData):
     geom = Column(Geometry("POINT"))
     time = Column(Time(timezone=True))
 
-class RasterData(SnowData, Base):
+class SiteData(SingleLocationData, Base):
     '''
-    Raster class
+    Table for storing pit site meta data, This table doesn't represent any
+    main data record but only support data fro each site
+    '''
+    __tablename__ = 'sites'
+    __table_args__ = {"schema": "public"}
+
+    slope_angle = Column(Integer)
+    aspect = Column(Integer)
+    air_temp = Column(Float)
+    total_depth = Column(Float)
+    weather_description = Column(String(50))
+    precip = Column(String(50))
+    sky_cover = Column(String(50))
+    wind = Column(String(50))
+    ground_condition = Column(String(100))
+    ground_roughness = Column(String(100))
+    ground_vegetation = Column(String(100))
+    vegetation_height = Column(String(100))
+    tree_canopy = Column(String(100))
+    site_notes = Column(String(1000))
+    bottom_depth = Column(Float)
+
+class RasterData(SnowData, Measurement, Base):
+    '''
+    Raster Table
     '''
     __tablename__ = 'images'
     __table_args__ = {"schema": "public"}
     raster = Column(Raster)
     description = Column(String(1000))
 
-class PointData(SingleLocationData, Base):
+class PointData(SingleLocationData, Measurement, Base):
     '''
-    Class for point data
+    Point data table
     '''
     __tablename__ = 'points'
     __table_args__ = {"schema": "public"}
@@ -62,7 +91,7 @@ class PointData(SingleLocationData, Base):
     }
 
 
-class LayerData(SingleLocationData, Base):
+class LayerData(SingleLocationData, Measurement, Base):
     '''
     Base class for interacting with profile data. This includes anything measured
     as a function of depth as single point. E.g. SMP profiles, Hand hardness,
@@ -73,21 +102,6 @@ class LayerData(SingleLocationData, Base):
 
     depth = Column(Float)
     site_id = Column(String(50))
-    pit_id = Column(String(250))
-    slope_angle = Column(Integer)
-    aspect = Column(Integer)
-    air_temp = Column(Float)
-    total_depth = Column(Float)
-    weather_description = Column(String(50))
-    precip = Column(String(50))
-    sky_cover = Column(String(50))
-    wind = Column(String(50))
-    ground_condition = Column(String(50))
-    ground_roughness = Column(String(50))
-    ground_vegetation = Column(String(50))
-    vegetation_height = Column(String(50))
-    tree_canopy = Column(String(50))
-    site_notes = Column(String(1000))
     bottom_depth = Column(Float)
     comments = Column(String(1000))
     sample_a = Column(String(20))
@@ -95,4 +109,3 @@ class LayerData(SingleLocationData, Base):
     sample_c = Column(String(20))
     value = Column(String(50))
     profile_id = Column(String(200))
-    timing = Column(String(100))

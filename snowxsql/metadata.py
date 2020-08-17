@@ -8,8 +8,10 @@ from .string_management import *
 from .utilities import get_logger, read_n_lines
 import utm
 import pandas as pd
-from geoalchemy2.elements import WKTElement
 
+from snowxsql.data import SiteData
+from snowxsql.db import get_table_attributes
+from snowxsql.projection import reproject_point_in_dict, add_geom
 from os.path import basename
 
 class SMPMeasurementLog(object):
@@ -286,18 +288,12 @@ class DataHeader(object):
              'top': 'depth',
              'height':'depth',
              'bottom':'bottom_depth',
-             # 'density_a': 'sample_a',
-             # 'density_b': 'sample_b',
-             # 'density_c': 'sample_c',
              'site': 'site_id',
              'pitid': 'pit_id',
              'slope':'slope_angle',
              'weather':'weather_description',
              'sky': 'sky_cover',
              'notes':'site_notes',
-             # 'dielectric_constant_a':'sample_a',
-             # 'dielectric_constant_b':'sample_b',
-             # 'dielectric_constant_c':'sample_c',
              'sample_top_height':'depth',
              'deq':'equivalent_diameter',
              'operator':'surveyors',
@@ -367,6 +363,25 @@ class DataHeader(object):
 
         # Interpret any data needing interpretation e.g. aspect
         self.info = self.interpret_data(info)
+
+    def submit(self, session):
+        '''
+        Submit meta data to the database as site info, Do not use on profile
+        headers. Only use on site_details files.
+
+        Args:
+            session: SQLAlchemy session object
+        '''
+        # only submit valid  keys to db
+        kwargs = {}
+        valid = get_table_attributes(SiteData)
+        for k,v in self.info.items():
+            if k in valid:
+                 kwargs[k] = v
+
+        d = SiteData(**kwargs)
+        session.add(d)
+        session.commit()
 
     def rename_sample_profiles(self, columns, data_name):
         '''
@@ -671,6 +686,8 @@ class DataHeader(object):
                              'header:\n{}'.format(', '.join(overwrite_keys)))
 
         info.update(self.extra_header)
+
+
         # Manage degrees  type entries
         for k in ['aspect','slope_angle']:
             if k in keys:
@@ -695,46 +712,18 @@ class DataHeader(object):
                             deg = convert_cardinal_to_degree(aspect)
                             info[k] = deg
 
-        # Convert geographic details to floats
-        for numeric_key in ['northing','easting','latitude','longitude']:
-            if numeric_key in keys:
-                info[numeric_key] = float(info[numeric_key])
-
-
-        # Convert UTM coordinates to Lat long or vice versa for database storage
-        if 'northing' in keys:
-            if type(info['utm_zone']) == str:
-                info['utm_zone'] = \
-                   int(''.join([s for s in info['utm_zone'] if s.isnumeric()]))
-
-            lat, long = utm.to_latlon(info['easting'],
-                              info['northing'],
-                              info['utm_zone'],
-                              northern=self.northern_hemisphere)
-
-            info['latitude'] = lat
-            info['longitude'] = long
-
-        elif 'latitude' in keys:
-            easting, northing, utm_zone, letter = utm.from_latlon(
-                                                info['latitude'],
-                                                info['longitude'])
-            info['easting'] = easting
-            info['northing'] = northing
-            info['utm_zone'] = utm_zone
+        info = reproject_point_in_dict(info, is_northern=self.northern_hemisphere)
 
         # Check for point data which will contain this in the data not the header
-        elif self.columns != None:
-            if 'latitude' in self.columns or 'easting' in self.columns:
-                self.is_point_data = True
+        if self.columns != None and ('latitude' in self.columns or 'easting' in self.columns):
+            self.is_point_data = True
 
-        else:
+        elif 'northing' not in info.keys() and 'latitude' not in info.keys():
             raise(ValueError('No geographic information was provided in the'
                             ' file header or via keyword arguments.'))
 
+        # Add a geometry entry for everything except point data which should have it as a column
         if not self.is_point_data:
-            # Add a geometry entry
-            info['geom'] = WKTElement('POINT({} {})'
-                                ''.format(info['easting'], info['northing']),
-                                          srid=self.extra_header['epsg'])
+            info = add_geom(info, self.extra_header['epsg'])
+
         return info
