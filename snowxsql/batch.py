@@ -143,8 +143,7 @@ class UploadProfileBatch():
 
     '''
 
-    defaults = { 'site_filenames': [],
-                 'debug': True,
+    defaults = { 'debug': True,
                  'log_name': 'batch',
                  'n_files': -1,
                  'smp_log_f': None,
@@ -168,9 +167,6 @@ class UploadProfileBatch():
                      Default=-1 (meaning all of the files)
             file_log: CSV providing metadata for profile_filenames. Cannot be
                       used with site_filenames
-            site_filenames: List of files containing site description headers
-                            which provides metadata for profile_filenames.
-                            Cannot be used with file_log.
             kwargs: Any keywords that can be passed along to the UploadProfile
                     Class. Any kwargs not recognized will be merged into a
                     comment.
@@ -206,47 +202,10 @@ class UploadProfileBatch():
         self.log.info('Accessing Database {}'.format(self.db_name))
         engine, metadata, self.session = get_db(self.db_name)
 
-        # Manage the site files and the file log
-        if not isinstance(self.smp_log_f, type(None)) and self.site_filenames:
-            raise ValueError('Batch Uploader is not able to digest info from a'
-                             ' smp log file and site files, please choose one.')
-
-        self.sites = self.open_sites()
-
         if self.smp_log_f != None:
             self.smp_log = SMPMeasurementLog(self.smp_log_f)
         else:
             self.smp_log = None
-
-    def open_sites(self):
-        '''
-        If site files names are provided  open them all for use later
-        '''
-        sites = []
-        n_profiles = len(self.profile_filenames)
-        self.log.info('Reading {} site descriptor files...'.format(n_profiles))
-
-        # Manage not getting a list
-        if type(self.site_filenames) != list:
-            self.site_filenames = [self.site_filenames]
-
-        if self.site_filenames:
-
-            n_sites = len(self.site_filenames)
-
-            # We can manage either 1 site file for all or an equal number
-            if n_sites != n_profiles and n_sites != 1:
-                raise ValueError('Number of site files must be either the '
-                                 'same length as the number of profile files '
-                                 'or must be length=1 which is used for all of '
-                                 'them. Currently site files length = {} and '
-                                 'profile_filenames = '
-                                 '{}'.format(n_sites, n_profiles))
-
-            for f in self.site_filenames:
-                sites.append(DataHeader(f, **self.kwargs))
-
-        return sites
 
     def push(self):
         '''
@@ -267,15 +226,6 @@ class UploadProfileBatch():
             smp_file = True
             self.kwargs['header_sep'] = ':'
 
-        elif len(self.sites) == 1:
-            self.log.info('Using {} for metadata for all profiles being uploaded...'
-                     ''.format(self.site_filenames[0]))
-
-            self.kwargs.update(self.sites[0].info)
-
-        elif len(self.sites) == len(self.profile_filenames):
-            individual_meta_files = True
-
         # Loop over all the ssa files and upload them
         if self.n_files != -1:
             self.profile_filenames[0:self.n_files]
@@ -283,10 +233,7 @@ class UploadProfileBatch():
         for i,f in enumerate(self.profile_filenames):
             kwargs = self.kwargs.copy()
 
-            if individual_meta_files:
-                kwargs.update(self.sites[i].info)
-
-            elif smp_file:
+            if smp_file:
                 extras = self.smp_log.get_metadata(f)
                 kwargs.update(extras)
 
