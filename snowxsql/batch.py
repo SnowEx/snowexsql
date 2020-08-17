@@ -84,7 +84,7 @@ class SiteDetailsBatch():
         error out. Otherwise any errors will be passed over and counted/reported
         '''
 
-        start = time.time()
+        self.start = time.time()
         self.log.info('Uploading {} files to database...'.format(len(self.filenames)))
 
         # Loop over a portion of files and upload them
@@ -116,7 +116,6 @@ class SiteDetailsBatch():
         '''
         Report timing and errors that occurred
         '''
-        files_attempted = i + 1
         self.log.info("{} / {} files uploaded.".format(self.uploaded,
                                                        files_attempted))
 
@@ -127,7 +126,7 @@ class SiteDetailsBatch():
             for e in self.errors:
                 self.log.error('\t{} - {}'.format(e[0], e[1]))
 
-        self.log.info('Finished! Elapsed {:d}s\n'.format(int(time.time() - start)))
+        self.log.info('Finished! Elapsed {:d}s\n'.format(int(time.time() - self.start)))
         self.session.close()
 
 

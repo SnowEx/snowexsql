@@ -235,7 +235,7 @@ class PointDataCSV(object):
                 self.df['instrument'].apply(lambda x: remap_data_names(x, self.measurement_names))
 
         # only submit valid  keys to db
-        valid = get_table_attributes('point')
+        valid = get_table_attributes(PointData)
         for k,v in self.kwargs.items():
             if k in valid:
                 self.df[k] = v

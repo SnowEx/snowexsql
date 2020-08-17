@@ -50,7 +50,13 @@ def add_geom(info, epsg):
     '''
     Adds the WKBElement to the dictionary
 
+    Args:
+        info: Dictionary containing easting and northing keys
+        epsg: integer representing the projection code
 
+    Returns:
+        info: Dictionary containing everything it originally did plus a geom
+              key with WKTElement value
     '''
     # Add a geometry entry
     info['geom'] = WKTElement('POINT({} {})'

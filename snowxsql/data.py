@@ -50,21 +50,20 @@ class SiteData(SingleLocationData, Base):
     __tablename__ = 'sites'
     __table_args__ = {"schema": "public"}
 
-    slope_angle = Column(Integer)
-    aspect = Column(Integer)
+    slope_angle = Column(Float)
+    aspect = Column(Float)
     air_temp = Column(Float)
     total_depth = Column(Float)
-    weather_description = Column(String(50))
-    precip = Column(String(50))
-    sky_cover = Column(String(50))
-    wind = Column(String(50))
+    weather_description = Column(String(500))
+    precip = Column(String(100))
+    sky_cover = Column(String(100))
+    wind = Column(String(100))
     ground_condition = Column(String(100))
     ground_roughness = Column(String(100))
     ground_vegetation = Column(String(100))
     vegetation_height = Column(String(100))
     tree_canopy = Column(String(100))
     site_notes = Column(String(1000))
-    bottom_depth = Column(Float)
 
 class RasterData(SnowData, Measurement, Base):
     '''

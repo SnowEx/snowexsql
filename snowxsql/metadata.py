@@ -5,13 +5,15 @@ data
 '''
 
 from .string_management import *
+from .interpretation import *
+from .data import SiteData
+from .db import get_table_attributes
+from .projection import reproject_point_in_dict, add_geom
 from .utilities import get_logger, read_n_lines
+
 import utm
 import pandas as pd
 
-from snowxsql.data import SiteData
-from snowxsql.db import get_table_attributes
-from snowxsql.projection import reproject_point_in_dict, add_geom
 from os.path import basename
 
 class SMPMeasurementLog(object):
@@ -346,8 +348,6 @@ class DataHeader(object):
             setattr(self, k, kwargs[k])
             del kwargs[k]
 
-        self.is_point_data = False
-
         self.extra_header = kwargs
 
         self.log.info('Interpretting metdata in {}'.format(filename))
@@ -674,11 +674,16 @@ class DataHeader(object):
             info: Dictionary of the raw_info containing interpetted info
 
         '''
-        info = raw_info.copy()
+        info = {}
+
+        # A. Parse out any nans, nones or other not-data type entries
+        for k,v in raw_info.items():
+            info[k] = parse_none(raw_info[k])
+
         keys = info.keys()
 
         # Merge information, warn user about overwriting
-        overwrite_keys = [k for k in info.keys() if k in self.extra_header.keys()]
+        overwrite_keys = [k for k in keys if k in self.extra_header.keys()]
 
         if overwrite_keys:
             self.log.warning('Extra header information passed will overwrite '
@@ -687,43 +692,18 @@ class DataHeader(object):
 
         info.update(self.extra_header)
 
+        # Convert slope and aspect to numbers
+        info = manage_degrees(info)
+        info = manage_aspect(info)
 
-        # Manage degrees  type entries
-        for k in ['aspect','slope_angle']:
-            if k in keys:
-                v = info[k]
-                if type(v) == str:
-                    # Remove any degrees symbols
-                    v = v.replace('\u00b0','')
-                    v = v.replace('Â','')
-                    info[k] = v
-
-                    # Manage cardinal directions
-                    if k == 'aspect':
-                        aspect = info['aspect']
-
-                        # Check for number of numeric values.
-                        numeric = len([True for c in aspect if c.isnumeric()])
-
-                        if numeric != len(aspect) and aspect.lower() != 'nan':
-                            self.log.warning('Aspect recorded for site {} is in cardinal '
-                            'directions, converting to degrees...'
-                            ''.format(info['site_id']))
-                            deg = convert_cardinal_to_degree(aspect)
-                            info[k] = deg
-
+        # Convert lat/long to utm and vice versa if either exist
         info = reproject_point_in_dict(info, is_northern=self.northern_hemisphere)
 
         # Check for point data which will contain this in the data not the header
-        if self.columns != None and ('latitude' in self.columns or 'easting' in self.columns):
-            self.is_point_data = True
+        if is_point_data(self.columns):
+            info = add_geom(info, self.extra_header['epsg'])
 
         elif 'northing' not in info.keys() and 'latitude' not in info.keys():
             raise(ValueError('No geographic information was provided in the'
                             ' file header or via keyword arguments.'))
-
-        # Add a geometry entry for everything except point data which should have it as a column
-        if not self.is_point_data:
-            info = add_geom(info, self.extra_header['epsg'])
-
         return info
