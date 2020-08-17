@@ -1,33 +1,43 @@
 from snowxsql.db import *
-
+from snowxsql.data import PointData, LayerData, RasterData, SiteData
 from  .sql_test_base import DBSetup
 
 from sqlalchemy import MetaData, inspect, Table
 from os import remove
 from os.path import join, dirname
-
+import pytest
 
 
 class TestDB(DBSetup):
+
+    base_atts = ['id', 'site_name','date','site_id']
+    single_loc_atts = ['latitude','longitude','easting','elevation','utm_zone','geom','time']
+
+    meas_atts = ['instrument','type', 'units','surveyors']
+
+    site_atts = base_atts + single_loc_atts + \
+                    ['slope_angle', 'aspect', 'air_temp', 'total_depth',
+                     'weather_description', 'precip', 'sky_cover', 'wind',
+                     'ground_condition', 'ground_roughness',
+                     'ground_vegetation', 'vegetation_height',
+                     'tree_canopy', 'site_notes']
+
+    point_atts = single_loc_atts + meas_atts +  \
+                                   ['version_number', 'equipment', 'value']
+
+    layer_atts = single_loc_atts + meas_atts + \
+    ['depth', 'value', 'bottom_depth', 'comments', 'sample_a', 'sample_b',
+                                                               'sample_c']
+    raster_atts = meas_atts + ['raster','description']
+
     def setup_class(self):
         '''
         Setup the database one time for testing
         '''
         super().setup_class()
-
         site_fname = join(self.data_dir,'site_details.csv' )
-        self.point_atts = ['id', 'site_name', 'date', 'time', 'time_created',
-                            'time_updated', 'latitude', 'longitude', 'northing',
-                            'easting', 'elevation', 'version_number', 'type',
-                            'instrument', 'surveyors', 'equipment', 'value']
 
-        self.layer_atts = ['depth', 'site_id', 'pit_id', 'slope_angle', 'aspect',
-                            'air_temp', 'total_depth', 'surveyors', 'weather_description',
-                            'precip', 'sky_cover', 'wind', 'ground_condition',
-                            'ground_roughness', 'ground_vegetation', 'vegetation_height',
-                            'tree_canopy', 'site_notes', 'type', 'value',
-                            'bottom_depth', 'comments', 'sample_a', 'sample_b',
-                            'sample_c']
+
     def test_point_structure(self):
         '''
         Tests our tables are in the database
@@ -48,11 +58,16 @@ class TestDB(DBSetup):
         for c in self.layer_atts:
             assert c in columns
 
-    def test_get_table_attributes(self):
+    @pytest.mark.parametrize("DataCls,attributes",[
+    (SiteData, site_atts),
+    (PointData, point_atts),
+    (LayerData, layer_atts),
+    (RasterData, raster_atts)])
+    def test_get_table_attributes(self, DataCls, attributes):
         '''
         Test we return a correct list of table columns from db.py
         '''
-        atts = get_table_attributes('point')
+        atts = get_table_attributes(DataCls)
 
-        for c in self.point_atts:
+        for c in attributes:
             assert c in atts
