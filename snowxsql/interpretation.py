@@ -11,8 +11,8 @@ import datetime
 
 def is_point_data(columns):
     '''
-    Searches the dataframe column names to see if the data set is point data,
-    which will have latitude or easting in the columns, if it is, return True
+    Searches the csv column names to see if the data set is point data,
+    which will have latitude or easting in the columns. If it is, return True
 
     Args:
         columns: List of dataframe columns
@@ -30,7 +30,8 @@ def is_point_data(columns):
 
 def manage_degrees(info):
     '''
-    Manages and interprets string values relating to degrees
+    Manages and interprets string values relating to degrees. Removes
+    degrees symbols and interprets key word flat for slope.
 
     Args:
         info: Dictionary containing potential degrees entries to be converted
@@ -63,8 +64,15 @@ def manage_degrees(info):
 
 def manage_aspect(info):
     '''
-    Manages when aspect is recorded in cardinal directions
+    Manages when aspect is recorded in cardinal directions and converts it to
+    a degrees from North float.
+
+    Args:
+        info: Dictionary potentially containing key aspect. Converts cardinal
+    Returns:
+        info: Dictionary with any key named aspect converted to  a float of degrees from north
     '''
+
     log = get_logger(__name__)
 
     # Convert Cardinal dirs to degrees
@@ -85,8 +93,19 @@ def manage_aspect(info):
 
 def convert_cardinal_to_degree(cardinal):
     '''
-    Converts cardinal directions to degrees
+    Converts cardinal directions to degrees. Also removes any / or - that
+    might get used to say between two cardinal directions
+
+    e.g. S/SW turns into SSW which is interpetted as halfway between those
+    two directions allowing for 22.5 degree increments.
+
+    Args:
+        Cardinal: Letters representing cardinal direction
+
+    Returns:
+        degrees: Float representing cardinal direction in degrees from north
     '''
+
     dirs = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW']
 
     # Manage extra characters separating composite dirs, make it all upper case
@@ -160,3 +179,52 @@ def add_date_time_keys(data, timezone='MST'):
     data['time'] = d.timetz()
 
     return data
+
+def standardize_depth(depths, desired_format='snow_height', is_smp=False):
+    '''
+    Data that is a function of depth comes in 2 formats. Sometimes 0 is
+    the snow surface, sometimes 0 is the ground. This function standardizes it
+    for each profile. desired_format can be:
+
+        snow_height: Zero at the bottom of the data.
+        surface_datum: Zero at the top of the data and uses negative depths
+                       (easier for plotting)
+
+    Args:
+        depths: Pandas series of depths in either format
+        desired_format: string indicating which format the data is in
+        is_smp: Boolean indicating which data this is, if smp then the data is
+                surface_datum but with positive depths
+   Returns:
+        new:
+    '''
+    max_depth = depths.max()
+    min_depth = depths.min()
+
+    new = depths.copy()
+
+    # How is the depth ordered
+    max_depth_at_top = depths.iloc[0] > depths.iloc[-1]
+
+    # Is the data in surface_datum already
+    bottom_is_negative = depths.iloc[-1] < 0
+
+    if desired_format == 'snow_height':
+
+        if is_smp:
+            new = (depths - max_depth).abs()
+
+        elif bottom_is_negative:
+            new = (depths + abs(min_depth))
+
+    elif desired_format == 'surface_datum':
+        if is_smp:
+            new = depths.mul(-1)
+
+        elif not bottom_is_negative:
+            new = depths - max_depth
+
+    else:
+        raise ValueError('{} is an invalid depth format! Options are: {}'
+                         ''.format(', '.join(['snow_height','surface_datum'])))
+    return new

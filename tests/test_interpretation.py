@@ -3,6 +3,7 @@ import pytest
 from datetime import date, time
 import numpy as np
 import pytz
+import pandas as pd
 
 @pytest.mark.filterwarnings('ignore:Assuming')
 @pytest.mark.parametrize("card,expected", [('n',0), ('S', 180), ('S/SW', 202.5), ('West',270)])
@@ -39,3 +40,28 @@ def test_add_date_time_keys(data):
     # Ensure we always remove the original keys used to interpret
     for k in ['utcdoy','utctod','datetime']:
         assert k not in d.keys()
+
+@pytest.mark.parametrize("depths,expected, format, is_smp",
+[
+# Test Snow Height --> surface datum
+([10,5,0], [0,-5,-10], 'surface_datum', False),
+# Test SMP --> surface_datum
+([0,5,10], [0,-5,-10], 'surface_datum', True),
+# Test surface_datum --> surface_datum
+([0,-5,-10], [0,-5,-10], 'surface_datum', False),
+# Test Snow Height --> snow_height
+([10,5,0], [10,5,0], 'snow_height', False),
+# Test surface_datum--> snow_height
+([0,-5,-10], [10,5,0], 'snow_height', False),
+# Test SMP --> snow_height
+([0,5,10], [10,5,0], 'snow_height', True),
+
+])
+def test_standardize_depth(depths, expected, format, is_smp):
+    '''
+    '''
+    dd = pd.Series(depths)
+    new = standardize_depth(dd, desired_format=format, is_smp=is_smp)
+
+    for i,d in enumerate(expected):
+        assert new.iloc[i] == d
