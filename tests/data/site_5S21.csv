@@ -1,0 +1,22 @@
+# Location,Grand Mesa
+# Site,5S21
+# PitID,COGM5S21_20200201
+# Date/Time,2020-02-01-14:30
+# UTM Zone,12N
+# Easting [m],744561
+# Northing [m],4322721
+# Slope [deg],0
+# Aspect [deg],N
+# Air Temp [deg C],1.5
+# Total Depth [cm],110
+# Surveyors,"Carrie Vuyovich, Glen Liston"
+# Weather,Thin overcast
+# Precip,None
+# Sky,Overcast(complete cover)
+# Wind,Light
+# Ground Condition,Frozen
+# Ground Roughness,Smooth
+# Ground Vegetation,['Grass']
+# Vegetation Height,"10,nan"
+# Tree Canopy,No Trees
+# Comments:,"surface temp = 14:44, bottom temp = 14:56"

@@ -107,4 +107,3 @@ class LayerData(SingleLocationData, Measurement, Base):
     sample_b = Column(String(20))
     sample_c = Column(String(20))
     value = Column(String(50))
-    profile_id = Column(String(200))

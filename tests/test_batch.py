@@ -4,10 +4,10 @@ from os.path import join
 from snowxsql.batch import *
 from snowxsql.data import LayerData
 
-# class TestSiteDetailsBatch(DBSetup):
-#     '''
-#     Test uploading mulitple site details files to the sites table
-#     '''
+class TestSiteDetailsBatch(DBSetup):
+    '''
+    Test uploading mulitple site details files to the sites table
+    '''
 
 
 
@@ -68,12 +68,12 @@ class ProfileBatchBase(DBSetup):
         assert received == expected
 
 
-class TestProfileBatch2V1(ProfileBatchBase):
+class TestProfileBatch(ProfileBatchBase):
     '''
     Test whether we can assign a single sites file to 2 profiles
     '''
 
-    profiles = ['density.csv','temperature.csv']
+    profiles = ['stratigraphy.csv','temperature.csv']
 
     params = {
 
