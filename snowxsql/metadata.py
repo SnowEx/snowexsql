@@ -1,7 +1,6 @@
 '''
-Place where header classes and metadata interpeters are located.
-This includes interpetting data file headers or dedicated files to describing
-data
+Module for header classes and metadata interpeters. This includes interpetting
+data file headers or dedicated files to describing data.
 '''
 
 from .string_management import *

@@ -1,3 +1,6 @@
+'''
+Module for functions that handle anything regarding coordinate projections.
+'''
 import utm
 from geoalchemy2.elements import WKTElement
 

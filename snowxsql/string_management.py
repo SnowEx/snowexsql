@@ -1,8 +1,13 @@
+'''
+Module for functions that interpret various strings encountered in files.
+These functions either prep, strip, or interpret strings for headers or
+the actual data to be uploaded.
+'''
+
 import warnings
 import pandas as pd
 import datetime
 import numpy as np
-
 
 def clean_str(messy):
     '''

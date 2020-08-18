@@ -1,5 +1,6 @@
 .. highlight:: shell
 
+.. _Installation:
 ============
 Installation
 ============
@@ -94,7 +95,6 @@ console using the following statements:
 
 
 Then continue on to install the source code below.
-
 
 Install From Source
 -------------------

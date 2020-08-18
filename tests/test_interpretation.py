@@ -65,3 +65,18 @@ def test_standardize_depth(depths, expected, format, is_smp):
 
     for i,d in enumerate(expected):
         assert new.iloc[i] == d
+
+@pytest.mark.parametrize("layer,name, expected",
+[
+# Test normal averaging
+({'density_a': 180, 'density_b': 200, 'density_c': 'nan'}, 'density', 190.0),
+# Test all nans scenario
+({'dielectric_constant_a': 'nan', 'dielectric_constant_b': 'nan'}, 'dielectric', np.nan)
+])
+def test_avg_from_multi_sample(layer, name, expected):
+    '''
+    Test whether we can extract the avg sample
+    '''
+    received = avg_from_multi_sample(layer, name)
+
+    assert str(received) == str(expected)

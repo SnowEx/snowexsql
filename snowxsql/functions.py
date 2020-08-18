@@ -1,3 +1,7 @@
+'''
+This module holds all PostGIS functions that have not been mapped yet for use
+with ORM. Many function already exist in GeoAlchemy.functions module
+'''
 import geoalchemy2.functions as gfunc
 from sqlalchemy.sql import func
 from geoalchemy2.types import Geometry, Raster, CompositeType, RasterElement

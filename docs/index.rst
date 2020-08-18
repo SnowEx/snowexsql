@@ -8,7 +8,7 @@ Welcome to snowXSQL's documentation!
    data_notes
    examples
    qgis
-   modules
+   api
    contributing
    authors
    history

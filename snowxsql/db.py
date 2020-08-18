@@ -1,3 +1,7 @@
+'''
+This module contains tool used directly regarding the database. This includes
+getting a session, initializing the database, getting table attributes, etc.
+'''
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from .data import Base, LayerData, PointData, RasterData

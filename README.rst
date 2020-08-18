@@ -10,10 +10,10 @@ Features
 --------
 
 * Database management for SnowEx Data
-* Manage Point, Profile and Raster Data
+* Manage Site, Point, Profile and Raster Data
 * Populate the snowex database
 * Convenient GIS tools
-* PostGreSQL Database
+* PostGreSQL Database end point for researchers
 
 
 Installing
@@ -24,8 +24,8 @@ There are two users this package is developed for:
 1. Researchers interacting with the database.
 2. Maintainers who populate and manage the database.
 
-The first group of users only need to install the python packages.
-The second group will need to follow the full installation procedure. These
+The first group of users only need to :ref:`Install From Source`
+The second group will need to follow the Full :ref:`Installation` procedure. These
 instructions can be found in the documentation.
 
 
@@ -37,12 +37,14 @@ sure your data repo is next to this repo in the directory structure. Any data
 on Gdrive should be downloaded and kept in your downloads folder.
 
 Downloads from GitHub:
-  * SnowEx2020_SQLdata repo (Pits, GPR, SSA)
+  * SnowEx2020_SQLdata repo (Pits, SSA)
 
 Downloads from Google Drive:
   * Quantum Spatial Bare Earth DEM and Vegetation Loaded
-  * SMP profiles (Soon to be Sourced from NSDIC)
-  *
+  * SMP profiles (Soon to be sourced from NSDIC)
+  * BSU GPR Data (Soon to be sourced from NSDIC)
+  * UAV SAR Data
+
 
 Then simply use:
 
@@ -51,7 +53,7 @@ Then simply use:
   cd scripts
   python run.py
 
-**NOTE:** Expect the run.py script to take more than an hour to complete.
+**NOTE:** Expect the run.py script to take around a couple hours to complete.
 
 Tests
 -----
@@ -68,6 +70,14 @@ This will run a series of tests that create a small database and confirm
 that samples of the data sets in the SnowEx2020_SQLdata folder can be
 uploaded seamlessly. These tests can serve as a nice way to see how to
 interact with the database but also serve to confirm our reproduciblity.
+
+The goal of this project is to have high fidelity in data
+interpretation/submission to the database. That's why we are setting the test
+coverage goal to be 90%. To see the current test coverage run:
+
+.. code-block:: bash
+
+  make coverage
 
 
 Documentation
@@ -90,5 +100,7 @@ Useful tools
 ------------
 
 * PostGreSQL database browser_
+* ncview ncview_
 
 .. _browser: https://www.pgadmin.org/
+.. _ncview: http://meteora.ucsd.edu/~pierce/ncview_home_page.html

@@ -1,6 +1,6 @@
-
 '''
-Location for managing common upload script structures
+Module for storing and managing mulitple file submissions to the
+the database
 '''
 
 from snowxsql.utilities import get_logger

@@ -16,3 +16,6 @@ docs/_build/*
 
 **/.ipynb_checkpoints/*
 
+.coverage
+htmlcov/*
+

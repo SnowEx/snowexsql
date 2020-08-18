@@ -8,7 +8,7 @@ class TestSiteDetailsBatch(DBSetup):
     '''
     Test uploading mulitple site details files to the sites table
     '''
-
+    pass
 
 
 class ProfileBatchBase(DBSetup):
@@ -84,8 +84,8 @@ class TestProfileBatch(ProfileBatchBase):
             ],
     'test_attr_value': [
         # Test all the attributes from the site details files
-        dict(name='hand_hardness', depth=17, attribute='surveyors', expected=None),
-        dict(name='hand_hardness', depth=17, attribute='comments', expected='Cups')]
+        dict(name='hand_hardness', depth=-18, attribute='surveyors', expected=None),
+        dict(name='hand_hardness', depth=-18, attribute='comments', expected='Cups')]
         }
 
 class TestSMPBatch(ProfileBatchBase):
@@ -103,9 +103,9 @@ class TestSMPBatch(ProfileBatchBase):
             ],
     'test_attr_value': [
         # # Test all the attributes from the SMP Log details files
-        dict(name='force', depth=100, attribute='site_id', expected='5S21'),
-        dict(name='force', depth=0.4, attribute='site_id', expected='2N12'),
-        dict(name='force', depth=0.4, attribute='comments', expected='started 1-2 cm below surface'),
+        dict(name='force', depth=-100, attribute='site_id', expected='5S21'),
+        dict(name='force', depth=-0.4, attribute='site_id', expected='2N12'),
+        dict(name='force', depth=-0.4, attribute='comments', expected='started 1-2 cm below surface'),
 
             ]
         }

@@ -1,3 +1,8 @@
+'''
+Module contains all conversions used for manipulating data. This includes:
+filetypes, datatypes, etc. Many tools here will be useful for most end users
+of the database. 
+'''
 import geopandas as gpd
 import rasterio
 from sqlalchemy.dialects import postgresql

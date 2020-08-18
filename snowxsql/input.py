@@ -1,3 +1,10 @@
+'''
+This module contains functions for incoming data that is not immediately ready
+to go into the database. Therefor all functions here provide some kind of
+preprocessing of data for submission. E.g. UAVSAR binary files have to be
+split into their components before use.
+'''
+
 from os.path import abspath, expanduser, join, basename, dirname
 import os
 import numpy as np

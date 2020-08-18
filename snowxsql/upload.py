@@ -1,3 +1,6 @@
+'''
+Module for classes that upload single files to the database. 
+'''
 from . data import *
 from .string_management import *
 from .interpretation import *
@@ -59,8 +62,21 @@ class UploadProfileData():
                                            encoding='latin')
 
         # If SMP profile convert depth to cm
+        is_smp=False
         if 'force' in df.columns:
             df['depth'] = df['depth'].div(10)
+            is_smp = True
+
+        # Standardize all depth data
+        new_depth = standardize_depth(df['depth'],
+                                      desired_format='surface_datum',
+                                      is_smp=is_smp)
+
+        if 'bottom_depth' in df.columns:
+            delta = df['depth'] - new_depth
+            df['bottom_depth'] = df['bottom_depth'] - delta
+
+        df['depth'] = new_depth
 
         delta = abs(df['depth'].max() - df['depth'].min())
         self.log.info('File contains {} profiles each with {} layers across '
@@ -137,6 +153,7 @@ class UploadProfileData():
         # Clean up comments a bit
         if 'comments' in df.columns:
             df['comments'] = df['comments'].apply(lambda x: x.strip(' ') if type(x) == str else x)
+
         return df
 
     def submit(self, session):

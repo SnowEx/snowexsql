@@ -1,13 +1,14 @@
 '''
-Locationt to keep intential interpretation of data scenarios. These are often
+Module for intentional interpretation of data/scenarios. These are often
 decisions being made about situations that are perhaps not universal but useful
-in the context of snowex data and creating the database
+in the context of snowex data and creating the database.
 '''
 
 from . utilities import get_logger
 import pandas as pd
 import warnings
 import datetime
+import numpy as np
 
 def is_point_data(columns):
     '''
@@ -198,6 +199,8 @@ def standardize_depth(depths, desired_format='snow_height', is_smp=False):
    Returns:
         new:
     '''
+    log = get_logger(__name__)
+
     max_depth = depths.max()
     min_depth = depths.min()
 
@@ -212,19 +215,55 @@ def standardize_depth(depths, desired_format='snow_height', is_smp=False):
     if desired_format == 'snow_height':
 
         if is_smp:
+            log.info('Converting SMP depths to snow height format.')
             new = (depths - max_depth).abs()
 
         elif bottom_is_negative:
+            log.info('Converting depths in surface datum to snow height format.')
+
             new = (depths + abs(min_depth))
 
     elif desired_format == 'surface_datum':
         if is_smp:
+            log.info('Converting SMP depths to snow height format.')
             new = depths.mul(-1)
 
         elif not bottom_is_negative:
+            log.info('Converting depths in snow height to surface datum format.')
             new = depths - max_depth
 
     else:
         raise ValueError('{} is an invalid depth format! Options are: {}'
                          ''.format(', '.join(['snow_height','surface_datum'])))
     return new
+
+def avg_from_multi_sample(layer, value_type):
+    '''
+    Our database entries sometimes have multiple values. We want to extract
+    those, cast them, average them and return the the value to be used as the main
+    value in the database
+
+    e.g.
+        layer = {density_a: 180, density_b: 200, density_c: nan}
+        result = 190
+
+    Args:
+        layer: layer dictionary (a single entry from a vertical profile)
+        value_type: string labeling type of data were looking for (density, dielectric constant..)
+
+    Returns:
+        result: Nan mean of the values found
+    '''
+    values =[]
+
+    for k, v in layer.items():
+        if value_type in k:
+            # If the bool is not nan and is not empty
+            if str(v).lower() !='nan' and bool(str(v).strip()):
+                values.append(float(v))
+
+    if values:
+        result = np.mean(np.array(values))
+    else:
+        result = np.nan
+    return result
