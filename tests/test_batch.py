@@ -79,13 +79,13 @@ class TestProfileBatch(ProfileBatchBase):
 
     'test_upload':[
             # test uploading each main profile from the file
-            dict(name='density', count=4),
+            dict(name='hand_hardness', count=5),
             dict(name='temperature', count=5)
             ],
     'test_attr_value': [
         # Test all the attributes from the site details files
-        dict(name='density', depth=35, attribute='surveyors', expected=None),
-        dict(name='density', depth=35, attribute='comments', expected=None)]
+        dict(name='hand_hardness', depth=17, attribute='surveyors', expected=None),
+        dict(name='hand_hardness', depth=17, attribute='comments', expected='Cups')]
         }
 
 class TestSMPBatch(ProfileBatchBase):
