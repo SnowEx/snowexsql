@@ -24,13 +24,14 @@ and verbosity of forming queries. GeoAlchemy2 provides object relational mapper 
 abilities which simply means we can have python classes that represent things in the
 database.
 
-The SnowEx Database currently is formed of three tables.
+The SnowEx Database currently is formed of 4 tables.
 
 1. **points** - Holds any data which has no other dimension beyond its value.
   E.g. Snow Depths, Federal Samplers, etc.
 2. **layers** - Holds any data collected which was collected at a single point but
   has a vertical snow component. Each entry is at a single location with an assigned depth. E.g. Hand Hardness, Density profiles, SMP, etc.
 3. **images** - Holds all raster data.
+4. **sites** - Holds all site details data.
 
 Every query will need a session and access to a database via name::
 
