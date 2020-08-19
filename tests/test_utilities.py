@@ -14,6 +14,7 @@ def test_find_files():
     '''
     Test we can find files using patterns and extensions
     '''
+    d = join(dirname(__file__), 'data')
 
-    files = find_files('./data', 'adf', 'w001001x')
+    files = find_files(d, 'adf', 'w001001x')
     assert len(files) == 2

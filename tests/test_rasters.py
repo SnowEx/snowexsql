@@ -13,9 +13,6 @@ from geoalchemy2.shape import to_shape
 from geoalchemy2.elements import WKTElement
 from geoalchemy2.types import Raster
 from snowxsql.conversions import raster_to_rasterio
-# import matplotlib.pyplot as plt
-# from rasterio.plot import show
-# import matplotlib.pyplot as plt
 
 class TestRasters(DBSetup):
 
