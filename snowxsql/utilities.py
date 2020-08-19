@@ -6,7 +6,8 @@ but to provide some use in the code set.
 import logging
 import coloredlogs
 import numpy as np
-
+from os import walk
+from os.path import join
 
 def get_logger(name, debug=True, ext_logger=None,):
     """
@@ -91,3 +92,19 @@ def kw_in_here(kw, d, case_insensitive=True):
 
     truth = [True for c in d_keys if k in c]
     return len(truth) > 0
+
+def find_files(directory, ext, pattern):
+    '''
+    Finds filesnames using the extension and a substring pattern
+
+    Args:
+        directory: Directory to search
+        ext: File extension to search for
+        pattern: Substring to search for in the file basename
+    '''
+    files = []
+    for r,ds,fs in walk(directory):
+        for f in fs:
+            if f.split('.')[-1] == ext and pattern in f:
+                files.append(join(r,f))
+    return files

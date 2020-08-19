@@ -33,3 +33,11 @@ def test_kw_in_here_list():
 
     k = 'Test'
     assert kw_in_here(k, l, case_insensitive=False) == True
+
+def test_find_files():
+    '''
+    Test we can find files using patterns and extensions
+    '''
+
+    files = find_files('./data', 'adf', 'w001001x')
+    assert len(files) == 2
