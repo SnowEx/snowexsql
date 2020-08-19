@@ -150,3 +150,40 @@ def parse_none(value):
             result = None
 
     return result
+
+def kw_in_here(kw, d, case_sensitive=True):
+    '''
+    Determines if the keyword is found in any of the entries in the List
+    If any match is found returns true
+
+    Can use a list or dictionary. If a dictionary is supplied the keys will be
+    used
+
+    e.g.
+
+    dielectric_constant is found in [temperature, dielectric_constant_a]
+
+    Args:
+        kw: Keyword we're searching for
+        d: List or dictionary with keys of strings
+        case_sensitive: Boolean indicating whether it should be case sensitive
+                        or not
+
+    Returns:
+        Bool: Indicating the keyword was found
+
+    '''
+    if isinstance(d, dict):
+        d_keys = d.keys()
+    else:
+        d_keys = d
+
+    if not case_sensitive:
+        k = kw.lower()
+        d_keys = [c.lower() for c in d_keys]
+
+    else:
+        k = kw
+
+    truth = [True for c in d_keys if k in c]
+    return len(truth) > 0

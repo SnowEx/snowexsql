@@ -42,3 +42,24 @@ def test_parse_none():
     # Assert these are unaffected by function
     for v in [10.5, 'Comment']:
         assert parse_none(v) == v
+
+@pytest.mark.parametrize('args, kwargs, expected', [
+# Test we find kw in the list
+( ['test', ['turtle','test']], {'case_sensitive':False}, True),
+# Test we find kw in an entry in the list
+( ['test', ['turtle','testing']], {'case_sensitive':False}, True),
+# Test the kw is found in a dictionary key list case sensitive
+( ['test', {'shell':1,'Test':1}], {'case_sensitive':False} , True),
+# Test the kw is not found in the list
+( ['test', ['turtle','shell']], {'case_sensitive':False} , False),
+# Test the kw is not found in the list case sensitive
+( ['test', ['shell','Test']], {'case_sensitive':True} , False),
+# Test the kw is found in the list case sensitive
+( ['Test', ['shell','Test']], {'case_sensitive':True} , True),
+])
+def test_kw_in_here(args, kwargs, expected):
+    '''
+    Tests we can find key words in list keys, case in/sensitive test
+    '''
+    print(args)
+    assert kw_in_here(*args, **kwargs) == expected
