@@ -22,8 +22,8 @@ def main():
     f = abspath(expanduser(f))
     data = readUAVSARgrd(f)
 
-    # Evenetually return the errors
+    # Eventually return the errors
     return 0
-    
+
 if __name__ == '__main__':
     main()
