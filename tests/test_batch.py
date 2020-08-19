@@ -2,110 +2,172 @@ from .sql_test_base import DBSetup, pytest_generate_tests
 import pytest
 from os.path import join
 from snowxsql.batch import *
-from snowxsql.data import LayerData
+from snowxsql.data import LayerData, SiteData, RasterData
+from datetime import date
 
-class TestSiteDetailsBatch(DBSetup):
+class BatchBase(DBSetup):
     '''
-    Test uploading mulitple site details files to the sites table
     '''
-    pass
-
-
-class ProfileBatchBase(DBSetup):
-    '''
-    The base batch testing class does the actually uploading and merging of
-    extra data
-    '''
-
-    profiles = []
-    smp_log_f = None
+    files = []
+    uploader_kwargs = {'db_name':'test'}
+    BatchClass = None
+    TableClass = None
+    count_attribute = 'type'
+    attribute = 'depth'
 
     def setup_class(self):
         '''
         Setup the database one time for testing
         '''
         super().setup_class()
-        for att in ['profiles']:
-            fnames = [join(self.data_dir, f) for f in getattr(self, att)]
-            setattr(self, att, fnames)
 
-        if self.smp_log_f != None:
-            self.smp_log_f = join(self.data_dir, self.smp_log_f)
+        # Make the files all point to the data folder
+        self.filenames = []
+        for f in self.files:
+            self.filenames.append(join(self.data_dir, f))
+
+        # Make sure we always point to the test db
+        self.uploader_kwargs['db_name'] = 'test'
+
+        # Incase we have a smp_log file make it point to the data folder too
+        if 'smp_log_f' in self.uploader_kwargs.keys():
+            if self.uploader_kwargs['smp_log_f'] != None:
+                self.uploader_kwargs['smp_log_f'] = join(self.data_dir, self.uploader_kwargs['smp_log_f'])
 
         # Upload two profiles with the same site details
-        b = UploadProfileBatch(self.profiles, db_name='test', timezone='UTC',
-                                              smp_log_f=self.smp_log_f)
+        b = self.BatchClass(self.filenames, **self.uploader_kwargs)
 
         b.push()
 
 
-    def test_upload(self, name, count):
+    def test_upload(self, value, count):
         '''
         Test a profile has the correct number of records
         Args:
             name: Name of the main profile to test the records for
             count: Number of expected records
         '''
-        records = self.session.query(LayerData).filter(LayerData.type == name).all()
+        q = self.session.query(self.TableClass)
+        q = q.filter(getattr(self.TableClass, self.count_attribute) == value)
+        records = q.all()
         assert len(records) == count
 
-
-    def test_attr_value(self, name, depth, attribute, expected):
+    def test_attr_value(self, value, att_value, attribute, expected):
         '''
         Test attributes are being passed from the site details file
 
         Args:
             name: Name of the profile to check attributes of
-            depth: Depth of the record to check (in cm)
+            att_value: value to narrow query assigned to self.attribute should narrow to a single record
             attribute: Name of the attribute/column name to check
-            expected: expected value the attribute of the profile at this depth to be
+            expected: expected value the attribute in a single record of the profile
         '''
 
-        q = self.session.query(LayerData).filter(LayerData.type == name)
-        records = q.filter(LayerData.depth == depth).all()
+        q = self.session.query(self.TableClass)
+        q = q.filter(getattr(self.TableClass, self.count_attribute) == value)
+        records = q.filter(getattr(self.TableClass, self.attribute) == att_value).all()
         received = getattr(records[0], attribute)
 
         assert received == expected
 
+class TestUploadSiteDetailsBatch(BatchBase):
+    '''
+    Test uploading mulitple site details files to the sites table
+    '''
+    files = ['site_5S21.csv','site_details.csv']
+    uploader_kwargs = {}
+    BatchClass = UploadSiteDetailsBatch
+    TableClass = SiteData
+    count_attribute = 'site_id'
+    attribute = 'date'
 
-class TestProfileBatch(ProfileBatchBase):
+    # Test scenarios
+    params = {
+
+    # Test that 1 entry for each site was uploaded
+    'test_upload':[
+            # test uploading site details from the file
+            dict(value='5S21', count=1),
+            dict(value='1N20', count=1)
+            ],
+    # Test attributes were assigned for each file
+    'test_attr_value': [
+        # Test all the attributes from the site details files
+        dict(value='1N20', att_value=date(2020, 2, 5), attribute='slope_angle', expected=5),
+        dict(value='5S21', att_value=date(2020, 2, 1),  attribute='ground_roughness', expected='Smooth')]
+        }
+
+class TestUploadProfileBatch(BatchBase):
     '''
     Test whether we can assign a single sites file to 2 profiles
     '''
 
-    profiles = ['stratigraphy.csv','temperature.csv']
-
+    files = ['stratigraphy.csv','temperature.csv']
+    uploader_kwargs = {'timezone':'UTC'}
+    BatchClass = UploadProfileBatch
+    TableClass = LayerData
+    attribute='depth'
     params = {
 
     'test_upload':[
             # test uploading each main profile from the file
-            dict(name='hand_hardness', count=5),
-            dict(name='temperature', count=5)
+            dict(value='hand_hardness', count=5),
+            dict(value='temperature', count=5)
             ],
     'test_attr_value': [
         # Test all the attributes from the site details files
-        dict(name='hand_hardness', depth=-18, attribute='surveyors', expected=None),
-        dict(name='hand_hardness', depth=-18, attribute='comments', expected='Cups')]
+        dict(value='hand_hardness', att_value=-18, attribute='surveyors', expected=None),
+        dict(value='hand_hardness', att_value=-18, attribute='comments', expected='Cups')]
         }
 
-class TestSMPBatch(ProfileBatchBase):
+class TestUploadSMPBatch(BatchBase):
     '''
     Test whether we can assign meta info from an smp log to 2 profiles
     '''
 
-    profiles = ['S19M1013_5S21_20200201.CSV','S06M0874_2N12_20200131.CSV']
-    smp_log_f = 'smp_log.csv'
+    files = ['S19M1013_5S21_20200201.CSV','S06M0874_2N12_20200131.CSV']
+    uploader_kwargs = {'timezone':'UTC',
+                        'smp_log_f': 'smp_log.csv'}
+    BatchClass = UploadProfileBatch
+    TableClass = LayerData
+
     params = {
 
     'test_upload':[
             # test uploading each main profile from the file
-            dict(name='force', count=20),
+            dict(value='force', count=20),
             ],
     'test_attr_value': [
         # # Test all the attributes from the SMP Log details files
-        dict(name='force', depth=-100, attribute='site_id', expected='5S21'),
-        dict(name='force', depth=-0.4, attribute='site_id', expected='2N12'),
-        dict(name='force', depth=-0.4, attribute='comments', expected='started 1-2 cm below surface'),
+        dict(value='force', att_value=-100, attribute='site_id', expected='5S21'),
+        dict(value='force', att_value=-0.4, attribute='site_id', expected='2N12'),
+        dict(value='force', att_value=-0.4, attribute='comments', expected='started 1-2 cm below surface'),
 
+            ]
+        }
+
+class TestUploadRasterBatch(BatchBase):
+    '''
+    Class testing the batch uploading of rasters
+    '''
+    files = ['be_gm1_0287/w001001x.adf','be_gm1_0328/w001001x.adf']
+    uploader_kwargs = {'type':'dem',
+                        'surveyors': 'QSI',
+                        'units':'meters',
+                        'epsg':29612}
+    BatchClass = UploadRasterBatch
+    TableClass = RasterData
+    count_attribute = 'type'
+    attribute = 'id'
+    params = {
+
+    'test_upload':[
+            # test uploading each main profile from the file
+            dict(value='dem', count=2),
+            ],
+    'test_attr_value': [
+        # # Test all the attributes from the SMP Log details files
+        dict(value='dem', att_value=1, attribute='surveyors', expected='QSI'),
+        dict(value='dem', att_value=1, attribute='units', expected='meters'),
             ]
         }

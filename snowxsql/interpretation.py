@@ -225,7 +225,7 @@ def standardize_depth(depths, desired_format='snow_height', is_smp=False):
 
     elif desired_format == 'surface_datum':
         if is_smp:
-            log.info('Converting SMP depths to snow height format.')
+            log.info('Converting SMP depths to surface datum format.')
             new = depths.mul(-1)
 
         elif not bottom_is_negative:

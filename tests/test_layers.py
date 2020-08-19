@@ -78,7 +78,6 @@ class TestDensityProfile(LayersBase):
         Insure bottom depth info is not lost after standardizing it
         '''
         rs = self.session.query(LayerData.bottom_depth).filter(LayerData.site_id == self.site_id).all()
-        print(rs)
         assert abs(rs[0][0] - rs[1][0]) == 10
 
 
