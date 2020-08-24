@@ -48,7 +48,7 @@ Python
 ------
 Install the python package by:
 
-.. .. code-block:: bash
+.. code-block:: bash
 
   python setup.py install
 
