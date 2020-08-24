@@ -23,15 +23,40 @@ Installation
 .. .. _pip: https://pip.pypa.io
 .. .. _Python installation guide: http://docs.python-guide.org/en/latest/starting/installation/
 
-Prerequisites
--------------
+Mac OS
+------
 
 First ensure you have following prequisites:
 
 * Python3.5 +
-* PostGreSQL_ 10 +
-* libpq-dev
-* PostGIS 3.0 +
+* HomeBrew
+
+.. code-block:: bash
+
+  cd scripts && sh install_mac.sh
+
+
+Ubuntu
+------
+
+First ensure you have following prequisites:
+
+* Python3.5 +
+* wget
+
+.. code-block:: bash
+
+  cd scripts && sh install_ubuntu.sh
+
+Python
+------
+Install the python package by:
+
+.. .. code-block:: bash
+
+  python setup.py install
+
+
 
 Setting up the Database
 -----------------------

@@ -8,7 +8,7 @@ wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-
 sudo apt-get update
 
 # See  https://www.postgresql.org/download/linux/ubuntu/
-sudo apt-get install -y postgresql postgis
+sudo apt-get install -y postgresql postgis libxml2-dev libgeos-dev libproj-dev libjson-c-dev gdal-bin libgdal-dev
 
 # Perform some clean up just in case
 for DB in $DATABASES
