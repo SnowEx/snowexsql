@@ -92,6 +92,6 @@ if __name__ == '__main__':
     if this_os == 'linux':
         modify_postgres_conf('/etc/postgresql/12/main/postgresql.conf', conf_updates)
     elif this_os == 'darwin':
-        modify_postgres_conf('placeholder.conf', conf_updates)
+        modify_postgres_conf('/usr/local/var/postgres/postgresql.conf', conf_updates)
     else:
         raise ValueError('{} is not a platform this script was written for!')
