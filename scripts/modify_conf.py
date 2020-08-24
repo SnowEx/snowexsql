@@ -71,7 +71,7 @@ def modify_postgres_conf(conf_file, entries):
         fp.close()
 
     # Move the file using sudo so we dont have to execute this script with sudo
-    check_output(['sudo', 'cp', os.path.abspath(temp), conf_file])
+    check_output(['sudo', 'mv', os.path.abspath(temp), conf_file])
 
 
 
