@@ -22,7 +22,7 @@ Installing
 Mac OS
 ~~~~~~
 
-First ensure you have following prequisites:
+First ensure you have following prerequisites:
 
 * Python3.5 +
 * HomeBrew
@@ -35,7 +35,7 @@ First ensure you have following prequisites:
 Ubuntu
 ~~~~~~
 
-First ensure you have following prequisites:
+First ensure you have following prerequisites:
 
 * Python3.5 +
 * wget
