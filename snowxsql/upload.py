@@ -62,14 +62,16 @@ class UploadProfileData():
                                            encoding='latin')
 
         # If SMP profile convert depth to cm
-        is_smp=False
+        depth_fmt = 'snow_height'
+        is_smp = False
         if 'force' in df.columns:
             df['depth'] = df['depth'].div(10)
             is_smp = True
+            depth_fmt = 'surface_datum'
 
         # Standardize all depth data
         new_depth = standardize_depth(df['depth'],
-                                      desired_format='surface_datum',
+                                      desired_format=depth_fmt,
                                       is_smp=is_smp)
 
         if 'bottom_depth' in df.columns:

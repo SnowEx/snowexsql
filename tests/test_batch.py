@@ -116,8 +116,8 @@ class TestUploadProfileBatch(BatchBase):
             ],
     'test_attr_value': [
         # Test all the attributes from the site details files
-        dict(value='hand_hardness', att_value=-18, attribute='surveyors', expected=None),
-        dict(value='hand_hardness', att_value=-18, attribute='comments', expected='Cups')]
+        dict(value='hand_hardness', att_value=17, attribute='surveyors', expected=None),
+        dict(value='hand_hardness', att_value=17, attribute='comments', expected='Cups')]
         }
 
 class TestUploadSMPBatch(BatchBase):

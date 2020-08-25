@@ -2,7 +2,9 @@ Data Notes
 ==========
 
 Below are various notes found or answers to questions about files or modifications
-to data that has been submitted to the database.
+to data that has been submitted to the database. This is not a complete list
+of variables stored in the database but only variables we felt needed notes
+due to decision making.
 
 Snow Micropen (SMP)
 -------------------
@@ -25,6 +27,11 @@ Snow Micropen (SMP)
 * Profiles Resampled to every 100th sample to expedite uploads. Metadata in the
   database contains the original sample id
 
+* SMP data depth in the original file is written positive depth from the snow
+  surface toward the ground. To avoid confusion with other profiles which are
+  stored in snow height format, SMP depths are written to the database negative
+  from the surface (snow surface datum format).
+
 
 UAVSAR
 ------
@@ -33,12 +40,16 @@ Interferogram (.int.grd)
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
 * The data is a complex format. Each component is 4 bits (8 total). Set in a
-  standard real + imaginary j format. STILL DETERMINING WHETHER THESE ARE SIGNED
-  OR NOT (e.g. uint4 or int4)
+  standard real + imaginary j format. These values can be negative (e.g int4)
 
+Amplitude (.amp.grd)
+~~~~~~~~~~~~~~~~~~~~~~~~
+Coming Soon, Data on Google Drive Now
 
-Ground Penetrating Radar
-------------------------
+Ground Penetrating Radar (GPR)
+------------------------------
+* `Download <https://drive.google.com/file/d/1gxP3rHoIEXeBAi0ipEKbF_ONQhYWuz_0/view>`_
+
 
 * The system is made by Sensors & Software, pulse EKKO Pro (pE) is the model,
   multi-polarization 1 GHz GPR
@@ -48,9 +59,14 @@ Ground Penetrating Radar
 
 Amplitude
 ~~~~~~~~~
-(Coming SOON)
+(NOT IN YET)
+* Will be stored as a vertical profile (Layers table).
 
-* Stored as a vertical profile (Layers table).
+SWE
+~~~
+
+depth
+~~~~~
 
 Two Way Travel Time
 ~~~~~~~~~~~~~~~~~~~

@@ -28,18 +28,18 @@ class TestStratigraphyProfile(LayersBase):
 
     'test_attr_value': [
         # Test a single value to all main profiles
-        dict(name='hand_hardness', depth=-5, attribute='value', expected='4F'),
-        dict(name='grain_size', depth=0, attribute='value', expected='< 1 mm'),
-        dict(name='grain_type', depth=-18, attribute='value', expected='FC'),
-        dict(name='manual_wetness', depth=-18, attribute='value', expected='D'),
+        dict(name='hand_hardness', depth=30, attribute='value', expected='4F'),
+        dict(name='grain_size', depth=35, attribute='value', expected='< 1 mm'),
+        dict(name='grain_type', depth=17, attribute='value', expected='FC'),
+        dict(name='manual_wetness', depth=17, attribute='value', expected='D'),
 
         # Test that meta data from the header only is assigned
-        dict(name=names[0], depth=-5, attribute='site_id', expected='1N20'),
-        dict(name=names[0], depth=-5, attribute='date', expected=dt.date()),
-        dict(name=names[0], depth=-5, attribute='time', expected=dt.timetz()),
-        dict(name=names[0], depth=-5, attribute='site_name', expected='Grand Mesa'),
-        dict(name=names[0], depth=-5, attribute='easting', expected=743281),
-        dict(name=names[0], depth=-5, attribute='northing', expected=4324005),
+        dict(name=names[0], depth=30, attribute='site_id', expected='1N20'),
+        dict(name=names[0], depth=30, attribute='date', expected=dt.date()),
+        dict(name=names[0], depth=30, attribute='time', expected=dt.timetz()),
+        dict(name=names[0], depth=30, attribute='site_name', expected='Grand Mesa'),
+        dict(name=names[0], depth=30, attribute='easting', expected=743281),
+        dict(name=names[0], depth=30, attribute='northing', expected=4324005),
             ],}
 
 
@@ -62,13 +62,13 @@ class TestDensityProfile(LayersBase):
 
     'test_attr_value': [
         # Test a single value to all main profiles
-        dict(name=names[0], depth=0, attribute='value', expected=np.mean([190, 245])),
+        dict(name=names[0], depth=35, attribute='value', expected=np.mean([190, 245])),
 
         # Test samples are renamed and assigned
-        dict(name=names[0], depth=0, attribute='sample_a', expected=190),
-        dict(name=names[0], depth=0, attribute='sample_b', expected=245),
+        dict(name=names[0], depth=35, attribute='sample_a', expected=190),
+        dict(name=names[0], depth=35, attribute='sample_b', expected=245),
         # Tests that NaN is converted to None
-        dict(name=names[0], depth=0, attribute='sample_c', expected=None),
+        dict(name=names[0], depth=35, attribute='sample_c', expected=None),
             ],
 
         }
@@ -100,12 +100,12 @@ class TestLWCProfile(LayersBase):
 
     'test_attr_value': [
         # Test a single value to all main profiles
-        dict(name=names[0], depth=-10, attribute='value', expected=np.mean([1.372, 1.35])),
+        dict(name=names[0], depth=27, attribute='value', expected=np.mean([1.372, 1.35])),
 
         # Test samples are renamed and assigned
-        dict(name=names[0], depth=-10, attribute='sample_a', expected=1.372),
-        dict(name=names[0], depth=-10, attribute='sample_b', expected=1.35),
-        dict(name=names[0], depth=-10, attribute='sample_c', expected=None),
+        dict(name=names[0], depth=27, attribute='sample_a', expected=1.372),
+        dict(name=names[0], depth=27, attribute='sample_b', expected=1.35),
+        dict(name=names[0], depth=27, attribute='sample_c', expected=None),
             ]
         }
 
@@ -127,12 +127,12 @@ class TestTemperatureProfile(LayersBase):
 
     'test_attr_value': [
         # Test a single value to all main profiles
-        dict(name=names[0], depth=-25, attribute='value', expected=-5.9),
+        dict(name=names[0], depth=10, attribute='value', expected=-5.9),
 
         # Test samples are not assigned
-        dict(name=names[0], depth=0, attribute='sample_a', expected=None),
-        dict(name=names[0], depth=0, attribute='sample_b', expected=None),
-        dict(name=names[0], depth=0, attribute='sample_c', expected=None),
+        dict(name=names[0], depth=35, attribute='sample_a', expected=None),
+        dict(name=names[0], depth=35, attribute='sample_b', expected=None),
+        dict(name=names[0], depth=35, attribute='sample_c', expected=None),
             ]
         }
 
@@ -156,15 +156,15 @@ class TestSSAProfile(LayersBase):
 
     'test_attr_value': [
         # Test a single value to all main profiles
-        dict(name='reflectance', depth=-70, attribute='value', expected=22.12),
-        dict(name='specific_surface_area', depth=-45, attribute='value', expected=11.20),
-        dict(name='equivalent_diameter', depth=0, attribute='value', expected=0.1054),
-        dict(name='sample_signal', depth=-70, attribute='value', expected=186.9),
+        dict(name='reflectance', depth=10, attribute='value', expected=22.12),
+        dict(name='specific_surface_area', depth=35, attribute='value', expected=11.20),
+        dict(name='equivalent_diameter', depth=80, attribute='value', expected=0.1054),
+        dict(name='sample_signal', depth=10, attribute='value', expected=186.9),
 
         # Test samples are renamed and assigned
-        dict(name=names[0], depth=-75, attribute='date', expected=dt.date()),
-        dict(name=names[0], depth=-75, attribute='time', expected=dt.timetz()),
-        dict(name=names[0], depth=-75, attribute='comments', expected='brush')
+        dict(name=names[0], depth=5, attribute='date', expected=dt.date()),
+        dict(name=names[0], depth=5, attribute='time', expected=dt.timetz()),
+        dict(name=names[0], depth=5, attribute='comments', expected='brush')
             ]
         }
 
