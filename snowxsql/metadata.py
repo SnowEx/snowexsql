@@ -15,6 +15,69 @@ import pandas as pd
 
 from os.path import basename
 
+
+def read_UAVSAR_ann(ann_file):
+    '''
+    .ann files describe the UAVsAR data. Use this function to read all that
+    information in and return it as a dictionary
+
+    Expected format:
+
+    `DEM Original Pixel spacing                     (arcsec)        = 1`
+
+    Where this is interpretted:
+    `key                     (units)        = [value]`
+
+    Then stored in the dictionary as:
+
+    `data[key] = {'value':value, 'units':units}`
+
+    values that are found to be numeric and have a decimal are converted to a
+    float otherwise numeric data is cast as integers. Everything else is left
+    as strings.
+
+    Args:
+        ann_file: path to UAVsAR description file
+    '''
+
+    with open(ann_file) as fp:
+        lines = fp.readlines()
+        fp.close()
+
+    data = {}
+
+    # loop through the data and parse
+    for line in lines:
+
+        # Filter out all comments and remove any line returns
+        info = line.split(';')[0].strip()
+
+        # ignore empty strings
+        if info:
+            d = info.split('=')
+            name, value = d[0], d[1]
+
+            # strip and collect the units assigned to each name
+            key_units = name.split('(')
+            key, units = key_units[0], key_units[1]
+
+            # Clean up tabs, spaces and line returns
+            key = key.strip()
+            units = units.replace(')','').strip()
+            value = value.strip()
+
+            ### Cast the values that can be to numbers ###
+            if value.strip('-').replace('.','').isnumeric():
+                if '.' in value:
+                    value = float(value)
+                else:
+                    value = int(value)
+
+            # Assign each entry as a dictionary with value and units
+            data[key.lower()] = {'value': value, 'units': units}
+
+    return data
+
 class SMPMeasurementLog(object):
     '''
     Opens and processes the log that describes the SMP measurments. This file

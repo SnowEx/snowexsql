@@ -14,13 +14,13 @@ Usage:
 from os.path import abspath, expanduser
 import struct
 import numpy as np
-from snowxsql.input import readUAVSARgrd
+from snowxsql.conversions import UAVSAR_interferogram_to_tiff
 
 
 def main():
     f = '~/Downloads/SnowEx2020_UAVSAR/grmesa_27416_20003-028_20005-007_0011d_s01_L090HH_01.int.grd'
     f = abspath(expanduser(f))
-    data = readUAVSARgrd(f)
+    data = UAVSAR_interferogram_to_tiff(f, 'test')
 
     # Eventually return the errors
     return 0

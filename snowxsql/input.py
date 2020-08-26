@@ -13,68 +13,6 @@ import utm
 from rasterio.plot import show
 from .utilities import get_logger
 
-def read_UAVsARann(ann_file):
-    '''
-    .ann files describe the UAVsAR data. Use this function to read all that
-    information in and return it as a dictionary
-
-    Expected format:
-
-    `DEM Original Pixel spacing                     (arcsec)        = 1`
-
-    Where this is interpretted:
-    `key                     (units)        = [value]`
-
-    Then stored in the dictionary as:
-
-    `data[key] = {'value':value, 'units':units}`
-
-    values that are found to be numeric and have a decimal are converted to a
-    float otherwise numeric data is cast as integers. Everything else is left
-    as strings.
-
-    Args:
-        ann_file: path to UAVsAR description file
-    '''
-
-    with open(ann_file) as fp:
-        lines = fp.readlines()
-        fp.close()
-
-    data = {}
-
-    # loop through the data and parse
-    for line in lines:
-
-        # Filter out all comments and remove any line returns
-        info = line.split(';')[0].strip()
-
-        # ignore empty strings
-        if info:
-            d = info.split('=')
-            name, value = d[0], d[1]
-
-            # strip and collect the units assigned to each name
-            key_units = name.split('(')
-            key, units = key_units[0], key_units[1]
-
-            # Clean up tabs, spaces and line returns
-            key = key.strip()
-            units = units.replace(')','').strip()
-            value = value.strip()
-
-            ### Cast the values that can be to numbers ###
-            if value.strip('-').replace('.','').isnumeric():
-                if '.' in value:
-                    value = float(value)
-                else:
-                    value = int(value)
-
-            # Assign each entry as a dictionary with value and units
-            data[key.lower()] = {'value': value, 'units': units}
-
-    return data
-
 def readUAVSARgrd(grd_file):
     '''
     Reads in the UAVsAR .grd files. Also requires a .txt file in the same
@@ -147,19 +85,19 @@ def readUAVSARgrd(grd_file):
         X[i,j] = coords[0]
         Y[i,j] = coords[1]
 
-    # Ix=~np.isnan(z);
+    Ix=~np.isnan(z);
 
-    # fig, axes = plt.subplots(1, 2)
-    #
-    # for i, comp in enumerate(['real', 'imag']):
-    #     im = axes[i].imshow(z[comp])
-    #     fig.colorbar(im, ax=axes[i])
-    #     arr = getattr(ij,comp)
-    #     mu = arr.mean()
-    #     std = arr.std()
-    #     axes[i].set_title('{} Component, mu={:2e}, std={:2e}'.format(comp.title(), mu, std))
-    # plt.suptitle(basename(grd_file))
-    # plt.show()
+    fig, axes = plt.subplots(1, 2)
+
+    for i, comp in enumerate(['real', 'imag']):
+        im = axes[i].imshow(z[comp])
+        fig.colorbar(im, ax=axes[i])
+        arr = getattr(ij,comp)
+        mu = arr.mean()
+        std = arr.std()
+        axes[i].set_title('{} Component, mu={:2e}, std={:2e}'.format(comp.title(), mu, std))
+    plt.suptitle(basename(grd_file))
+    plt.show()
 
 
     #
