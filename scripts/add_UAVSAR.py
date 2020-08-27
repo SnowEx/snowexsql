@@ -4,7 +4,7 @@ as a raster to the db
 
 *** INCOMPLETE **
     TODO:
-        1. Convert the data thats read in, into a raster to be used by raster uploader
+        1. Looks like the data is not in the correct orientation
 
 Usage:
     1. Download the data into your downloads folder
@@ -14,13 +14,13 @@ Usage:
 from os.path import abspath, expanduser
 import struct
 import numpy as np
-from snowxsql.conversions import UAVSAR_interferogram_to_tiff
+from snowxsql.conversions import UAVSAR_grd_to_tiff
 
 
 def main():
     f = '~/Downloads/SnowEx2020_UAVSAR/grmesa_27416_20003-028_20005-007_0011d_s01_L090HH_01.int.grd'
     f = abspath(expanduser(f))
-    data = UAVSAR_interferogram_to_tiff(f, 'test')
+    data = UAVSAR_grd_to_tiff(f, 'test')
 
     # Eventually return the errors
     return 0

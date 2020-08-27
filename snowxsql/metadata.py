@@ -16,7 +16,7 @@ import pandas as pd
 from os.path import basename
 
 
-def read_UAVSAR_ann(ann_file):
+def read_UAVSAR_annotation(ann_file):
     '''
     .ann files describe the UAVsAR data. Use this function to read all that
     information in and return it as a dictionary
@@ -50,8 +50,9 @@ def read_UAVSAR_ann(ann_file):
     for line in lines:
 
         # Filter out all comments and remove any line returns
-        info = line.split(';')[0].strip()
-
+        info = line.strip().split(';')
+        comment = info[-1].strip().lower()
+        info = info[0]
         # ignore empty strings
         if info:
             d = info.split('=')
@@ -62,8 +63,8 @@ def read_UAVSAR_ann(ann_file):
             key, units = key_units[0], key_units[1]
 
             # Clean up tabs, spaces and line returns
-            key = key.strip()
-            units = units.replace(')','').strip()
+            key = key.strip().lower()
+            units = units.replace(')','').strip().lower()
             value = value.strip()
 
             ### Cast the values that can be to numbers ###
@@ -74,8 +75,7 @@ def read_UAVSAR_ann(ann_file):
                     value = int(value)
 
             # Assign each entry as a dictionary with value and units
-            data[key.lower()] = {'value': value, 'units': units}
-
+            data[key] = {'value': value, 'units': units, 'comment':comment}
     return data
 
 class SMPMeasurementLog(object):

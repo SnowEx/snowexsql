@@ -10,7 +10,7 @@ from rasterio import MemoryFile
 from geoalchemy2.shape import to_shape
 from snowxsql.data import PointData
 from sqlalchemy.sql import func
-from .metadata import read_UAVSAR_ann
+from .metadata import read_UAVSAR_annotation
 from .utilities import get_logger
 from os.path import dirname, basename, join, isdir
 import os
@@ -23,7 +23,7 @@ from rasterio.transform import Affine
 # Remove later
 import matplotlib.pyplot as plt
 
-def UAVSAR_interferogram_to_tiff(grd_file, outdir):
+def UAVSAR_grd_to_tiff(grd_file, outdir):
     '''
     Reads in the UAVSAR interferometry file and saves the real and complex
     value and writes them to GeoTiffs. Requires a .ann file in the same
@@ -33,12 +33,20 @@ def UAVSAR_interferogram_to_tiff(grd_file, outdir):
         grd_file: File containing the UAVsAR data
         outdir: directory to save the output files
     '''
-
     log = get_logger('UAVSAR')
+
+    data_map = {'int':'interferogram',
+                'amp1':'amplitude of pass 1',
+                'amp2':'amplitude of pass 2',
+                'cor':'correlation'}
 
     # Grab just the filename and make a list splitting it on periods
     fparts = basename(grd_file).split('.')
     fkey = fparts[0]
+    ftype = fparts[-2]
+    dname = data_map[ftype]
+
+    log.info('Processing {} file...'.format(dname))
 
     # Get the directory the int file
     directory = dirname(grd_file)
@@ -55,8 +63,9 @@ def UAVSAR_interferogram_to_tiff(grd_file, outdir):
     # Form the descriptor file name based on the grid file name, should have .ann in it
     ann_file = join(directory, fmatches[0])
 
-    desc = read_UAVSAR_ann(ann_file)
+    desc = read_UAVSAR_annotation(ann_file)
 
+    # Grab the metadata for building our georeference
     nrow = desc['ground range data latitude lines']['value']
     ncol = desc['ground range data longitude samples']['value']
 
@@ -67,26 +76,39 @@ def UAVSAR_interferogram_to_tiff(grd_file, outdir):
     # Delta latitude and longitude
     dlat = desc['ground range data latitude spacing']['value']
     dlon = desc['ground range data longitude spacing']['value']
+    log.debug('Using Deltas for lat/long = {} / {}'.format(dlat, dlon))
 
     # Read in the data as a tuple representing the real and imaginary components
-    log.info('Reading {} and converting file to complex numbers...'.format(basename(grd_file)))
+    log.info('Reading {} and converting it from binary...'.format(basename(grd_file)))
 
-    # Read in the file from a complex values
-    # Little Endian (<), 4 bytes (32 bits), real values (float)
-    z = np.fromfile(grd_file, dtype=np.dtype([('real', '<f'), ('imaginary', '<f')]))
+    bytes = desc['{} bytes per pixel'.format(dname)]
+
+    # Form the datatypes
+    if dname in 'interferogram':
+        # Little Endian (<) + real values (float) +  4 bytes (32 bits) = <f4
+        dtype = np.dtype([('real', '<f4'), ('imaginary', '<f4')])
+    else:
+        dtype = np.dtype([('real', '<f{}'.format(bytes))])
+
+    # Read in the data according to the annotation file and bytes
+    z = np.fromfile(grd_file, dtype=dtype)
+
     # Reshape it to match what the text file says the image is
     z = z.reshape(nrow, ncol)
 
     # Create spatial coordinates
     latitudes = np.arange(lat1, lat1 + dlat * (nrow-1), dlat)
     longitudes = np.arange(lon1, lon1 + dlon * (ncol-1), dlon)
+    log.info('Upper Left Corner: {}, {}'.format(latitudes[0], longitudes[0]))
+    log.info('Bottom Right Corner = {}, {}'.format(latitudes[-1], longitudes[-1]))
+
     [LON, LAT] = np.meshgrid(longitudes, latitudes)
 
     # set zeros to Nan
     z[np.where(z==0)] = np.nan
 
     # Convert to UTM
-    log.info('Converting SAR Lat/long coordinates to UTM...')
+    log.info('Converting InSAR Lat/long coordinates to UTM...')
     X = np.zeros_like(LON)
     Y = np.zeros_like(LAT)
 
@@ -99,8 +121,10 @@ def UAVSAR_interferogram_to_tiff(grd_file, outdir):
 
     # Build the tranform and CRS
     crs = CRS.from_epsg(4326)
-    t = Affine.translation(latitudes[0] - dlat / 2, longitudes[0] - dlon / 2) * Affine.scale(dlat, dlon)
-    print(longitudes)
+
+    # Lat1/lon1 are already the center so for geotiff were good to go.
+    t = Affine.translation(lat1, lon1) * Affine.scale(dlat, dlon)
+
     # Build the base file name
     if not isdir(outdir):
         os.mkdir(outdir)
@@ -108,25 +132,28 @@ def UAVSAR_interferogram_to_tiff(grd_file, outdir):
     fbase = join(outdir, '.'.join(basename(grd_file).split('.')[0:-1]) + '.{}.tif')
 
     for i, comp in enumerate(['real', 'imaginary']):
-        new_dataset = rasterio.open(
-                fbase.format(comp),
-                'w+',
-                driver='GTiff',
-                height=z[comp].shape[0],
-                width=z[comp].shape[1],
-                count=1,
-                dtype=z[comp].dtype,
-                crs=crs,
-                transform=t,
-                )
-        new_dataset.write(z[comp], 1)
+        if comp in z.dtype.names:
+            #d = z[comp]
+            d = np.flip(z[comp], axis=0)
+            d = np.flip(d, axis=1)
 
-        show(new_dataset.read(1), vmax=0.1, vmin=-0.1)
-        for stat in ['min','max','mean','std']:
-            print('{} {} = {}'.format(comp, stat, getattr(z[comp],stat)()))
-        new_dataset.close()
+            new_dataset = rasterio.open(
+                    fbase.format(comp),
+                    'w+',
+                    driver='GTiff',
+                    height=d.shape[0],
+                    width=d.shape[1],
+                    count=1,
+                    dtype=d.dtype,
+                    crs=crs,
+                    transform=t,
+                    )
+            new_dataset.write(d, 1)
 
-
+            # show(new_dataset.read(1), vmax=0.1, vmin=-0.1)
+            for stat in ['min','max','mean','std']:
+                print('{} {} = {}'.format(comp, stat, getattr(d, stat)()))
+            new_dataset.close()
 
 def points_to_geopandas(results):
     '''
