@@ -18,7 +18,7 @@ def main():
     ssa_dir = join(directory, 'SSA')
     filenames = [join(directory, 'SSA', f) for f in listdir(ssa_dir) if f.split('.')[-1]=='csv']
 
-    b = UploadProfileBatch(profile_filenames=filenames, debug=False)
+    b = UploadProfileBatch(filenames=filenames, debug=False)
     b.push()
     return len(b.errors)
 

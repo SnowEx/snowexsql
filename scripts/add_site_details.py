@@ -9,7 +9,7 @@ Usage:
 '''
 from os.path import join, abspath, basename, relpath
 from os import listdir
-from snowxsql.batch import SiteDetailsBatch
+from snowxsql.batch import UploadSiteDetailsBatch
 
 def main():
 
@@ -21,7 +21,7 @@ def main():
 
     # Grab only site details
     site_filenames = [f for f in filenames if 'site' in f]
-    b = SiteDetailsBatch(site_filenames)
+    b = UploadSiteDetailsBatch(site_filenames)
     b.push()
 
     # Submit all profiles associated with pit at a time
