@@ -5,7 +5,7 @@ Welcome to snowXSQL's documentation!
    readme
    installation
    usage
-   database+_structure
+   database_structure
    data_notes
    examples
    qgis
