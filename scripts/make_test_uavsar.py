@@ -13,7 +13,7 @@ import rasterio
 from rasterio.crs import CRS
 from rasterio.plot import show
 from rasterio.transform import Affine
-
+import glob
 
 def get_crop_indices(n, ratio):
     '''
@@ -29,92 +29,130 @@ def get_crop_indices(n, ratio):
     spread = end - start
     return int(start), int(end), int(spread)
 
+def get_uavsar_annotation(fkey, directory):
+    # search local files for a matching file with .ann in its name
+    ann_candidates = os.listdir(directory)
+    fmatches = [f for f in ann_candidates if fkey in f and 'ann' in f]
 
-ratio = 0.2
-f = '~/Downloads/SnowEx2020_UAVSAR/grmesa_27416_20003-028_20005-007_0011d_s01_L090HH_01.int.grd'
-grd_file = abspath(expanduser(f))
+    # If we find too many or not enough raise an exception and exit
+    if len(fmatches) != 1:
+        raise ValueError('Unable to find a corresponding description file to'
+                         ' UAVsAR file {}'.format(f))
+
+    # Form the descriptor file name based on the grid file name, should have .ann in it
+    ann_file = join(directory, fmatches[0])
+    desc = read_UAVSAR_annotation(ann_file)
+
+    return desc
+
 log = get_logger('InSar Test Data')
 
-# Grab just the filename and make a list splitting it on periods
-fparts = basename(grd_file).split('.')
-fkey = fparts[0]
+# How much of the original data cropped to the middle, e.g. 20% in each direction from center
+ratio = 0.2
 
-# Get the directory the int file
-directory = dirname(grd_file)
+# Output directory
+outdir = 'test'
 
-# search local files for a matching file with .ann in its name
-ann_candidates = os.listdir(directory)
-fmatches = [f for f in ann_candidates if fkey in f and 'ann' in f]
+# Pattern to look for
+directory= '~/Downloads/SnowEx2020_UAVSAR'
+pattern = 'grmesa_27416_20003-028_20005-007_0011d_s01_L090HH_01.*.grd'
 
-# If we find too many or not enough raise an exception and exit
-if len(fmatches) != 1:
-    raise ValueError('Unable to find a corresponding description file to'
-                     ' UAVsAR file {}'.format(grd_file))
+# how to map the names
+data_map = {'int':'interferogram',
+            'amp1':'amplitude of pass 1',
+            'amp2':'amplitude of pass 2',
+            'cor':'correlation'}
 
-dname = 'interferogram'
-# Form the descriptor file name based on the grid file name, should have .ann in it
-ann_file = join(directory, fmatches[0])
+# Get the directory the file
+directory = abspath(expanduser(directory))
+files = glob.glob(join(directory, pattern))
 
-desc = read_UAVSAR_annotation(ann_file)
+log.info('Found {} files that can be used for testing...'.format(len(files)))
+
+fkey = pattern.split('.')[0]
+desc = get_uavsar_annotation(fkey, directory)
 
 # Grab array size
 nrows = desc['ground range data latitude lines']['value']
 ncols = desc['ground range data longitude samples']['value']
-
-# Gte the number of bytes for the dataset
-bytes = desc['{} bytes per pixel'.format(dname)]['value']
 
 # Attempt to crop on the center of the image
 start_row, end_row, new_nrows = get_crop_indices(nrows, ratio)
 start_col, end_col, new_ncols = get_crop_indices(ncols, ratio)
 
 
-# Read in the data as bytes
-log.info('Reading {} as bytes...'.format(basename(grd_file)))
-with open(grd_file,'rb') as fp:
-    z_b = fp.read()
-    fp.close()
+for f in files:
 
-# Number of Bits of the file
-nbits = len(z_b)
+    # Output file name, use the same extension
+    out_f = 'uavsar.' + '.'.join(f.split('.')[-2:])
 
-# Number of Bits of the incoming array that we expect
-expected_full_nbits = nrows * ncols * bytes
+    # Grab the dataname
+    d_key =  basename(f).split('.')[-2]
+    dname = data_map[d_key]
+    log.info('Processing {} file...'.format(dname))
 
-# Number of Bits of the resulting bits after cropping
-expected_cropped_nbits = new_nrows * new_ncols * bytes
+    # Gte the number of bytes for the dataset
+    if 'amplitude' in dname:
+        temp_d = 'amplitude'
+    else:
+        temp_d = dname
 
-# Bytes version of each of those
-Mbytes = len(z_b) / bytes / 1e6
-expected_full_Mbytes = nrows * ncols / 1e6
-expected_cropped_Mbytes = new_nrows * new_ncols / 1e6
+    bytes = desc['{} bytes per pixel'.format(temp_d)]['value']
 
-# First check that the incoming data is what we expected
-if Mbytes != expected_full_Mbytes:
-    log.warning("File size does not match the expected size from the annotation file ({} Mb != {} Mb)".format(Mbytes, expected_full_Mbytes))
+    # Read in the data as bytes
+    log.info('Reading {} as bytes...'.format(basename(f)))
+    with open(f,'rb') as fp:
+        z_b = fp.read()
+        fp.close()
 
-# Create a new byte array for storing the cropped data
-new = bytearray()
+    # Number of Bits of the file
+    nbytes = len(z_b)
 
-# Loop over the total number of rows and calculate a moving index for the bits list
-for i in range(nrows):
-    # Convert our row index to the bytes index
-    bits_idx = i * ncols * bytes
+    # Number of Bits of the incoming array that we expect
+    expected_full_nbits = nrows * ncols * bytes
 
-    # Convert our starting/ending col to bits index
-    start = bits_idx + (start_col * bytes)
-    end = start + (new_ncols * bytes)
-    
-    for b in z_b[start:end]:
-        new.append(b)
+    # Number of Bits of the resulting bits after cropping
+    expected_cropped_nbits = new_nrows * new_ncols * bytes
 
-received_nbits = len(new)
-received_Mbytes = received_nbits / bytes / 1e6
+    # MegaBytes version of each of nbits
+    Mbytes = nbytes / 1e6
+    expected_full_Mbytes = nrows * ncols * bytes / 1e6
+    expected_cropped_Mbytes = new_nrows * new_ncols * bytes/ 1e6
 
-log.info('Data was reduced by {} Mb ({} Mb -- > {} Mb)'.format((Mbytes - received_Mbytes),
-                                                      Mbytes, received_Mbytes))
+    log.info('File is {:0.2f} Mb.'.format(Mbytes))
+    log.info('Cropping to {:0.2f}% of data'.format(100.0 * ratio**2))
+    log.info('Based on the nrows and ncols, data post crop should be {:0.2f} Mb'.format(expected_cropped_Mbytes))
+    # Retrieve the reported file size
+    key = 'ground range {}'.format(dname)
+    reported_size = int(desc[key]['comment'].split(' ')[-2].strip()) / 1e6
 
-if expected_cropped_Mbytes != received_Mbytes:
-    log.error('Cropped byte array doesnt match expected size.\n Expected {} Mb vs'
-                ' Received {} Mb (difference = {})'
-                ''.format(expected_cropped_Mbytes, received_Mbytes, (expected_cropped_Mbytes - received_Mbytes)))
+    if reported_size != Mbytes:
+        log.warning('Filesize read in doesnt match the reported value in the'
+                    ' annotation file.\nAnnotation File = {}'
+                    '\nReported = {}Mb\nRead = {}Mb'
+                    ''.format(ann_file, reported_size, Mbytes))
+
+    # First check that the incoming data is what we expected
+    if Mbytes != expected_full_Mbytes:
+        log.warning('File size does not match the estimated size based on rows and cols'
+                    'file ({:0.2f} Mb != {:0.2f} Mb)'.format(Mbytes, expected_full_Mbytes))
+
+    # Convert to our desired data
+    if dname == 'interferogram':
+        dtype = np.dtype([('real', '<f4'), ('imaginary', '<f4')])
+    else:
+        dtype = np.dtype([('real', '<f{}'.format(bytes))])
+    log.info("dtype is defined as {}.".format(dtype))
+
+    # Convert array and reshape to a matrix for easier indexing
+    arr = np.frombuffer(z_b, dtype=dtype).reshape(nrows,ncols)
+
+    # Crop the data, flatten, and convert back to bytes
+    sub_arr = arr[start_row:end_row, start_col:end_col].flatten().tobytes()
+
+    # Write out the data to the file
+    file = join(outdir, out_f)
+    log.info('Writing output to {}'.format(file))
+    with open(file, 'wb+') as fp:
+        fp.write(sub_arr)
+        fp.close()

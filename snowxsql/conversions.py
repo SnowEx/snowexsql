@@ -19,6 +19,7 @@ import utm
 from rasterio.crs import CRS
 from rasterio.plot import show
 from rasterio.transform import Affine
+from rasterio.warp import calculate_default_transform, reproject, Resampling
 
 # Remove later
 import matplotlib.pyplot as plt
@@ -69,7 +70,7 @@ def UAVSAR_grd_to_tiff(grd_file, outdir):
     nrow = desc['ground range data latitude lines']['value']
     ncol = desc['ground range data longitude samples']['value']
 
-    # Find starting latitude, longitude
+    # Find starting latitude, longitude already at the center
     lat1 = desc['ground range data starting latitude']['value']
     lon1 = desc['ground range data starting longitude']['value']
 
@@ -96,26 +97,26 @@ def UAVSAR_grd_to_tiff(grd_file, outdir):
     # Reshape it to match what the text file says the image is
     z = z.reshape(nrow, ncol)
 
-    # Create spatial coordinates
-    latitudes = np.arange(lat1, lat1 + dlat * (nrow-1), dlat)
-    longitudes = np.arange(lon1, lon1 + dlon * (ncol-1), dlon)
-    log.info('Upper Left Corner: {}, {}'.format(latitudes[0], longitudes[0]))
-    log.info('Bottom Right Corner = {}, {}'.format(latitudes[-1], longitudes[-1]))
-
-    [LON, LAT] = np.meshgrid(longitudes, latitudes)
-
-    # set zeros to Nan
-    z[np.where(z==0)] = np.nan
-
-    # Convert to UTM
-    log.info('Converting InSAR Lat/long coordinates to UTM...')
-    X = np.zeros_like(LON)
-    Y = np.zeros_like(LAT)
-
-    for i,j in zip(range(0, LON.shape[0]), range(0, LON.shape[1])):
-        coords = utm.from_latlon(LAT[i,j], LON[i,j])
-        X[i,j] = coords[0]
-        Y[i,j] = coords[1]
+    # # Create spatial coordinates
+    # latitudes = np.arange(lat1, lat1 + dlat * (nrow-1), dlat)
+    # longitudes = np.arange(lon1, lon1 + dlon * (ncol-1), dlon)
+    # log.info('Upper Left Corner: {}, {}'.format(latitudes[0], longitudes[0]))
+    # log.info('Bottom Right Corner = {}, {}'.format(latitudes[-1], longitudes[-1]))
+    #
+    # [LON, LAT] = np.meshgrid(longitudes, latitudes)
+    #
+    # # set zeros to Nan
+    # z[np.where(z==0)] = np.nan
+    #
+    # # Convert to UTM
+    # log.info('Converting InSAR Lat/long coordinates to UTM...')
+    # X = np.zeros_like(LON)
+    # Y = np.zeros_like(LAT)
+    #
+    # for i,j in zip(range(0, LON.shape[0]), range(0, LON.shape[1])):
+    #     coords = utm.from_latlon(LAT[i,j], LON[i,j])
+    #     X[i,j] = coords[0]
+    #     Y[i,j] = coords[1]
 
     # fig, axes = plt.subplots(1, 2)
 
@@ -133,7 +134,7 @@ def UAVSAR_grd_to_tiff(grd_file, outdir):
 
     for i, comp in enumerate(['real', 'imaginary']):
         if comp in z.dtype.names:
-            #d = z[comp]
+
             d = np.flip(z[comp], axis=0)
             d = np.flip(d, axis=1)
 
@@ -148,6 +149,7 @@ def UAVSAR_grd_to_tiff(grd_file, outdir):
                     crs=crs,
                     transform=t,
                     )
+            # Write out the data
             new_dataset.write(d, 1)
 
             # show(new_dataset.read(1), vmax=0.1, vmin=-0.1)
