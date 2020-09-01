@@ -32,7 +32,7 @@ class TestFunctions(DBSetup):
         '''
 
         # Get the first pixel as a point
-        records = self.session.query(ST_PixelAsPoint(RasterData.raster, 1, 1)).scalar()
+        records = self.session.query(ST_PixelAsPoint(ImageData.raster, 1, 1)).scalar()
 
         # Get the Geometry from the Well known binary format
         q = self.session.scalar(records.ST_GeomFromEWKB())
@@ -49,7 +49,7 @@ class TestFunctions(DBSetup):
     #     '''
     #
     #     # Get the first pixel as a point
-    #     records = self.session.query(ST_PixelAsPoints(RasterData.raster)).limit(5).all()
+    #     records = self.session.query(ST_PixelAsPoints(ImageData.raster)).limit(5).all()
     #
     #     # Check that its the correct type
     #     for r in records:

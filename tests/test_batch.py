@@ -2,7 +2,7 @@ from .sql_test_base import DBSetup, pytest_generate_tests
 import pytest
 from os.path import join
 from snowxsql.batch import *
-from snowxsql.data import LayerData, SiteData, RasterData
+from snowxsql.data import LayerData, SiteData, ImageData
 from datetime import date
 
 class BatchBase(DBSetup):
@@ -156,7 +156,7 @@ class TestUploadRasterBatch(BatchBase):
                         'units':'meters',
                         'epsg':29612}
     BatchClass = UploadRasterBatch
-    TableClass = RasterData
+    TableClass = ImageData
     count_attribute = 'type'
     attribute = 'id'
     params = {

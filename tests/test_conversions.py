@@ -1,5 +1,5 @@
 from snowxsql.conversions import *
-from snowxsql.data import PointData, RasterData
+from snowxsql.data import PointData, ImageData
 from snowxsql.upload import PointDataCSV, UploadRaster
 import geopandas as gpd
 from geoalchemy2.shape import to_shape
@@ -50,7 +50,7 @@ class TestConversions(DBSetup):
         '''
         Test numpy retrieval array of a raster via rasterio
         '''
-        rasters = self.session.query(func.ST_AsTiff(RasterData.raster)).all()
+        rasters = self.session.query(func.ST_AsTiff(ImageData.raster)).all()
         dataset = raster_to_rasterio(self.session, rasters)[0]
 
         arr = dataset.read(1)

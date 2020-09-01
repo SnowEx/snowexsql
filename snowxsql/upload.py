@@ -315,58 +315,6 @@ class PointDataCSV(object):
         self.points_uploaded += 1
 
 
-# class UploadRasterCollection(object):
-#     '''
-#     Given a folder, looks through and uploads all rasters with the matching
-#     the file extension
-#     '''
-#     defaults = {'pattern':'x.adf',
-#                 'ext'='adf'}
-#
-#     def __init__(self, image_dir, **kwargs):
-#         self.log = get_logger(__name__)
-#         self.log.info('Starting raster collection upload...')
-#         self.image_dir = abspath(expanduser(image_dir))
-#         self.rasters = []
-#         self.errors = []
-#
-#         self.meta = {'date':date,
-#                      'description':description,
-#                      'site_name':site_name,
-#                      'units':units}
-#         self.epsg = epsg
-#
-#         for r,ds,fs in os.walk(self.image_dir):
-#             for f in fs:
-#                 if f.split('.')[-1] == ext and pattern in f:
-#                     self.rasters.append(join(r,f))
-#
-#         self.log.info('Found {} raster in {} with ext = {} and pattern = {}.'.format(len(self.rasters), self.image_dir, ext, pattern))
-#
-#     def submit(self, session):
-#         rasters_uploaded = 0
-#         start = time.time()
-#
-#         bar = progressbar.ProgressBar(max_value=len(self.rasters))
-#         for i,f in enumerate(self.rasters):
-#             r = UploadRaster(f, self.epsg, **self.meta)
-#             try:
-#                 r.submit(session)
-#                 rasters_uploaded += 1
-#             except Exception as e:
-#                 self.errors.append((f,e))
-#             bar.update(i)
-#
-#         # Log errors
-#         if len(self.errors) > 0:
-#             self.log.error("During the upload of {} raster, {} failed.".format(len(self.rasters), len(self.errors)))
-#             for f,e in self.errors:
-#                 self.log.error(e)
-#
-#         self.log.info("{} / {} Rasters uploaded.".format(rasters_uploaded, len(self.rasters)))
-#         self.log.info('Finished! Elapsed {:d}s'.format(int(time.time() - start)))
-
-
 class UploadRaster(object):
     '''
     Class for uploading a single tifs to the database
@@ -393,6 +341,6 @@ class UploadRaster(object):
         raster = RasterElement(values)
         self.data['raster'] = raster
 
-        r = RasterData(**self.data)
+        r = ImageData(**self.data)
         session.add(r)
         session.commit()

@@ -28,7 +28,7 @@ class SnowData(object):
 
 class Measurement(object):
     '''
-    Attributes required for a measurement of any kind
+    Base Class providing attributes required for a measurement of any kind
     '''
     instrument = Column(String(50))
     type = Column(String(50))
@@ -71,9 +71,9 @@ class SiteData(SingleLocationData, Base):
     tree_canopy = Column(String(100))
     site_notes = Column(String(1000))
 
-class RasterData(SnowData, Measurement, Base):
+class ImageData(SnowData, Measurement, Base):
     '''
-    Raster Table
+    Class representing the images table. This table holds all images/rasters
     '''
     __tablename__ = 'images'
     __table_args__ = {"schema": "public"}
@@ -82,7 +82,9 @@ class RasterData(SnowData, Measurement, Base):
 
 class PointData(SingleLocationData, Measurement, Base):
     '''
-    Point data table
+    Class representing the points table. This table holds all point data.
+    Here a single data entry is a single coordinate pair with a single value
+    e.g. snow depths
     '''
     __tablename__ = 'points'
     __table_args__ = {"schema": "public"}
@@ -98,8 +100,9 @@ class PointData(SingleLocationData, Measurement, Base):
 
 class LayerData(SingleLocationData, Measurement, Base):
     '''
-    Base class for interacting with profile data. This includes anything measured
-    as a function of depth as single point. E.g. SMP profiles, Hand hardness,
+    Class representing the layers table. This table holds all layers or
+    profile data. Here a single data entry is a single value at depth in the
+    snowpack and a single coordinate pair.  e.g. SMP profiles, Hand hardness,
     temperature etc...
     '''
     __tablename__ = 'layers'

@@ -32,7 +32,7 @@ class TestRasters(DBSetup):
         '''
         Test two rasters uploaded
         '''
-        records = self.session.query(RasterData.id).all()
+        records = self.session.query(ImageData.id).all()
         # Get the Geometry from the Well known binary format
         assert len(records) == 2
 
@@ -42,7 +42,7 @@ class TestRasters(DBSetup):
         '''
 
         # Get the first pixel as a point
-        records = self.session.query(ST_PixelAsPoint(RasterData.raster, 1, 1)).limit(1).all()
+        records = self.session.query(ST_PixelAsPoint(ImageData.raster, 1, 1)).limit(1).all()
 
         # Convert geom to shapely object and compare
         assert to_shape(records[0][0]) == Point(743000, 4324500)
@@ -54,7 +54,7 @@ class TestRasters(DBSetup):
         '''
 
         # Get the first pixel as a point
-        rasters = self.session.query(func.ST_AsTiff(func.ST_Union(RasterData.raster, type_=Raster))).all()
+        rasters = self.session.query(func.ST_AsTiff(func.ST_Union(ImageData.raster, type_=Raster))).all()
         assert len(rasters) == 1
 
     def test_raster_union2(self):
@@ -63,7 +63,7 @@ class TestRasters(DBSetup):
         '''
 
         # Get the first pixel as a point
-        merged = self.session.query(func.ST_Union(RasterData.raster, type_=Raster)).filter(RasterData.id.in_([1,2])).all()
+        merged = self.session.query(func.ST_Union(ImageData.raster, type_=Raster)).filter(ImageData.id.in_([1,2])).all()
         assert len(merged) == 1
 
 
@@ -86,7 +86,7 @@ class TestRasters(DBSetup):
     #     print(to_shape(buffered_pit))
     #
     #     # Clip the raster using buffered pit polygon
-    #     ras = self.session.query(RasterData.raster).all()
+    #     ras = self.session.query(ImageData.raster).all()
     #     dataset  = raster_to_rasterio(self.session, ras)
     #
     #     show(dataset.read(1), transform=dataset.transform)

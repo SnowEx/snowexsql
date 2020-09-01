@@ -1,5 +1,5 @@
 from snowxsql.db import *
-from snowxsql.data import PointData, LayerData, RasterData, SiteData
+from snowxsql.data import PointData, LayerData, ImageData, SiteData
 from  .sql_test_base import DBSetup
 
 from sqlalchemy import MetaData, inspect, Table
@@ -62,7 +62,7 @@ class TestDB(DBSetup):
     (SiteData, site_atts),
     (PointData, point_atts),
     (LayerData, layer_atts),
-    (RasterData, raster_atts)])
+    (ImageData, raster_atts)])
     def test_get_table_attributes(self, DataCls, attributes):
         '''
         Test we return a correct list of table columns from db.py
