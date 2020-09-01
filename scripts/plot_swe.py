@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 from geoalchemy2.shape import to_shape
 
 # Connect to the database we made.
-db_name = 'postgresql+psycopg2:///snowex'
+db_name = 'snowex'
 engine, metadata, session = get_db(db_name)
 
 # Grab all the unique site names

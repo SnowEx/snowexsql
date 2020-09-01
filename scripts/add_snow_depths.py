@@ -21,7 +21,7 @@ def main():
                                'SnowEx2020_SD_GM_alldepths_v1.csv'))
 
     # Start the Database
-    db_name = 'postgresql+psycopg2:///snowex'
+    db_name = 'snowex'
     engine, metadata, session = get_db(db_name)
 
     csv = PointDataCSV(fname, units='cm', site_name=site_name, timezone=timezone, epsg=26912)

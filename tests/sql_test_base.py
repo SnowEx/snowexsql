@@ -35,7 +35,7 @@ class DBSetup:
         '''
         Setup the database one time for testing
         '''
-        self.db = 'postgresql+psycopg2:///test'
+        self.db = 'test'
         self.data_dir = join(dirname(__file__), 'data')
 
         self.engine, self.metadata, self.session = get_db(self.db)

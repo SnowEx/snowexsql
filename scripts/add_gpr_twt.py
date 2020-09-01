@@ -34,7 +34,7 @@ def main():
                                  'BSU_pE_GPR_01282020_01292020_02042020_TWT.csv')
 
     # Start the Database
-    db_name = 'postgresql+psycopg2:///snowex'
+    db_name = 'snowex'
     engine, metadata, session = get_db(db_name)
 
     csv = PointDataCSV(abspath(expanduser(fname)), units='ns', site_name=site_name,
@@ -44,6 +44,6 @@ def main():
                                           instrument='Pulse Ekko Pro')
     csv.submit(session)
     return len(csv.errors)
-    
+
 if __name__ == '__main__':
     main()

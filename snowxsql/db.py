@@ -21,10 +21,20 @@ def initialize(engine):
 
 def get_db(db_str):
     '''
-    Returns a session object
+    Returns the DB engine, MetaData, and session object
+
+    Args:
+        db_str: Just the name of the database
+    Returns:
+        tuple: **engine** -
     '''
+    # This library requires a postgres dialect and the psycopg2 driver
+    # TODO: This will need to change when we run this not locally, see
+    # https://docs.sqlalchemy.org/en/13/core/engines.html#database-urls for
+    # more info.
+    db = 'postgresql+psycopg2:///{}'.format(db_str)
     # create a Session
-    engine = create_engine(db_str, echo=False)
+    engine = create_engine(db, echo=False)
     Session = sessionmaker(bind=engine)
     metadata = MetaData(bind=engine)
     session = Session(expire_on_commit=False)

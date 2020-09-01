@@ -69,7 +69,6 @@ class BatchBase():
         self.uploaded = 0
 
         # Grab db
-        self.db_name = 'postgresql+psycopg2:///{}'.format(self.db_name)
         self.log.info('Accessing Database {}'.format(self.db_name))
         engine, metadata, self.session = get_db(self.db_name)
 

@@ -7,7 +7,7 @@ from snowxsql.utilities import get_logger
 
 def main():
     log = get_logger('Create DB')
-    db_name = 'postgresql+psycopg2:///snowex'
+    db_name = 'snowex'
 
     engine, metadata, session = get_db(db_name)
 
