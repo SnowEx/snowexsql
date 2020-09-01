@@ -1,6 +1,7 @@
 from snowxsql.utilities import *
 import numpy as np
 from os.path import dirname, join
+import pytest
 
 def test_read_nline():
     '''
@@ -18,3 +19,15 @@ def test_find_files():
 
     files = find_files(d, 'adf', 'w001001x')
     assert len(files) == 2
+
+@pytest.mark.parametrize("kw, lines, expected",[
+# Typical use
+('snow', ['snowpits','nothing'], 0),
+# Didn't find anything
+('ice', ['snow', 'ex', 'is','awesome'], -1)
+])
+def test_find_kw_in_lines(kw, lines, expected):
+    '''
+    test finding a keyword in a list of strings
+    '''
+    assert find_kw_in_lines(kw, lines, addon_str='') == expected

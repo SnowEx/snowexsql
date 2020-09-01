@@ -4,29 +4,7 @@ Edits the postgres conf file
 import platform
 import os
 from subprocess import check_output
-
-def find_kw_in_lines(kw, lines):
-    '''
-    Returns the index of a list of strings that had a kw in it
-
-    Args:
-        kw: Keyword to find in a line
-        lines: List of strings to search for the keyword
-    Return:
-        i: Integer of the index of a line containing a kw. -1 otherwise
-    '''
-
-    for i,line in enumerate(lines):
-        s = '{} = '.format(kw)
-        uncommented = line.strip('#')
-        if s in uncommented:
-            if s[0] == uncommented[0]:
-                break
-    # No match
-    if i == len(lines)-1:
-        i = -1
-
-    return i
+from snowxsql.utilities import find_kw_in_lines
 
 def modify_postgres_conf(conf_file, entries):
     '''
@@ -41,8 +19,8 @@ def modify_postgres_conf(conf_file, entries):
     with open(conf_file) as fp:
         lines = fp.readlines()
         fp.close()
-    print("Updating options in {}...".format(conf_file))
 
+    print("Updating options in {}...".format(conf_file))
     for k,v in entries.items():
 
         i = find_kw_in_lines(k, lines)
@@ -74,7 +52,6 @@ def modify_postgres_conf(conf_file, entries):
     check_output(['sudo', 'mv', os.path.abspath(temp), conf_file])
 
 
-
 if __name__ == '__main__':
     # Modify and output the conf file to its original location
     conf_updates = {'work_mem':"2000MB",
@@ -84,9 +61,6 @@ if __name__ == '__main__':
 
 
     this_os = platform.system().lower()
-
-    # Names of databases to make
-    db_names = ['snowex','test']
 
     # Manage the os
     if this_os == 'linux':

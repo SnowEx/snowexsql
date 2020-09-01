@@ -72,3 +72,31 @@ def find_files(directory, ext, pattern):
             if f.split('.')[-1] == ext and pattern in f:
                 files.append(join(r,f))
     return files
+
+
+def find_kw_in_lines(kw, lines, addon_str=' = '):
+    '''
+    Returns the index of a list of strings that had a kw in it
+
+    Args:
+        kw: Keyword to find in a line
+        lines: List of strings to search for the keyword
+        addon_str: String to append to your key word to help filter
+    Return:
+        i: Integer of the index of a line containing a kw. -1 otherwise
+    '''
+    str_temp = '{}' + addon_str
+
+    for i,line in enumerate(lines):
+        s = str_temp.format(kw)
+
+        uncommented = line.strip('#')
+
+        if s in uncommented:
+            if s[0] == uncommented[0]:
+                break
+    # No match
+    if i == len(lines)-1:
+        i = -1
+
+    return i
