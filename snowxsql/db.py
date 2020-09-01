@@ -19,15 +19,23 @@ def initialize(engine):
     meta.create_all(bind=engine)
 
 
-def get_db(db_str):
+def get_db(db_str, return_metadata=False):
     '''
     Returns the DB engine, MetaData, and session object
 
     Args:
         db_str: Just the name of the database
+        return_metadata: Boolean indicating whether the metadata object is
+                         being returned, useful only for developers
     Returns:
-        tuple: **engine** -
+        tuple: **engine** - sqlalchemy Engine object for directly sending
+                            querys to the DB
+               **session** - sqlalchemy Session Object for using object
+                             relational mapping (ORM)
+               **metadata** (optional) - sqlalchemy MetaData object for
+                            modifying the database
     '''
+
     # This library requires a postgres dialect and the psycopg2 driver
     # TODO: This will need to change when we run this not locally, see
     # https://docs.sqlalchemy.org/en/13/core/engines.html#database-urls for
@@ -39,7 +47,13 @@ def get_db(db_str):
     metadata = MetaData(bind=engine)
     session = Session(expire_on_commit=False)
 
-    return engine, metadata, session
+    if return_metadata:
+        result = (engine, session, metadata)
+
+    else:
+        result = (engine, session)
+
+    return result
 
 
 def get_table_attributes(DataCls):

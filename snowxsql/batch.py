@@ -70,7 +70,7 @@ class BatchBase():
 
         # Grab db
         self.log.info('Accessing Database {}'.format(self.db_name))
-        engine, metadata, self.session = get_db(self.db_name)
+        engine, self.session = get_db(self.db_name)
 
     def assign_attr_defaults(self, **kwargs):
         '''

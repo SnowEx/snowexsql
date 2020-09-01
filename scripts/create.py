@@ -9,7 +9,7 @@ def main():
     log = get_logger('Create DB')
     db_name = 'snowex'
 
-    engine, metadata, session = get_db(db_name)
+    engine, session = get_db(db_name)
 
     a = input('\nWARNING! You are about to overwrite the entire database! Press Y to continue, press any other key to abort: ')
     if a.lower() == 'y':

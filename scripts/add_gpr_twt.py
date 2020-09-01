@@ -35,7 +35,7 @@ def main():
 
     # Start the Database
     db_name = 'snowex'
-    engine, metadata, session = get_db(db_name)
+    engine, session = get_db(db_name)
 
     csv = PointDataCSV(abspath(expanduser(fname)), units='ns', site_name=site_name,
                                           timezone=timezone,

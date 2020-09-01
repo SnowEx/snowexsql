@@ -38,7 +38,7 @@ class DBSetup:
         self.db = 'test'
         self.data_dir = join(dirname(__file__), 'data')
 
-        self.engine, self.metadata, self.session = get_db(self.db)
+        self.engine, self.session, self.metadata = get_db(self.db, return_metadata=True)
 
         initialize(self.engine)
 

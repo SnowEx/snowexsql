@@ -71,3 +71,15 @@ class TestDB(DBSetup):
 
         for c in attributes:
             assert c in atts
+
+# Independent Tests
+@pytest.mark.parametrize("return_metadata, expected_objs",[
+(False, 2),
+(True, 3)])
+def test_getting_db(return_metadata, expected_objs):
+    '''
+    Test we can receive a connection and opt out of getting the metadata
+    '''
+
+    result = get_db('test', return_metadata=return_metadata)
+    assert len(result) == expected_objs
