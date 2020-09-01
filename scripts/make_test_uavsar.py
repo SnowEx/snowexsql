@@ -14,6 +14,8 @@ from rasterio.crs import CRS
 from rasterio.plot import show
 from rasterio.transform import Affine
 import glob
+from shutil import copyfile
+from snowxsql.utilities import find_kw_in_lines
 
 def get_crop_indices(n, ratio):
     '''
@@ -43,7 +45,7 @@ def get_uavsar_annotation(fkey, directory):
     ann_file = join(directory, fmatches[0])
     desc = read_UAVSAR_annotation(ann_file)
 
-    return desc
+    return desc, ann_file
 
 log = get_logger('InSar Test Data')
 
@@ -51,7 +53,7 @@ log = get_logger('InSar Test Data')
 ratio = 0.2
 
 # Output directory
-outdir = 'test'
+outdir = '../tests/data'
 
 # Pattern to look for
 directory= '~/Downloads/SnowEx2020_UAVSAR'
@@ -68,9 +70,10 @@ directory = abspath(expanduser(directory))
 files = glob.glob(join(directory, pattern))
 
 log.info('Found {} files that can be used for testing...'.format(len(files)))
+mods = {}
 
 fkey = pattern.split('.')[0]
-desc = get_uavsar_annotation(fkey, directory)
+desc, ann_file = get_uavsar_annotation(fkey, directory)
 
 # Grab array size
 nrows = desc['ground range data latitude lines']['value']
@@ -79,6 +82,10 @@ ncols = desc['ground range data longitude samples']['value']
 # Attempt to crop on the center of the image
 start_row, end_row, new_nrows = get_crop_indices(nrows, ratio)
 start_col, end_col, new_ncols = get_crop_indices(ncols, ratio)
+
+# mods to write out later to the ann file
+mods['ground range data latitude lines'.title()] = new_nrows
+mods['ground range data longitude samples'.title()] = new_ncols
 
 
 for f in files:
@@ -97,10 +104,12 @@ for f in files:
     else:
         temp_d = dname
 
-    bytes = desc['{} bytes per pixel'.format(temp_d)]['value']
+    desc_name = '{} bytes per pixel'.format(temp_d)
+    bytes = desc[desc_name]['value']
 
     # Read in the data as bytes
     log.info('Reading {} as bytes...'.format(basename(f)))
+
     with open(f,'rb') as fp:
         z_b = fp.read()
         fp.close()
@@ -108,16 +117,16 @@ for f in files:
     # Number of Bits of the file
     nbytes = len(z_b)
 
-    # Number of Bits of the incoming array that we expect
-    expected_full_nbits = nrows * ncols * bytes
+    # Number of Bytes of the incoming array that we expect
+    expected_full_nbytes = nrows * ncols * bytes
 
-    # Number of Bits of the resulting bits after cropping
-    expected_cropped_nbits = new_nrows * new_ncols * bytes
+    # Number of Bytes of the resulting bits after cropping
+    expected_cropped_nbytes = new_nrows * new_ncols * bytes
 
     # MegaBytes version of each of nbits
     Mbytes = nbytes / 1e6
-    expected_full_Mbytes = nrows * ncols * bytes / 1e6
-    expected_cropped_Mbytes = new_nrows * new_ncols * bytes/ 1e6
+    expected_full_Mbytes = expected_full_nbytes / 1e6
+    expected_cropped_Mbytes = expected_cropped_nbytes / 1e6
 
     log.info('File is {:0.2f} Mb.'.format(Mbytes))
     log.info('Cropping to {:0.2f}% of data'.format(100.0 * ratio**2))
@@ -145,7 +154,7 @@ for f in files:
     log.info("dtype is defined as {}.".format(dtype))
 
     # Convert array and reshape to a matrix for easier indexing
-    arr = np.frombuffer(z_b, dtype=dtype).reshape(nrows,ncols)
+    arr = np.frombuffer(z_b, dtype=dtype).reshape(nrows, ncols)
 
     # Crop the data, flatten, and convert back to bytes
     sub_arr = arr[start_row:end_row, start_col:end_col].flatten().tobytes()
@@ -156,3 +165,30 @@ for f in files:
     with open(file, 'wb+') as fp:
         fp.write(sub_arr)
         fp.close()
+
+# Copy over the ANN file. The ANN file will still need modifying
+out_f = 'uavsar.ann'
+log.info('Copying over the annotation file to {} with modifications...'.format(out_f))
+with open(ann_file, 'r') as fp:
+    lines = fp.readlines()
+
+    for k,v in mods.items():
+        i = find_kw_in_lines(k, lines, addon_str='')
+
+        if i != -1:
+            # Found the option in the file, try to replace the value and keep the comment
+            log.info('\tUpdating {} in annotation file...'.format(k))
+            info = lines[i].split('=')
+            name = info[0].replace('#','').strip()
+            data = info[1].lstrip().split('\t')
+
+            # We don't care about the value, skip over it
+            # value = data[0]
+            comment = '\t'.join(data[1:]).rstrip()
+            lines[i] = '{} = {}{}\n'.format(k, v, comment)
+    fp.close()
+
+# Write out the new file
+with open(join(outdir, out_f), 'w+') as fp:
+    fp.write(''.join(lines))
+fp.close()
