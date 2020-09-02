@@ -1,9 +1,12 @@
 '''
-Added smp measurements to the database
+Resample the SMP profiles to every 100 value
 
 Download from https://osu.app.box.com/s/7yq08y1mqpl9evgz6rfw8hu771228ryn
 
 Unzip to ~/Downloads
+
+usage:
+    python resample_smp.py
 '''
 from os.path import join, abspath, expanduser, isdir, dirname, basename
 from os import listdir, mkdir
@@ -167,6 +170,10 @@ def main():
                 resample_batch(filenames, output, downsample, header_pos=header_pos)
             else:
                 log.warning('Skipping resample and overwriting of resampled files...')
+        else:
+            mkdir(output)
+            resample_batch(filenames, output, downsample, header_pos=header_pos)
+
 
 if __name__ == '__main__':
     main()
