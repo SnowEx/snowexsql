@@ -165,7 +165,6 @@ def strip_encapsulated(str_line, encapsulator):
         final = final.replace(c, '')
 
     # Make sure we remove the last one
-    print(final)
     return final
 
 def parse_none(value):

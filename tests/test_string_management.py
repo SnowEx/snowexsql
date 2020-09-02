@@ -45,10 +45,9 @@ def test_get_encapsulated(args, kwargs):
 
 
 @pytest.mark.parametrize('s, encaps, expected', [
-('Density [kg/m^3], Date [yyyymmdd]','[]', 'Density , Date '),])
-# ('Time (seconds)', '()','Time '),
-# ('Name "Surveyor"', '"','Name ')])
-
+('Density [kg/m^3], Date [yyyymmdd]','[]', 'Density , Date '),
+('Time (seconds)', '()','Time '),
+('Name "Surveyor"', '"','Name ')])
 def test_strip_encapsulated(s, encaps, expected):
     '''
     Test where we can remove chars in a string
