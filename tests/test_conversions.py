@@ -73,7 +73,7 @@ class TestConversionsOnDB(DBSetup):
 #     (LayerData, layer_atts),
 #     (ImageData, raster_atts)])
 
-class InSarToTiffBase():
+class InSarToRasterioBase():
     '''
     This conversion is complicated and requires multiple tests to ensure
     fidelity
@@ -92,17 +92,17 @@ class InSarToTiffBase():
     # Output file
     output_f = '.'.join(input_f.split('.')[0:-1] + ['tif'])
 
+    # Value comparison
+    stats = {'mean':None,'min':None, 'max':None, 'std':None}
+
     @classmethod
     def setup_class(self):
         '''
         Attempt to convert all the files
         '''
         os.mkdir(self.temp)
-        UAVSAR_grd_to_tiff(join(self.temp,self.input_f), self.temp)
-
-        # Open the file for testing
-        self.dataset = rasterio.open(self.output_f)
-
+        self.dataset, self.desc = INSAR_to_rasterio(join(self.d, self.input_f), self.temp)
+        self.band = self.dataset.read(1)
 
     @classmethod
     def teardown_class(self):
@@ -117,19 +117,42 @@ class InSarToTiffBase():
 
     def test_coords(self, tiff, coords):
         '''
-        Test by Opening tiff and confirm coords are as expected
+        Test by Opening tiff and confirm coords are as expected in ann
         '''
-        pass
+        nrows = desc['ground range data latitude lines']['value']
+        ncols = desc['ground range data longitude samples']['value']
+        assert self.band.shape == (nrows, ncols)
 
-    def test_values(self, tiff):
-        pass
+    @pytest.mark.parametrize("stat",[('mean'), ('min'), ('max'), ('std')])
+    def test_stats(self, stat):
+        '''
+        Test Values statistics are as expected
+        '''
+        assert self.stats[stat] == getattr(self.band,stat)()
+
+    @pytest.mark.parametrize("dim, desc_key", [
+    # Test the height
+    ('width','ground range data latitude lines'),
+    # Test the width
+    ('height','ground range data longitude samples')])
+    def test_dimensions(self, dim, desc_key):
+        '''
+        Test the height of the array is correct
+        '''
+        ncols = desc['ground range data latitude lines']['value']
+        assert getattr(self.band, dim) == self.desc[desc_key]['value']
 
 
-class TestInSarToTiffAmplitude(InSarToTiffBase):
+class TestInSarToRasteriofAmplitude(InSarToRasterioBase):
     '''
     Test converting an amplitude file to tif, test its integrity
     '''
     input_f = 'uavsar.amp1.grd'
+    stats = {'mean': 0.1504400670528412,
+             'min': 0.0,
+             'max': 18.1796875,
+             'std': 0.15933503210544586,
+             }
 
 # # @pytest.mark.parameterize("grd_file,coords")
 # def test_uavsar_to_tiff(grd_file):

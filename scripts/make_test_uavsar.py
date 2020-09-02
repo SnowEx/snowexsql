@@ -78,15 +78,28 @@ desc, ann_file = get_uavsar_annotation(fkey, directory)
 # Grab array size
 nrows = desc['ground range data latitude lines']['value']
 ncols = desc['ground range data longitude samples']['value']
+dlat = desc['ground range data latitude spacing']['value']
+dlon = desc['ground range data longitude spacing']['value']
 
 # Attempt to crop on the center of the image
 start_row, end_row, new_nrows = get_crop_indices(nrows, ratio)
 start_col, end_col, new_ncols = get_crop_indices(ncols, ratio)
 
 # mods to write out later to the ann file
-mods['ground range data latitude lines'.title()] = new_nrows
-mods['ground range data longitude samples'.title()] = new_ncols
+mods['ground range data latitude lines'] = new_nrows
+mods['ground range data longitude samples'] = new_ncols
 
+mods['ground range data starting latitude'] = start_row * dlat + desc['ground range data starting latitude']['value']
+mods['ground range data starting longitude'] = start_col * dlon + desc['ground range data starting longitude']['value']
+
+# mods['approximate upper left latitude'] =
+# mods['approximate upper left longitude']
+# mods['approximate upper right latitude']
+# mods['approximate upper right longitude']
+# mods['approximate lower left latitude']
+# mods['approximate lower left longitude']
+# mods['approximate lower right latitude']
+# mods['approximate lower right longitude']
 
 for f in files:
 
@@ -156,8 +169,18 @@ for f in files:
     # Convert array and reshape to a matrix for easier indexing
     arr = np.frombuffer(z_b, dtype=dtype).reshape(nrows, ncols)
 
-    # Crop the data, flatten, and convert back to bytes
-    sub_arr = arr[start_row:end_row, start_col:end_col].flatten().tobytes()
+    # Crop the data, calc/report stats on it
+    sub_arr = arr[start_row:end_row, start_col:end_col]
+
+    log.info('Stats for subsample...')
+    for n in dtype.names:
+        log.info('Stats for {} ({}) subsampled...'.format(dname, n))
+
+        for stat in ['mean','min','max', 'std']:
+            log.info('\t* {} = {}'.format(stat, getattr(arr[n], stat)()))
+
+    # Flatten the array and convert back to bytes
+    sub_arr = sub_arr.flatten().tobytes()
 
     # Write out the data to the file
     file = join(outdir, out_f)
@@ -173,7 +196,7 @@ with open(ann_file, 'r') as fp:
     lines = fp.readlines()
 
     for k,v in mods.items():
-        i = find_kw_in_lines(k, lines, addon_str='')
+        i = find_kw_in_lines(k.title(), lines, addon_str='')
 
         if i != -1:
             # Found the option in the file, try to replace the value and keep the comment

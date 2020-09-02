@@ -24,7 +24,7 @@ from rasterio.warp import calculate_default_transform, reproject, Resampling
 # Remove later
 import matplotlib.pyplot as plt
 
-def UAVSAR_grd_to_tiff(grd_file, outdir):
+def INSAR_to_rasterio(grd_file, outdir):
     '''
     Reads in the UAVSAR interferometry file and saves the real and complex
     value and writes them to GeoTiffs. Requires a .ann file in the same
@@ -77,7 +77,7 @@ def UAVSAR_grd_to_tiff(grd_file, outdir):
     # Delta latitude and longitude
     dlat = desc['ground range data latitude spacing']['value']
     dlon = desc['ground range data longitude spacing']['value']
-    log.debug('Using Deltas for lat/long = {} / {}'.format(dlat, dlon))
+    log.debug('Using Deltas for lat/long = {} / {} degrees'.format(dlat, dlon))
 
     # Read in the data as a tuple representing the real and imaginary components
     log.info('Reading {} and converting it from binary...'.format(basename(grd_file)))
@@ -155,7 +155,8 @@ def UAVSAR_grd_to_tiff(grd_file, outdir):
             # show(new_dataset.read(1), vmax=0.1, vmin=-0.1)
             for stat in ['min','max','mean','std']:
                 print('{} {} = {}'.format(comp, stat, getattr(d, stat)()))
-            new_dataset.close()
+            #new_dataset.close()
+    return dataset, desc
 
 def points_to_geopandas(results):
     '''
