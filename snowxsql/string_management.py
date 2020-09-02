@@ -103,30 +103,70 @@ def remap_data_names(original, rename_map):
 
     return new
 
-def strip_encapsulated(str_line, encapusulator):
+def get_encapsulated(str_line, encapusulator):
     '''
-    Removes from a string all things encapusulated by characters
+    Returns items found in the encapusulator, useful for finding units
 
     Args:
         str_line: String that has encapusulated info we want removed
         encapusulator: string of characters encapusulating info to be removed
     Returns:
-        result: String without anything between encapusulators
+        result: list of strings found inside anything between encapusulators
+
+    e.g.
+        line = 'density (kg/m^3), temperature (C)'
+        ['kg/m^3', 'C'] = get_encapsulated(line, '()')
     '''
-    result = str_line
+
+    result = []
+
     if len(encapusulator) > 2:
         raise ValueError('Encapusulator can only be 1 or 2 chars long!')
+
     elif len(encapusulator) == 2:
         lcap = encapusulator[0]
         rcap = encapusulator[1]
+
     else:
         lcap = rcap = encapusulator
 
-    while lcap in result and rcap in result:
-        result = result.replace(result[result.index(lcap):result.index(rcap) + 1], '')
+    # Split on the lcap
+    if lcap in str_line:
+        for i, val in enumerate(str_line.split(lcap)):
+            # The first one will always be before our encapsulated
+            if i != 0:
+                if lcap != rcap:
+                    result.append(val[0:val.index(rcap)])
+                else:
+                    result.append(val)
+
+    return result
+
+def strip_encapsulated(str_line, encapsulator):
+    '''
+    Removes from a str anything thats encapusulated by characters and the
+    encapsulating chars themselves
+
+    Args:
+        str_line: String that has encapusulated info we want removed
+        encapsulator: string of characters encapsulating info to be removed
+    Returns:
+        final: String without anything between encapusulators
+    '''
+    final = str_line
+    result = get_encapsulated(final, encapsulator)
+
+    # Remove all the encapsulated words
+    for v in result:
+        final = final.replace(v,'')
+
+    # Remove all encapsulators
+    for c in encapsulator:
+        final = final.replace(c, '')
 
     # Make sure we remove the last one
-    return result.replace(')','')
+    print(final)
+    return final
 
 def parse_none(value):
     '''

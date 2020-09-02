@@ -16,19 +16,45 @@ def test_standardize_key():
         assert standardize_key(t)== result[i]
 
 
-def test_strip_encapsulated():
+@pytest.mark.parametrize('args, kwargs', [
+# Test multiple values being returned
+(['Density [kg/m^3], Date [yyyymmdd]', '[]',  ['kg/m^3' , 'yyyymmdd']], {'errors': False}),
+# Test single value being return with parenthese
+(['Time (seconds)', '()', ['seconds']],{'errors': False}),
+# Test Single encapsulator used as both
+(['Name "Surveyor"', '"', ['Surveyor']], {'errors': False}),
+# Test nothing returned
+(['Name', '()', []], {'errors': False}),
+# Test our value error for incorrect encaps
+(['Name', '()()', []], {'errors': True}),])
+def test_get_encapsulated(args, kwargs):
     '''
     Test where we can remove chars in a string
     '''
+    s, encaps, expected = args
+    # Errors out to test exception
+    errors = kwargs['errors']
 
-    s = 'Measurement Tool (MP = Magnaprobe; M2 = Mesa 2; PR = Pit Ruler),ID,Date (yyyymmdd)'
-    r = strip_encapsulated(s, '()')
-    assert r == 'Measurement Tool ,ID,Date '
+    if not errors:
+        results = get_encapsulated(s, encaps)
+        for r, e in zip(results, expected):
+            assert r == e
+    else:
+        with pytest.raises(ValueError):
+            results = get_encapsulated(s, encaps)
 
-    s = 'Date (What is happening)'
-    r = strip_encapsulated(s, '()')
-    assert r == 'Date '
 
+@pytest.mark.parametrize('s, encaps, expected', [
+('Density [kg/m^3], Date [yyyymmdd]','[]', 'Density , Date '),])
+# ('Time (seconds)', '()','Time '),
+# ('Name "Surveyor"', '"','Name ')])
+
+def test_strip_encapsulated(s, encaps, expected):
+    '''
+    Test where we can remove chars in a string
+    '''
+    r = strip_encapsulated(s, encaps)
+    assert r == expected
 
 def test_parse_none():
     '''
