@@ -10,7 +10,7 @@ from rasterio import MemoryFile
 from geoalchemy2.shape import to_shape
 from snowxsql.data import PointData
 from sqlalchemy.sql import func
-from .metadata import read_UAVSAR_annotation
+from .metadata import read_InSar_annotation
 from .utilities import get_logger
 from os.path import dirname, basename, join, isdir
 import os
@@ -64,7 +64,7 @@ def INSAR_to_rasterio(grd_file, outdir):
     # Form the descriptor file name based on the grid file name, should have .ann in it
     ann_file = join(directory, fmatches[0])
 
-    desc = read_UAVSAR_annotation(ann_file)
+    desc = read_InSar_annotation(ann_file)
 
     # Grab the metadata for building our georeference
     nrow = desc['ground range data latitude lines']['value']
@@ -77,12 +77,15 @@ def INSAR_to_rasterio(grd_file, outdir):
     # Delta latitude and longitude
     dlat = desc['ground range data latitude spacing']['value']
     dlon = desc['ground range data longitude spacing']['value']
-    log.debug('Using Deltas for lat/long = {} / {} degrees'.format(dlat, dlon))
+    log.debug('Expecting data to be shaped {} x {}'.format(nrow, ncol))
+
+    log.info('Using Deltas for lat/long = {} / {} degrees'.format(dlat, dlon))
 
     # Read in the data as a tuple representing the real and imaginary components
     log.info('Reading {} and converting it from binary...'.format(basename(grd_file)))
 
-    bytes = desc['{} bytes per pixel'.format(dname)]
+    bytes = desc['{} bytes per pixel'.format(dname.split(' ')[0])]['value']
+    log.info('{} bytes per pixel = {}'.format(dname, bytes))
 
     # Form the datatypes
     if dname in 'interferogram':
@@ -96,29 +99,6 @@ def INSAR_to_rasterio(grd_file, outdir):
 
     # Reshape it to match what the text file says the image is
     z = z.reshape(nrow, ncol)
-
-    # # Create spatial coordinates
-    # latitudes = np.arange(lat1, lat1 + dlat * (nrow-1), dlat)
-    # longitudes = np.arange(lon1, lon1 + dlon * (ncol-1), dlon)
-    # log.info('Upper Left Corner: {}, {}'.format(latitudes[0], longitudes[0]))
-    # log.info('Bottom Right Corner = {}, {}'.format(latitudes[-1], longitudes[-1]))
-    #
-    # [LON, LAT] = np.meshgrid(longitudes, latitudes)
-    #
-    # # set zeros to Nan
-    # z[np.where(z==0)] = np.nan
-    #
-    # # Convert to UTM
-    # log.info('Converting InSAR Lat/long coordinates to UTM...')
-    # X = np.zeros_like(LON)
-    # Y = np.zeros_like(LAT)
-    #
-    # for i,j in zip(range(0, LON.shape[0]), range(0, LON.shape[1])):
-    #     coords = utm.from_latlon(LAT[i,j], LON[i,j])
-    #     X[i,j] = coords[0]
-    #     Y[i,j] = coords[1]
-
-    # fig, axes = plt.subplots(1, 2)
 
     # Build the tranform and CRS
     crs = CRS.from_epsg(4326)
@@ -135,11 +115,13 @@ def INSAR_to_rasterio(grd_file, outdir):
     for i, comp in enumerate(['real', 'imaginary']):
         if comp in z.dtype.names:
 
+            # Seems like a hack.... but based on the docs I think this is correct
             d = np.flip(z[comp], axis=0)
             d = np.flip(d, axis=1)
-
-            new_dataset = rasterio.open(
-                    fbase.format(comp),
+            out = fbase.format(comp)
+            log.info('Writing to {}...'.format(out))
+            dataset = rasterio.open(
+                    out,
                     'w+',
                     driver='GTiff',
                     height=d.shape[0],
@@ -150,13 +132,12 @@ def INSAR_to_rasterio(grd_file, outdir):
                     transform=t,
                     )
             # Write out the data
-            new_dataset.write(d, 1)
+            dataset.write(d, 1)
 
             # show(new_dataset.read(1), vmax=0.1, vmin=-0.1)
             for stat in ['min','max','mean','std']:
-                print('{} {} = {}'.format(comp, stat, getattr(d, stat)()))
-            #new_dataset.close()
-    return dataset, desc
+                log.info('{} {} = {}'.format(comp, stat, getattr(d, stat)()))
+            dataset.close()
 
 def points_to_geopandas(results):
     '''

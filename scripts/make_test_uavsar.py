@@ -5,7 +5,7 @@ we can use it for testing
 from os.path import join, dirname, basename, abspath, expanduser
 import os
 import numpy as np
-from snowxsql.metadata import read_UAVSAR_annotation
+from snowxsql.metadata import read_InSar_annotation
 from snowxsql.utilities import get_logger
 import utm
 import matplotlib.pyplot as plt
@@ -26,10 +26,10 @@ def get_crop_indices(n, ratio):
         n: Total number of columns or rows
         ratio: decimal of the data to cut around the half the count
     '''
-    start = 0.5 * n - 0.5 * ratio * 0.5 * n
-    end = 0.5 * n + 0.5 * ratio * 0.5 * n
+    start = int(0.5 * n - 0.5 * ratio * 0.5 * n)
+    end = int(0.5 * n + 0.5 * ratio * 0.5 * n)
     spread = end - start
-    return int(start), int(end), int(spread)
+    return start, end, spread
 
 def get_uavsar_annotation(fkey, directory):
     # search local files for a matching file with .ann in its name
@@ -43,7 +43,7 @@ def get_uavsar_annotation(fkey, directory):
 
     # Form the descriptor file name based on the grid file name, should have .ann in it
     ann_file = join(directory, fmatches[0])
-    desc = read_UAVSAR_annotation(ann_file)
+    desc = read_InSar_annotation(ann_file)
 
     return desc, ann_file
 
@@ -85,6 +85,7 @@ dlon = desc['ground range data longitude spacing']['value']
 start_row, end_row, new_nrows = get_crop_indices(nrows, ratio)
 start_col, end_col, new_ncols = get_crop_indices(ncols, ratio)
 
+log.info('After cropping images should be {} x {}'.format(new_nrows, new_ncols))
 # mods to write out later to the ann file
 mods['ground range data latitude lines'] = new_nrows
 mods['ground range data longitude samples'] = new_ncols
@@ -144,6 +145,7 @@ for f in files:
     log.info('File is {:0.2f} Mb.'.format(Mbytes))
     log.info('Cropping to {:0.2f}% of data'.format(100.0 * ratio**2))
     log.info('Based on the nrows and ncols, data post crop should be {:0.2f} Mb'.format(expected_cropped_Mbytes))
+
     # Retrieve the reported file size
     key = 'ground range {}'.format(dname)
     reported_size = int(desc[key]['comment'].split(' ')[-2].strip()) / 1e6
@@ -164,6 +166,7 @@ for f in files:
         dtype = np.dtype([('real', '<f4'), ('imaginary', '<f4')])
     else:
         dtype = np.dtype([('real', '<f{}'.format(bytes))])
+
     log.info("dtype is defined as {}.".format(dtype))
 
     # Convert array and reshape to a matrix for easier indexing
@@ -171,23 +174,23 @@ for f in files:
 
     # Crop the data, calc/report stats on it
     sub_arr = arr[start_row:end_row, start_col:end_col]
+    b = sub_arr.tobytes()
 
-    log.info('Stats for subsample...')
-    for n in dtype.names:
+    # log.info('Number of values being written to file {}'.format(len(sub_arr.flatten())))
+    for n in sub_arr.dtype.names:
         log.info('Stats for {} ({}) subsampled...'.format(dname, n))
-
         for stat in ['mean','min','max', 'std']:
-            log.info('\t* {} = {}'.format(stat, getattr(arr[n], stat)()))
-
-    # Flatten the array and convert back to bytes
-    sub_arr = sub_arr.flatten().tobytes()
+            log.info('\t* {} = {}'.format(stat, getattr(sub_arr[n], stat)()))
 
     # Write out the data to the file
     file = join(outdir, out_f)
     log.info('Writing output to {}'.format(file))
     with open(file, 'wb+') as fp:
-        fp.write(sub_arr)
+        fp.write(b)
         fp.close()
+
+    log.info('Complete!\n')
+
 
 # Copy over the ANN file. The ANN file will still need modifying
 out_f = 'uavsar.ann'
@@ -202,13 +205,19 @@ with open(ann_file, 'r') as fp:
             # Found the option in the file, try to replace the value and keep the comment
             log.info('\tUpdating {} in annotation file...'.format(k))
             info = lines[i].split('=')
-            name = info[0].replace('#','').strip()
-            data = info[1].lstrip().split('\t')
+            name = info[0].strip()
 
-            # We don't care about the value, skip over it
-            # value = data[0]
-            comment = '\t'.join(data[1:]).rstrip()
-            lines[i] = '{} = {}{}\n'.format(k, v, comment)
+            data = ''.join(info[1:])
+            comment = ''
+            spacing = ''
+
+            if ';' in lines[i]:
+                content = data.split(';')
+                comment = '; ' + content[-1].strip()
+
+            msg = '{:<63}= {:<23}{:<50}\n'.format(name, v, comment)
+            lines[i] = msg
+
     fp.close()
 
 # Write out the new file
