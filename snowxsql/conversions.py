@@ -135,8 +135,8 @@ def INSAR_to_rasterio(grd_file, outdir):
             dataset.write(d, 1)
 
             # show(new_dataset.read(1), vmax=0.1, vmin=-0.1)
-            for stat in ['min','max','mean','std']:
-                log.info('{} {} = {}'.format(comp, stat, getattr(d, stat)()))
+            # for stat in ['min','max','mean','std']:
+            #     log.info('{} {} = {}'.format(comp, stat, getattr(d, stat)()))
             dataset.close()
 
 def points_to_geopandas(results):

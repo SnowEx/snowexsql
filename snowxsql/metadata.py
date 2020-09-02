@@ -65,6 +65,11 @@ def read_InSar_annotation(ann_file):
             # Clean up tabs, spaces and line returns
             key = name.split('(')[0].strip().lower()
             units = get_encapsulated(name, '()')
+            if not units:
+                units = None
+            else:
+                units = units[0]
+
             value = value.strip()
 
             ### Cast the values that can be to numbers ###
@@ -75,7 +80,8 @@ def read_InSar_annotation(ann_file):
                     value = int(value)
 
             # Assign each entry as a dictionary with value and units
-            data[key] = {'value': value, 'units': units[0], 'comment':comment}
+            data[key] = {'value': value, 'units': units, 'comment':comment}
+
     return data
 
 class SMPMeasurementLog(object):
