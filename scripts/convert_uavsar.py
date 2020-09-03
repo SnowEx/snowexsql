@@ -37,7 +37,7 @@ def convert(filenames, output):
     completed = 0
 
     # Loop over all the files, name them using the same name just using a different folder
-    for f in filenames:
+    for f in filenames[0:2]:
         base_f = basename(f)
 
         log.info('Converting {}'.format(base_f))
@@ -48,7 +48,8 @@ def convert(filenames, output):
 
         except Exception as e:
             errors.append((f, e))
-            log.error(e + '\n')
+            log.error(e)
+            log.error(' ')
     log.info('Converted {}/{} files.'.format(completed, nfiles))
 
     if errors:

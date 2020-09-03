@@ -101,10 +101,10 @@ def INSAR_to_rasterio(grd_file, outdir):
     z = z.reshape(nrow, ncol)
 
     # Build the tranform and CRS
-    crs = CRS.from_epsg(4326)
+    crs = '+proj=latlong'
 
     # Lat1/lon1 are already the center so for geotiff were good to go.
-    t = Affine.translation(lat1, lon1) * Affine.scale(dlat, dlon)
+    t = Affine.translation(lon1, lat1) * Affine.scale(dlon, dlat)
 
     # Build the base file name
     if not isdir(outdir):
@@ -116,8 +116,9 @@ def INSAR_to_rasterio(grd_file, outdir):
         if comp in z.dtype.names:
 
             # Seems like a hack.... but based on the docs I think this is correct
-            d = np.flip(z[comp], axis=0)
-            d = np.flip(d, axis=1)
+            # d = np.flip(z[comp], axis=0)
+            # d = np.flip(d, axis=1)
+            d = z[comp]
             out = fbase.format(comp)
             log.info('Writing to {}...'.format(out))
             dataset = rasterio.open(
