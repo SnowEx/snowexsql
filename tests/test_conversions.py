@@ -201,3 +201,24 @@ class TestInSarToRasteriofInterferogramReal(InSarToRasterioBase):
               'min' : -0.32751649618148804,
               'max' : 15.531420707702637,
               'std' : 0.06184517219662666}
+
+def test_reproject_to_utm():
+    '''
+    Test we can reproject a tiff in lat long to utm
+    '''
+    this_location = dirname(__file__)
+
+    # Temporary output folder
+    temp = join(this_location, 'temp')
+
+    # Data dir
+    d =  join( this_location, 'data')
+
+    if isdir(temp):
+        shutil.rmtree(temp)
+    os.mkdir(temp)
+
+    input_f = 'uavsar.amp1.grd'
+    INSAR_to_rasterio(join(d, input_f), temp)
+
+    reproject_to_utm(join(temp, 'uavsar.amp1.real.tif'), join(temp, 'temp.tif'), dst_epsg=26912)

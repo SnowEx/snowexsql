@@ -19,7 +19,8 @@ import utm
 from rasterio.crs import CRS
 from rasterio.plot import show
 from rasterio.transform import Affine
-from rasterio.warp import calculate_default_transform, reproject, Resampling
+from rasterio.warp import reproject, Resampling, calculate_default_transform
+import utm
 
 # Remove later
 import matplotlib.pyplot as plt
@@ -139,6 +140,40 @@ def INSAR_to_rasterio(grd_file, outdir):
             # for stat in ['min','max','mean','std']:
             #     log.info('{} {} = {}'.format(comp, stat, getattr(d, stat)()))
             dataset.close()
+
+def reproject_to_utm(src_file, dst_file, dst_epsg=26912):
+    '''
+    Use rasterio to reproject a tiff to a different coordinate
+    system
+    '''
+    src = rasterio.open(src_file)
+    src_data = src.read(1)
+    dst_crs = 'EPSG:{}'.format(dst_epsg)
+
+
+    dst_transform, width, height = calculate_default_transform(
+        src.crs, dst_crs, src.width, src.height, *src.bounds)
+
+    kwargs = src.meta.copy()
+    kwargs.update({
+        'crs': dst_crs,
+        'transform': dst_transform,
+        'width': width,
+        'height': height})
+
+    # Place holder
+    with rasterio.open(dst_file, 'w', **kwargs) as dst:
+
+        reproject(
+                rasterio.band(src, 1),
+                rasterio.band(dst, 1),
+                src_transform=src.transform,
+                src_crs=src.crs,
+                dst_transform=dst_transform,
+                dst_crs=dst_crs,
+                resampling=Resampling.nearest)
+    dst.close()
+    src.close()
 
 def points_to_geopandas(results):
     '''
