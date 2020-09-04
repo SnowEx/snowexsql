@@ -1,33 +1,63 @@
 '''
-This script reads in the UAVSAR interferometry data and attempts to add them
-as a raster to the db
+Usage:
+1. Download the data from the GDrive sent from HP.
 
-*** INCOMPLETE **
-    TODO:
-        1. Looks like the data is not in the correct orientation
+2. Unzip into your Downloads.
+
+3. Convert data to GeoTiffs, and reprojects it (done with conver_uavsar.py)
+
+4. Run this script.
 
 Usage:
-    1. Download the data into your downloads folder
-    2. run this script or the full db script
+    python add_UAVSAR.py
+
 '''
 
-from os.path import abspath, expanduser
-import struct
-import numpy as np
-from snowxsql.conversions import UAVSAR_grd_to_tiff
-
+from snowxsql.batch import UploadUAVSARBatch
+import os
+from os.path import join, abspath, expanduser
+import glob
 
 def main():
-    # f = '~/Downloads/SnowEx2020_UAVSAR/grmesa_27416_20003-028_20005-007_0011d_s01_L090HH_01.int.grd'
-    # f = abspath(expanduser(f))
-    # data = UAVSAR_grd_to_tiff(f, 'test')
 
-    f = '~/Downloads/SnowEx2020_UAVSAR/grmesa_27416_20003-028_20005-007_0011d_s01_L090HH_01.amp1.grd'
-    f = abspath(expanduser(f))
-    data = UAVSAR_grd_to_tiff(f, 'test')
+    # Location of the downloaded data
+    downloads = '~/Downloads/SnowEx2020_UAVSAR'
 
-    # Eventually return the errors
-    return 0
+    # Sub folder name under the downloaded data that the tifs were saved to
+    geotif_loc = 'geotiffs'
+
+    # Spatial Reference
+    epsg = 26912
+
+    # Metadata
+    surveyors = 'UAVSAR team, JPL'
+    instrument = 'UAVSAR, L-band InSAR'
+    site_name = 'Grand Mesa'
+    units = '' # Add from the Annotation file
+    desc = ''
+
+    # Expand the paths
+    downloads = abspath(expanduser(downloads))
+    geotif_loc = join(downloads, geotif_loc)
+
+    # error counting
+    errors_count = 0
+
+    # Build metadata that gets copied to all rasters
+    data = {'site_name': site_name,
+            'description': desc,
+            'units': units,
+            'epsg': epsg,
+            'surveyors': surveyors,
+            'instrument': instrument}
+
+    # Grab all the annotation files in the original data folder
+    ann_files = glob.glob(join(downloads, '*.ann'))
+    rs = UploadUAVSARBatch(ann_files, geotiff_dir=geotif_loc,  **data)
+    rs.push()
+    errors_count += len(rs.errors)
+
+    return errors_count
 
 if __name__ == '__main__':
     main()

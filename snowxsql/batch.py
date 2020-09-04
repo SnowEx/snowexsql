@@ -258,3 +258,69 @@ class UploadRasterBatch(BatchBase):
             }
 
     UploaderClass = UploadRaster
+
+class UploadUAVSARBatch(UploadRaster):
+    '''
+    Class extending the functionality of Upload Raster Batch to better
+    fit the UAVSAR data which has the following rasters associated to a single
+    metdata file (annotation file):
+        * Correlaion
+        * Amplitude of pass 1
+        * Amplitude of pass 2
+        * Interferogram real
+        * Interferogram imaginary
+
+    This batch uploader takes annotation files and then assumes the associated
+    files are in the same naming convention and uploads them
+
+    Requires the kwarg:
+        geotiff_dir: path to directory where data was converted to geotiff
+    '''
+    # Name map for the file extension
+    dname_map = {'int':'interferogram',
+                'amp1':'amplitude of pass 1',
+                'amp2':'amplitude of pass 2',
+                'cor':'correlation'}
+
+    defaults = { 'debug': True,
+                 'n_files': -1,
+                 'db_name': 'snowex',
+                 'geotiff_dir': None # Add a keyword arg for the geotiff location
+            }
+
+    def _push_one(self, f, **kwargs):
+        '''
+        Here we overwrite _push_one to push a set of rasters associated to the
+        annotation file instead a single raster
+        '''
+
+        # Copy the metadata for modifying and open the ann file
+        meta = kwargs.copy()
+        desc = read_InSar_annotation(f)
+
+        # Expand the path for the geotiffs
+        tiff_dir = abspath(expanduser(self.geotiff_dir))
+
+        # form the pattern to look for and grab the tifs
+        pattern = basename(f).split('.')[0:-1] + '*'
+        rasters = glob.glob(join(tiff_dir, pattern))
+
+        # Submit each geotif, modifying meta on the fly
+        for r in rasters:
+            # Grab information from the filename
+            f_pieces = r.split('.')
+            component = f_pieces[-2]            # Real or imaginary component
+            data_abbr = f_pieces[-3]            # Key to the data name
+            dname = self.dname_map[data_abbr]   # Data type in db
+
+            # For the data type
+            meta['type'] = 'insar ' + dname
+            meta['description'] = get_InSar_flight_comment(dname, desc)
+
+            d = self.UploaderClass(f, **meta)
+
+            # Submit the data to the database
+            d.submit(self.session)
+
+        # Uploaded set
+        self.uploaded += 1

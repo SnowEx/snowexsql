@@ -267,3 +267,49 @@ def avg_from_multi_sample(layer, value_type):
     else:
         result = np.nan
     return result
+
+def get_InSar_flight_comment(data_name, desc):
+    '''
+    Takes an annotation file dictionary and forms a string for the Insar
+    file to add to the description of the raster entry
+
+    If the data is an amplitude file then it only gets a comment like:
+
+        overpass duration : Feb 1 2020 2pm MST - Feb 1 2020 3pm MST
+
+    If the data is a derived product then we assign both flight durations:
+
+            1st overpass duration: Feb 1 2020 2pm MST - Feb 1 2020 3pm MST
+            2nd overpass duration: Feb 2 2020 2pm MST - Feb 2 2020 3pm MST
+
+    Args:
+        f: Filename used to parse the data type (int, cor, amp1, amp2)
+        desc: descriptor dictionary formed from the annotation file
+    Returns:
+        meta: metadata dictionary containing  the dataname
+    '''
+    tz = pytz.timezone('MST')
+    blank = '{} time of acquisition for pass {}'
+
+    # Assign the correct date to the amplitude flights
+    if 'amplitude' in dname:
+        pass_num = dname.split(' ')[-1]
+
+        # Convert to MST (originally UTC) and assign start date to date
+        key = blank.format('start', pass_num)
+        dt = desc[key].astimezone(tz)
+        meta['date'] = dt.date()
+
+        # Add a comment to the description regarding flight time
+        start = dt.isoformat()
+
+        key1 = blank.format('stop', pass_num)
+        end = desc[key1].astimezone(tz).isoformat()
+
+        comment = 'Overpass Duration: {} - {} (MST)'.format(start, end)
+
+    else:
+        comment = '1st Overpass Duration: {} - {} (MST), '.format(start1, end1)
+        comment += '2nd Overpass Duration {} - {} (MST)'.format(start2, end2)
+
+    return comment

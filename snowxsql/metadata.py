@@ -12,6 +12,7 @@ from .utilities import get_logger, read_n_lines
 
 import utm
 import pandas as pd
+import pytz
 
 from os.path import basename
 
@@ -81,6 +82,13 @@ def read_InSar_annotation(ann_file):
 
             # Assign each entry as a dictionary with value and units
             data[key] = {'value': value, 'units': units, 'comment':comment}
+
+    # Convert times to datetimes
+    for pass_num in ['1','2']:
+        for timing in ['start','stop']:
+            key = '{} time of acquisition for pass {}'.format(timing, pass_numm)
+            dt = pd.to_datetime(data[key])
+            data[key]['value'] = dt
 
     return data
 
