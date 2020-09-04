@@ -102,7 +102,7 @@ def INSAR_to_rasterio(grd_file, outdir):
     z = z.reshape(nrow, ncol)
 
     # Build the tranform and CRS
-    crs = '+proj=latlong'
+    crs = CRS.from_user_input("EPSG:4326")
 
     # Lat1/lon1 are already the center so for geotiff were good to go.
     t = Affine.translation(lon1, lat1) * Affine.scale(dlon, dlat)
@@ -148,6 +148,7 @@ def reproject_to_utm(src_file, dst_file, dst_epsg=26912):
     '''
     src = rasterio.open(src_file)
     src_data = src.read(1)
+    dst_crs = CRS.from_user_input('EPSG:{}'.format(dst_epsg))
     dst_crs = 'EPSG:{}'.format(dst_epsg)
 
 
