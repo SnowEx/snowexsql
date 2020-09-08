@@ -264,7 +264,7 @@ class UploadUAVSARBatch(UploadRaster):
     Class extending the functionality of Upload Raster Batch to better
     fit the UAVSAR data which has the following rasters associated to a single
     metdata file (annotation file):
-        * Correlaion
+        * Correlation
         * Amplitude of pass 1
         * Amplitude of pass 2
         * Interferogram real

@@ -6,6 +6,8 @@ from os.path import join, dirname, abspath
 import datetime
 import numpy as np
 import pytz
+import pytest
+
 
 dt = datetime.datetime(2020, 2, 5, 13, 30, 0, 0, pytz.timezone('MST'))
 info = {'site_name':'Grand Mesa',
@@ -218,18 +220,65 @@ class TestSMPMeasurementLog():
         assert self.df['surveyors'].iloc[-1] == 'HP Marshall'
         assert self.df['surveyors'].iloc[0] == 'Ioanna Merkouriadi'
 
-def test_read_InSAR_annotation():
+
+class TestReadInSarAnnotation():
     '''
-    Test we can read insar/uavsar annotation file
+    Tests if we read in an annotation file correctly.
     '''
-    f = join(dirname(__file__),'data', 'uavsar.ann')
-    desc = read_InSar_annotation(f)
+    @classmethod
+    def setup_class(self):
+        '''
+        Read in the insar annotation file and test its values
+        '''
+        f = join(dirname(__file__),'data', 'uavsar.ann')
+        self.desc = read_InSar_annotation(f)
 
-    # Assert we can read in the values
-    assert desc['Interferogram Bytes Per Pixel'.lower()]['value'] == 8
+    def test_dict_attr(self):
+        '''
+        Test the desc diction is structured the way we expect
+        '''
+        d = self.desc['Interferogram Bytes Per Pixel'.lower()]
 
-    # Assert we can read in the comments
-    assert desc['Ground Range Data Starting Latitude'.lower()]['comment'] == 'center of upper left ground range pixel'
+        # An entry has the correcy dict keys
+        for k in ['value', 'units', 'comment']:
+            assert k in d.keys()
 
-    # Assert we read in the units
-    assert desc['Ground Range Data Latitude Spacing'.lower()]['units'] == 'deg'
+    @pytest.mark.parametrize("key, subkey, expected", [
+    # Test interpretting an int value
+    ('Interferogram Bytes Per Pixel'.lower(), 'value', 8),
+    # Test a comment assignment
+    ('Ground Range Data Starting Latitude'.lower(), 'comment', 'center of upper left ground range pixel'),
+    # Test a units assignment
+    ('Ground Range Data Latitude Spacing'.lower(), 'units', 'deg'),
+    # Test a datetime assignment
+    ('Start Time of Acquisition for Pass 1'.lower(), 'value', pd.to_datetime('2020-2-1 2:13:16 UTC'))
+    ])
+    def test_desc_value(self, key, subkey, expected):
+        '''
+        Test each value is interpreted as expected from the ANN file
+        '''
+        data = self.desc[key][subkey]
+        dtype = type(data)
+
+        # Assert value is as expected
+        assert data == expected
+
+        # Assert the data type is expected
+        assert dtype == type(expected)
+
+
+# def test_read_InSAR_annotation():
+#     '''
+#     Test we can read insar/uavsar annotation file
+#     '''
+#     f = join(dirname(__file__),'data', 'uavsar.ann')
+#     desc = read_InSar_annotation(f)
+#
+#     # Assert we can read in the values
+#     assert desc['Interferogram Bytes Per Pixel'.lower()]['value'] == 8
+#
+#     # Assert we can read in the comments
+#     assert desc['Ground Range Data Starting Latitude'.lower()]['comment'] == 'center of upper left ground range pixel'
+#
+#     # Assert we read in the units
+#     assert desc['Ground Range Data Latitude Spacing'.lower()]['units'] == 'deg'

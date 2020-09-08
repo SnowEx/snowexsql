@@ -24,10 +24,10 @@ def read_InSar_annotation(ann_file):
 
     Expected format:
 
-    `DEM Original Pixel spacing                     (arcsec)        = 1`
+    `DEM Original Pixel spacing (arcsec) = 1`
 
-    Where this is interpretted:
-    `key                     (units)        = [value]`
+    Where this is interpretted as:
+    `key (units) = [value]`
 
     Then stored in the dictionary as:
 
@@ -86,8 +86,8 @@ def read_InSar_annotation(ann_file):
     # Convert times to datetimes
     for pass_num in ['1','2']:
         for timing in ['start','stop']:
-            key = '{} time of acquisition for pass {}'.format(timing, pass_numm)
-            dt = pd.to_datetime(data[key])
+            key = '{} time of acquisition for pass {}'.format(timing, pass_num)
+            dt = pd.to_datetime(data[key]['value'])
             data[key]['value'] = dt
 
     return data

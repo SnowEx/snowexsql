@@ -4,7 +4,10 @@ Convert UAVSAR data to geotiffs before uploading to db
 Download from HP Marshalls Google Drive
 
 Unzip to ~/Downloads
+
+Otherwise see main() to redefine the location where the files are stored
 '''
+
 from os.path import join, abspath, expanduser, isdir, dirname, basename
 from os import listdir, mkdir
 from snowxsql.utilities import get_logger, read_n_lines
