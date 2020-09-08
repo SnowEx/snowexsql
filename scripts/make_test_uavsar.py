@@ -310,9 +310,18 @@ def main():
     log.info("")
     log.info("Reprojecting files to GeoTiffs...")
 
+    utm_dir = '../tests/data/uavsar'
+    utm_dir = abspath(expanduser(utm_dir))
+
+    if isdir(utm_dir):
+        rmtree(utm_dir)
+    mkdir(utm_dir)
+
     for f in glob.glob(join(outdir,'uavsar_latlon*.tif')):
         # # Reproject the data
-        utm_file = f.replace('_latlon','_utm')
+
+        utm_file = basename(f).replace('_latlon','_utm')
+        utm_file = join(utm_dir, utm_file)
         reproject_to_utm(f, utm_file, dst_epsg=26912)
 
 if __name__ == '__main__':

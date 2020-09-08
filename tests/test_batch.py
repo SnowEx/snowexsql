@@ -1,6 +1,6 @@
 from .sql_test_base import DBSetup, pytest_generate_tests
 import pytest
-from os.path import join
+from os.path import join, dirname
 from snowxsql.batch import *
 from snowxsql.data import LayerData, SiteData, ImageData
 from datetime import date
@@ -9,11 +9,11 @@ class BatchBase(DBSetup):
     '''
     '''
     files = []
-    uploader_kwargs = {'db_name':'test'}
+    uploader_kwargs = {}
     BatchClass = None
     TableClass = None
     count_attribute = 'type'
-    attribute = 'depth'
+    attribute = 'id'
 
     def setup_class(self):
         '''
@@ -54,18 +54,19 @@ class BatchBase(DBSetup):
 
     def test_attr_value(self, value, att_value, attribute, expected):
         '''
-        Test attributes are being passed from the site details file
+        Test attributes are being passed to the database
 
         Args:
-            name: Name of the profile to check attributes of
+            name: Name of the data to check attributes of
             att_value: value to narrow query assigned to self.attribute should narrow to a single record
             attribute: Name of the attribute/column name to check
             expected: expected value the attribute in a single record of the profile
         '''
-
         q = self.session.query(self.TableClass)
         q = q.filter(getattr(self.TableClass, self.count_attribute) == value)
+
         records = q.filter(getattr(self.TableClass, self.attribute) == att_value).all()
+
         received = getattr(records[0], attribute)
 
         assert received == expected
@@ -107,6 +108,7 @@ class TestUploadProfileBatch(BatchBase):
     BatchClass = UploadProfileBatch
     TableClass = LayerData
     attribute='depth'
+
     params = {
 
     'test_upload':[
@@ -130,6 +132,7 @@ class TestUploadSMPBatch(BatchBase):
                         'smp_log_f': 'smp_log.csv'}
     BatchClass = UploadProfileBatch
     TableClass = LayerData
+    attribute='depth'
 
     params = {
 
@@ -171,3 +174,49 @@ class TestUploadRasterBatch(BatchBase):
         dict(value='dem', att_value=1, attribute='units', expected='meters'),
             ]
         }
+
+class TestUploadUAVSARBatch(BatchBase):
+    '''
+    Test test the UAVSAR uploader by providing one ann file which should upload
+    all of the uavsar images.
+    '''
+    # Upload all uav
+    d = join(dirname(__file__), 'data', 'uavsar')
+    files = ['uavsar.ann']
+    uploader_kwargs = {'surveyors': 'UAVSAR team, JPL',
+                       'epsg':29612,
+                       'geotiff_dir':d}
+
+    BatchClass = UploadUAVSARBatch
+    TableClass = ImageData
+    count_attribute = 'type'
+    attribute = 'id'
+
+    params = {
+
+    'test_upload':[
+            # Test we uploaded an amplitude for each date (2)
+            dict(value='insar amplitude', count=2),
+            # Test that the derived products only have one
+            dict(value='insar correlation', count=1),
+            dict(value='insar interferogram imaginary', count=1),
+            dict(value='insar interferogram real', count=1)
+            ],
+
+    'test_attr_value': [
+        # Test the surveyors is assigned from kwargs
+        dict(value='insar interferogram imaginary', att_value=1, attribute='surveyors', expected='UAVSAR team, JPL'),
+        #dict(value='insar correlation', att_value=1, attribute='units', expected='scalar between 0 and 1'),
+        dict(value='insar amplitude', att_value=1, attribute='date', expected=date(2020, 2, 1)),
+        dict(value='insar interferogram real', att_value=1, attribute='units', expected='Linear Power and Phase in Radians'),
+
+        # dict(value='insar interferogram real', att_value=1, attribute='units', expected='meters'),
+            ]
+        }
+
+    def test_test(self):
+        q = self.session.query(self.TableClass)
+        q = q.filter(getattr(self.TableClass, self.count_attribute) == 'insar amplitude')
+        records = q.all()#filter(getattr(self.TableClass, self.attribute)==1).all()
+        print(records[0].date)
+        #received = getattr(records[0], attribute)

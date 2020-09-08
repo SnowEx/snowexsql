@@ -265,20 +265,3 @@ class TestReadInSarAnnotation():
 
         # Assert the data type is expected
         assert dtype == type(expected)
-
-
-# def test_read_InSAR_annotation():
-#     '''
-#     Test we can read insar/uavsar annotation file
-#     '''
-#     f = join(dirname(__file__),'data', 'uavsar.ann')
-#     desc = read_InSar_annotation(f)
-#
-#     # Assert we can read in the values
-#     assert desc['Interferogram Bytes Per Pixel'.lower()]['value'] == 8
-#
-#     # Assert we can read in the comments
-#     assert desc['Ground Range Data Starting Latitude'.lower()]['comment'] == 'center of upper left ground range pixel'
-#
-#     # Assert we read in the units
-#     assert desc['Ground Range Data Latitude Spacing'.lower()]['units'] == 'deg'

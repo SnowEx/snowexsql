@@ -313,7 +313,7 @@ def get_InSar_flight_comment(data_name, desc):
     for n in passes:
         for timing in ['start', 'stop']:
             key = blank.format(timing, n)
-            dt = desc[key].astimezone(tz)
+            dt = desc[key]['value'].astimezone(tz)
             times.append(dt.date())
             times.append(dt.time())
 

@@ -3,15 +3,17 @@ Module for storing and managing mulitple file submissions to the
 the database
 '''
 
+import time
+import pandas as pd
+import glob
+from os.path import basename, abspath, expanduser, join
+from snowxsql.metadata import DataHeader, SMPMeasurementLog, read_InSar_annotation
+from snowxsql.db import get_table_attributes
+from snowxsql.data import SiteData
 from snowxsql.utilities import get_logger
 from snowxsql.upload import UploadProfileData, UploadRaster
 from snowxsql.db import get_db
-import time
-import pandas as pd
-from os.path import basename
-from snowxsql.metadata import DataHeader, SMPMeasurementLog
-from snowxsql.db import get_table_attributes
-from snowxsql.data import SiteData
+from snowxsql.interpretation import get_InSar_flight_comment
 
 class BatchBase():
     '''
@@ -259,7 +261,7 @@ class UploadRasterBatch(BatchBase):
 
     UploaderClass = UploadRaster
 
-class UploadUAVSARBatch(UploadRaster):
+class UploadUAVSARBatch(BatchBase):
     '''
     Class extending the functionality of Upload Raster Batch to better
     fit the UAVSAR data which has the following rasters associated to a single
@@ -288,6 +290,8 @@ class UploadUAVSARBatch(UploadRaster):
                  'geotiff_dir': None # Add a keyword arg for the geotiff location
             }
 
+    UploaderClass = UploadRaster
+
     def _push_one(self, f, **kwargs):
         '''
         Here we overwrite _push_one to push a set of rasters associated to the
@@ -302,7 +306,7 @@ class UploadUAVSARBatch(UploadRaster):
         tiff_dir = abspath(expanduser(self.geotiff_dir))
 
         # form the pattern to look for and grab the tifs
-        pattern = basename(f).split('.')[0:-1] + '*'
+        pattern = '.'.join(basename(f).split('.')[0:-1]) + '*.tif'
         rasters = glob.glob(join(tiff_dir, pattern))
 
         # Submit each geotif, modifying meta on the fly
@@ -314,10 +318,29 @@ class UploadUAVSARBatch(UploadRaster):
             dname = self.dname_map[data_abbr]   # Data type in db
 
             # For the data type
-            meta['type'] = 'insar ' + dname
+            meta['type'] = 'insar ' + dname.split(' ')[0]
+
+            if dname == 'interferogram':
+                meta['type'] += (' ' + component)
+
+            # Assign the date for the respective flights
+            if 'amplitude' in dname:
+                meta['date'] = desc['start time of acquisition for pass {}'.format(dname.split(' ')[-1])]['value']
+
+            # Derived produces always receive the date of the last overpass
+            else:
+                meta['date'] = desc['start time of acquisition for pass 2']['value']
+
+            # Assign units
+            meta['units'] = desc['{} units'.format(dname.split(' ')[0])]['value']
+
+            # Flexibly form a comment for each of the products for dates
             meta['description'] = get_InSar_flight_comment(dname, desc)
 
-            d = self.UploaderClass(f, **meta)
+
+            self.log.info('Uploading {} as {}...'.format(r, meta['type']))
+
+            d = self.UploaderClass(r, **meta)
 
             # Submit the data to the database
             d.submit(self.session)
