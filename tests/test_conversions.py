@@ -103,13 +103,19 @@ class InSarToRasterioBase():
         if not os.path.isdir(self.temp):
             os.mkdir(self.temp)
 
-        INSAR_to_rasterio(join(self.d, self.input_f), self.temp)
-        self.desc = read_InSar_annotation(join(self.d,'uavsar.ann'))
+        self.desc = read_InSar_annotation(join(self.d,'uavsar_latlon.ann'))
 
         # Output file
         f_pieces = self.input_f.split('.')[0:-1] + [self.component, 'tif']
-        output_f = '.'.join(f_pieces)
-        self.dataset = rasterio.open(join(self.temp, output_f))
+        output_f = join(self.temp, '.'.join(f_pieces))
+
+        if os.path.isdir(self.temp):
+            shutil.rmtree(self.temp)
+
+        os.mkdir(self.temp)
+
+        INSAR_to_rasterio(join(self.d, self.input_f), self.desc, join(self.temp, self.input_f.replace('grd','tif')))
+        self.dataset = rasterio.open(output_f)
         self.band = self.dataset.read(1)
 
     @classmethod
@@ -155,7 +161,7 @@ class TestInSarToRasteriofCorrelation(InSarToRasterioBase):
     '''
     Test converting an amplitude file to tif, test its integrity
     '''
-    input_f = 'uavsar.cor.grd'
+    input_f = 'uavsar_latlon.cor.grd'
 
     stats = {'mean' : 0.6100003123283386,
              'min': 0.0016001829644665122,
@@ -166,7 +172,7 @@ class TestInSarToRasteriofAmplitude(InSarToRasterioBase):
     '''
     Test converting an amplitude file to tif, test its integrity
     '''
-    input_f = 'uavsar.amp1.grd'
+    input_f = 'uavsar_latlon.amp1.grd'
 
     stats = {'mean':  0.303824245929718,
              'min' : 0.046944327652454376,
@@ -178,7 +184,7 @@ class TestInSarToRasteriofInterferogramImaginary(InSarToRasterioBase):
     Test converting an interferogram file to tif, test its integrity
     imaginary component test only
     '''
-    input_f = 'uavsar.int.grd'
+    input_f = 'uavsar_latlon.int.grd'
     component = 'imaginary'
 
     # Values taken from before conversion back to bytes
@@ -193,7 +199,7 @@ class TestInSarToRasteriofInterferogramReal(InSarToRasterioBase):
     imaginary component test only
     '''
 
-    input_f = 'uavsar.int.grd'
+    input_f = 'uavsar_latlon.int.grd'
     component = 'real'
 
     # Values taken from before conversion back to bytes
@@ -218,7 +224,7 @@ def test_reproject_to_utm():
         shutil.rmtree(temp)
     os.mkdir(temp)
 
-    input_f = 'uavsar.amp1.grd'
-    INSAR_to_rasterio(join(d, input_f), temp)
+    input_f = 'uavsar_latlon.amp1.real.tif'
+    # INSAR_to_rasterio(join(d, input_f), temp)
 
-    reproject_to_utm(join(temp, 'uavsar.amp1.real.tif'), join(temp, 'temp.tif'), dst_epsg=26912)
+    reproject_to_utm(join(d, input_f), join(temp, 'temp.tif'), dst_epsg=26912)

@@ -2,10 +2,12 @@
 Script is used to make a UAVSAR subset data in the original data format so
 we can use it for testing
 '''
-from os.path import join, dirname, basename, abspath, expanduser
+from os.path import join, dirname, basename, abspath, expanduser, isdir
 import os
+from os import mkdir
 import numpy as np
 from snowxsql.metadata import read_InSar_annotation
+from snowxsql.conversions import INSAR_to_rasterio, reproject_to_utm
 from snowxsql.utilities import get_logger
 import utm
 import matplotlib.pyplot as plt
@@ -14,8 +16,11 @@ from rasterio.crs import CRS
 from rasterio.plot import show
 from rasterio.transform import Affine
 import glob
-from shutil import copyfile
+from shutil import copyfile, rmtree
 from snowxsql.utilities import find_kw_in_lines
+
+log = get_logger('InSar Test Data')
+
 
 def get_crop_indices(n, ratio):
     '''
@@ -32,6 +37,8 @@ def get_crop_indices(n, ratio):
     return start, end, spread
 
 def get_uavsar_annotation(fkey, directory):
+    '''
+    '''
     # search local files for a matching file with .ann in its name
     ann_candidates = os.listdir(directory)
     fmatches = [f for f in ann_candidates if fkey in f and 'ann' in f]
@@ -47,65 +54,73 @@ def get_uavsar_annotation(fkey, directory):
 
     return desc, ann_file
 
-log = get_logger('InSar Test Data')
+def get_grid_dims(desc):
+    '''
+    Returns the nrows, ncols, dlat, and dlon from the annotation file
+    '''
+    # Grab array size
+    nrows = desc['ground range data latitude lines']['value']
+    ncols = desc['ground range data longitude samples']['value']
+    dlat = desc['ground range data latitude spacing']['value']
+    dlon = desc['ground range data longitude spacing']['value']
 
-# How much of the original data cropped to the middle, e.g. 20% in each direction from center
-ratio = 0.2
+    return nrows, ncols, dlat, dlon
 
-# Output directory
-outdir = '../tests/data'
+def make_mods(desc, ratio):
+    '''
+    Make the modifcation Dictionary
 
-# Pattern to look for
-directory= '~/Downloads/SnowEx2020_UAVSAR'
-pattern = 'grmesa_27416_20003-028_20005-007_0011d_s01_L090HH_01.*.grd'
+    Args:
+        desc: Dictionary reprenting the annotation file
+        ratio: Fraction of the data to crop to in both directions on center
 
-# how to map the names
-data_map = {'int':'interferogram',
-            'amp1':'amplitude of pass 1',
-            'amp2':'amplitude of pass 2',
-            'cor':'correlation'}
+    Returns:
+        mods: Dictionary of desc entries to modify
+    '''
+    mods = {}
+    # Grab array size
+    nrows, ncols, dlat, dlon = get_grid_dims(desc)
 
-# Get the directory the file
-directory = abspath(expanduser(directory))
-files = glob.glob(join(directory, pattern))
+    # Attempt to crop on the center of the image
+    start_row, end_row, new_nrows = get_crop_indices(nrows, ratio)
+    start_col, end_col, new_ncols = get_crop_indices(ncols, ratio)
 
-log.info('Found {} files that can be used for testing...'.format(len(files)))
-mods = {}
+    log.info('After cropping images should be {} x {}'.format(new_nrows, new_ncols))
 
-fkey = pattern.split('.')[0]
-desc, ann_file = get_uavsar_annotation(fkey, directory)
+    # mods to write out later to the ann file
+    mods['ground range data latitude lines'] = new_nrows
+    mods['ground range data longitude samples'] = new_ncols
 
-# Grab array size
-nrows = desc['ground range data latitude lines']['value']
-ncols = desc['ground range data longitude samples']['value']
-dlat = desc['ground range data latitude spacing']['value']
-dlon = desc['ground range data longitude spacing']['value']
+    mods['ground range data starting latitude'] = start_row * dlat + desc['ground range data starting latitude']['value']
+    mods['ground range data starting longitude'] = start_col * dlon + desc['ground range data starting longitude']['value']
 
-# Attempt to crop on the center of the image
-start_row, end_row, new_nrows = get_crop_indices(nrows, ratio)
-start_col, end_col, new_ncols = get_crop_indices(ncols, ratio)
+    return mods
 
-log.info('After cropping images should be {} x {}'.format(new_nrows, new_ncols))
-# mods to write out later to the ann file
-mods['ground range data latitude lines'] = new_nrows
-mods['ground range data longitude samples'] = new_ncols
 
-mods['ground range data starting latitude'] = start_row * dlat + desc['ground range data starting latitude']['value']
-mods['ground range data starting longitude'] = start_col * dlon + desc['ground range data starting longitude']['value']
+def open_crop_grd_files(f, desc, ratio, out_file):
+    '''
+    Open the grd file, crop to a known dimension. Then save back to bytes
+    in the test/data folder
 
-# mods['approximate upper left latitude'] =
-# mods['approximate upper left longitude']
-# mods['approximate upper right latitude']
-# mods['approximate upper right longitude']
-# mods['approximate lower left latitude']
-# mods['approximate lower left longitude']
-# mods['approximate lower right latitude']
-# mods['approximate lower right longitude']
+    Args:
+        f: Input file
+        desc: Annotation Dictionary
+        ratio: Fraction to subset the data on center
+        out_file: Output location
+    '''
 
-for f in files:
+    # Grab array size
+    nrows, ncols, dlat, dlon = get_grid_dims(desc)
 
-    # Output file name, use the same extension
-    out_f = 'uavsar.' + '.'.join(f.split('.')[-2:])
+    # Attempt to crop on the center of the image
+    start_row, end_row, new_nrows = get_crop_indices(nrows, ratio)
+    start_col, end_col, new_ncols = get_crop_indices(ncols, ratio)
+
+    # how to map the names
+    data_map = {'int':'interferogram',
+                'amp1':'amplitude of pass 1',
+                'amp2':'amplitude of pass 2',
+                'cor':'correlation'}
 
     # Grab the dataname
     d_key =  basename(f).split('.')[-2]
@@ -182,45 +197,123 @@ for f in files:
         for stat in ['mean','min','max', 'std']:
             log.info('\t* {} = {}'.format(stat, getattr(sub_arr[n], stat)()))
 
-    # Write out the data to the file
-    file = join(outdir, out_f)
-    log.info('Writing output to {}'.format(file))
-    with open(file, 'wb+') as fp:
+    # Write out the binary data to the file for testing the software
+    log.info('Writing output to {}'.format(out_file))
+    with open(out_file, 'wb+') as fp:
         fp.write(b)
         fp.close()
 
-    log.info('Complete!\n')
 
+def copy_and_mod_annotation(ann_file, out_f, mods):
+    '''
+    Copy the annotation file to ../tests/data/uavsar.ann. Then modify the file
+    to represent the new data thats been cropped
 
-# Copy over the ANN file. The ANN file will still need modifying
-out_f = 'uavsar.ann'
-log.info('Copying over the annotation file to {} with modifications...'.format(out_f))
-with open(ann_file, 'r') as fp:
-    lines = fp.readlines()
+    Args:
+        ann_file: Path to the original annotation file
+        out_f: Path to save the modified file
+        mods: Dictionary of modifications to apply to the annotation file
+    '''
 
-    for k,v in mods.items():
-        i = find_kw_in_lines(k.title(), lines, addon_str='')
+    log.info('Copying over the annotation file to {} with modifications...'.format(out_f))
+    # Read the file in
+    with open(ann_file, 'r') as fp:
+        lines = fp.readlines()
 
-        if i != -1:
-            # Found the option in the file, try to replace the value and keep the comment
-            log.info('\tUpdating {} in annotation file...'.format(k))
-            info = lines[i].split('=')
-            name = info[0].strip()
+        # Modify it
+        for k,v in mods.items():
+            i = find_kw_in_lines(k.title(), lines, addon_str='')
 
-            data = ''.join(info[1:])
-            comment = ''
-            spacing = ''
+            if i != -1:
+                # Found the option in the file, try to replace the value and keep the comment
+                log.info('\tUpdating {} in annotation file...'.format(k))
+                info = lines[i].split('=')
+                name = info[0].strip()
 
-            if ';' in lines[i]:
-                content = data.split(';')
-                comment = '; ' + content[-1].strip()
+                data = ''.join(info[1:])
+                comment = ''
+                spacing = ''
 
-            msg = '{:<63}= {:<23}{:<50}\n'.format(name, v, comment)
-            lines[i] = msg
+                if ';' in lines[i]:
+                    content = data.split(';')
+                    comment = '; ' + content[-1].strip()
 
+                msg = '{:<63}= {:<23}{:<50}\n'.format(name, v, comment)
+                lines[i] = msg
+
+        fp.close()
+
+    # Write out the new file with mods
+    with open(out_f, 'w+') as fp:
+        fp.write(''.join(lines))
     fp.close()
 
-# Write out the new file
-with open(join(outdir, out_f), 'w+') as fp:
-    fp.write(''.join(lines))
-fp.close()
+
+def main():
+
+    # How much of the original data cropped to the middle, e.g. 20% in each direction from center
+    ratio = 0.2
+
+    # Output directory
+    outdir = '../tests/data'
+    temp = './temp'
+
+    outdir = abspath(outdir)
+    temp = abspath(temp)
+
+    # Pattern to look for
+    directory= '~/Downloads/SnowEx2020_UAVSAR'
+    pattern = 'grmesa_27416_20003-028_20005-007_0011d_s01_L090HH_01.*.grd'
+
+    # Get the directory the file
+    directory = abspath(expanduser(directory))
+    files = glob.glob(join(directory, pattern))
+
+    log.info('Found {} files that can be used for testing...'.format(len(files)))
+
+    fkey = pattern.split('.')[0]
+
+    # Get the ann file
+    desc, ann_file = get_uavsar_annotation(fkey, directory)
+
+    # Form the modifications to the ann file
+    mods = make_mods(desc, ratio)
+
+    # make our temporary folder
+    if isdir(temp):
+        rmtree(temp)
+
+    mkdir(temp)
+
+    log.info("")
+    log.info("Cropping binary files...")
+    for f in files:
+        # Output file name, use the same extension
+        ext = '.'.join(f.split('.')[-2:])
+        grd_file = join(outdir, 'uavsar_latlon.' + ext)
+
+        # Crop and save resulting binary file in tests/data
+        open_crop_grd_files(f, desc, ratio, grd_file)
+
+    # Modify the annotation file and write it out to the new location
+    new_ann = join(outdir, 'uavsar_latlon.ann')
+    copy_and_mod_annotation(ann_file, new_ann, mods)
+    desc = read_InSar_annotation(new_ann)
+
+    log.info("")
+    log.info("Converting files to GeoTiffs...")
+    for f in glob.glob(join(outdir,'uavsar_latlon*.grd')):
+        # Convert the binary to tiff and save in our testing
+        tif_file = f.replace('.grd','.tif')
+        INSAR_to_rasterio(f, desc, tif_file)
+
+    log.info("")
+    log.info("Reprojecting files to GeoTiffs...")
+
+    for f in glob.glob(join(outdir,'uavsar_latlon*.tif')):
+        # # Reproject the data
+        utm_file = f.replace('_latlon','_utm')
+        reproject_to_utm(f, utm_file, dst_epsg=26912)
+
+if __name__ == '__main__':
+    main()

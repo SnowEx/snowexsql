@@ -25,7 +25,7 @@ import utm
 # Remove later
 import matplotlib.pyplot as plt
 
-def INSAR_to_rasterio(grd_file, outdir):
+def INSAR_to_rasterio(grd_file, desc, out_file):
     '''
     Reads in the UAVSAR interferometry file and saves the real and complex
     value and writes them to GeoTiffs. Requires a .ann file in the same
@@ -33,9 +33,10 @@ def INSAR_to_rasterio(grd_file, outdir):
 
     Args:
         grd_file: File containing the UAVsAR data
-        outdir: directory to save the output files
+        desc: dictionary of the annotation file.
+        out_file: Directory to output the converted files
     '''
-    log = get_logger('UAVSAR')
+    log = get_logger('insar_2_raster')
 
     data_map = {'int':'interferogram',
                 'amp1':'amplitude of pass 1',
@@ -49,23 +50,6 @@ def INSAR_to_rasterio(grd_file, outdir):
     dname = data_map[ftype]
 
     log.info('Processing {} file...'.format(dname))
-
-    # Get the directory the int file
-    directory = dirname(grd_file)
-
-    # search local files for a matching file with .ann in its name
-    ann_candidates = os.listdir(directory)
-    fmatches = [f for f in ann_candidates if fkey in f and 'ann' in f]
-
-    # If we find too many or not enough raise an exception and exit
-    if len(fmatches) != 1:
-        raise ValueError('Unable to find a corresponding description file to'
-                         ' UAVsAR file {}'.format(grd_file))
-
-    # Form the descriptor file name based on the grid file name, should have .ann in it
-    ann_file = join(directory, fmatches[0])
-
-    desc = read_InSar_annotation(ann_file)
 
     # Grab the metadata for building our georeference
     nrow = desc['ground range data latitude lines']['value']
@@ -106,12 +90,8 @@ def INSAR_to_rasterio(grd_file, outdir):
 
     # Lat1/lon1 are already the center so for geotiff were good to go.
     t = Affine.translation(lon1, lat1) * Affine.scale(dlon, dlat)
-
-    # Build the base file name
-    if not isdir(outdir):
-        os.mkdir(outdir)
-
-    fbase = join(outdir, '.'.join(basename(grd_file).split('.')[0:-1]) + '.{}.tif')
+    ext = out_file.split('.')[-1]
+    fbase = join(dirname(out_file), '.'.join(basename(out_file).split('.')[0:-1]) + '.{}.{}')
 
     for i, comp in enumerate(['real', 'imaginary']):
         if comp in z.dtype.names:
@@ -120,7 +100,7 @@ def INSAR_to_rasterio(grd_file, outdir):
             # d = np.flip(z[comp], axis=0)
             # d = np.flip(d, axis=1)
             d = z[comp]
-            out = fbase.format(comp)
+            out = fbase.format(comp, ext)
             log.info('Writing to {}...'.format(out))
             dataset = rasterio.open(
                     out,
