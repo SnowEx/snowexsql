@@ -76,8 +76,9 @@ class TestConversionsOnDB(DBSetup):
 
 class InSarToRasterioBase():
     '''
+    Convert the UAVSAR grd files to tif.
     This conversion is complicated and requires multiple tests to ensure
-    fidelity
+    fidelity.
     '''
     this_location = dirname(__file__)
 

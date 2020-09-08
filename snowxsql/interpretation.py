@@ -9,6 +9,8 @@ import pandas as pd
 import warnings
 import datetime
 import numpy as np
+import pytz
+
 
 def is_point_data(columns):
     '''
@@ -285,31 +287,34 @@ def get_InSar_flight_comment(data_name, desc):
     Args:
         f: Filename used to parse the data type (int, cor, amp1, amp2)
         desc: descriptor dictionary formed from the annotation file
+
     Returns:
-        meta: metadata dictionary containing  the dataname
+        comment: A comment for the database for the uavsar file uploaded
     '''
+
     tz = pytz.timezone('MST')
     blank = '{} time of acquisition for pass {}'
 
-    # Assign the correct date to the amplitude flights
-    if 'amplitude' in dname:
-        pass_num = dname.split(' ')[-1]
+    # Assign the correct date to the amplitude flights which dont require both flights
+    if 'amplitude' in data_name:
+        pass_num = data_name.split(' ')[-1]
+        passes = [pass_num]
+        comment = 'Overpass Duration: {} {} - {} {} (MST)'
 
-        # Convert to MST (originally UTC) and assign start date to date
-        key = blank.format('start', pass_num)
-        dt = desc[key].astimezone(tz)
-        meta['date'] = dt.date()
-
-        # Add a comment to the description regarding flight time
-        start = dt.isoformat()
-
-        key1 = blank.format('stop', pass_num)
-        end = desc[key1].astimezone(tz).isoformat()
-
-        comment = 'Overpass Duration: {} - {} (MST)'.format(start, end)
-
+    # Build a comment for both flights
     else:
-        comment = '1st Overpass Duration: {} - {} (MST), '.format(start1, end1)
-        comment += '2nd Overpass Duration {} - {} (MST)'.format(start2, end2)
+        # Start stop times
+        passes = ['1', '2']
+        comment = '1st Overpass Duration: {} {} - {} {} (MST), '
+        comment += '2nd Overpass Duration {} {} - {} {} (MST)'
 
-    return comment
+    # Format the comment strings given the overpasses,
+    times = []
+    for n in passes:
+        for timing in ['start', 'stop']:
+            key = blank.format(timing, n)
+            dt = desc[key].astimezone(tz)
+            times.append(dt.date())
+            times.append(dt.time())
+
+    return comment.format(*times)

@@ -80,3 +80,24 @@ def test_avg_from_multi_sample(layer, name, expected):
     received = avg_from_multi_sample(layer, name)
 
     assert str(received) == str(expected)
+
+
+@pytest.mark.parametrize('data_name, expected', [
+('amplitude of pass 1','Overpass Duration: 2020-01-01 10:00:00 - 2020-01-01 12:00:00 (MST)'),
+('correlation','1st Overpass Duration: 2020-01-01 10:00:00 - 2020-01-01 12:00:00 (MST), 2nd Overpass Duration 2020-02-01 10:00:00 - 2020-02-01 12:00:00 (MST)'),
+
+])
+def test_get_InSar_flight_comment(data_name, expected):
+    '''
+    Test we can formulate a usefule comment for the uavsar annotation file
+    and a dataname
+    '''
+    blank = '{} time of acquisition for pass {}'
+
+    desc = {blank.format('start', '1'): pd.to_datetime('2020-01-01 10:00:00 MST'),
+            blank.format('stop', '1'): pd.to_datetime('2020-01-01 12:00:00 MST'),
+            blank.format('start', '2'): pd.to_datetime('2020-02-01 10:00:00 MST'),
+            blank.format('stop', '2'): pd.to_datetime('2020-02-01 12:00:00 MST')}
+
+    comment = get_InSar_flight_comment(data_name, desc)
+    assert comment == expected
