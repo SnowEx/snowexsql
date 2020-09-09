@@ -382,7 +382,8 @@ class DataHeader(object):
              'long':'longitude',
              'lon':'longitude',
              'twt':'two_way_travel',
-             'measurement_tool':'instrument'
+             'measurement_tool':'instrument',
+             'avgdensity':'density'
              }
 
     # Known possible profile types anything not in here will throw an error
@@ -390,13 +391,14 @@ class DataHeader(object):
                      'force', 'reflectance','sample_signal',
                      'specific_surface_area', 'equivalent_diameter',
                      'grain_size', 'hand_hardness', 'grain_type',
-                     'manual_wetness', 'two_way_travel', 'depth']
+                     'manual_wetness', 'two_way_travel', 'depth','swe']
 
     # Defaults to keywords arguments
     defaults = {'timezone': 'MST',
                 'epsg':26912,
                 'header_sep': ',',
-                'northern_hemisphere':True}
+                'northern_hemisphere':True,
+                'depth_is_metadata':True}
 
 
     def __init__(self, filename, **kwargs):
@@ -408,6 +410,10 @@ class DataHeader(object):
             header_sep: key value pairs in header information separtor (: , etc)
             northern_hemisphere: Bool describing if the pit location is in the
                                  northern_hemisphere for converting utms coords
+            depth_is_metadata: Whether or not to include depth as a main
+                              variable (useful for point data that contains
+                              snow depth and other variables), profiles should
+                              use depth as metadata
             kwargs: keyword values to pass to the database as metadata
         '''
         self.log = get_logger(__name__)
@@ -576,11 +582,12 @@ class DataHeader(object):
             if kw_count > 0:
                 data_names.append(dname)
 
+                # Avoid triggering on depth and bottom depth in profiles
                 if kw_count > 1 and dname != 'depth':
                     multi_sample_profile = True
 
-        # Depth is never submitted with anything else otherwise it is a support variable
-        if len(data_names) > 1 and 'depth' in data_names:
+        # If depth is metadata (e.g. profiles) then remove it as a main variable
+        if 'depth' in data_names and self.depth_is_metadata:
             data_names.pop(data_names.index('depth'))
 
         if data_names:

@@ -26,21 +26,21 @@ info = {'site_name':'Grand Mesa',
 
 class DataHeaderTestBase():
 
+    depth_is_metadata = True
+
     def setup_class(self):
         '''
-        Please define the following attributes before
-        super.setup_class:
-
         columns: list of column names
         multi_sample_profile: Boolean indicating whether to average samples
         data_names: list of names of profiles to upload
         header_pos: int of the index in the lines of the file where the columns are found
         info: Dictionary of the header information
         file: Basename of the file were testing in the data folder
+        depth_is_metadata: Boolean indicating whether to include depth as a main variable
         '''
 
         data = abspath(join(dirname(__file__), 'data'))
-        self.header = DataHeader(join(data, self.file))
+        self.header = DataHeader(join(data, self.file), depth_is_metadata=self.depth_is_metadata)
         self.name = self.file.split('.')[0]
 
     def assert_header_attribute(self, attr):
@@ -192,12 +192,31 @@ class TestSiteDetailseHeader(DataHeaderTestBase):
         super().setup_class(self)
 
 class TestDepthsHeader(DataHeaderTestBase):
+    depth_is_metadata=False
+
     def setup_class(self):
         self.file = 'depths.csv'
         self.data_names = ['depth']
         self.columns = ['instrument', 'id', 'date', 'time', 'longitude',
                         'latitude','easting', 'northing', 'elevation',
                         'equipment', 'version_number'] + self.data_names
+
+        self.multi_sample_profile = False
+        self.info = info.copy()
+
+        super().setup_class(self)
+
+class TestGPRHeader(DataHeaderTestBase):
+    '''
+    Test the header information can be interpretted correctly in the GPR data
+    '''
+    depth_is_metadata=False
+
+    def setup_class(self):
+        self.file = 'gpr.csv'
+        self.data_names = ['density','depth','swe', 'two_way_travel']
+        self.columns = ['utcyear', 'utcdoy', 'utctod', 'utmzone', 'easting',
+                        'northing', 'elevation', 'avgvelocity', 'avgdensity'] + self.data_names
 
         self.multi_sample_profile = False
         self.info = info.copy()

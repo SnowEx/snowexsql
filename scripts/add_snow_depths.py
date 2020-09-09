@@ -24,7 +24,7 @@ def main():
     db_name = 'snowex'
     engine, session = get_db(db_name)
 
-    csv = PointDataCSV(fname, units='cm', site_name=site_name, timezone=timezone, epsg=26912)
+    csv = PointDataCSV(fname, depth_is_metadata=False, units='cm', site_name=site_name, timezone=timezone, epsg=26912)
     csv.submit(session)
     return len(csv.errors)
 
