@@ -8,6 +8,8 @@ from snowxsql.data import PointData
 
 from  .sql_test_base import DBSetup
 import datetime
+import pytest
+
 
 class PointsBase(DBSetup):
     fname = ''
@@ -22,12 +24,13 @@ class PointsBase(DBSetup):
         super().setup_class()
 
         fname = join(self.data_dir, self.fname)
-        csv = PointDataCSV(fname, units=self.units, site_name='Grand Mesa', timezone=self.timezone, epsg=26912, surveyors='TEST')
-        print(csv.hdr.data_names)
+        csv = PointDataCSV(fname, depth_is_metadata=False, units=self.units,
+                                  site_name='Grand Mesa',
+                                  timezone=self.timezone,
+                                  epsg=26912, surveyors='TEST')
         csv.submit(self.session)
         self.base_query = self.session.query(PointData).filter(PointData.type == self.variable)
 
-    # def get_query(self, )
     def assert_record_count(self, count, unique=False, attr='value'):
         '''
         Assert the main query returns a certain number of records.
@@ -96,12 +99,6 @@ class TestPoints(PointsBase):
         records = self.session.query(PointData).limit(1).all()
         assert hasattr(records[0], 'geom')
 
-
-class TestSnowDepths(PointsBase):
-    fname = 'depths.csv'
-    variable = 'depth'
-    units = 'cm'
-
     def test_data_entry(self):
         '''
         Test that the data was entered successfully
@@ -127,8 +124,8 @@ class TestSnowDepths(PointsBase):
         q = self.session.query(PointData.instrument).filter(PointData.id == 1)
         self.assert_value_assignment(q, 'magnaprobe')
 
-class TestGPRTWT(PointsBase):
-    fname = 'gpr_twt.csv'
+class TestGPR(PointsBase):
+    fname = 'gpr.csv'
     units = 'ns'
     timezone = 'UTC'
     variable = 'two_way_travel'
@@ -153,20 +150,18 @@ class TestGPRTWT(PointsBase):
         Test the correct dates were assigned
         '''
         # 1 unique dates
-        self.assert_record_count(1, unique=True, attr='date')
+        self.assert_record_count(3, unique=True, attr='date')
 
-    def test_value_type_assignment(self):
+    @pytest.mark.parametrize('column, filter_att, filter_value, expected', [
+    # Assert that the twt is renamed to two_way_travel
+    ('type', 'type', 'two_way_travel', 'two_way_travel'),
+
+    # Test we pass through the surveyors as kw
+    ])
+    def test_value_type_assignment(self, column, filter_att, filter_value, expected):
         '''
-        Test that column twt is renamed to two_way_travel
+
         '''
         # Not sure why thie first entry is 100000 but it is and it should be 94 cm
-        q = self.session.query(PointData.type).filter(PointData.elevation==3058.903)
-        self.assert_value_assignment(q, 'two_way_travel')
-
-    def test_surveyor_pass_through(self):
-        '''
-        Test we can pass surveyors through the class instantiation
-        '''
-        # Not sure why thie first entry is 100000 but it is and it should be 94 cm
-        q = self.session.query(PointData.surveyors).filter(PointData.elevation==3058.903)
-        self.assert_value_assignment(q, 'TEST')
+        q = self.session.query(getattr(PointData, column)).filter(getattr(PointData, filter_att)==filter_value)
+        self.assert_value_assignment(q, expected)

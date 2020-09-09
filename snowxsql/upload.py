@@ -171,6 +171,7 @@ class UploadProfileData():
         for pt in self.data_names:
             df = self.build_data(pt)
 
+            # Add a progressbar if its long upload
             if len(df.index) > 1000:
                 long_upload = True
                 bar = progressbar.ProgressBar(max_value=len(df.index))
@@ -199,8 +200,12 @@ class PointDataCSV(object):
 
     # Remapping for special keywords for snowdepth measurements
     measurement_names = {'mp':'magnaprobe','m2':'mesa', 'pr':'pit ruler'}
-    cleanup_keys = ['utmzone']
 
+    # Units to apply
+    units = {'depths':'cm','two_way_travel':'ns','swe':'mm',
+             'density':'kg/m^3'}
+
+    # Class attributes to apply
     defaults = {'debug':True}
 
     def __init__(self, filename, **kwargs):
@@ -222,14 +227,32 @@ class PointDataCSV(object):
         '''
 
         self.log.info('Reading in CSV data from {}'.format(filename))
-        self.value_type = self.hdr.data_names[0]
-
         df = pd.read_csv(filename, header=self.hdr.header_pos,
                                    names=self.hdr.columns)
 
-        for c in df.columns:
-            if c.lower() in self.cleanup_keys:
-                del df[c]
+        # Assign the measurement tool verbose name
+        if 'instrument' in df.columns:
+            df['instrument'] = \
+                df['instrument'].apply(lambda x: remap_data_names(x, self.measurement_names))
+
+        # Add date and time keys
+        df = df.apply(lambda data: add_date_time_keys(data, timezone=self.hdr.timezone), axis=1)
+
+        # 1. Only submit valid columns to the DB
+        valid = get_table_attributes(PointData)
+
+        # 2. Add all kwargs that were valid
+        for v in valid:
+            if v in self.kwargs.keys():
+                df[v] = self.kwargs[v]
+
+        # 3. Remove columns that are not valid
+        drops = \
+        [c for c in df.columns  if c not in valid and c not in self.hdr.data_names]
+        df = df.drop(columns=drops)
+
+        # replace all nans or string nones with None (none type)
+        df = df.apply(lambda x: parse_none(x))
         return df
 
     def build_data(self, data_name):
@@ -237,48 +260,39 @@ class PointDataCSV(object):
         Pad the dataframe with metdata or make info more verbose
         '''
         # Assign our main value to the value column
-        self.df['value'] = self.df[data_name].copy()
-        self.df['type'] = data_name
-        del self.df[data_name]
+        df = self.df.copy()
+        df['value'] = self.df[data_name].copy()
+        df['type'] = data_name
 
-        # Assign the measurement tool verbose name
-        if 'instrument' in self.df.columns:
-            self.df['instrument'] = \
-                self.df['instrument'].apply(lambda x: remap_data_names(x, self.measurement_names))
+        # Add units 
+        if data_name in self.units.keys():
+            df['units'] = self.units[data_name]
 
-        # only submit valid  keys to db
-        valid = get_table_attributes(PointData)
-        for k,v in self.kwargs.items():
-            if k in valid:
-                self.df[k] = v
+        df = df.drop(columns=self.hdr.data_names)
 
-        # Remove any ID fields
-        if 'id' in self.df.columns:
-            self.df = self.df.drop(columns=['id'])
+        return df
 
-        # replace all nans or string nones with None (none type)
-        self.df = self.df.apply(lambda x: parse_none(x))
 
     def submit(self, session):
         # Loop through all the entries and add them to the db
-        self.build_data(self.value_type)
-        self.log.info('Submitting {} rows to database...'.format(len(self.df.index)))
+        for pt in self.hdr.data_names:
+            df = self.build_data(pt)
+            self.log.info('Submitting {} points of {} to the database...'.format(len(self.df.index), pt))
 
-        bar = progressbar.ProgressBar(max_value=len(self.df.index))
+            bar = progressbar.ProgressBar(max_value=len(self.df.index))
 
-        for i,row in self.df.iterrows():
-
-            if self.debug:
-                self.add_one(session, row)
-            else:
-                try:
+            for i,row in df.iterrows():
+                if self.debug:
                     self.add_one(session, row)
+                else:
+                    try:
+                        self.add_one(session, row)
 
-                except Exception as e:
-                    self.errors.append(e)
-                    self.log.error((i, e))
+                    except Exception as e:
+                        self.errors.append(e)
+                        self.log.error((i, e))
 
-            bar.update(i)
+                bar.update(i)
 
         # Error reporting
         if len(self.errors) > 0:
@@ -295,7 +309,6 @@ class PointDataCSV(object):
         '''
         # Create the data structure to pass into the interacting class attributes
         data = row.copy()
-        data = add_date_time_keys(data, timezone=self.hdr.timezone)
 
         # Add geometry
         data['geom'] = WKTElement('POINT({} {})'.format(data['easting'],data['northing']), srid=self.hdr.info['epsg'])

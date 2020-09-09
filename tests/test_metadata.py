@@ -52,8 +52,10 @@ class DataHeaderTestBase():
         dtype = type(expected)
 
         if dtype == list:
-            for d in data:
-                assert d in expected
+            # Assert they are the same length
+            assert len(data) == len(expected)
+            for e in expected:
+                assert e in data
 
         elif dtype == dict:
             for k,v in data.items():
@@ -216,7 +218,7 @@ class TestGPRHeader(DataHeaderTestBase):
         self.file = 'gpr.csv'
         self.data_names = ['density','depth','swe', 'two_way_travel']
         self.columns = ['utcyear', 'utcdoy', 'utctod', 'utmzone', 'easting',
-                        'northing', 'elevation', 'avgvelocity', 'avgdensity'] + self.data_names
+                        'northing', 'elevation', 'avgvelocity'] + self.data_names
 
         self.multi_sample_profile = False
         self.info = info.copy()
