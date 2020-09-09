@@ -100,3 +100,38 @@ def find_kw_in_lines(kw, lines, addon_str=' = '):
         i = -1
 
     return i
+
+def assign_default_kwargs(object, kwargs, defaults, leave=[]):
+    '''
+    Assign keyword arguments to class attributes. If a key in the default
+    is not in the kwargs then its value becomes the value in the default.
+    Any value found in the defaults is removed from the kwargs
+
+    Args:
+        object: Object to assign as keys in defaults as attributes
+        kwargs: Dictionary of keyword arguments provided
+        defaults: Dictionary of all class related arguments that are assigned as attributes
+        leave: List of attributes to leave in mod_kwargs
+    Returns:
+        mod_kwargs: kwargs with all keys in the defaults removed from it.
+    '''
+
+    mod_kwargs = kwargs.copy()
+
+    # Loop over all the defaults
+    for k,v in defaults.items():
+        # if the k was provided then use it and remove it from the kwargs
+        if k in kwargs.keys():
+            value = kwargs[k]
+            # Delete it so kwargs could be passed on for other use unless its requested to be left
+            if k not in leave:
+                del mod_kwargs[k]
+
+        else:
+            # Make sure we have a value assigned from the defaults
+            value = v
+
+        # Assign it as a class attribute
+        setattr(object, k, value)
+
+    return mod_kwargs

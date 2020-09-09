@@ -34,17 +34,22 @@ def test_find_kw_in_lines(kw, lines, expected):
 
 
 class TestAssignDefaultKwargs():
+    '''
+    Test the function assign_default_kwargs. This class is necessary so
+    we can add attributes to it without raising exceptions.
+    '''
 
-    @pytest.mark.parametrize("kwargs, defaults, expected_kwargs, expected_attr",[
+    @pytest.mark.parametrize("kwargs, defaults, leave, expected_kwargs, expected_attr",[
     # Assert missing attributes are added to object and removed from kwargs
-    ({}, {'test':False}, {}, {'test':False}),
+    ({}, {'test':False}, [],  {}, {'test':False}),
     # Assert we don't overwrite the kwargs provided by user
-    ({'test':True, }, {'test':False}, {}, {'test':True}),
+    ({'test':True, },  {'test':False}, [], {}, {'test':True}),
     # Assert we leave non-default keys and still assign defaults
-    ({'stays':True, }, {'test':False}, {'stays':True}, {'test':False}),
-
+    ({'stays':True, }, {'test':False}, [], {'stays':True}, {'test':False}),
+    # Assert keys can be left in the mod kwargs but still be used
+    ({'leave_test':True}, {'test':False,'leave_test':True}, ['leave_test'],  {'leave_test':True}, {'test':False, 'leave_test':True}),
     ])
-    def test_assign_default_kwargs(self, kwargs, defaults, expected_kwargs, expected_attr):
+    def test_assign_default_kwargs(self, kwargs, defaults, leave, expected_kwargs, expected_attr):
         '''
         Test we can assign object attributes to an object given kwargs and defaults
 
@@ -52,7 +57,7 @@ class TestAssignDefaultKwargs():
         # Make a dummy object for testing
 
         # Modify obj, and removed default kw in kwargs
-        mod_kwargs = assign_default_kwargs(self, kwargs, defaults)
+        mod_kwargs = assign_default_kwargs(self, kwargs, defaults, leave)
 
         # 1. Test We have removed kw from mod_kwargs
         for k,v in expected_kwargs.items():

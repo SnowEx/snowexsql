@@ -207,15 +207,7 @@ class PointDataCSV(object):
         self.log = get_logger(__name__)
 
         # Assign defaults for this class
-        for k in ['debug']:
-            if k not in kwargs.keys():
-                setattr(self, k, self.defaults[k])
-            else:
-                setattr(self, k, kwargs[k])
-                del kwargs[k]
-
-        # Kwargs to pass through to metdata
-        self.kwargs = kwargs
+        self.kwargs = assign_default_kwargs(self, kwargs, self.defaults)
 
         self.hdr = DataHeader(filename, **self.kwargs)
         self.df = self._read(filename)
@@ -317,22 +309,30 @@ class PointDataCSV(object):
 
 class UploadRaster(object):
     '''
-    Class for uploading a single tifs to the database
+    Class for uploading a single tifs to the database. Utilizes the raster2pgsql
+    command and then parses it for delivery via python.
     '''
+
+    defaults = {'epsg':26912,
+                'tiled':False}
+
     def __init__(self, filename,  **kwargs):
         self.log = get_logger(__name__)
         self.filename = filename
-        self.data = kwargs
-        self.epsg = kwargs['epsg']
-
-        del kwargs['epsg']
+        self.data = assign_default_kwargs(self, kwargs, self.defaults)
 
     def submit(self, session):
         '''
         Submit the data to the db using ORM
         '''
         # This produces a PSQL command with auto tiling
-        cmd = ['raster2pgsql','-s', str(self.epsg), '-t','500x500', self.filename]
+        cmd = ['raster2pgsql','-s', str(self.epsg)]
+
+        if self.tiled == True:
+            cmd.append('-t')
+            cmd.append('500x500')
+
+        cmd.append(self.filename)
         self.log.debug('Executing: {}'.format(' '.join(cmd)))
         s = check_output(cmd, stderr=STDOUT).decode('utf-8')
 

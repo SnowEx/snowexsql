@@ -8,7 +8,7 @@ from .interpretation import *
 from .data import SiteData
 from .db import get_table_attributes
 from .projection import reproject_point_in_dict, add_geom
-from .utilities import get_logger, read_n_lines
+from .utilities import get_logger, read_n_lines, assign_default_kwargs
 
 import utm
 import pandas as pd
@@ -398,8 +398,6 @@ class DataHeader(object):
                 'header_sep': ',',
                 'northern_hemisphere':True}
 
-    # Keywords that are only used in the class and not passed on to metdata
-    _class_atts = ['northern_hemisphere','header_sep', 'timezone']
 
     def __init__(self, filename, **kwargs):
         '''
@@ -414,17 +412,7 @@ class DataHeader(object):
         '''
         self.log = get_logger(__name__)
 
-        # Populate the kwargs with defaults values if they are not provided
-        for k,v in self.defaults.items():
-            if k not in kwargs.keys():
-                kwargs[k] = v
-
-        # Assign useful class attributes and remove them from the kwargs
-        for k in self._class_atts:
-            setattr(self, k, kwargs[k])
-            del kwargs[k]
-
-        self.extra_header = kwargs
+        self.extra_header = assign_default_kwargs(self, kwargs, self.defaults, leave=['epsg'])
 
         self.log.info('Interpretting metdata in {}'.format(filename))
 
@@ -777,7 +765,7 @@ class DataHeader(object):
 
         # Check for point data which will contain this in the data not the header
         if not is_point_data(self.columns):
-            info = add_geom(info, self.extra_header['epsg'])
+            info = add_geom(info, self.epsg)
 
         # If columns or info does not have coordinates raise an error
         important = ['northing', 'latitude']

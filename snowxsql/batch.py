@@ -10,7 +10,7 @@ from os.path import basename, abspath, expanduser, join
 from snowxsql.metadata import DataHeader, SMPMeasurementLog, read_InSar_annotation
 from snowxsql.db import get_table_attributes
 from snowxsql.data import SiteData
-from snowxsql.utilities import get_logger
+from snowxsql.utilities import get_logger, assign_default_kwargs
 from snowxsql.upload import UploadProfileData, UploadRaster
 from snowxsql.db import get_db
 from snowxsql.interpretation import get_InSar_flight_comment
@@ -36,8 +36,6 @@ class BatchBase():
               Use debug=False to allow exceptions
         report: Log the final result of uploaded files, errors, time elapsed,
                 etc.
-        assign_attr_defaults: Function used to apply any defaults and remove
-                              them from kwargs
     '''
 
     defaults = {}
@@ -61,7 +59,7 @@ class BatchBase():
                     comment.
         '''
         self.filenames = filenames
-        self.meta = self.assign_attr_defaults(**kwargs)
+        self.meta = assign_default_kwargs(self, kwargs, self.defaults)
 
         # Grab logger
         self.log = get_logger('batch')
@@ -73,28 +71,6 @@ class BatchBase():
         # Grab db
         self.log.info('Accessing Database {}'.format(self.db_name))
         engine, self.session = get_db(self.db_name)
-
-    def assign_attr_defaults(self, **kwargs):
-        '''
-        Uses the defaults dict to assign class attributes unless they are passed
-        in as a keyword args
-
-        '''
-        # Assign important attributes and defaults
-        for attr, value in self.defaults.items():
-            if attr in kwargs.keys():
-                vv = kwargs[attr]
-
-                # defaults for our class get dropped and the remaining goes to the
-                # ...uploader
-                del kwargs[attr]
-
-            else:
-                vv = value
-
-            setattr(self, attr, vv)
-
-        return kwargs
 
     def push(self):
         '''
