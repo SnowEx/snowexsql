@@ -185,7 +185,8 @@ class TestUploadUAVSARBatch(BatchBase):
     files = ['uavsar.ann']
     uploader_kwargs = {'surveyors': 'UAVSAR team, JPL',
                        'epsg':29612,
-                       'geotiff_dir':d}
+                       'geotiff_dir':d,
+                       'instrument':'UAVSAR, L-band InSAR'}
 
     BatchClass = UploadUAVSARBatch
     TableClass = ImageData
@@ -206,9 +207,10 @@ class TestUploadUAVSARBatch(BatchBase):
     'test_attr_value': [
         # Test the surveyors is assigned from kwargs
         dict(value='insar interferogram imaginary', att_value=1, attribute='surveyors', expected='UAVSAR team, JPL'),
-        #dict(value='insar correlation', att_value=1, attribute='units', expected='scalar between 0 and 1'),
-        dict(value='insar amplitude', att_value=1, attribute='date', expected=date(2020, 2, 1)),
-        dict(value='insar interferogram real', att_value=1, attribute='units', expected='Linear Power and Phase in Radians'),
+        dict(value='insar interferogram real', att_value=2, attribute='units', expected='Linear Power and Phase in Radians'),
+        # Notice the date in the file is 2-1 but in UTC so -7 hrs puts us in 1-31
+        dict(value='insar amplitude', att_value=3, attribute='date', expected=date(2020, 1, 31)),
+        dict(value='insar correlation', att_value=4, attribute='instrument', expected='UAVSAR, L-band InSAR'),
 
         # dict(value='insar interferogram real', att_value=1, attribute='units', expected='meters'),
             ]
@@ -216,7 +218,8 @@ class TestUploadUAVSARBatch(BatchBase):
 
     def test_test(self):
         q = self.session.query(self.TableClass)
-        q = q.filter(getattr(self.TableClass, self.count_attribute) == 'insar amplitude')
-        records = q.all()#filter(getattr(self.TableClass, self.attribute)==1).all()
-        print(records[0].date)
+        records = q.all()
+        print(self.attribute)
+        #records = q.filter(getattr(self.TableClass, self.attribute)==1).all()
+        print([(r.id, r.type) for r in records])
         #received = getattr(records[0], attribute)
