@@ -49,7 +49,8 @@ def main():
             'units': units,
             'epsg': epsg,
             'surveyors': surveyors,
-            'instrument': instrument}
+            'instrument': instrument,
+            'tiled':True}
 
     # Grab all the annotation files in the original data folder
     ann_files = glob.glob(join(downloads, '*.ann'))

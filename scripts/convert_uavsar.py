@@ -1,5 +1,5 @@
 '''
-Convert UAVSAR data to geotiffs before uploading to db
+Convert UAVSAR data to geotiffs then reproject to UTM before uploading to db
 
 Download from HP Marshalls Google Drive
 
@@ -12,6 +12,7 @@ from os.path import join, abspath, expanduser, isdir, dirname, basename
 from os import listdir, mkdir
 from snowxsql.utilities import get_logger, read_n_lines
 from snowxsql.conversions import INSAR_to_rasterio, reproject_to_utm
+from snowxsql.metadata import read_InSar_annotation
 import shutil
 import glob
 import time
@@ -45,38 +46,44 @@ def convert(filenames, output, epsg):
     nfiles = len(filenames)
 
     log.info('Converting {} UAVSAR .grd files to geotiff...'.format(nfiles))
-    log.info('Making output folder {}'.format(output))
 
+    directory = dirname(filenames[0])
     # Loop over all the files, name them using the same name just using a different folder
-    for f in filenames:
-        base_f = basename(f)
+    for ann in sorted(filenames):
 
-        # Form the patter for reprojecting
+        # open the ann file
+        desc = read_InSar_annotation(ann)
+
+        # Form a pattern based on the annotation filename
+        base_f = basename(ann)
         pattern = '.'.join(base_f.split('.')[0:-1]) + '*'
-        log.info('Converting {}'.format(base_f))
 
-        try:
-            # Convert the GRD to a geotiff thats projected in lat long
-            INSAR_to_rasterio(f, temp)
+        # Gather all files associated
+        grd_files = glob.glob(join(directory, pattern + '.grd'))
+        log.info('Converting {} grd files to geotiff...'.format(len(grd_files)))
 
-            # Loop over the resulting files, reproject to utm
-            for ll in glob.glob(join(temp, pattern)):
-                bll = basename(ll)
-                out = join(output, bll)
+        for grd in grd_files:
+            # Save to our temporary folder and only change fname to have ext=tif
+            latlon_tiff = grd.replace(directory, temp).replace('grd','tif')
 
-                # Reproject the resulting files to UTM
-                log.info('Reprojecting {} to UTM...'.format(bll))
-                reproject_to_utm(ll, out, dst_epsg=epsg)
+            try:
+                # Convert the GRD to a geotiff thats projected in lat long
+                INSAR_to_rasterio(grd, desc, latlon_tiff)
+                tiff_pattern = '.'.join(latlon_tiff.split('.')[0:-1]) + '*'
+                tif_files = glob.glob(tiff_pattern)
 
-            log.info('Complete!\n')
-            completed += 1
+                log.info('Reprojecting {} files to utm...'.format(len(tif_files)))
 
-        except Exception as e:
-            errors.append((f, e))
-            log.error(e)
-            log.error(' ')
+                for tif in glob.glob(tiff_pattern):
+                    utm_file = tif.replace(temp, output)
+                    reproject_to_utm(tif, utm_file, epsg)
+                    completed += 1
 
+            except Exception as e:
+                log.error(e)
+                errors.append((grd, e))
 
+    nfiles = completed + len(errors)
     log.info('Converted {}/{} files.'.format(completed, nfiles))
 
     # Report errors an a convenient location for users
@@ -108,7 +115,7 @@ def main():
     output = join(directory, output)
 
     # Gather all .grd files
-    filenames = glob.glob(join(directory, 'grmesa_27416_20003-028_20005-007_0011d_s01_L090*.grd'))
+    filenames = glob.glob(join(directory, '*.ann'))
 
     if isdir(output):
         ans = input('\nWARNING! You are about overwrite {} previously '

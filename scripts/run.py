@@ -19,7 +19,7 @@ from os.path import dirname
 import importlib
 from create import main as create
 from resample_smp import main as resample_smp
-
+from convert_uavsar import main as convert_uavsar
 
 start = time.time()
 log = get_logger('Populate')
@@ -55,6 +55,9 @@ create()
 
 # Offer to resample the smp data
 resample_smp()
+
+# Offer to convert the uavsar data (REQUIRED on your first attempt)
+convert_uavsar()
 
 # Run all the upload scripts
 total_errors = 0
