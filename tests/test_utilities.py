@@ -31,3 +31,33 @@ def test_find_kw_in_lines(kw, lines, expected):
     test finding a keyword in a list of strings
     '''
     assert find_kw_in_lines(kw, lines, addon_str='') == expected
+
+
+class TestAssignDefaultKwargs():
+
+    @pytest.mark.parametrize("kwargs, defaults, expected_kwargs, expected_attr",[
+    # Assert missing attributes are added to object and removed from kwargs
+    ({}, {'test':False}, {}, {'test':False}),
+    # Assert we don't overwrite the kwargs provided by user
+    ({'test':True, }, {'test':False}, {}, {'test':True}),
+    # Assert we leave non-default keys and still assign defaults
+    ({'stays':True, }, {'test':False}, {'stays':True}, {'test':False}),
+
+    ])
+    def test_assign_default_kwargs(self, kwargs, defaults, expected_kwargs, expected_attr):
+        '''
+        Test we can assign object attributes to an object given kwargs and defaults
+
+        '''
+        # Make a dummy object for testing
+
+        # Modify obj, and removed default kw in kwargs
+        mod_kwargs = assign_default_kwargs(self, kwargs, defaults)
+
+        # 1. Test We have removed kw from mod_kwargs
+        for k,v in expected_kwargs.items():
+            assert v == mod_kwargs[k]
+
+        # 2. Test the object has the attributes/values
+        for k,v in expected_attr.items():
+            assert getattr(self, k) == v

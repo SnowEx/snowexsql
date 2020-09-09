@@ -324,23 +324,28 @@ class UploadRaster(object):
         self.filename = filename
         self.data = kwargs
         self.epsg = kwargs['epsg']
+
         del kwargs['epsg']
 
     def submit(self, session):
         '''
         Submit the data to the db using ORM
         '''
-        # This produces a PSQL command
-        cmd = ['raster2pgsql','-s', str(self.epsg), self.filename]
+        # This produces a PSQL command with auto tiling
+        cmd = ['raster2pgsql','-s', str(self.epsg), '-t','500x500', self.filename]
         self.log.debug('Executing: {}'.format(' '.join(cmd)))
         s = check_output(cmd, stderr=STDOUT).decode('utf-8')
 
-        # Split the SQL command at values
-        values = s.split("VALUES ('")[-1]
-        values = values.split("'")[0]
-        raster = RasterElement(values)
-        self.data['raster'] = raster
+        # Split the SQL command at values (' which is the start of every one
+        tiles = s.split("VALUES ('")
+        if len(tiles) > 1:
+            self.log.info('Raster is split into {} tiles for uploading...'.format(len(tiles)))
 
-        r = ImageData(**self.data)
-        session.add(r)
-        session.commit()
+        # Allow for tiling, the first split is always psql statement we don't need
+        for t in tiles[1:]:
+            v = t.split("'::")[0]
+            raster = RasterElement(v)
+            self.data['raster'] = raster
+            r = ImageData(**self.data)
+            session.add(r)
+            session.commit()
