@@ -170,7 +170,6 @@ def add_date_time_keys(data, timezone='MST'):
         delta = datetime.timedelta(days=d, hours=hr, minutes=mm, seconds=ss,
                                                                 milliseconds=ms)
         d = base.astimezone(pytz.timezone(timezone)) + delta
-        print(data['utcdoy'], data['utctod'], d)
 
         # Remove them
         for v in ['utcyear', 'utcdoy', 'utctod']:

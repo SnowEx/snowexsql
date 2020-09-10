@@ -232,12 +232,15 @@ class PointDataCSV(object):
 
         # Assign the measurement tool verbose name
         if 'instrument' in df.columns:
+            self.log.info('Renaming instruments to more verbose names...')
             df['instrument'] = \
                 df['instrument'].apply(lambda x: remap_data_names(x, self.measurement_names))
 
         # Add date and time keys
+        self.log.info('Adding date and time to metadata...')
         df = df.apply(lambda data: add_date_time_keys(data, timezone=self.hdr.timezone), axis=1)
 
+        self.log.info('Adding valid keywaord arguments to metadata...')
         # 1. Only submit valid columns to the DB
         valid = get_table_attributes(PointData)
 
@@ -249,6 +252,8 @@ class PointDataCSV(object):
         # 3. Remove columns that are not valid
         drops = \
         [c for c in df.columns  if c not in valid and c not in self.hdr.data_names]
+        self.log.info('Dropping {} as they are not valid on the database...'.format(', '.join(drops)))
+
         df = df.drop(columns=drops)
 
         # replace all nans or string nones with None (none type)

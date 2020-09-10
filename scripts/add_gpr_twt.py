@@ -1,8 +1,9 @@
 '''
-Read in the SnowEx GPR data of two way travel time and submit them to the db
+Read in the SnowEx Decimated GPR data. Uploaded SWE, Two Way Travel, Depth, to
+the database
 
-Download data from:
-https://drive.google.com/file/d/1QS7N0h7ixkiZcLv0xpme5A8rQTLvGMUJ/view
+Download data from Tate Meehan:
+https://drive.google.com/file/d/1gxP3rHoIEXeBAi0ipEKbF_ONQhYWuz_0/view?usp=drive_web
 
 Extract to Downloads
 
@@ -10,7 +11,6 @@ Usage:
     python add_gpr_twt.py
 
 '''
-
 
 import pandas as pd
 from os.path import join, abspath, expanduser
@@ -27,22 +27,20 @@ def main():
     start = time.time()
     site_name = 'Grand Mesa'
     timezone = 'MST'
-
-    # Add the entire gpr dataset
-    fname = join('~','Downloads','NSIDC_GPR_Package','SNEX20_BSU_GPR_TT',
-                                 'BSU_pE_GPR_01282020_01292020_02042020_TWT',
-                                 'BSU_pE_GPR_01282020_01292020_02042020_TWT.csv')
+    file = '~/Downloads/SNEX20_BSU_GPR/BSU_pE_GPR_01282020_01292020_02042020/BSU_pE_GPR_01282020_01292020_02042020_decimated.csv'
 
     # Start the Database
     db_name = 'snowex'
     engine, session = get_db(db_name)
 
-    csv = PointDataCSV(abspath(expanduser(fname)), units='ns', site_name=site_name,
+    csv = PointDataCSV(abspath(expanduser(file)), site_name=site_name,
                                           timezone=timezone,
                                           epsg=26912,
+                                          depth_is_metadata=False,
                                           surveyors='Tate Meehan',
-                                          instrument='Pulse Ekko Pro')
+                                          instrument='pulse EKKO Pro multi-polarization 1 GHz GPR')
     csv.submit(session)
+    session.close()
     return len(csv.errors)
 
 if __name__ == '__main__':
