@@ -35,44 +35,69 @@ Snow Micropen (SMP)
 
 UAVSAR
 ------
+Files are originally in a unique binary format. The tools here for maintainers
+convert those to geotiffs which results in a lat long geographic coordinate system.
+This is then re-projected to UTM 12 NAD 83. Then on upload the images at tiled to
+500x 500 pixels.
+
+* Initially downloaded from HP GDRIVE
+
+Amplitude (.amp#.grd)
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+* There are two Amplitude files. The int, cor files are derived products that
+  come from two overflights. amp1 refers to the first flight and amp2 the second.
+* The primary date for these is the same as the Time of flight mentioned in the
+  annotation file.
 
 Interferogram (.int.grd)
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
 * The data is a complex format. Each component is 4 bits (8 total). Set in a
   standard real + imaginary j format. These values can be negative (e.g int4)
+* Stored in the Database as `insar interferogram`
+* The description in the database stores the flights dates
+* The primary date in the database is the same as the last flight
+* Labeled `insar interferogram real` and 'insar interferogram imaginary'
+  for each component of the data
+* Stored in Linear power and radians
 
-Amplitude (.amp.grd)
-~~~~~~~~~~~~~~~~~~~~~~~~
-Coming Soon, Data on Google Drive Now
+Correlation
+~~~~~~~~~~~
+* Labeled as 'insar correlation'
+* Stored as a scalar between 0-1
+
 
 Ground Penetrating Radar (GPR)
 ------------------------------
 * `Download <https://drive.google.com/file/d/1gxP3rHoIEXeBAi0ipEKbF_ONQhYWuz_0/view>`_
-
-
 * The system is made by Sensors & Software, pulse EKKO Pro (pE) is the model,
   multi-polarization 1 GHz GPR
 * Tate Meehan was the surveyor for all BSU GPR data
 * Column UTCtod is HHMMSS.sss (24 hour Zulu time of day with the colons removed.)
 * Column UTCdoy is days since January 1. So February 1 = 32.
-
-Amplitude
-~~~~~~~~~
-(NOT IN YET)
-* Will be stored as a vertical profile (Layers table).
+* Uploaded to the DB: two_way_travel, depth, density, and swe
 
 SWE
 ~~~
+* Stored in millimeters
 
 depth
 ~~~~~
+* Stored in centimeters
 
 Two Way Travel Time
 ~~~~~~~~~~~~~~~~~~~
 
 * Labeled at `twt` in the CSV and renamed to `two_way_travel` in database
 * Exists as point data (e.g. single value with lat long and other metadata)
+* Stored in nanoseconds
+
+density
+~~~~~~~
+* Stored as `avgDensity` renamed to `density`
+* Stored in kg/m^3
+
 
 
 Stratigraphy
@@ -100,3 +125,13 @@ LWC files contain dielectric constant data
 
 * Dielectric constants have multiple samples. The main value is the average of
   these values horizontally
+
+
+Snow Off DEM
+------------
+
+The lidar snow off data is from the USGS 1m lidar acquisition which mostly
+covers the entire survey site.
+
+* Sources are described `./scripts/3DEP_sources_1m_DEM.txt`
+* Downloaded using `./download_snow_off.sh`
