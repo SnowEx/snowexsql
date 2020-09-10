@@ -194,12 +194,12 @@ class TestSiteDetailseHeader(DataHeaderTestBase):
         super().setup_class(self)
 
 class TestDepthsHeader(DataHeaderTestBase):
-    depth_is_metadata=False
+    depth_is_metadata = False
 
     def setup_class(self):
         self.file = 'depths.csv'
         self.data_names = ['depth']
-        self.columns = ['instrument', 'id', 'date', 'time', 'longitude',
+        self.columns = ['id','instrument', 'date', 'time', 'longitude',
                         'latitude','easting', 'northing', 'elevation',
                         'equipment', 'version_number'] + self.data_names
 

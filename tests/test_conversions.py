@@ -32,7 +32,7 @@ class TestConversionsOnDB(DBSetup):
 
         # Upload some point data
         fname = join(self.data_dir, 'depths.csv' )
-        csv = PointDataCSV(fname, units='cm', site_name='Grand Mesa', timezone='MST', epsg=26912)
+        csv = PointDataCSV(fname, depth_is_metadata=False, units='cm', site_name='Grand Mesa', timezone='MST', epsg=26912)
         csv.submit(self.session)
 
 
@@ -68,12 +68,6 @@ class TestConversionsOnDB(DBSetup):
         np.testing.assert_approx_equal(v, 3058.005, significant=3)
 
 # # Does not require a database
-#     @pytest.mark.parametrize("DataCls,attributes",[
-#     (SiteData, site_atts),
-#     (PointData, point_atts),
-#     (LayerData, layer_atts),
-#     (ImageData, raster_atts)])
-
 class InSarToRasterioBase():
     '''
     Convert the UAVSAR grd files to tif.
@@ -229,4 +223,3 @@ def test_reproject_to_utm():
     # INSAR_to_rasterio(join(d, input_f), temp)
 
     reproject_to_utm(join(d, input_f), join(temp, 'temp.tif'), dst_epsg=26912)
-    

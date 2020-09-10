@@ -10,7 +10,7 @@ import pytest
 
 class TestDB(DBSetup):
 
-    base_atts = ['id', 'site_name','date','site_id']
+    base_atts = ['site_name','date','site_id']
     single_loc_atts = ['latitude','longitude','easting','elevation','utm_zone','geom','time']
 
     meas_atts = ['instrument','type', 'units','surveyors']
