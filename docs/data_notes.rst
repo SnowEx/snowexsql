@@ -99,7 +99,6 @@ density
 * Stored in kg/m^3
 
 
-
 Stratigraphy
 ------------
 
@@ -127,11 +126,32 @@ LWC files contain dielectric constant data
   these values horizontally
 
 
-Snow Off DEM
-------------
+USGS Snow Off DEM
+------------------
 
 The lidar snow off data is from the USGS 1m lidar acquisition which mostly
 covers the entire survey site.
 
-* Sources are described `./scripts/3DEP_sources_1m_DEM.txt`
+* Sources are described `./scripts/3DEP_sources_1m_DEM.txt`, but found by
+  using https://viewer.nationalmap.gov/basic/
 * Downloaded using `./download_snow_off.sh`
+* Labeled as `snow off digital elevation model`
+
+Quantum Spatial Inc.
+--------------------
+Raster dems from QSI.
+
+Bare Earth Digital Elevation Models
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* SNOW ON without vegetation height.
+* Stored in meters
+* labeled as `bare earth digital elevation models`
+
+
+Digital Surface Models
+~~~~~~~~~~~~~~~~~~~~~~
+
+* SNOW ON with vegetation height.
+* Stored in meters
+* labeled as `digital surface models`
