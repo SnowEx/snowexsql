@@ -202,7 +202,7 @@ class PointDataCSV(object):
     measurement_names = {'mp':'magnaprobe','m2':'mesa', 'pr':'pit ruler'}
 
     # Units to apply
-    units = {'depths':'cm','two_way_travel':'ns','swe':'mm',
+    units = {'depth':'cm','two_way_travel':'ns','swe':'mm',
              'density':'kg/m^3'}
 
     # Class attributes to apply
@@ -264,7 +264,7 @@ class PointDataCSV(object):
         df['value'] = self.df[data_name].copy()
         df['type'] = data_name
 
-        # Add units 
+        # Add units
         if data_name in self.units.keys():
             df['units'] = self.units[data_name]
 

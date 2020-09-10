@@ -4,7 +4,7 @@ from sqlalchemy.orm import sessionmaker
 
 import os
 from os.path import join, dirname
-
+from numpy.testing import assert_almost_equal
 from snowxsql.db import get_db, initialize
 from snowxsql.upload import UploadProfileData
 from snowxsql.data import LayerData
@@ -128,7 +128,10 @@ class TableTestBase(DBSetup):
         records = q.all()
 
         received = getattr(records[0], attribute_to_check)
-        assert received == expected
+        if type(received) == float:
+            assert_almost_equal(received, expected, 6)
+        else:
+            assert received == expected
 
     def test_unique_count(self, data_name, attribute_to_count, expected_count):
         '''

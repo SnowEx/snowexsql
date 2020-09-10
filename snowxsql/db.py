@@ -63,4 +63,6 @@ def get_table_attributes(DataCls):
 
     valid_attributes = [att for att in dir(DataCls) if att[0] !='_']
 
+    # Drop ID as it is (should) never provided
+    valid_attributes = [v for v in valid_attributes if v != 'id']
     return valid_attributes
