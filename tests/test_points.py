@@ -6,63 +6,47 @@ from os.path import join, dirname
 from snowxsql.upload import PointDataCSV
 from snowxsql.data import PointData
 
-from  .sql_test_base import DBSetup
+from  .sql_test_base import DBSetup, TableTestBase
 import datetime
 import pytest
 
+from .sql_test_base import DBSetup, pytest_generate_tests
 
-class PointsBase(DBSetup):
-    fname = ''
-    units = ''
-    timezone = 'MST'
-
-    @classmethod
-    def setup_class(self):
-        '''
-        Setup the database one time for testing
-        '''
-        super().setup_class()
-
-        fname = join(self.data_dir, self.fname)
-        csv = PointDataCSV(fname, depth_is_metadata=False, units=self.units,
-                                  site_name='Grand Mesa',
-                                  timezone=self.timezone,
-                                  epsg=26912, surveyors='TEST')
-        csv.submit(self.session)
-        self.base_query = self.session.query(PointData).filter(PointData.type == self.variable)
-
-    def assert_record_count(self, count, unique=False, attr='value'):
-        '''
-        Assert the main query returns a certain number of records.
-        If the unique is used then assert that there is a certain count of
-        unique records from the database, useful for dates counting or
-        other attributes
-        '''
-
-        records = self.base_query.all()
-
-        if unique:
-            assert len(set([getattr(d, attr) for d in records]))
-        else:
-            assert len(records) == count
-
-    def assert_value_assignment(self, query, expected):
-        '''
-        Provide a query and assert its expected value
-        '''
-        records = query.all()
-        assert records[0][0] == expected
+class PointsBase(TableTestBase):
+    args = []
+    kwargs = dict(timezone='MST',
+                  depth_is_metadata=False,
+                  site_name='Grand Mesa',
+                  epsg=26912,
+                  surveyors='TEST')
+    TableClass = PointData
+    UploaderClass = PointDataCSV
 
 
 class TestPoints(PointsBase):
     '''
     Class to test general behavior for the database, checking datatypes, and
-    geopandas compliance
+    geopandas compliance. Also check that we uploaded snowdepths correctly
     '''
+    args = ['depths.csv']
+    params = {
+    'test_count':[
+            # Test that we uploaded 10 records
+            dict(data_name='depth', expected_count=10)
+                ],
 
-    fname = 'depths.csv'
-    variable = 'depth'
-    units = 'cm'
+    'test_value': [
+            # Test the actual value of the dataset
+            dict(data_name='depth', attribute_to_check='value', filter_attribute='id', filter_value=1, expected=94),
+            # Test we rename the instrument correctly
+            dict(data_name='depth', attribute_to_check='instrument', filter_attribute='id', filter_value=1, expected='magnaprobe')
+            ],
+
+    'test_unique_count': [
+            # Test we have 5 unique dates
+            dict(data_name='depth', attribute_to_count='date', expected_count=5)
+            ]
+            }
 
     def test_point_datatypes(self):
         '''
@@ -87,7 +71,7 @@ class TestPoints(PointsBase):
                 'equipment': str,
                 'value': float}
 
-        r = self.base_query.limit(1).one()
+        r = self.session.query(PointData).limit(1).one()
         for c, dtype in dtypes.items():
             db_type = type(getattr(r, c))
             assert (db_type == dtype) or (db_type == type(None))
@@ -99,30 +83,6 @@ class TestPoints(PointsBase):
         records = self.session.query(PointData).limit(1).all()
         assert hasattr(records[0], 'geom')
 
-    def test_data_entry(self):
-        '''
-        Test that the data was entered successfully
-        '''
-        q = self.session.query(PointData.value).filter(PointData.id == 1)
-        self.assert_value_assignment(q, 94)
-
-    def test_snowdepth_counts(self):
-        '''
-        Test uploading snowdepths to db
-        '''
-        # Assert there are 10 snowdepths entered
-        self.assert_record_count(10)
-
-    def test_unique_dates(self):
-        # 5 unique dates
-        self.assert_record_count(5, unique=True, attr='date')
-
-    def test_instrument_name(self):
-        '''
-        Test measurement tool is renamed to instrument
-        '''
-        q = self.session.query(PointData.instrument).filter(PointData.id == 1)
-        self.assert_value_assignment(q, 'magnaprobe')
 
 class TestGPR(PointsBase):
     fname = 'gpr.csv'
@@ -162,6 +122,5 @@ class TestGPR(PointsBase):
         '''
 
         '''
-        # Not sure why thie first entry is 100000 but it is and it should be 94 cm
         q = self.session.query(getattr(PointData, column)).filter(getattr(PointData, filter_att)==filter_value)
         self.assert_value_assignment(q, expected)
