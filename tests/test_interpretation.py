@@ -23,19 +23,25 @@ def test_cardinal_to_degrees_value_error():
     with pytest.raises(ValueError):
         d = convert_cardinal_to_degree('')
 
-@pytest.mark.parametrize("data",
-[({'date/time': '2020-02-05-10:45'}),
- ({'date':'2020-02-05', 'time':'10:45'}),
- ({'utcyear': 2020, 'utcdoy': 36, 'utctod': 104500.00})])
-def test_add_date_time_keys(data):
+mst = pytz.timezone('MST')
+this_day =  date(year=2020, month=1, day=1)
+this_time = time(hour=0, tzinfo=mst)
+@pytest.mark.parametrize("data, expected_date, expected_time",
+[({'date/time': '2020-01-01-00:00'}, this_day, this_time),
+ ({'date':'2020-01-01', 'time':'00:00'}, this_day, this_time),
+ ({'utcyear': 2020, 'utcdoy': 1, 'utctod': '070000.00'}, this_day, this_time),
+ # Test we can hanlde the milli seconds
+ ({'utcyear':2019, 'utcdoy':35, 'utctod':214317.222}, date(year=2019, month=2, day=4), time(hour=14, minute=43, second=17, microsecond=222000, tzinfo=mst))
+])
+def test_add_date_time_keys(data, expected_date, expected_time):
     '''
     Test that the date and time keys can be added from various scenarios
     '''
 
     d = add_date_time_keys(data, timezone='MST')
 
-    assert d['date'] ==date(year=2020, month=2, day=5)
-    assert d['time'] == time(hour=10, minute=45, tzinfo=pytz.timezone('MST'))
+    assert d['date'] ==expected_date
+    assert d['time'] == expected_time
 
     # Ensure we always remove the original keys used to interpret
     for k in ['utcdoy','utctod','datetime']:

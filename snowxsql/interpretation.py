@@ -155,21 +155,22 @@ def add_date_time_keys(data, timezone='MST'):
 
     # Handle gpr data dates
     elif 'utcyear' in keys and 'utcdoy' in keys and 'utctod' in keys:
-        base = pd.to_datetime('{:d}-01-01 00:00:00 '.format(int(data['utcyear'])) + timezone)
+        base = pd.to_datetime('{:d}-01-01 00:00:00 '.format(int(data['utcyear'])) + 'UTC')
 
         # Number of days since january 1
         d = int(data['utcdoy']) - 1
 
         # Zulu time (time without colons)
         time = str(data['utctod'])
-        hr = int(time[0:2])
-        mm = int(time[2:4])
-        ss = int(time[4:6])
-        ms = int(time.split('.')[-1])
+        hr = int(time[0:2]) # hours
+        mm = int(time[2:4]) # minutes
+        ss = int(time[4:6]) # seconds
+        ms = int(float('0.' + time.split('.')[-1]) * 1000) # milliseconds
 
         delta = datetime.timedelta(days=d, hours=hr, minutes=mm, seconds=ss,
                                                                 milliseconds=ms)
-        d = base + delta
+        d = base.astimezone(pytz.timezone(timezone)) + delta
+        print(data['utcdoy'], data['utctod'], d)
 
         # Remove them
         for v in ['utcyear', 'utcdoy', 'utctod']:
