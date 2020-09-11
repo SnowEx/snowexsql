@@ -17,6 +17,9 @@ import shutil
 import glob
 import time
 
+log = get_logger('grd2tif')
+
+
 def convert(filenames, output, epsg):
     '''
     Convert all grd files from the UAVSAR grd to tiff. Then reporjects
@@ -27,8 +30,6 @@ def convert(filenames, output, epsg):
         output: directory to output files to
         epsg: epsg of the resulting file
     '''
-    log = get_logger('grd2tif')
-
     # Keep track of errors, time elapsed, and number of files completed
     start = time.time()
     errors = []
