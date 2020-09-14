@@ -229,17 +229,36 @@ class TestSMPMeasurementLog():
     '''
     Class for testing the snowxsql.metadata.SMPMeasurementLog class.
     '''
+    @classmethod
     def setup_class(self):
         self.data = abspath(join(dirname(__file__), 'data'))
         self.smp_log = SMPMeasurementLog(join(self.data, 'smp_log.csv'))
         self.df = self.smp_log.df
 
-    def test_surveyors(self):
+    @pytest.mark.parametrize('column, index, expected', [
+    ('surveyors',-1, 'HP Marshall'),
+    ('surveyors',0, 'Ioanna Merkouriadi'),
+    ])
+    def test_value(self, column, index, expected):
         '''
         Test surveyorss initials are renamed correctly
         '''
-        assert self.df['surveyors'].iloc[-1] == 'HP Marshall'
-        assert self.df['surveyors'].iloc[0] == 'Ioanna Merkouriadi'
+        assert self.df[column].iloc[index] == expected
+
+    @pytest.mark.parametrize("count_column, expected_count", [
+    # Assert there are 2 surveyors listed in the log
+    ('surveyors', 2),
+    # Assert there are two dates in the log
+    ('date', 2),
+    # Assert there is 4 suffixes in the log (e.g. all of them)
+    ('fname_sufix', 4),
+    ])
+    def test_unique_count(self, count_column, expected_count):
+        '''
+        Test surveyorss initials are renamed correctly
+        '''
+        assert len((self.df[count_column]).unique()) == expected_count
+        # assert self.df['surveyors'].iloc[0] == 'Ioanna Merkouriadi'
 
 
 class TestReadInSarAnnotation():
