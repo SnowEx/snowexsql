@@ -149,6 +149,17 @@ class TestUploadSMPBatch(BatchBase):
             ]
         }
 
+    @pytest.mark.parametrize('site, count',[
+    ('5S21',10),
+    ('2N12', 10)
+    ])
+    def test_single_profile_count(self, site, count):
+        '''
+        Ensure that each site can be filtered to its 10 points in its own profile
+        '''
+        records = self.session.query(LayerData).filter(LayerData.site_id == site).all()
+        assert len(records) == count
+
 class TestUploadRasterBatch(BatchBase):
     '''
     Class testing the batch uploading of rasters
