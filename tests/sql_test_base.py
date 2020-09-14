@@ -72,6 +72,10 @@ class TableTestBase(DBSetup):
     # Always define this using a table class from data.py and is used for ORM
     TableClass = None
 
+    # First filter to be applied is count_attribute == data_name
+    count_attribute = 'type'
+
+
     # Define params which is a dictionary of test names and their args
     params = {
     'test_count':[dict(data_name=None, expected_count=None)],
@@ -85,9 +89,26 @@ class TableTestBase(DBSetup):
         Setup the database one time for testing
         '''
         super().setup_class()
-        self.args[0] = join(self.data_dir, self.args[0])
+
+        # Batches always provide a list of files
+        if type(self.args[0]) == list:
+            self.args[0] = [join(self.data_dir, f) for f in self.args[0]]
+        # Single uploaders only upload a single file
+        else:
+            self.args[0] = join(self.data_dir, self.args[0])
+
+        # Incase we have a smp_log file make it point to the data folder too
+        if 'smp_log_f' in self.kwargs.keys():
+            if self.kwargs['smp_log_f'] != None:
+                self.kwargs['smp_log_f'] = join(self.data_dir, self.kwargs['smp_log_f'])
+
         u = self.UploaderClass(*self.args, **self.kwargs)
-        u.submit(self.session)
+
+        # Allow for batches and single upload
+        if 'batch' in self.UploaderClass.__name__.lower():
+            u.push()
+        else:
+            u.submit(self.session)
 
     def get_query(self, filter_attribute, filter_value, query=None):
         '''
@@ -105,14 +126,13 @@ class TableTestBase(DBSetup):
         if query == None:
             query = self.session.query(self.TableClass)
         q = query.filter(getattr(self.TableClass, filter_attribute) == filter_value)
-
         return q
 
     def test_count(self, data_name, expected_count):
         '''
         Test the record count of a data type
         '''
-        q = self.get_query('type', data_name)
+        q = self.get_query(self.count_attribute, data_name)
         records = q.all()
         assert len(records) == expected_count
 
@@ -121,24 +141,26 @@ class TableTestBase(DBSetup):
         Test that the first value in a filtered record search is as expected
         '''
         # Filter  to the data type were querying
-        q = self.get_query('type', data_name)
+        q = self.get_query(self.count_attribute, data_name)
 
         # Add another filter by some attribute
         q = self.get_query(filter_attribute, filter_value, query=q)
         records = q.all()
 
         received = getattr(records[0], attribute_to_check)
+
         if type(received) == float:
             assert_almost_equal(received, expected, 6)
         else:
             assert received == expected
+
 
     def test_unique_count(self, data_name, attribute_to_count, expected_count):
         '''
         Test that the number of unique values in a given attribute is as expected
         '''
         # Add another filter by some attribute
-        q = self.get_query('type', data_name)
+        q = self.get_query(self.count_attribute, data_name)
         records = q.all()
         received = len(set([getattr(r, attribute_to_count) for r in records]))
         assert received == expected_count
