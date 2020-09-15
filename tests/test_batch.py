@@ -6,6 +6,9 @@ from snowxsql.data import LayerData, SiteData, ImageData
 from datetime import date, time
 import pytz
 
+#Delete
+import matplotlib.pyplot as plt
+
 class TestUploadSiteDetailsBatch(TableTestBase):
     '''
     Test uploading mulitple site details files to the sites table
@@ -56,17 +59,20 @@ class TestUploadSMPBatch(TableTestBase):
     '''
 
     args = [['S19M1013_5S21_20200201.CSV','S06M0874_2N12_20200131.CSV']]
-    kwargs = {'db_name':'test', 'timezone':'UTC', 'smp_log_f': 'smp_log.csv'}
+    kwargs = {'db_name':'test', 'timezone':'UTC', 'smp_log_f': 'smp_log.csv','units':'Newtons'}
     UploaderClass = UploadProfileBatch
     TableClass = LayerData
     attribute='depth'
 
     params = {
-    'test_count':[dict(data_name='force', expected_count=20)],
+    # Test that the number of entries equals the number of lines of data from both files
+    'test_count':[dict(data_name='force', expected_count=(242 + 154))],
+    
     'test_value': [dict(data_name='force', attribute_to_check='site_id', filter_attribute='depth', filter_value=-100, expected='5S21'),
                    dict(data_name='force', attribute_to_check='site_id', filter_attribute='depth', filter_value=-0.4, expected='2N12'),
                    dict(data_name='force', attribute_to_check='comments', filter_attribute='depth', filter_value=-0.4, expected='started 1-2 cm below surface'),
-                   dict(data_name='force', attribute_to_check='time', filter_attribute='id', filter_value=1, expected=time(hour=23, minute=16, second=49, tzinfo=pytz.timezone('UTC')))
+                   dict(data_name='force', attribute_to_check='time', filter_attribute='id', filter_value=1, expected=time(hour=23, minute=16, second=49, tzinfo=pytz.timezone('UTC'))),
+                   dict(data_name='force', attribute_to_check='units', filter_attribute='depth', filter_value=-0.4, expected='Newtons'),
 
                    ],
     'test_unique_count': [dict(data_name='force', attribute_to_count='date', expected_count=2),
@@ -75,15 +81,19 @@ class TestUploadSMPBatch(TableTestBase):
 
 
     @pytest.mark.parametrize('site, count',[
-    ('5S21',10),
-    ('2N12', 10)
+    ('5S21',242),
+    ('2N12', 154)
     ])
     def test_single_profile_count(self, site, count):
         '''
         Ensure that each site can be filtered to its 10 points in its own profile
         '''
         records = self.session.query(LayerData).filter(LayerData.site_id == site).all()
+        depth = [r.depth for r in records]
+        value = [r.value for r in records]
+
         assert len(records) == count
+
 
 class TestUploadRasterBatch(TableTestBase):
     '''

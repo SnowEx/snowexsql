@@ -1,6 +1,7 @@
 
-from  .sql_test_base import LayersBase, pytest_generate_tests
+from  .sql_test_base import pytest_generate_tests, TableTestBase
 import pytest
+from snowxsql.upload import UploadProfileData
 from snowxsql.data import LayerData
 from datetime import date, time
 import pandas as pd
@@ -8,251 +9,191 @@ import pytz
 import datetime
 import numpy as np
 
-class TestStratigraphyProfile(LayersBase):
-    '''
-    Tests all stratigraphy uploading and value assigning
+# Delete
+import matplotlib.pyplot as plt
 
-    Only examine the data in the file were uploading
+class TestStratigraphyProfileB(TableTestBase):
+    '''
+    Test that all the profiles from the Stratigraphy file were uploaded and
+    have integrity
     '''
 
-    names = ['hand_hardness', 'grain_size', 'grain_type',
-                  'manual_wetness']
+    args = ['stratigraphy.csv']
+    kwargs = {'timezone':'MST'}
+    UploaderClass = UploadProfileData
+    TableClass = LayerData
     dt = datetime.datetime(2020, 2, 5, 13, 30, 0, 0, pytz.timezone('MST'))
 
     params = {
+    'test_count':[dict(data_name='hand_hardness', expected_count=5)],
 
-    'test_upload':[
-                # test uploading each main profile from the file
-                dict(csv_f='stratigraphy.csv', names=names, n_values=5),
-                ],
+    # Test a value from the profile to check that the profile is there and it has integrity
+    'test_value': [dict(data_name='hand_hardness', attribute_to_check='value', filter_attribute='depth', filter_value=30, expected='4F'),
+                   dict(data_name='grain_size', attribute_to_check='value', filter_attribute='depth', filter_value=35, expected='< 1 mm'),
+                   dict(data_name='grain_type', attribute_to_check='value', filter_attribute='depth', filter_value=17, expected='FC'),
+                   dict(data_name='manual_wetness', attribute_to_check='value', filter_attribute='depth', filter_value=17, expected='D'),
 
-    'test_attr_value': [
-        # Test a single value to all main profiles
-        dict(name='hand_hardness', depth=30, attribute='value', expected='4F'),
-        dict(name='grain_size', depth=35, attribute='value', expected='< 1 mm'),
-        dict(name='grain_type', depth=17, attribute='value', expected='FC'),
-        dict(name='manual_wetness', depth=17, attribute='value', expected='D'),
+                   # Test were are uploading most of the important attributes
+                   dict(data_name='hand_hardness', attribute_to_check='site_id', filter_attribute='depth', filter_value=30, expected='1N20'),
+                   dict(data_name='hand_hardness', attribute_to_check='date', filter_attribute='depth', filter_value=30, expected=dt.date()),
+                   dict(data_name='hand_hardness', attribute_to_check='time', filter_attribute='depth', filter_value=30, expected=dt.timetz()),
+                   dict(data_name='hand_hardness', attribute_to_check='site_name', filter_attribute='depth', filter_value=30, expected='Grand Mesa'),
+                   dict(data_name='hand_hardness', attribute_to_check='easting', filter_attribute='depth', filter_value=30, expected=743281),
+                   dict(data_name='hand_hardness', attribute_to_check='northing', filter_attribute='depth', filter_value=30, expected=4324005),
 
-        # Test that meta data from the header only is assigned
-        dict(name=names[0], depth=30, attribute='site_id', expected='1N20'),
-        dict(name=names[0], depth=30, attribute='date', expected=dt.date()),
-        dict(name=names[0], depth=30, attribute='time', expected=dt.timetz()),
-        dict(name=names[0], depth=30, attribute='site_name', expected='Grand Mesa'),
-        dict(name=names[0], depth=30, attribute='easting', expected=743281),
-        dict(name=names[0], depth=30, attribute='northing', expected=4324005),
-            ],}
+                   # Test the single comment was used
+                   dict(data_name='hand_hardness', attribute_to_check='comments', filter_attribute='depth', filter_value=17, expected='Cups'),
+
+                   ],
+
+    'test_unique_count': [
+                    # Test only 1 value was submitted to each layer for wetness
+                    dict(data_name='manual_wetness', attribute_to_count='value', expected_count=1),
+                    # Test only 3 hand hardness categories were used
+                    dict(data_name='hand_hardness', attribute_to_count='value', expected_count=3),
+                    # Test only 2 graint type categories were used
+                    dict(data_name='grain_type', attribute_to_count='value', expected_count=2),
+                    # Test only 2 grain_sizes were used
+                    dict(data_name='grain_size', attribute_to_count='value', expected_count=2),
 
 
-class TestDensityProfile(LayersBase):
+                    ]
+            }
+
+
+class TestDensityProfile(TableTestBase):
     '''
-    Tests all density uploading and value assigning
-
-    Only examine the data in the file were uploading
+    Test that a density file is uploaded correctly including sample
+    averaging for the main value.
     '''
 
-    names = ['density']
-
+    args = ['density.csv']
+    kwargs = {'timezone':'MST'}
+    UploaderClass = UploadProfileData
+    TableClass = LayerData
     dt = datetime.datetime(2020, 2, 5, 13, 30, 0, 0, pytz.timezone('MST'))
 
     params = {
+    'test_count':[dict(data_name='density', expected_count=4)],
 
-    'test_upload':[
-                # test uploading each main profile from the file
-                dict(csv_f='density.csv', names=names, n_values=4)],
-
-    'test_attr_value': [
-        # Test a single value to all main profiles
-        dict(name=names[0], depth=35, attribute='value', expected=np.mean([190, 245])),
-
-        # Test samples are renamed and assigned
-        dict(name=names[0], depth=35, attribute='sample_a', expected=190),
-        dict(name=names[0], depth=35, attribute='sample_b', expected=245),
-        # Tests that NaN is converted to None
-        dict(name=names[0], depth=35, attribute='sample_c', expected=None),
-            ],
-
-        }
+    # Test a value from the profile to check that the profile is there and it has integrity
+    'test_value': [dict(data_name='density', attribute_to_check='value', filter_attribute='depth', filter_value=35, expected=np.mean([190, 245])),
+                   dict(data_name='density', attribute_to_check='sample_a', filter_attribute='depth', filter_value=35, expected=190),
+                   dict(data_name='density', attribute_to_check='sample_b', filter_attribute='depth', filter_value=35, expected=245),
+                   dict(data_name='density', attribute_to_check='sample_c', filter_attribute='depth', filter_value=35, expected=None),
+                   ],
+    'test_unique_count': [
+                    # Place holder for this test: test only one site_id was added
+                    dict(data_name='density', attribute_to_count='site_id', expected_count=1)
+                    ]
+            }
 
     def test_bottom_depth(self):
         '''
         Insure bottom depth info is not lost after standardizing it
         '''
-        rs = self.session.query(LayerData.bottom_depth).filter(LayerData.site_id == self.site_id).all()
-        assert abs(rs[0][0] - rs[1][0]) == 10
+        records = self.session.query(LayerData.bottom_depth).filter(LayerData.id <= 2).all()
+        assert records[0][0] - records[1][0] == 10
 
 
-class TestLWCProfile(LayersBase):
+class TestLWCProfile(TableTestBase):
     '''
-    Tests all LWC uploading and value assigning
-
-    Only examine the data in the file were uploading
+    Test the an dielectric_constant file is uploaded correctly
     '''
 
-    names = ['dielectric_constant']
-
+    args = ['LWC.csv']
+    kwargs = {'timezone':'MST'}
+    UploaderClass = UploadProfileData
+    TableClass = LayerData
     dt = datetime.datetime(2020, 2, 5, 13, 30, 0, 0, pytz.timezone('MST'))
 
     params = {
+    'test_count':[dict(data_name='dielectric_constant', expected_count=4)],
 
-    'test_upload':[
-                # test uploading each main profile from the file
-                dict(csv_f='LWC.csv', names=names, n_values=4)],
-
-    'test_attr_value': [
-        # Test a single value to all main profiles
-        dict(name=names[0], depth=27, attribute='value', expected=np.mean([1.372, 1.35])),
-
-        # Test samples are renamed and assigned
-        dict(name=names[0], depth=27, attribute='sample_a', expected=1.372),
-        dict(name=names[0], depth=27, attribute='sample_b', expected=1.35),
-        dict(name=names[0], depth=27, attribute='sample_c', expected=None),
-            ]
-        }
+    # Test a value from the profile to check that the profile is there and it has integrity
+    'test_value': [dict(data_name='dielectric_constant', attribute_to_check='value', filter_attribute='depth', filter_value=27, expected=np.mean([1.372, 1.35])),
+                   dict(data_name='dielectric_constant', attribute_to_check='sample_a', filter_attribute='depth', filter_value=27, expected=1.372),
+                   dict(data_name='dielectric_constant', attribute_to_check='sample_b', filter_attribute='depth', filter_value=27, expected=1.35),
+                   dict(data_name='dielectric_constant', attribute_to_check='sample_c', filter_attribute='depth', filter_value=27, expected=None),
+                   ],
+    'test_unique_count': [
+                    # Place holder for this test: test only one location was added
+                    dict(data_name='dielectric_constant', attribute_to_count='northing', expected_count=1)
+                    ]
+            }
 
 
-class TestTemperatureProfile(LayersBase):
+class TestTemperatureProfile(TableTestBase):
     '''
-    Tests all temperature uploading and value assigning
-
-    Only examine the data in the file were uploading
+    Test that a temperature profile is uploaded to the DB correctly
     '''
 
-    names = ['temperature']
-
-    params = {
-
-    'test_upload':[
-                # test uploading each main profile from the file
-                dict(csv_f='temperature.csv', names=names, n_values=5)],
-
-    'test_attr_value': [
-        # Test a single value to all main profiles
-        dict(name=names[0], depth=10, attribute='value', expected=-5.9),
-
-        # Test samples are not assigned
-        dict(name=names[0], depth=35, attribute='sample_a', expected=None),
-        dict(name=names[0], depth=35, attribute='sample_b', expected=None),
-        dict(name=names[0], depth=35, attribute='sample_c', expected=None),
-            ]
-        }
-
-class TestSSAProfile(LayersBase):
-    '''
-    Tests all SSA uploading and value assigning
-
-    Only examine the data in the file were uploading
-    '''
-
-    names = ['reflectance','specific_surface_area', 'equivalent_diameter',
-             'sample_signal']
-
+    args = ['temperature.csv']
+    kwargs = {'timezone':'MST'}
+    UploaderClass = UploadProfileData
+    TableClass = LayerData
     dt = datetime.datetime(2020, 2, 5, 13, 40, 0, 0, pytz.timezone('MST'))
 
     params = {
+    'test_count':[dict(data_name='temperature', expected_count=5)],
 
-    'test_upload':[
-                # test uploading each main profile from the file
-                dict(csv_f='SSA.csv', names=names, n_values=16)],
+    # Test a value from each profile to check that the profile is there and it has integrity
+    'test_value': [dict(data_name='temperature', attribute_to_check='value', filter_attribute='depth', filter_value=10, expected=-5.9),
+                   dict(data_name='temperature', attribute_to_check='sample_a', filter_attribute='depth', filter_value=35, expected=None),
+                   ],
+    'test_unique_count': [
+                    # Place holder for this test: test only one location was added
+                    dict(data_name='temperature', attribute_to_count='northing', expected_count=1)
+                    ]
+            }
 
-    'test_attr_value': [
-        # Test a single value to all main profiles
-        dict(name='reflectance', depth=10, attribute='value', expected=22.12),
-        dict(name='specific_surface_area', depth=35, attribute='value', expected=11.20),
-        dict(name='equivalent_diameter', depth=80, attribute='value', expected=0.1054),
-        dict(name='sample_signal', depth=10, attribute='value', expected=186.9),
-
-        # Test samples are renamed and assigned
-        dict(name=names[0], depth=5, attribute='date', expected=dt.date()),
-        dict(name=names[0], depth=5, attribute='time', expected=dt.timetz()),
-        dict(name=names[0], depth=5, attribute='comments', expected='brush')
-            ]
-        }
-
-class TestSMPProfile(LayersBase):
+class TestSSAProfile(TableTestBase):
     '''
-    Tests all SSA uploading and value assigning
-
-    Only examine the data in the file were uploading
+    Test that all profiles from an SSA file are uploaded correctly
     '''
 
-    names = ['force']
+    args = ['SSA.csv']
+    kwargs = {'timezone':'MST'}
+    UploaderClass = UploadProfileData
+    TableClass = LayerData
+    dt = datetime.datetime(2020, 2, 5, 13, 40, 0, 0, pytz.timezone('MST'))
 
-    dt = datetime.datetime(2020, 1, 31, 22, 42, 14, 0, pytz.timezone('UTC'))
-    sep=':'
-    timezone = 'UTC'
-    site_id = None
     params = {
+    'test_count':[dict(data_name='reflectance', expected_count=16)],
 
-    'test_upload':[
-                # test uploading each main profile from the file
-                dict(csv_f='S06M0874_2N12_20200131.CSV', names=names, n_values=10)],
+    # Test a value from each profile to check that the profile is there and it has integrity
+    'test_value': [dict(data_name='reflectance', attribute_to_check='value', filter_attribute='depth', filter_value=10, expected=22.12),
+                   dict(data_name='specific_surface_area', attribute_to_check='value', filter_attribute='depth', filter_value=35, expected=11.2),
+                   dict(data_name='equivalent_diameter', attribute_to_check='value', filter_attribute='depth', filter_value=80, expected=0.1054),
+                   dict(data_name='sample_signal', attribute_to_check='value', filter_attribute='depth', filter_value=10, expected=186.9),
+                   dict(data_name='reflectance', attribute_to_check='comments', filter_attribute='depth', filter_value=5, expected='brush'),
 
-    'test_attr_value': [
-        # Test a single value to all main profiles
-        dict(name='force', depth=-0.4, attribute='value', expected=0.11),
+                   ],
+    'test_unique_count': [
+                    # Confirm we only have 1 comment and everything else is none
+                    dict(data_name='reflectance', attribute_to_count='comments', expected_count=2),
 
-        # # Test samples are renamed and assigned
-        dict(name=names[0], depth=-0.4, attribute='date', expected=dt.date()),
-        dict(name=names[0], depth=-0.4, attribute='time', expected=dt.timetz()),
-        dict(name=names[0], depth=-0.4, attribute='latitude', expected= 39.03013229370117),
-        dict(name=names[0], depth=-0.4, attribute='longitude', expected=-108.16268920898438)
-            ]
-        }
+                    ]
 
-## TODO: Move this to test_db.py
-    # def test_datatypes(self):
-    #     '''
-    #     Test that all layer attributes in the db are the correct type.
-    #     '''
-    #     dtypes = {'id': int,
-    #     'site_name': str,
-    #     'date': datetime.date,
-    #     'time': datetime.time,
-    #     'time_created': datetime.datetime,
-    #     'time_updated': datetime.datetime,
-    #     'latitude': float,
-    #     'longitude': float,
-    #     'northing': float,
-    #     'easting': float,
-    #     'utm_zone': str,
-    #     'elevation': float,
-    #     'type': str,
-    #     'value': str,
-    #     'depth': float,
-    #     'bottom_depth': float,
-    #     'site_id': str,
-    #     'pit_id': str,
-    #     'slope_angle': int,
-    #     'aspect': int,
-    #     'air_temp': float,
-    #     'total_depth': float,
-    #     'surveyors': str,
-    #     'weather_description': str,
-    #     'precip': str,
-    #     'sky_cover': str,
-    #     'wind': str,
-    #     'ground_condition': str,
-    #     'ground_roughness': str,
-    #     'ground_vegetation': str,
-    #     'vegetation_height': str,
-    #     'tree_canopy': str,
-    #     'site_notes': str,
-    #     'sample_a': str,
-    #     'sample_b': str,
-    #     'sample_c': str,
-    #     'comments': str}
-    #
-    #     records = get_profile(self, data_name=force, depth=0.4):
-    #
-    #     for r in records:
-    #         for c, dtype in dtypes.items():
-    #             db_type = type(getattr(r, c))
-    #             assert (db_type == dtype) or (db_type == type(None))
-    #
-    # def test_geopandas_compliance(self):
-    #     '''
-    #     Test the geometry column exists
-    #     '''
-    #     records = self.session.query(LayerData.geom).limit(1).all()
-    #     # To be compliant with Geopandas must be geom not geometry!
-    #     assert hasattr(records[0], 'geom')
+            }
+
+class TestSMPProfile(TableTestBase):
+    '''
+    Test SMP profile is uploaded with all its attributes and valid data
+    '''
+
+    args = ['S06M0874_2N12_20200131.CSV']
+    kwargs = {'timezone':'UTC','units':'Newtons', 'header_sep': ':'}
+    UploaderClass = UploadProfileData
+    TableClass = LayerData
+    dt = datetime.datetime(2020, 1, 31, 22, 42, 14, 0, pytz.timezone('UTC'))
+
+    params = {
+    'test_count':[dict(data_name='force', expected_count=154)],
+    'test_value': [dict(data_name='force', attribute_to_check='date', filter_attribute='depth', filter_value=-0.4, expected=dt.date()),
+                   dict(data_name='force', attribute_to_check='time', filter_attribute='depth', filter_value=-0.4, expected=dt.timetz()),
+                   dict(data_name='force', attribute_to_check='latitude', filter_attribute='depth', filter_value=-0.4, expected=39.03013229370117),
+                   dict(data_name='force', attribute_to_check='longitude', filter_attribute='depth', filter_value=-0.4, expected=-108.16268920898438),
+                   ],
+    'test_unique_count': [dict(data_name='force', attribute_to_count='date', expected_count=1)]
+            }
