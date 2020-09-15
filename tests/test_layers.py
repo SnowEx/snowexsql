@@ -174,8 +174,8 @@ class TestSSAProfile(TableTestBase):
                     dict(data_name='reflectance', attribute_to_count='comments', expected_count=2),
 
                     ]
-
             }
+
 
 class TestSMPProfile(TableTestBase):
     '''
@@ -190,7 +190,9 @@ class TestSMPProfile(TableTestBase):
 
     params = {
     'test_count':[dict(data_name='force', expected_count=154)],
-    'test_value': [dict(data_name='force', attribute_to_check='date', filter_attribute='depth', filter_value=-0.4, expected=dt.date()),
+    'test_value': [
+                   dict(data_name='force', attribute_to_check='value', filter_attribute='depth', filter_value=-53.17, expected=0.331),
+                   dict(data_name='force', attribute_to_check='date', filter_attribute='depth', filter_value=-0.4, expected=dt.date()),
                    dict(data_name='force', attribute_to_check='time', filter_attribute='depth', filter_value=-0.4, expected=dt.timetz()),
                    dict(data_name='force', attribute_to_check='latitude', filter_attribute='depth', filter_value=-0.4, expected=39.03013229370117),
                    dict(data_name='force', attribute_to_check='longitude', filter_attribute='depth', filter_value=-0.4, expected=-108.16268920898438),
