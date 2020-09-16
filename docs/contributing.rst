@@ -15,7 +15,7 @@ Types of Contributions
 Report Bugs
 ~~~~~~~~~~~
 
-Report bugs at https://github.com/hpmarshall/snowxsql/issues.
+Report bugs at https://github.com/hpmarshall/SnowEx2020_SQLcode/issues.
 
 If you are reporting a bug, please include:
 
@@ -42,18 +42,68 @@ snowXSQL could always use more documentation, whether as part of the
 official snowXSQL docs, in docstrings, or even on the web in blog posts,
 articles, and such.
 
-Examples
-~~~~~~~~
+Adding an Upload Script
+~~~~~~~~~~~~~~~~~~~~~~~
 
-This project can always use examples of using the data. To add an example
-simply create a new jupyter notebook under `docs/gallery`. Name the notebook
-`<your_project>_example.ipynb`. Note it must have the `_example` to be found by
-sphinx (documentation software). Once you have created it, if you produce any
-figures, add the following tags to your notebook cell that produces the figure
-of interest to make nice previews.
+One way of making the database more valuable is to expand what data it holds.
+To do this simply:
 
-* `nbsphinx-thumbnail`
-* `nbsphinx-gallery`
+1. Add a python script under `./scripts` using the naming convention
+   `add_<Your_awesome_data>.py`, this will allow for it to be detected by the
+   `run.py` script automatically.
+
+2. Add the follow code:
+
+    .. code-block:: python
+
+      # You may choose to import only your batch uploader
+      from snowxsql.batch import *
+
+      # Define your main function which will be called by run.py
+      def main():
+        '''
+        Uploader script for <My Data>
+        '''
+        # 1. Define the files to be uploaded.
+
+        # 2. Assign any contant metadata and pass it as keyword arguments to the uploader
+
+        # 3, Pass them to you batch uploader you need
+
+        # 4. Push to the database and collect the errors from push function
+
+        errors = [] # replace me with your errors = <your_batch_class>.push()
+        return errors
+
+      # Add this so you can run your script directly without running run.py
+      if __name__ == 'main':
+        main()
+
+3. If you are uploading a file with multiple datasets inside of it to the Layers
+   or point data tables, you will need to add their data names to metadata.py.
+   This will allow the uploaders to automatically detect the multiple profiles
+   in a single file. Simply add you data name to the class variable
+   `available_names <https://github.com/hpmarshall/SnowEx2020_SQLcode/blob/b4a0fb2baadedcd96fa95275c3d2262c69ed0cf4/snowxsql/metadata.py#L390>`
+   in metadata.py.
+
+
+Adding Jupyter Notebooks
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+This project can always use examples of using the data from the database. To
+add an example simply:
+
+1. Create a new jupyter notebook under `docs/gallery`. Name the notebook
+   `<your_project>_example.ipynb`. Note it must have the `_example` to be found by
+   sphinx (documentation software).
+
+2. Add a brief goal of the notebook and an enumerate steps list. Then use
+   markdown `###` e.g. `### Step 1:` to demarcate each step so it shows up in the table of contents
+
+3. After you have created/ran it, tag a cell with figures to make use of
+   thumbnails in the docs. Those are:
+                              * `nbsphinx-thumbnail`
+                              * `nbsphinx-gallery`
 
 *Note: you can assign these tags pretty easy by accident to other blocks simultaneously which
 will break the thumbnail generator. If your thumbnail doesn't show up then check
@@ -62,7 +112,7 @@ which blocks had tags enabled*
 Submit Feedback
 ~~~~~~~~~~~~~~~
 
-The best way to send feedback is to file an issue at https://github.com/hpmarshall/snowxsql/issues.
+The best way to send feedback is to file an issue at https://github.com/hpmarshall/SnowEx2020_SQLcode/issues.
 
 If you are proposing a feature:
 
@@ -79,7 +129,7 @@ Ready to contribute? Here's how to set up `snowxsql` for local development.
 1. Fork the `snowxsql` repo on GitHub.
 2. Clone your fork locally::
 
-    $ git clone git@github.com:your_name_here/snowxsql.git
+    $ git clone git@github.com:your_name_here/SnowEx2020_SQLcode.git
 
 3. Install your local copy into a virtualenv. Assuming you have virtualenvwrapper installed, this is how you set up your fork for local development::
 
@@ -118,7 +168,7 @@ Before you submit a pull request, check that it meets these guidelines:
    your new functionality into a function with a docstring, and add the
    feature to the list in README.rst.
 .. 3. The pull request should work for Python 3.5, 3.6, 3.7 and 3.8, and for PyPy. Check
-..    https://travis-ci.com/hpmarshall/snowxsql/pull_requests
+..    https://travis-ci.com/hpmarshall/SnowEx2020_SQLcode/pull_requests
    and make sure that the tests pass for all supported Python versions.
 
 Tips
