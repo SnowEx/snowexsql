@@ -9,8 +9,6 @@ import pytz
 import datetime
 import numpy as np
 
-# Delete
-import matplotlib.pyplot as plt
 
 class TestStratigraphyProfileB(TableTestBase):
     '''

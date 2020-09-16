@@ -6,8 +6,6 @@ from snowxsql.data import LayerData, SiteData, ImageData
 from datetime import date, time
 import pytz
 
-#Delete
-import matplotlib.pyplot as plt
 
 class TestUploadSiteDetailsBatch(TableTestBase):
     '''
@@ -67,7 +65,7 @@ class TestUploadSMPBatch(TableTestBase):
     params = {
     # Test that the number of entries equals the number of lines of data from both files
     'test_count':[dict(data_name='force', expected_count=(242 + 154))],
-    
+
     'test_value': [dict(data_name='force', attribute_to_check='site_id', filter_attribute='depth', filter_value=-100, expected='5S21'),
                    dict(data_name='force', attribute_to_check='site_id', filter_attribute='depth', filter_value=-0.4, expected='2N12'),
                    dict(data_name='force', attribute_to_check='comments', filter_attribute='depth', filter_value=-0.4, expected='started 1-2 cm below surface'),

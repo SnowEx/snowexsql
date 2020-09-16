@@ -6,6 +6,20 @@ to data that has been submitted to the database. This is not a complete list
 of variables stored in the database but only variables we felt needed notes
 due to decision making.
 
+
+General Gotchas
+----------------
+
+* In the database all data in the value column in the layers table is stored as
+  a string to accommodate all type of data that is put into it.
+
+* Layer data coming from the the database may not be returned in order. So you
+  should sort by depth to get a sensible profile.
+
+* All raster data returned from the database is returned in Well Known Binary
+  format.
+
+  
 Snow Micropen (SMP)
 -------------------
 
