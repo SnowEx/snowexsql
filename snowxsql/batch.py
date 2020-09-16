@@ -313,6 +313,8 @@ class UploadUAVSARBatch(BatchBase):
             # Flexibly form a comment for each of the products for dates
             meta['description'] = get_InSar_flight_comment(dname, desc)
 
+            # Add the polarization to the the comments
+            meta['description'] = 'Polarization = {}'.format(desc['polarization']['value'])
 
             self.log.info('Uploading {} as {}...'.format(r, meta['type']))
 

@@ -140,7 +140,7 @@ class TestUploadUAVSARBatch(TableTestBase):
                    dict(data_name='insar interferogram real', attribute_to_check='units', filter_attribute='id', filter_value=2, expected='Linear Power and Phase in Radians'),
                    dict(data_name='insar amplitude', attribute_to_check='date', filter_attribute='id', filter_value=3, expected=date(2020, 1, 31)),
                    dict(data_name='insar correlation', attribute_to_check='instrument', filter_attribute='id', filter_value=4, expected='UAVSAR, L-band InSAR'),
-
+                   dict(data_name='insar correlation', attribute_to_check='description', filter_attribute='id', filter_value=4, expected='Polarization = HH'),
                    ],
     # Test we have two dates for the insar amplitude overapasses
     'test_unique_count': [dict(data_name='insar amplitude', attribute_to_count='date', expected_count=2),]
