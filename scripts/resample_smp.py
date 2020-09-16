@@ -85,7 +85,7 @@ def make_comparison(f):
     plt.show()
 
 
-def resample_batch(filenames, output, downsample, header_pos=6):
+def resample_batch(filenames, output, downsample, header_pos=6, clean_on_start=True):
     '''
     Resample all the file names and save to the output dir
 
@@ -93,16 +93,19 @@ def resample_batch(filenames, output, downsample, header_pos=6):
         filenames: List of smp csv files needed to be subsampled
         output: directory to output files to
         downsample: Number of samples to subsample at (e.g. downsample=100 is subsampled to every 100th sample)
-
+        clean_on_start: Remove the output folder at the start when running
     '''
+
     log = get_logger('SMP Resample')
 
-    shutil.rmtree(output)
+    if clean_on_start:
+        shutil.rmtree(output)
+
+    if not isdir(output):
+        log.info('Making output folder {}'.format(output))
+        mkdir(output)
 
     log.info('Resampling {} SMP profiles...'.format(len(filenames)))
-
-    log.info('Making output folder {}'.format(output))
-    mkdir(output)
 
     # Loop over all the files, name them using the same name just using a different folder
     for f in filenames:
