@@ -52,7 +52,7 @@ Python
 ------
 Install the python package by:
 
-.. .. code-block:: bash
+.. code-block:: bash
 
   python setup.py install
 
@@ -130,13 +130,13 @@ You can either clone the public repository:
 
 .. code-block:: console
 
-    $ git clone git://github.com/hpmarshall/snowxsql
+    $ git clone git://github.com/hpmarshall/SnowEx2020_SQLcode
 
 Or download the `tarball`_:
 
 .. code-block:: console
 
-    $ curl -OJL https://github.com/hpmarshall/snowxsql/tarball/master
+    $ curl -OJL https://github.com/hpmarshall/SnowEx2020_SQLcode/tarball/master
 
 Once you have a copy of the source, you can install it with:
 
@@ -145,5 +145,5 @@ Once you have a copy of the source, you can install it with:
     $ python setup.py install
 
 
-.. _Github repo: https://github.com/hpmarshall/snowxsql
-.. _tarball: https://github.com/hpmarshall/snowxsql/tarball/master
+.. _Github repo: https://github.com/hpmarshall/SnowEx2020_SQLcode
+.. _tarball: https://github.com/hpmarshall/SnowEx2020_SQLcode/tarball/master
