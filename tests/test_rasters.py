@@ -1,5 +1,6 @@
 from sqlalchemy import MetaData
 import datetime
+import numpy as np
 
 from os import remove
 from os.path import join, dirname
@@ -12,21 +13,55 @@ from shapely.geometry import Point
 from geoalchemy2.shape import to_shape
 from geoalchemy2.elements import WKTElement
 from geoalchemy2.types import Raster
+
 from snowxsql.conversions import raster_to_rasterio
 
-class TestRasters(DBSetup):
+from  .sql_test_base import DBSetup, TableTestBase, pytest_generate_tests
+
+
+class TestRaster(TableTestBase):
+    '''
+    Test uploading a raster
+    '''
+
+    # Class to use to upload the data
+    UploaderClass = UploadRaster
+
+    # Positional arguments to pass to the uploader class
+    args = [join('be_gm1_0328','w001001x.adf')]
+
+    # Keyword args to pass to the uploader class
+    kwargs = {'type':'dem', 'epsg':26912, 'description':'test'}
+
+    # Always define this using a table class from data.py and is used for ORM
+    TableClass = ImageData
+
+    # First filter to be applied is count_attribute == data_name
+    count_attribute = 'type'
+
+
+    # Define params which is a dictionary of test names and their args
+    params = {
+    'test_count': [dict(data_name='dem', expected_count=1)],
+    'test_value': [dict(data_name='dem', attribute_to_check='description', filter_attribute='id', filter_value=1, expected='test')],
+    'test_unique_count': [dict(data_name='dem', attribute_to_count='id', expected_count=1)]
+            }
+
+class TestRasterOperations(DBSetup):
 
     def setup_class(self):
         '''
         Setup the database one time for testing
         '''
         super().setup_class()
+        # Positional arguments to pass to the uploader class
+        args = [join(self.data_dir, 'uavsar','uavsar_utm.amp1.real.tif')]
 
+        # Keyword args to pass to the uploader class
+        kwargs = {'type':'insar', 'epsg':26912, 'description':'test', 'tiled':True}
         # Upload two rasters (next two each other)
-        for d in ['be_gm1_0328', 'be_gm1_0287']:
-            self.raster_f = join(self.data_dir, d, 'w001001x.adf' )
-            u = UploadRaster(filename=self.raster_f, epsg=26912)
-            u.submit(self.session)
+        u = UploadRaster(*args, **kwargs)
+        u.submit(self.session)
 
     def test_raster_upload(self):
         '''
@@ -34,7 +69,7 @@ class TestRasters(DBSetup):
         '''
         records = self.session.query(ImageData.id).all()
         # Get the Geometry from the Well known binary format
-        assert len(records) == 2
+        assert len(records) == 4
 
     def test_raster_point_retrieval(self):
         '''
@@ -43,10 +78,12 @@ class TestRasters(DBSetup):
 
         # Get the first pixel as a point
         records = self.session.query(ST_PixelAsPoint(ImageData.raster, 1, 1)).limit(1).all()
-
+        received = to_shape(records[0][0])
+        print(received)
+        expected = Point(748446.1945536422, 4328702.971977075)
         # Convert geom to shapely object and compare
-        assert to_shape(records[0][0]) == Point(743000, 4324500)
-
+        np.testing.assert_almost_equal(received.x, expected.x, 6)
+        np.testing.assert_almost_equal(received.y, expected.y, 6)
 
     def test_raster_union(self):
         '''
@@ -65,31 +102,3 @@ class TestRasters(DBSetup):
         # Get the first pixel as a point
         merged = self.session.query(func.ST_Union(ImageData.raster, type_=Raster)).filter(ImageData.id.in_([1,2])).all()
         assert len(merged) == 1
-
-
-
-    # def test_raster_clip(self):
-    #     '''
-    #     Tests we can subset a raster by geometry
-    #     '''
-    #
-    #     # Grab our pit
-    #     site_fname = join(self.data_dir,'site_details.csv' )
-    #     pit = PitHeader(site_fname, 'MST')
-    #
-    #     # Create an element of a point at the pit
-    #     p = WKTElement('POINT({} {})'.format(pit.info['easting'], pit.info['northing']))
-    #
-    #     # Create a polygon buffered by 1 meters centered on pit
-    #     q = self.session.query(gfunc.ST_Buffer(p, 10))
-    #     buffered_pit = q.all()[0][0]
-    #     print(to_shape(buffered_pit))
-    #
-    #     # Clip the raster using buffered pit polygon
-    #     ras = self.session.query(ImageData.raster).all()
-    #     dataset  = raster_to_rasterio(self.session, ras)
-    #
-    #     show(dataset.read(1), transform=dataset.transform)
-    #     plt.show()
-    #     pixel_count = self.session.query(ras.ST_Count()).scalar()
-    #     # assert pixel_count == 12

@@ -355,12 +355,13 @@ class UploadRaster(object):
         s = check_output(cmd, stderr=STDOUT).decode('utf-8')
 
         # Split the SQL command at values (' which is the start of every one
-        tiles = s.split("VALUES ('")
+        tiles = s.split("VALUES ('")[1:]
         if len(tiles) > 1:
+            # -1 because the first element is not a
             self.log.info('Raster is split into {} tiles for uploading...'.format(len(tiles)))
 
         # Allow for tiling, the first split is always psql statement we don't need
-        for t in tiles[1:]:
+        for t in tiles:
             v = t.split("'::")[0]
             raster = RasterElement(v)
             self.data['raster'] = raster

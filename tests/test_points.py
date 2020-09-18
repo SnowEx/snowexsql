@@ -6,11 +6,10 @@ from os.path import join, dirname
 from snowxsql.upload import PointDataCSV
 from snowxsql.data import PointData
 
-from  .sql_test_base import DBSetup, TableTestBase
+from  .sql_test_base import DBSetup, TableTestBase, pytest_generate_tests
 import datetime
 import pytest
 
-from .sql_test_base import DBSetup, pytest_generate_tests
 
 class PointsBase(TableTestBase):
     args = []
