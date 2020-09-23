@@ -3,6 +3,9 @@ Module for functions that handle anything regarding coordinate projections.
 '''
 import utm
 from geoalchemy2.elements import WKTElement
+import rasterio
+from rasterio.warp import calculate_default_transform, reproject, Resampling
+
 
 def reproject_point_in_dict(info, is_northern=True):
     '''
@@ -12,6 +15,7 @@ def reproject_point_in_dict(info, is_northern=True):
     Args:
         info: Dictionary containing key northing/easting or latitude longitude
         is_northern: Boolean for which hemisphere this data is in
+
     Returns:
         result: Dictionary containing all previous information plus a coordinates
                 reprojected counter part
@@ -66,3 +70,38 @@ def add_geom(info, epsg):
                         ''.format(info['easting'], info['northing']),
                                   srid=epsg)
     return info
+
+
+def reproject_raster_by_epsg(input_f, output_f, epsg):
+    '''
+    Reproject a geotiff raster from one epsg to another
+
+    Args:
+        input_f: Input path to a geotiff
+        output_f: Output  location of a reprojected geotiff
+        epsg: Valid projection reference number
+    '''
+
+    dst_crs = 'EPSG:{}'.format(epsg)
+
+    with rasterio.open(input_f) as src:
+        transform, width, height = calculate_default_transform(
+            src.crs, dst_crs, src.width, src.height, *src.bounds)
+        kwargs = src.meta.copy()
+        kwargs.update({
+            'crs': dst_crs,
+            'transform': transform,
+            'width': width,
+            'height': height
+        })
+
+        with rasterio.open(output_f, 'w', **kwargs) as dst:
+            for i in range(1, src.count + 1):
+                reproject(
+                    source=rasterio.band(src, i),
+                    destination=rasterio.band(dst, i),
+                    src_transform=src.transform,
+                    src_crs=src.crs,
+                    dst_transform=transform,
+                    dst_crs=dst_crs,
+                    resampling=Resampling.bilinear)
