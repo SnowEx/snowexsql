@@ -43,21 +43,22 @@ def test_add_geom():
     assert p.x == info['easting']
     assert p.y == info['northing']
 
+
 class TestReprojectRasterByEPSG():
     output_f = join(dirname(__file__), 'test.tif')
 
-    def teardown_method(self):
-        '''
-        Remove our output file
-        '''
-        if isfile(self.output_f):
-            remove(self.output_f)
+    # def teardown_method(self):
+    #     '''
+    #     Remove our output file
+    #     '''
+    #     if isfile(self.output_f):
+    #         remove(self.output_f)
 
-    @pytest.mark.parametrize("input_f, epsg", [
-    ('uavsar_latlon.amp1.real.tif', 26912),
+    @pytest.mark.parametrize("input_f, epsg, bounds", [
+    ('uavsar_latlon.amp1.real.tif', 26912, (748446.1945536422, 4325651.650770078, 751909.2857505103, 4328702.971977075)),
 
     ])
-    def test_reproject(self, input_f, epsg):
+    def test_reproject(self, input_f, epsg, bounds):
         '''
         test reprojecting a raster from EPSG to another
         '''
@@ -67,5 +68,12 @@ class TestReprojectRasterByEPSG():
         reproject_raster_by_epsg(f, self.output_f, epsg)
 
         with rasterio.open(self.output_f) as dataset:
-            # Test our epsg was assigned
-            assert CRS.from_epsg(epsg) == dataset.crs
+            dbounds = dataset.bounds
+            dcrs = dataset.crs
+
+        # Test our epsg was assigned
+        assert CRS.from_epsg(epsg) == dataset.crs
+
+        # Assert bounds
+        for i,v in enumerate(bounds):
+            assert_almost_equal(v, dataset.bounds[i], 3)
