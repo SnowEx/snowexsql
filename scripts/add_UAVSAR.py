@@ -52,8 +52,16 @@ def main():
             'instrument': instrument,
             'tiled':True}
 
-    # Grab all the annotation files in the original data folder
-    ann_files = glob.glob(join(downloads, '*.ann'))
+    # Grab all the grand mesa annotation files in the original data folder
+    ann_files = glob.glob(join(downloads, 'grmesa*.ann'))
+    rs = UploadUAVSARBatch(ann_files, geotiff_dir=geotif_loc,  **data)
+    rs.push()
+    errors_count += len(rs.errors)
+
+    # Make adjustments for lowman files
+    data['site_name'] = 'idaho'
+    data['epsg'] = 29611
+    ann_files = glob.glob(join(downloads, 'lowman*.ann'))
     rs = UploadUAVSARBatch(ann_files, geotiff_dir=geotif_loc,  **data)
     rs.push()
     errors_count += len(rs.errors)

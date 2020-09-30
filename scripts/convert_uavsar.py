@@ -103,7 +103,8 @@ def convert(filenames, output, epsg):
 def main():
 
     # Reprojection EPSG
-    epsg = 26912
+    gm_epsg = 26912
+    boi_epsg = 26911
 
     # Folder to look for .grd files
     directory = '~/Downloads/SnowEx2020_UAVSAR'
@@ -115,22 +116,27 @@ def main():
     directory = abspath(expanduser(directory))
     output = join(directory, output)
 
-    # Gather all .grd files
-    filenames = glob.glob(join(directory, '*.ann'))
+    # Gather all .ann files
+    gm_filenames = glob.glob(join(directory, 'grmesa*.ann'))
+    boi_filenames = glob.glob(join(directory, 'lowman*.ann'))
+    nfiles = len(boi_filenames) + len(gm_filenames)
 
     if isdir(output):
         ans = input('\nWARNING! You are about overwrite {} previously '
                     'converted UAVSAR Geotiffs files located at {}!\nPress Y to'
                     ' continue and any other key to abort: '
-                    ''.format(len(filenames), output))
+                    ''.format(nfiles, output))
 
         if ans.lower() == 'y':
-            convert(filenames, output, epsg)
+            convert(gm_filenames, output, gm_epsg)
+            convert(boi_filenames, output, boi_epsg)
+
         else:
             log.warning('Skipping conversion and overwriting of UAVSAR files...')
     else:
         mkdir(output)
-        convert(filenames, output)
+        convert(gm_filenames, output, gm_epsg)
+        convert(boi_filenames, output, boi_epsg)
 
 
 if __name__ == '__main__':

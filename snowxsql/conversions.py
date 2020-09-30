@@ -48,7 +48,7 @@ def INSAR_to_rasterio(grd_file, desc, out_file):
     fkey = fparts[0]
     ftype = fparts[-2]
     dname = data_map[ftype]
-
+    print(ftype, fkey)
     log.info('Processing {} file...'.format(dname))
 
     # Grab the metadata for building our georeference
@@ -95,10 +95,6 @@ def INSAR_to_rasterio(grd_file, desc, out_file):
 
     for i, comp in enumerate(['real', 'imaginary']):
         if comp in z.dtype.names:
-
-            # Seems like a hack.... but based on the docs I think this is correct
-            # d = np.flip(z[comp], axis=0)
-            # d = np.flip(d, axis=1)
             d = z[comp]
             out = fbase.format(comp, ext)
             log.info('Writing to {}...'.format(out))
