@@ -100,7 +100,7 @@ class TestUploadRasterBatch(TableTestBase):
     args = [['be_gm1_0287/w001001x.adf','be_gm1_0328/w001001x.adf']]
     kwargs = {'db_name':'test', 'type':'dem', 'surveyors': 'QSI',
                                               'units':'meters',
-                                              'epsg':29612}
+                                              'epsg':26912}
     UploaderClass = UploadRasterBatch
     TableClass = ImageData
 
@@ -119,11 +119,12 @@ class TestUploadUAVSARBatch(TableTestBase):
     Test test the UAVSAR uploader by providing one ann file which should upload
     all of the uavsar images.
     '''
+    surveyors = 'UAVSAR team, JPL'
     # Upload all uav
     d = join(dirname(__file__), 'data', 'uavsar')
     args = [['uavsar.ann']]
-    kwargs = {'db_name':'test', 'surveyors': 'UAVSAR team, JPL',
-                       'epsg':29612,
+    kwargs = {'db_name':'test', 'surveyors':surveyors,
+                       'epsg':26912,
                        'geotiff_dir':d,
                        'instrument':'UAVSAR, L-band InSAR'}
 
@@ -136,12 +137,17 @@ class TestUploadUAVSARBatch(TableTestBase):
                   dict(data_name='insar interferogram real', expected_count=1),
                   dict(data_name='insar interferogram imaginary', expected_count=1)],
 
-    'test_value': [dict(data_name='insar interferogram imaginary', attribute_to_check='surveyors', filter_attribute='id', filter_value=1, expected='UAVSAR team, JPL'),
-                   dict(data_name='insar interferogram real', attribute_to_check='units', filter_attribute='id', filter_value=2, expected='Linear Power and Phase in Radians'),
-                   dict(data_name='insar amplitude', attribute_to_check='date', filter_attribute='id', filter_value=3, expected=date(2020, 1, 31)),
-                   dict(data_name='insar correlation', attribute_to_check='instrument', filter_attribute='id', filter_value=4, expected='UAVSAR, L-band InSAR'),
-                   dict(data_name='insar correlation', attribute_to_check='description', filter_attribute='id', filter_value=4, expected='Polarization = HH'),
+    'test_value': [dict(data_name='insar interferogram imaginary', attribute_to_check='surveyors', filter_attribute='units', filter_value='Linear Power and Phase in Radians', expected='UAVSAR team, JPL'),
+                   dict(data_name='insar interferogram real', attribute_to_check='units', filter_attribute='surveyors', filter_value=surveyors, expected='Linear Power and Phase in Radians'),
+                   dict(data_name='insar amplitude', attribute_to_check='date', filter_attribute='surveyors', filter_value=surveyors, expected=date(2020, 1, 31)),
+                   dict(data_name='insar correlation', attribute_to_check='instrument', filter_attribute='surveyors', filter_value=surveyors, expected='UAVSAR, L-band InSAR'),
+                   dict(data_name='insar correlation', attribute_to_check='description', filter_attribute='surveyors', filter_value=surveyors, expected='Polarization = HH'),
                    ],
     # Test we have two dates for the insar amplitude overapasses
     'test_unique_count': [dict(data_name='insar amplitude', attribute_to_count='date', expected_count=2),]
             }
+    def test_test(self):
+        '''
+        '''
+        r = self.session.query(ImageData).filter(ImageData.type == 'insar interferogram imaginary').all()
+        print(r)
