@@ -146,8 +146,3 @@ class TestUploadUAVSARBatch(TableTestBase):
     # Test we have two dates for the insar amplitude overapasses
     'test_unique_count': [dict(data_name='insar amplitude', attribute_to_count='date', expected_count=2),]
             }
-    def test_test(self):
-        '''
-        '''
-        r = self.session.query(ImageData).filter(ImageData.type == 'insar interferogram imaginary').all()
-        print(r)
