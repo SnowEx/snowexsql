@@ -20,7 +20,7 @@ import time
 log = get_logger('grd2tif')
 
 
-def convert(filenames, output, epsg):
+def convert(filenames, output, epsg,clean_first=False):
     '''
     Convert all grd files from the UAVSAR grd to tiff. Then reporjects
     the resulting files from Lat long to UTM, and then saves to the output dir
@@ -29,6 +29,7 @@ def convert(filenames, output, epsg):
         filenames: List of *.grd files needed to be converted
         output: directory to output files to
         epsg: epsg of the resulting file
+        clean_first: Boolean indicating whether to clear out the output folder first
     '''
     # Keep track of errors, time elapsed, and number of files completed
     start = time.time()
@@ -40,9 +41,12 @@ def convert(filenames, output, epsg):
 
     for d in [output, temp]:
         if isdir(d):
-            log.info('Removing {}...'.format(d))
-            shutil.rmtree(d)
-        mkdir(d)
+            if clean_first:
+                log.info('Removing {}...'.format(d))
+                shutil.rmtree(d)
+
+        if not isdir(d):
+            mkdir(d)
 
     nfiles = len(filenames)
 

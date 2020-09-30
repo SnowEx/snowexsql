@@ -48,7 +48,6 @@ def INSAR_to_rasterio(grd_file, desc, out_file):
     fkey = fparts[0]
     ftype = fparts[-2]
     dname = data_map[ftype]
-    print(ftype, fkey)
     log.info('Processing {} file...'.format(dname))
 
     # Grab the metadata for building our georeference
