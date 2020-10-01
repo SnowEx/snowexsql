@@ -98,7 +98,7 @@ class InSarToRasterioBase():
         if not os.path.isdir(self.temp):
             os.mkdir(self.temp)
 
-        self.desc = read_InSar_annotation(join(self.d,'uavsar_latlon.ann'))
+        self.desc = read_InSar_annotation(join(self.d, 'uavsar_latlon.ann'))
 
         # Output file
         f_pieces = self.input_f.split('.')[0:-1] + [self.component, 'tif']
@@ -109,7 +109,7 @@ class InSarToRasterioBase():
 
         os.mkdir(self.temp)
 
-        INSAR_to_rasterio(join(self.d, self.input_f), self.desc, join(self.temp, self.input_f.replace('grd','tif')))
+        INSAR_to_rasterio(join(self.d, self.input_f), self.desc, join(self.temp, self.input_f.replace('grd', 'tif')))
         self.dataset = rasterio.open(output_f)
         self.band = self.dataset.read(1)
 

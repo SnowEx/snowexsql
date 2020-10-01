@@ -10,7 +10,7 @@ import datetime
 import numpy as np
 
 
-class TestStratigraphyProfileB(TableTestBase):
+class TestStratigraphyProfile(TableTestBase):
     '''
     Test that all the profiles from the Stratigraphy file were uploaded and
     have integrity
