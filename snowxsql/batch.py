@@ -311,10 +311,12 @@ class UploadUAVSARBatch(BatchBase):
             meta['units'] = desc['{} units'.format(dname.split(' ')[0])]['value']
 
             # Flexibly form a comment for each of the products for dates
-            meta['description'] = get_InSar_flight_comment(dname, desc)
-
+            comment = get_InSar_flight_comment(dname, desc)
+            # add which dem was used which dictates the file name convert e.g. ...VV_01.int.grd
+            comment += ', DEM used = {}'.format(desc['dem used in processing']['value'])
             # Add the polarization to the the comments
-            meta['description'] = 'Polarization = {}'.format(desc['polarization']['value'])
+            comment += ', Polarization = {}'.format(desc['polarization']['value'])
+            meta['description'] = comment
 
             self.log.info('Uploading {} as {}...'.format(r, meta['type']))
 

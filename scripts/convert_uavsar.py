@@ -20,7 +20,7 @@ import time
 log = get_logger('grd2tif')
 
 
-def convert(filenames, output, epsg):
+def convert(filenames, output, epsg,clean_first=False):
     '''
     Convert all grd files from the UAVSAR grd to tiff. Then reporjects
     the resulting files from Lat long to UTM, and then saves to the output dir
@@ -29,6 +29,7 @@ def convert(filenames, output, epsg):
         filenames: List of *.grd files needed to be converted
         output: directory to output files to
         epsg: epsg of the resulting file
+        clean_first: Boolean indicating whether to clear out the output folder first
     '''
     # Keep track of errors, time elapsed, and number of files completed
     start = time.time()
@@ -40,9 +41,12 @@ def convert(filenames, output, epsg):
 
     for d in [output, temp]:
         if isdir(d):
-            log.info('Removing {}...'.format(d))
-            shutil.rmtree(d)
-        mkdir(d)
+            if clean_first:
+                log.info('Removing {}...'.format(d))
+                shutil.rmtree(d)
+
+        if not isdir(d):
+            mkdir(d)
 
     nfiles = len(filenames)
 
@@ -103,7 +107,8 @@ def convert(filenames, output, epsg):
 def main():
 
     # Reprojection EPSG
-    epsg = 26912
+    gm_epsg = 26912
+    boi_epsg = 26911
 
     # Folder to look for .grd files
     directory = '~/Downloads/SnowEx2020_UAVSAR'
@@ -115,22 +120,27 @@ def main():
     directory = abspath(expanduser(directory))
     output = join(directory, output)
 
-    # Gather all .grd files
-    filenames = glob.glob(join(directory, '*.ann'))
+    # Gather all .ann files
+    gm_filenames = glob.glob(join(directory, 'grmesa*.ann'))
+    boi_filenames = glob.glob(join(directory, 'lowman*.ann'))
+    nfiles = len(boi_filenames) + len(gm_filenames)
 
     if isdir(output):
         ans = input('\nWARNING! You are about overwrite {} previously '
                     'converted UAVSAR Geotiffs files located at {}!\nPress Y to'
                     ' continue and any other key to abort: '
-                    ''.format(len(filenames), output))
+                    ''.format(nfiles, output))
 
         if ans.lower() == 'y':
-            convert(filenames, output, epsg)
+            convert(gm_filenames, output, gm_epsg, clean_first=True)
+            convert(boi_filenames, output, boi_epsg)
+
         else:
             log.warning('Skipping conversion and overwriting of UAVSAR files...')
     else:
         mkdir(output)
-        convert(filenames, output)
+        convert(gm_filenames, output, gm_epsg)
+        convert(boi_filenames, output, boi_epsg)
 
 
 if __name__ == '__main__':

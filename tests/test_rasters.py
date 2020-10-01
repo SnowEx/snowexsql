@@ -17,7 +17,7 @@ from geoalchemy2.types import Raster
 from snowxsql.conversions import raster_to_rasterio
 
 from  .sql_test_base import DBSetup, TableTestBase, pytest_generate_tests
-
+from rasterio.plot import show
 
 class TestRaster(TableTestBase):
     '''
@@ -47,7 +47,10 @@ class TestRaster(TableTestBase):
     'test_unique_count': [dict(data_name='dem', attribute_to_count='id', expected_count=1)]
             }
 
-class TestRasterOperations(DBSetup):
+class TestTiledRaster(DBSetup):
+    '''
+    A class to test common operations and features of tiled raster in the DB
+    '''
 
     def setup_class(self):
         '''
@@ -63,13 +66,23 @@ class TestRasterOperations(DBSetup):
         u = UploadRaster(*args, **kwargs)
         u.submit(self.session)
 
-    def test_raster_upload(self):
+    def test_tiled_raster_count(self):
         '''
         Test two rasters uploaded
         '''
         records = self.session.query(ImageData.id).all()
-        # Get the Geometry from the Well known binary format
         assert len(records) == 4
+
+    def test_tiled_raster_size(self):
+        '''
+        Tiled raster should be 500x500 in most cases (can be smaller to fit domains)
+        '''
+        rasters = self.session.query(func.ST_AsTiff(ImageData.raster)).all()
+        datasets = raster_to_rasterio(self.session, rasters)
+
+        for d in datasets:
+            assert d.width <= 500
+            assert d.height <= 500
 
     def test_raster_point_retrieval(self):
         '''
@@ -79,8 +92,8 @@ class TestRasterOperations(DBSetup):
         # Get the first pixel as a point
         records = self.session.query(ST_PixelAsPoint(ImageData.raster, 1, 1)).limit(1).all()
         received = to_shape(records[0][0])
-        print(received)
         expected = Point(748446.1945536422, 4328702.971977075)
+
         # Convert geom to shapely object and compare
         np.testing.assert_almost_equal(received.x, expected.x, 6)
         np.testing.assert_almost_equal(received.y, expected.y, 6)
@@ -100,5 +113,21 @@ class TestRasterOperations(DBSetup):
         '''
 
         # Get the first pixel as a point
-        merged = self.session.query(func.ST_Union(ImageData.raster, type_=Raster)).filter(ImageData.id.in_([1,2])).all()
+        merged = self.session.query(func.ST_Union(ImageData.raster, type_=Raster)).filter(ImageData.id.in_([1, 2])).all()
         assert len(merged) == 1
+
+    def test_raster_bounds(self):
+        '''
+        Test the tile bounds are as expected
+        '''
+        rasters = self.session.query(func.ST_AsTiff(ImageData.raster)).all()
+        datasets = raster_to_rasterio(self.session, rasters)
+
+        # Original untiled raster bounds from gdalinfo
+        llx = 748446.195
+        lly = 4328702.972
+        urx = 751909.286
+        ury = 4328702.972
+
+        for d in datasets:
+            d.bound

@@ -5,7 +5,7 @@ from os.path import join, dirname
 
 from snowxsql.upload import PointDataCSV
 from snowxsql.data import PointData
-
+from snowxsql.metadata import DataHeader
 from  .sql_test_base import DBSetup, TableTestBase, pytest_generate_tests
 import datetime
 import pytest
@@ -81,6 +81,14 @@ class TestSnowDepths(PointsBase):
         '''
         records = self.session.query(PointData).limit(1).all()
         assert hasattr(records[0], 'geom')
+
+    def test_extended_geom(self):
+        '''
+        Test that the WKBElement is assigned an SRID which is not the default
+        behavior
+        '''
+        r = self.session.query(PointData.geom).limit(1).one()
+        assert r[0].srid == 26912
 
 class TestGPRPointData(PointsBase):
     gpr_dt =datetime.date(2019, 1, 28)

@@ -21,7 +21,7 @@ def main():
 
     # Grab only site details
     site_filenames = [f for f in filenames if 'site' in f]
-    b = UploadSiteDetailsBatch(site_filenames)
+    b = UploadSiteDetailsBatch(site_filenames, epsg=26912)
     b.push()
 
     # Submit all profiles associated with pit at a time

@@ -66,9 +66,9 @@ def add_geom(info, epsg):
               key with WKTElement value
     '''
     # Add a geometry entry
-    info['geom'] = WKTElement('POINT({} {})'
-                        ''.format(info['easting'], info['northing']),
-                                  srid=epsg)
+    info['geom'] = WKTElement('SRID={}; POINT({} {})'
+                        ''.format(epsg, info['easting'], info['northing']),
+                                 extended=True)
     return info
 
 

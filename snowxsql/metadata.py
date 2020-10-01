@@ -449,6 +449,7 @@ class DataHeader(object):
             if k in valid:
                  kwargs[k] = v
 
+        kwargs = add_geom(kwargs, self.info['epsg'])
         d = SiteData(**kwargs)
         session.add(d)
         session.commit()
