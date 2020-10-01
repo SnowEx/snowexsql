@@ -314,11 +314,10 @@ class UploadUAVSARBatch(BatchBase):
             comment = get_InSar_flight_comment(dname, desc)
             # add which dem was used which dictates the file name convert e.g. ...VV_01.int.grd
             comment += ', DEM used = {}'.format(desc['dem used in processing']['value'])
-
             # Add the polarization to the the comments
             comment += ', Polarization = {}'.format(desc['polarization']['value'])
             meta['description'] = comment
-            print(comment)
+
             self.log.info('Uploading {} as {}...'.format(r, meta['type']))
 
             d = self.UploaderClass(r, **meta)

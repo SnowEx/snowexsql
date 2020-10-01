@@ -132,7 +132,7 @@ def main():
                     ''.format(nfiles, output))
 
         if ans.lower() == 'y':
-            convert(gm_filenames, output, gm_epsg)
+            convert(gm_filenames, output, gm_epsg, clean_first=True)
             convert(boi_filenames, output, boi_epsg)
 
         else:
