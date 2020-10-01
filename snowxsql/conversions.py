@@ -7,6 +7,7 @@ import geopandas as gpd
 import rasterio
 from sqlalchemy.dialects import postgresql
 from rasterio import MemoryFile
+from rasterio.enums import Resampling
 from geoalchemy2.shape import to_shape
 from snowxsql.data import PointData
 from sqlalchemy.sql import func
@@ -21,6 +22,8 @@ from rasterio.plot import show
 from rasterio.transform import Affine
 from rasterio.warp import reproject, Resampling, calculate_default_transform
 import utm
+import tempfile
+
 
 # Remove later
 import matplotlib.pyplot as plt
@@ -222,3 +225,74 @@ def raster_to_rasterio(session, rasters):
             tmpfile.write(bdata)
             datasets.append(tmpfile.open())
     return datasets
+
+
+def crop(src, polygon, invert=False):
+    '''
+    Crop a rasterio dataset by a polygon
+
+    Args:
+        src: Rasterio dataset
+        polygon: Pyshape Polygon
+    Returns:
+        dest: Rasterio dataset thats been cropped to the polygon
+    '''
+    print("crop:")
+    if invert:
+        crop = False
+    else:
+        crop = True
+    out_image, out_transform = rasterio.mask.mask(src, [to_shape(polygon)], crop=crop, invert=invert)
+
+    out_meta = src.meta
+    print('SRC = {} --> DST = {}'.format(src.shape, out_image.shape))
+
+    out_meta.update({"driver": "GTiff",
+                     "height": out_image.shape[1],
+                     "width": out_image.shape[2],
+                     "transform": out_transform})
+
+    with MemoryFile() as tmpfile:
+            dest = tmpfile.open(**out_meta)
+            dest.write(out_image)
+
+    return dest
+
+
+def resample(src, res):
+    '''
+    Resample a datasset
+    '''
+    print('resample:')
+    # resample data to target shape
+    print("SRC res = {} -- > DST res = {}".format(src.res, res))
+
+    # if we go from 2 --> 1 then the ratio = 2/1
+    scale_x = res[0] / src.res[0]
+    scale_y = res[1] / src.res[1]
+
+    print("scaling_x Factor --> {}".format(scale_x))
+    print("scaling_y Factor --> {}".format(scale_y))
+    out_width = int(src.height / scale_y)
+    out_height = int(src.width / scale_x)
+    print('SRC Dims = {} --> DST dims = {}'.format(src.shape, (out_width, out_height)))
+
+    resized = src.read(out_shape=(out_height, out_width),
+                       resampling=Resampling.bilinear)
+
+    # scale image transform
+    transform = src.transform * src.transform.scale(
+                (src.width / resized.shape[2]),
+                (src.height / resized.shape[1])
+    )
+    out_meta = src.meta
+    out_meta.update({"driver": "GTiff",
+                     "count":1,
+                     "height": resized.shape[1],
+                     "width": resized.shape[2],
+                     "transform": transform})
+
+    with MemoryFile() as tmpfile:
+        dest = tmpfile.open(**out_meta)
+        dest.write(resized)
+    return dest
