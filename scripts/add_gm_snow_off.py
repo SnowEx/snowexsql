@@ -28,7 +28,7 @@ def main():
     site_name = 'Grand Mesa'
     units = 'meters' # Add from the Annotation file
     desc = 'US Geological Survey 1m DEM from the 3DEP'
-    type = 'snow off digital elevation model'
+    dtype = 'snow off digital elevation model'
     # Expand the paths
     downloads = abspath(expanduser(downloads))
 
@@ -42,7 +42,8 @@ def main():
             'epsg': epsg,
             'surveyors': surveyors,
             'instrument': instrument,
-            'tiled':True}
+            'tiled':True, 
+            'type':dtype}
 
     # Grab all the annotation files in the original data folder
     ann_files = glob.glob(join(downloads, '*.tif'))

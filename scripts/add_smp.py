@@ -1,8 +1,7 @@
 '''
 Added smp measurements to the database
 
-Download from https://osu.app.box.com/s/7yq08y1mqpl9evgz6rfw8hu771228ryn
-
+Downloaded from Megan Mason's NSDIC Upload package
 Unzip to ~/Downloads
 '''
 from os.path import join, abspath, expanduser
@@ -17,14 +16,17 @@ def main():
 
     # Obtain a list of Grand mesa smp files
     directory = abspath(expanduser('~/Downloads/NSIDC-upload/'))
+
+    # Resampled Dataset in the folder
     smp_data = join(directory,'level_1_data', 'csv_resampled')
+
     filenames = [join(smp_data, f) for f in listdir(smp_data) if f.split('.')[-1]=='CSV']
     log.info('Adding {} SMP profiles...'.format(len(filenames)))
 
     # grab the file log excel
     smp_log_file = join(directory, 'SMP_level1.csv')
 
-    b = UploadProfileBatch(filenames, debug=True,
+    b = UploadProfileBatch(filenames, debug=True, site_name='Grand Mesa', units='Newtons',
                            timezone='UTC', smp_log_f=smp_log_file)
     b.push()
     return len(b.errors)

@@ -1,7 +1,14 @@
 '''
 Upload the SnowEx Raster for snow off over Grand Mesa 2016-2017 flown by
 ASO
+
+To run with all the upload scripts use:
+    python run.py
+
+Other wise to run individually:
+    python add_aso_snowoff.py
 '''
+
 from os.path import isdir, dirname, abspath, expanduser, basename, join
 from os import mkdir
 from shutil import rmtree
@@ -24,7 +31,7 @@ def main():
     kwargs = {'instrument':'lidar',
               'surveyors': 'Airborne Snow Observatory',
               'date': date(2016, 9, 26),
-              'type': 'DEM',
+              'type': 'snow off digital elevation model',
               'units':'meters',
               'description':'Snow off DEM flown by ASO for SNOWEX 2017',
               'tiled':True
