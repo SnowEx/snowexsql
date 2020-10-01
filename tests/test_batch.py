@@ -5,7 +5,7 @@ from snowxsql.batch import *
 from snowxsql.data import LayerData, SiteData, ImageData
 from datetime import date, time
 import pytz
-
+from geoalchemy2.shape import to_shape, from_shape
 
 class TestUploadSiteDetailsBatch(TableTestBase):
     '''
@@ -13,7 +13,7 @@ class TestUploadSiteDetailsBatch(TableTestBase):
     '''
 
     args = [['site_5S21.csv','site_details.csv']]
-    kwargs = {'db_name':'test'}
+    kwargs = {'db_name':'test', 'epsg':26912}
     UploaderClass = UploadSiteDetailsBatch
     TableClass = SiteData
     count_attribute = 'site_id'
@@ -31,6 +31,9 @@ class TestUploadSiteDetailsBatch(TableTestBase):
     'test_unique_count': [dict(data_name='1N20', attribute_to_count='date', expected_count=1)]
             }
 
+    def test_extended_geom(self):
+        g = self.session.query(SiteData.geom).limit(1).all()
+        assert g[0][0].srid == 26912
 
 class TestUploadProfileBatch(TableTestBase):
     '''
@@ -141,8 +144,25 @@ class TestUploadUAVSARBatch(TableTestBase):
                    dict(data_name='insar interferogram real', attribute_to_check='units', filter_attribute='surveyors', filter_value=surveyors, expected='Linear Power and Phase in Radians'),
                    dict(data_name='insar amplitude', attribute_to_check='date', filter_attribute='surveyors', filter_value=surveyors, expected=date(2020, 1, 31)),
                    dict(data_name='insar correlation', attribute_to_check='instrument', filter_attribute='surveyors', filter_value=surveyors, expected='UAVSAR, L-band InSAR'),
-                   dict(data_name='insar correlation', attribute_to_check='description', filter_attribute='surveyors', filter_value=surveyors, expected='Polarization = HH'),
                    ],
     # Test we have two dates for the insar amplitude overapasses
     'test_unique_count': [dict(data_name='insar amplitude', attribute_to_count='date', expected_count=2),]
             }
+
+    @pytest.mark.parametrize("data_name, kw", [
+    # Check the single pass products have a few key words
+    ('amplitude', ['duration', 'overpass', 'polarization', 'dem']),
+    # Check the derived products all have a ref to 1st and 2nd overpass in addition to the others
+    ('correlation', ['duration', 'overpass', '1st', '2nd', 'polarization', 'dem']),
+    ('interferogram real', ['duration', 'overpass', '1st', '2nd', 'polarization', 'dem']),
+    ('interferogram imaginary', ['duration', 'overpass', '1st', '2nd', 'polarization', 'dem']),
+    ])
+    def test_description_generation(self, data_name, kw):
+        '''
+        Asserts each kw is found in the description of the data
+        '''
+        name = 'insar {}'.format(data_name)
+        records = self.session.query(ImageData.description).filter(ImageData.type == name).all()
+
+        for k in kw:
+            assert k in records[0][0].lower()

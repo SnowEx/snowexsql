@@ -42,6 +42,7 @@ def test_add_geom():
     p = to_shape(result['geom'])
     assert p.x == info['easting']
     assert p.y == info['northing']
+    assert result['geom'].srid == 26912
 
 class TestReprojectRasterByEPSG():
     output_f = join(dirname(__file__), 'test.tif')
