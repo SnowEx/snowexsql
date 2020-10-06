@@ -332,7 +332,8 @@ class UploadRaster(object):
     '''
 
     defaults = {'epsg':26912,
-                'tiled':False}
+                'tiled':False,
+                'no_data': None}
 
     def __init__(self, filename,  **kwargs):
         self.log = get_logger(__name__)
@@ -346,9 +347,15 @@ class UploadRaster(object):
         # This produces a PSQL command with auto tiling
         cmd = ['raster2pgsql','-s', str(self.epsg)]
 
+        # Add tiling if requested
         if self.tiled == True:
             cmd.append('-t')
             cmd.append('500x500')
+
+        # If nodata applied:
+        if self.no_data != None:
+            cmd.append('-N')
+            cmd.append(str(self.no_data))
 
         cmd.append(self.filename)
         self.log.debug('Executing: {}'.format(' '.join(cmd)))
