@@ -54,7 +54,12 @@ def modify_postgres_conf(conf_file, entries):
 
 if __name__ == '__main__':
     # Modify and output the conf file to its original location
-    conf_updates = {'work_mem':"2000MB",
+    # Settings semi based on https://postgis.net/workshops/postgis-intro/tuning.html
+    conf_updates = {'shared_buffers':'500MB',
+                    'work_mem':"3000MB",
+                    'maintenance_work_mem':'128MB',
+                    'wal_buffers':'1MB',
+                    'random_page_cost':'2.0',
                     'postgis.enable_outdb_rasters': 1,
                     'postgis.gdal_enabled_drivers' :"'ENABLE_ALL'"
                     }
@@ -64,7 +69,7 @@ if __name__ == '__main__':
 
     # Manage the os
     if this_os == 'linux':
-        modify_postgres_conf('/etc/postgresql/12/main/postgresql.conf', conf_updates)
+        modify_postgres_conf('/etc/postgresql/13/main/postgresql.conf', conf_updates)
     elif this_os == 'darwin':
         modify_postgres_conf('/usr/local/var/postgres/postgresql.conf', conf_updates)
     else:

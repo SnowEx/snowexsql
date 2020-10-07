@@ -9,10 +9,10 @@ sudo apt-get update
 sudo apt install pandoc
 
 # See  https://www.postgresql.org/download/linux/ubuntu/
-sudo apt-get install -y postgresql postgis libxml2-dev libgeos-dev libproj-dev libjson-c-dev gdal-bin libgdal-dev
+sudo apt-get install -y postgresql postgis libxml2-dev libgeos-dev libproj-dev libjson-c-dev gdal-bin libgdal-dev postgresql-13-postgis-3-scripts
 
 # Start the database
-sudo -u postgres pg_ctlcluster 12 main start
+sudo -u postgres pg_ctlcluster 13 main start
 
 # Perform some clean up just in case
 for DB in $DATABASES
