@@ -11,7 +11,8 @@ Otherwise see main() to redefine the location where the files are stored
 from os.path import join, abspath, expanduser, isdir, dirname, basename
 from os import listdir, mkdir
 from snowxsql.utilities import get_logger, read_n_lines
-from snowxsql.conversions import INSAR_to_rasterio, reproject_to_utm
+from snowxsql.conversions import INSAR_to_rasterio
+from snowxsql.projection import reproject_raster_by_epsg
 from snowxsql.metadata import read_InSar_annotation
 import shutil
 import glob
@@ -81,7 +82,7 @@ def convert(filenames, output, epsg,clean_first=False):
 
                 for tif in glob.glob(tiff_pattern):
                     utm_file = tif.replace(temp, output)
-                    reproject_to_utm(tif, utm_file, epsg)
+                    reproject_raster_by_epsg(tif, utm_file, epsg)
                     completed += 1
 
             except Exception as e:

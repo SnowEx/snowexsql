@@ -5,7 +5,7 @@ import utm
 from geoalchemy2.elements import WKTElement
 import rasterio
 from rasterio.warp import calculate_default_transform, reproject, Resampling
-
+from rasterio.crs import CRS
 
 def reproject_point_in_dict(info, is_northern=True):
     '''

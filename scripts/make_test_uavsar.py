@@ -7,7 +7,8 @@ import os
 from os import mkdir
 import numpy as np
 from snowxsql.metadata import read_InSar_annotation
-from snowxsql.conversions import INSAR_to_rasterio, reproject_to_utm
+from snowxsql.conversions import INSAR_to_rasterio,
+from snowxsql.projection import reproject_raster_by_epsg
 from snowxsql.utilities import get_logger
 import utm
 import matplotlib.pyplot as plt
@@ -322,7 +323,7 @@ def main():
 
         utm_file = basename(f).replace('_latlon','_utm')
         utm_file = join(utm_dir, utm_file)
-        reproject_to_utm(f, utm_file, dst_epsg=26912)
+        reproject_raster_by_epsg(f, utm_file, 26912)
 
 if __name__ == '__main__':
     main()

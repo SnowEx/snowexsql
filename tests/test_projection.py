@@ -3,9 +3,11 @@ import pytest
 from numpy.testing import assert_almost_equal
 from geoalchemy2.types import WKTElement
 from geoalchemy2.shape import to_shape
-from os.path import dirname, join, isfile
-from os import remove
+from os.path import dirname, join, isfile, isdir
+from os import remove, mkdir
 from rasterio.crs import CRS
+import shutil
+
 
 @pytest.mark.parametrize('info, expected',[
 # Test we add UTM info when its not provided
