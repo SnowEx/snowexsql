@@ -7,7 +7,7 @@ import datetime
 import numpy as np
 import pytz
 import pytest
-
+import pandas as pd
 
 dt = datetime.datetime(2020, 2, 5, 13, 30, 0, 0, pytz.timezone('MST'))
 info = {'site_name':'Grand Mesa',
@@ -112,6 +112,10 @@ class TestDensityHeader(DataHeaderTestBase):
 
 
 class TestLWCHeader(DataHeaderTestBase):
+    '''
+    Class for testing the header reading of the first type of lwc files that
+    parsed.
+    '''
     def setup_class(self):
         self.file = 'LWC.csv'
         self.data_names = ['permittivity']
@@ -121,6 +125,33 @@ class TestLWCHeader(DataHeaderTestBase):
 
         super().setup_class(self)
 
+class TestLWCHeaderB(DataHeaderTestBase):
+    '''
+    Class for testing the other type of LWC headers that contain two multi sampled
+    profiles.
+    '''
+    dt = pd.to_datetime('2020-3-12 14:45 MST')
+
+    info = {
+        'site_name': 'Grand Mesa',
+        'site_id': 'Skyway Tree',
+        'pit_id':'COGMST_20200312',
+        'date': dt.date(),
+        'time': dt.timetz(),
+        'utm_zone': 12,
+        'easting': 754173,
+        'northing': 4325871,
+        'latitude':39.044956500842126,
+        'longitude': -108.0631059755992
+    }
+
+    def setup_class(self):
+        self.file = 'LWC2.csv'
+        self.data_names = ['permittivity', 'lwc_vol','density']
+        self.columns = ['depth','bottom_depth', 'density', 'permittivity_sample_a', 'permittivity_sample_b', 'lwc_vol_sample_a', 'lwc_vol_sample_b']
+        self.multi_sample_profile = True
+
+        super().setup_class(self)
 
 class TestStratigraphyHeader(DataHeaderTestBase):
     def setup_class(self):

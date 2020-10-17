@@ -59,6 +59,7 @@ def standardize_key(messy):
 
     key = clean_str(key)
     key = key.lower().replace(' ','_')
+    key = key.lower().replace('-','_')
 
     return key
 

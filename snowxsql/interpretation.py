@@ -148,8 +148,8 @@ def add_date_time_keys(data, timezone='MST'):
     # Look for a single header entry for date and time.
     for k in keys:
         if 'date' in k and 'time' in k:
-            d = pd.to_datetime(str(data[k]) + timezone)
-            single_entry = True
+            str_date = str(data[k].replace('T','-')) + ' ' + timezone
+            d = pd.to_datetime(str_date)
             del data[k]
             break
 

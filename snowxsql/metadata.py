@@ -389,7 +389,7 @@ class DataHeader(object):
              }
 
     # Known possible profile types anything not in here will throw an error
-    available_data_names = ['density', 'permittivity', 'temperature',
+    available_data_names = ['density', 'permittivity','lwc_vol', 'temperature',
                      'force', 'reflectance','sample_signal',
                      'specific_surface_area', 'equivalent_diameter',
                      'grain_size', 'hand_hardness', 'grain_type',
@@ -456,19 +456,21 @@ class DataHeader(object):
         session.add(d)
         session.commit()
 
-    def rename_sample_profiles(self, columns, data_name):
+    def rename_sample_profiles(self, columns, data_names):
         '''
-        Rename columns like density_a to sample_a
+        Rename columns like density_a to density_sample_a
         '''
         result = []
+        print(columns)
         for c in columns:
-            v = c
+            for data_name in data_names:
+                    v = c
+                    if data_name in c and c[-2]=='_':
+                        v = c.replace(data_name, '{}_sample'.format(data_name))
+                        result.append(v)
 
-            if data_name in c:
-                v = c.replace(data_name, '{}_sample'.format(data_name))
-
-            result.append(v)
-
+                    elif c not in result and c[-2] != '_':
+                        result.append(c)
         return result
 
     def parse_column_names(self, lines):
@@ -550,8 +552,8 @@ class DataHeader(object):
         self.data_names = remap_data_names(self.data_names, self.rename)
 
         if self.multi_sample_profile:
-            columns = self.rename_sample_profiles(columns, self.data_names[0])
-            print(columns)
+            columns = self.rename_sample_profiles(columns, self.data_names)
+
         return columns, header_pos
 
     def determine_data_names(self, raw_columns):
@@ -601,14 +603,9 @@ class DataHeader(object):
                             ' header/columns columns: {}'.format(", ".join(raw_columns)))
 
         if multi_sample_profile:
-            if len(data_names) != 1:
-                raise ValueError('Cannot add multi sampled columns where there'
-                                 ' is more than one data name in file!'
-                                 '\ndata_names = {}'.format(', '.join(data_names)))
-            else:
-                self.log.info('{} data contains multiple samples for each '
+            self.log.info('Data contains multiple samples for each '
                               'layer. The main value will be the average of '
-                              'these samples.'.format(data_names[0].title()))
+                              'these samples.')
 
         return data_names, multi_sample_profile
 
@@ -673,11 +670,10 @@ class DataHeader(object):
 
             # Avoid splitting on times
             if 'time' in k or 'date' in k:
-                value = ':'.join(d[1:])
+                value = ':'.join(d[1:]).strip()
             else:
                 value = ', '.join(d[1:])
-
-            value = clean_str(value)
+                value = clean_str(value)
 
             # Assign non empty strings to dictionary
             if k and value:
