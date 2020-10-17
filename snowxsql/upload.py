@@ -135,8 +135,14 @@ class UploadProfileData():
 
         # Get the average if its multisample profile
         if self.hdr.multi_sample_profile:
-            sample_cols = [c for c in df.columns if 'sample' in c]
+            kw = '{}_sample'.format(data_name)
+            sample_cols = [c for c in df.columns if kw in c]
             df['value'] = df[sample_cols].mean(axis=1).astype(str)
+
+            # Replace the data_name sample columns with just sample
+            for s in sample_cols:
+                n = s.replace(kw, 'sample')
+                df[n] = df[s].copy()
 
         # Individual
         else:

@@ -96,7 +96,7 @@ class TestDensityProfile(TableTestBase):
 
 class TestLWCProfile(TableTestBase):
     '''
-    Test the an dielectric_constant file is uploaded correctly
+    Test the permittivity file is uploaded correctly
     '''
 
     args = ['LWC.csv']
@@ -106,17 +106,17 @@ class TestLWCProfile(TableTestBase):
     dt = datetime.datetime(2020, 2, 5, 13, 30, 0, 0, pytz.timezone('MST'))
 
     params = {
-    'test_count':[dict(data_name='dielectric_constant', expected_count=4)],
+    'test_count':[dict(data_name='permittivity', expected_count=4)],
 
     # Test a value from the profile to check that the profile is there and it has integrity
-    'test_value': [dict(data_name='dielectric_constant', attribute_to_check='value', filter_attribute='depth', filter_value=27, expected=np.mean([1.372, 1.35])),
-                   dict(data_name='dielectric_constant', attribute_to_check='sample_a', filter_attribute='depth', filter_value=27, expected=1.372),
-                   dict(data_name='dielectric_constant', attribute_to_check='sample_b', filter_attribute='depth', filter_value=27, expected=1.35),
-                   dict(data_name='dielectric_constant', attribute_to_check='sample_c', filter_attribute='depth', filter_value=27, expected=None),
+    'test_value': [dict(data_name='permittivity', attribute_to_check='value', filter_attribute='depth', filter_value=27, expected=np.mean([1.372, 1.35])),
+                   dict(data_name='permittivity', attribute_to_check='sample_a', filter_attribute='depth', filter_value=27, expected=1.372),
+                   dict(data_name='permittivity', attribute_to_check='sample_b', filter_attribute='depth', filter_value=27, expected=1.35),
+                   dict(data_name='permittivity', attribute_to_check='sample_c', filter_attribute='depth', filter_value=27, expected=None),
                    ],
     'test_unique_count': [
                     # Place holder for this test: test only one location was added
-                    dict(data_name='dielectric_constant', attribute_to_count='northing', expected_count=1)
+                    dict(data_name='permittivity', attribute_to_count='northing', expected_count=1)
                     ]
             }
 

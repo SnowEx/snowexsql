@@ -105,7 +105,7 @@ class TestDensityHeader(DataHeaderTestBase):
     def setup_class(self):
         self.file = 'density.csv'
         self.data_names = ['density']
-        self.columns = ['depth','bottom_depth', 'sample_a', 'sample_b', 'sample_c']
+        self.columns = ['depth','bottom_depth', 'density_sample_a', 'density_sample_b', 'density_sample_c']
         self.multi_sample_profile = True
         self.info = info.copy()
         super().setup_class(self)
@@ -114,8 +114,8 @@ class TestDensityHeader(DataHeaderTestBase):
 class TestLWCHeader(DataHeaderTestBase):
     def setup_class(self):
         self.file = 'LWC.csv'
-        self.data_names = ['dielectric_constant']
-        self.columns = ['depth','bottom_depth', 'sample_a', 'sample_b']
+        self.data_names = ['permittivity']
+        self.columns = ['depth','bottom_depth', 'permittivity_sample_a', 'permittivity_sample_b']
         self.multi_sample_profile = True
         self.info = info.copy()
 

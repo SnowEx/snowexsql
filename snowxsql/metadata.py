@@ -383,11 +383,13 @@ class DataHeader(object):
              'lon':'longitude',
              'twt':'two_way_travel',
              'measurement_tool':'instrument',
-             'avgdensity':'density'
+             'avgdensity':'density',
+             'avg_density':'density',
+             'dielectric_constant': 'permittivity',
              }
 
     # Known possible profile types anything not in here will throw an error
-    available_data_names = ['density', 'dielectric_constant', 'temperature',
+    available_data_names = ['density', 'permittivity', 'temperature',
                      'force', 'reflectance','sample_signal',
                      'specific_surface_area', 'equivalent_diameter',
                      'grain_size', 'hand_hardness', 'grain_type',
@@ -463,7 +465,7 @@ class DataHeader(object):
             v = c
 
             if data_name in c:
-                v = c.replace(data_name, 'sample')
+                v = c.replace(data_name, '{}_sample'.format(data_name))
 
             result.append(v)
 
@@ -549,7 +551,7 @@ class DataHeader(object):
 
         if self.multi_sample_profile:
             columns = self.rename_sample_profiles(columns, self.data_names[0])
-
+            print(columns)
         return columns, header_pos
 
     def determine_data_names(self, raw_columns):

@@ -76,13 +76,22 @@ def remap_data_names(original, rename_map):
         new: List/dictionary containing the names remapped
 
     '''
+    remap_keys = rename_map.keys()
 
     if type(original) == dict:
         new = {}
 
         for k, v in original.items():
-            if k in rename_map.keys():
+
+            if k in remap_keys:
                 new_k = rename_map[k]
+
+            # handle multisample names that need changing (e.g. dielectric_constant_a)
+            elif k[-2] == '_':
+                kw = k[0:-2]
+                if kw in remap_keys:
+                    new_k = k.replace(kw, rename_map[kw])
+
             else:
                 new_k = k
 
@@ -92,13 +101,17 @@ def remap_data_names(original, rename_map):
         new = []
 
         for i, v in enumerate(original):
-            if v in rename_map.keys():
+
+            if v in remap_keys:
                 new.append(rename_map[v])
+
+            elif v[-2] == '_' and v[0:-2] in remap_keys:
+                new.append(v.replace(v[0:-2], rename_map[v[0:-2]]))
             else:
                 new.append(v)
     else:
         new = original.lower()
-        if new in rename_map.keys():
+        if new in remap_keys:
             new = rename_map[new]
 
     return new
