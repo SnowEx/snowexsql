@@ -28,6 +28,7 @@ this_day =  date(year=2020, month=1, day=1)
 this_time = time(hour=0, tzinfo=mst)
 @pytest.mark.parametrize("data, expected_date, expected_time",
 [({'date/time': '2020-01-01-00:00'}, this_day, this_time),
+ ({'date/local time': '2020-01-01-00:00'}, this_day, this_time),
  ({'date':'2020-01-01', 'time':'00:00'}, this_day, this_time),
  ({'utcyear': 2020, 'utcdoy': 1, 'utctod': '070000.00'}, this_day, this_time),
  # Test we can hanlde the milli seconds

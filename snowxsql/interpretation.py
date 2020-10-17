@@ -143,40 +143,47 @@ def add_date_time_keys(data, timezone='MST'):
         d: Python Datetime object
     '''
     keys = data.keys()
-    # Extract datetime for separate db entries
-    if 'date/time' in keys:
-        d = pd.to_datetime(str(data['date/time']) + timezone)
-        del data['date/time']
+    d = None
 
-    # Handle SMP data dates and times
-    elif 'date' in keys and 'time' in keys:
-        dstr = ' '.join([str(data['date']), str(data['time']), timezone])
-        d = pd.to_datetime(dstr)
+    # Look for a single header entry for date and time.
+    for k in keys:
+        if 'date' in k and 'time' in k:
+            d = pd.to_datetime(str(data[k]) + timezone)
+            single_entry = True
+            del data[k]
+            break
 
-    # Handle gpr data dates
-    elif 'utcyear' in keys and 'utcdoy' in keys and 'utctod' in keys:
-        base = pd.to_datetime('{:d}-01-01 00:00:00 '.format(int(data['utcyear'])) + 'UTC')
+    # If we didn't find date/time combined.
+    if d == None:
+        # Handle SMP data dates and times
+        if 'date' in keys and 'time' in keys:
+            dstr = ' '.join([str(data['date']), str(data['time']), timezone])
+            d = pd.to_datetime(dstr)
 
-        # Number of days since january 1
-        d = int(data['utcdoy']) - 1
+        # Handle gpr data dates
+        elif 'utcyear' in keys and 'utcdoy' in keys and 'utctod' in keys:
+            base = pd.to_datetime('{:d}-01-01 00:00:00 '.format(int(data['utcyear'])) + 'UTC')
 
-        # Zulu time (time without colons)
-        time = str(data['utctod'])
-        hr = int(time[0:2]) # hours
-        mm = int(time[2:4]) # minutes
-        ss = int(time[4:6]) # seconds
-        ms = int(float('0.' + time.split('.')[-1]) * 1000) # milliseconds
+            # Number of days since january 1
+            d = int(data['utcdoy']) - 1
 
-        delta = datetime.timedelta(days=d, hours=hr, minutes=mm, seconds=ss,
-                                                                milliseconds=ms)
-        d = base.astimezone(pytz.timezone(timezone)) + delta
+            # Zulu time (time without colons)
+            time = str(data['utctod'])
+            hr = int(time[0:2]) # hours
+            mm = int(time[2:4]) # minutes
+            ss = int(time[4:6]) # seconds
+            ms = int(float('0.' + time.split('.')[-1]) * 1000) # milliseconds
 
-        # Remove them
-        for v in ['utcyear', 'utcdoy', 'utctod']:
-            del data[v]
+            delta = datetime.timedelta(days=d, hours=hr, minutes=mm, seconds=ss,
+                                                                    milliseconds=ms)
+            d = base.astimezone(pytz.timezone(timezone)) + delta
 
-    else:
-        raise ValueError('Data is missing date/time info!\n{}'.format(data))
+            # Remove them
+            for v in ['utcyear', 'utcdoy', 'utctod']:
+                del data[v]
+
+        else:
+            raise ValueError('Data is missing date/time info!\n{}'.format(data))
 
     data['date'] = d.date()
     data['time'] = d.timetz()
