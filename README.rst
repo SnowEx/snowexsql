@@ -18,6 +18,11 @@ Features
 
 Installing
 ----------
+If you are just planning on using the database, then only install the
+python package below.
+
+If you are are database maintainers or installing it for the first time
+follow the instructions below completely.
 
 Mac OS
 ~~~~~~
@@ -78,13 +83,14 @@ test coverage run:
 Documentation
 -------------
 
-There is a whole host of resources for users in the documentation. Its been
-setup for you preview in your browser.
+There is a whole host of resources for users in the documentation. It has been
+setup for you to preview in your browser.
 
 To see the documentation in your browser:
 
 **Warning**: To see the examples/gallery you will need to populate the
-database before running this command. Otherwise they will be left blank.
+database before running this command. Otherwise they will be left with the
+last image submitted to GitHub.
 
 .. code-block:: bash
 
