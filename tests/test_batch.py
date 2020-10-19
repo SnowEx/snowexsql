@@ -53,6 +53,24 @@ class TestUploadProfileBatch(TableTestBase):
     'test_unique_count': [dict(data_name='manual_wetness', attribute_to_count='value', expected_count=1)]
             }
 
+class TestUploadLWCProfileBatch(TableTestBase):
+    '''
+    Test uploading multiple two types of the LWC profiles
+    '''
+
+    args = [['LWC.csv','LWC2.csv']]
+    kwargs = {'db_name':'test', 'timezone':'UTC'}
+    UploaderClass = UploadProfileBatch
+    TableClass = LayerData
+
+    params = {
+    'test_count':[dict(data_name='permittivity', expected_count=(4 + 8)),
+                  dict(data_name='lwc_vol', expected_count=8)],
+    'test_value': [dict(data_name='density', attribute_to_check='value', filter_attribute='depth', filter_value=83, expected=164.5)],
+    'test_unique_count': [dict(data_name='permittivity', attribute_to_count='site_id', expected_count=2)]
+            }
+
+
 
 class TestUploadSMPBatch(TableTestBase):
     '''

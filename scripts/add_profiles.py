@@ -30,7 +30,7 @@ def main():
         profile_filenames = [f for f in filenames if 'site' not in f and pit_id in f]
 
         b = UploadProfileBatch(filenames=profile_filenames,
-                               site_filenames=f, debug=False)
+                               site_filenames=f, debug=True)
         b.push()
         errors += len(b.errors)
 

@@ -31,7 +31,7 @@ class DataHeaderTestBase():
     def setup_class(self):
         '''
         columns: list of column names
-        multi_sample_profile: Boolean indicating whether to average samples
+        multi_sample_profiles: Boolean indicating whether to average samples
         data_names: list of names of profiles to upload
         header_pos: int of the index in the lines of the file where the columns are found
         info: Dictionary of the header information
@@ -92,13 +92,13 @@ class DataHeaderTestBase():
         self.assert_header_attribute('info')
 
     def test_multisample_profile(self):
-        self.assert_header_attribute('multi_sample_profile')
+        self.assert_header_attribute('multi_sample_profiles')
 
     def test_header_pos(self):
         '''
         Test the location of the in the file of the column header (Nth line)
         '''
-        self.assert_header_attribute('multi_sample_profile')
+        self.assert_header_attribute('multi_sample_profiles')
 
 
 class TestDensityHeader(DataHeaderTestBase):
@@ -106,7 +106,7 @@ class TestDensityHeader(DataHeaderTestBase):
         self.file = 'density.csv'
         self.data_names = ['density']
         self.columns = ['depth','bottom_depth', 'density_sample_a', 'density_sample_b', 'density_sample_c']
-        self.multi_sample_profile = True
+        self.multi_sample_profiles = ['density']
         self.info = info.copy()
         super().setup_class(self)
 
@@ -120,7 +120,7 @@ class TestLWCHeader(DataHeaderTestBase):
         self.file = 'LWC.csv'
         self.data_names = ['permittivity']
         self.columns = ['depth','bottom_depth', 'permittivity_sample_a', 'permittivity_sample_b']
-        self.multi_sample_profile = True
+        self.multi_sample_profiles = ['permittivity']
         self.info = info.copy()
 
         super().setup_class(self)
@@ -149,7 +149,7 @@ class TestLWCHeaderB(DataHeaderTestBase):
         self.file = 'LWC2.csv'
         self.data_names = ['permittivity', 'lwc_vol','density']
         self.columns = ['depth','bottom_depth', 'density', 'permittivity_sample_a', 'permittivity_sample_b', 'lwc_vol_sample_a', 'lwc_vol_sample_b']
-        self.multi_sample_profile = True
+        self.multi_sample_profiles = ['permittivity','lwc_vol']
 
         super().setup_class(self)
 
@@ -158,7 +158,7 @@ class TestStratigraphyHeader(DataHeaderTestBase):
         self.file = 'stratigraphy.csv'
         self.data_names = ['hand_hardness','grain_size','grain_type','manual_wetness']
         self.columns = ['depth','bottom_depth', 'comments'] + self.data_names
-        self.multi_sample_profile = False
+        self.multi_sample_profiles = []
         self.info = info.copy()
 
         super().setup_class(self)
@@ -169,7 +169,7 @@ class TestTemperatureHeader(DataHeaderTestBase):
         self.file = 'temperature.csv'
         self.data_names = ['temperature']
         self.columns = ['depth'] + self.data_names
-        self.multi_sample_profile = False
+        self.multi_sample_profiles = []
         self.info = info.copy()
 
         super().setup_class(self)
@@ -182,7 +182,7 @@ class TestSSAHeader(DataHeaderTestBase):
         self.file = 'SSA.csv'
         self.data_names = ['specific_surface_area','reflectance','sample_signal','equivalent_diameter']
         self.columns = ['depth','comments'] + self.data_names
-        self.multi_sample_profile = False
+        self.multi_sample_profiles = []
         self.info = info.copy()
         self.info['instrument'] = 'IS3-SP-11-01F'
         self.info['profile_id'] = 'N/A'
@@ -199,7 +199,7 @@ class TestSiteDetailseHeader(DataHeaderTestBase):
         self.file = 'site_details.csv'
         self.data_names = None
         self.columns = None
-        self.multi_sample_profile = False
+        self.multi_sample_profiles = []
         self.info = info.copy()
         self.info['surveyors'] = "Chris Hiemstra, Hans Lievens"
         self.info['weather_description'] = 'Sunny, cold, gusts'
@@ -234,7 +234,7 @@ class TestDepthsHeader(DataHeaderTestBase):
                         'latitude','easting', 'northing', 'elevation',
                         'equipment', 'version_number'] + self.data_names
 
-        self.multi_sample_profile = False
+        self.multi_sample_profiles = []
         self.info = info.copy()
 
         super().setup_class(self)
@@ -251,7 +251,7 @@ class TestGPRHeader(DataHeaderTestBase):
         self.columns = ['utcyear', 'utcdoy', 'utctod', 'utmzone', 'easting',
                         'northing', 'elevation', 'avgvelocity'] + self.data_names
 
-        self.multi_sample_profile = False
+        self.multi_sample_profiles = []
         self.info = info.copy()
 
         super().setup_class(self)

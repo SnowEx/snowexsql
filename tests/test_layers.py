@@ -120,6 +120,40 @@ class TestLWCProfile(TableTestBase):
                     ]
             }
 
+class TestLWCProfileB(TableTestBase):
+    '''
+    Test the permittivity file is uploaded correctly
+    '''
+
+    args = ['LWC2.csv']
+    kwargs = {'timezone':'MST'}
+    UploaderClass = UploadProfileData
+    TableClass = LayerData
+    dt = datetime.datetime(2020, 3, 12, 14, 45, 0, 0, pytz.timezone('MST'))
+
+    params = {
+    'test_count':[dict(data_name='permittivity', expected_count=8)],
+
+    # Test a value from the profile to check that the profile is there and it has integrity
+    'test_value': [dict(data_name='permittivity', attribute_to_check='value', filter_attribute='depth', filter_value=73, expected=np.mean([1.507, 1.521])),
+                   dict(data_name='permittivity', attribute_to_check='sample_a', filter_attribute='depth', filter_value=73, expected=1.507),
+                   dict(data_name='permittivity', attribute_to_check='sample_b', filter_attribute='depth', filter_value=73, expected=1.521),
+                   dict(data_name='permittivity', attribute_to_check='sample_c', filter_attribute='depth', filter_value=73, expected=None),
+                   # Check lwc_vol
+                   dict(data_name='lwc_vol', attribute_to_check='value', filter_attribute='depth', filter_value=15, expected=np.mean([0.1, 0.0])),
+                   dict(data_name='lwc_vol', attribute_to_check='sample_a', filter_attribute='depth', filter_value=15, expected=0.1),
+                   dict(data_name='lwc_vol', attribute_to_check='sample_b', filter_attribute='depth', filter_value=15, expected=0.0),
+                   dict(data_name='lwc_vol', attribute_to_check='sample_c', filter_attribute='depth', filter_value=15, expected=None),
+                   # Density
+                   dict(data_name='density', attribute_to_check='value', filter_attribute='depth', filter_value=83, expected=164.5),
+                   ],
+
+    'test_unique_count': [
+                    # Place holder for this test: test only one location was added
+                    dict(data_name='permittivity', attribute_to_count='northing', expected_count=1)
+                    ]
+            }
+
 
 class TestTemperatureProfile(TableTestBase):
     '''

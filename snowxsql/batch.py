@@ -62,7 +62,7 @@ class BatchBase():
         self.meta = assign_default_kwargs(self, kwargs, self.defaults)
 
         # Grab logger
-        self.log = get_logger('batch')
+        self.log = get_logger(__name__)
 
         # Performance tracking
         self.errors = []
@@ -71,6 +71,7 @@ class BatchBase():
         # Grab db
         self.log.info('Accessing Database {}'.format(self.db_name))
         engine, self.session = get_db(self.db_name)
+        self.log.info('Preparing to upload {} files...'.format(len(filenames)))
 
     def push(self):
         '''

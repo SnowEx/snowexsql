@@ -352,7 +352,7 @@ class DataHeader(object):
         columns: Column names of data stored in csv. None for site description
                  files which is basically all one header
         data_names: List of data names to be uploaded
-        multi_sample_profile: Boolean describing single profile types that
+        multi_sample_profiles: List containing profile types that
                               have multiple samples (e.g. density). This
                               triggers calculating the mean of the profiles
                               for the main value
@@ -422,13 +422,13 @@ class DataHeader(object):
 
         self.extra_header = assign_default_kwargs(self, kwargs, self.defaults, leave=['epsg'])
 
-        self.log.info('Interpretting metdata in {}'.format(filename))
+        self.log.info('Interpretting metdaata in {}'.format(filename))
 
         # Site location files will have no data_name
         self.data_names = None
 
         # Does our profile type have multiple samples
-        self.multi_sample_profile = False
+        self.multi_sample_profiles = []
 
         # Read in the header into dictionary and list of columns names
         info, self.columns, self.header_pos = self._read(filename)
@@ -461,7 +461,6 @@ class DataHeader(object):
         Rename columns like density_a to density_sample_a
         '''
         result = []
-        print(columns)
         for c in columns:
             for data_name in data_names:
                     v = c
@@ -546,12 +545,12 @@ class DataHeader(object):
         columns = remap_data_names(columns, self.rename)
 
         # Detmerine the profile type
-        (self.data_names, self.multi_sample_profile) = \
+        (self.data_names, self.multi_sample_profiles) = \
                                              self.determine_data_names(columns)
 
         self.data_names = remap_data_names(self.data_names, self.rename)
 
-        if self.multi_sample_profile:
+        if self.multi_sample_profiles:
             columns = self.rename_sample_profiles(columns, self.data_names)
 
         return columns, header_pos
@@ -569,12 +568,12 @@ class DataHeader(object):
         Returns:
             type: **data_names** - list of column names that will be uploaded
                    as a main value
-                  **multi_sample_profile** - boolean representing if we will
+                  **multi_sample_profiles** - boolean representing if we will
                     average the samples for a main value (e.g. density)
         '''
         # Names of columns we are going to submit as main values
         data_names = []
-        multi_sample_profile = False
+        multi_sample_profiles = []
 
         # String of the columns for counting
         str_cols =  ' '.join(raw_columns).replace(' ',"_").lower()
@@ -589,7 +588,8 @@ class DataHeader(object):
 
                 # Avoid triggering on depth and bottom depth in profiles
                 if kw_count > 1 and dname != 'depth':
-                    multi_sample_profile = True
+                    self.log.debug('{} is multisampled...'.format(dname))
+                    multi_sample_profiles.append(dname)
 
         # If depth is metadata (e.g. profiles) then remove it as a main variable
         if 'depth' in data_names and self.depth_is_metadata:
@@ -602,12 +602,12 @@ class DataHeader(object):
             raise ValueError('Unable to determine data names from'
                             ' header/columns columns: {}'.format(", ".join(raw_columns)))
 
-        if multi_sample_profile:
-            self.log.info('Data contains multiple samples for each '
+        if multi_sample_profiles:
+            self.log.info('{} contains multiple samples for each '
                               'layer. The main value will be the average of '
-                              'these samples.')
+                              'these samples.'.format(', '.join(multi_sample_profiles)))
 
-        return data_names, multi_sample_profile
+        return data_names, multi_sample_profiles
 
     def _read(self, filename):
         '''

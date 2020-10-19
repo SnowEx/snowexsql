@@ -37,7 +37,7 @@ class UploadProfileData():
         self.hdr = DataHeader(profile_filename, **kwargs)
 
         # Transfer a couple attributes for brevity
-        for att in ['data_names', 'multi_sample_profile']:
+        for att in ['data_names', 'multi_sample_profiles']:
             setattr(self, att, getattr(self.hdr, att))
 
         # Read in data
@@ -134,7 +134,7 @@ class UploadProfileData():
         df['type'] = data_name
 
         # Get the average if its multisample profile
-        if self.hdr.multi_sample_profile:
+        if data_name in self.multi_sample_profiles:
             kw = '{}_sample'.format(data_name)
             sample_cols = [c for c in df.columns if kw in c]
             df['value'] = df[sample_cols].mean(axis=1).astype(str)
@@ -147,7 +147,6 @@ class UploadProfileData():
         # Individual
         else:
             df['value'] = df[data_name].astype(str)
-            df = df.drop(columns=self.data_names)
 
         # Drop all columns were not expecting
         drop_cols = [c for c in df.columns if c not in self.expected_attributes]
@@ -259,7 +258,6 @@ class PointDataCSV(object):
         drops = \
         [c for c in df.columns  if c not in valid and c not in self.hdr.data_names]
         self.log.info('Dropping {} as they are not valid on the database...'.format(', '.join(drops)))
-
         df = df.drop(columns=drops)
 
         # replace all nans or string nones with None (none type)
