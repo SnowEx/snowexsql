@@ -110,8 +110,8 @@ def main():
     meta2['date'] = pd.to_datetime('02/13/2020').date()
 
     # Dictionary mapping the metadata to the repsective folders
-    flight_meta = {'GrandMesa2020_F1': meta1,}
-            # 'GrandMesa2020_F2':meta2}
+    flight_meta = {'GrandMesa2020_F1': meta1,
+                   'GrandMesa2020_F2':meta2}
 
     names = {'Bare_Earth_Digital_Elevation_Models':'DEM',
              'Digital_Surface_Models': 'DSM'}
@@ -119,7 +119,7 @@ def main():
     # Loop over the flight names
     for flight in flight_meta.keys():
         # Loop over the two types of data to upload
-        for dem in ['Bare_Earth_Digital_Elevation_Models']:#, 'Digital_Surface_Models']:
+        for dem in ['Bare_Earth_Digital_Elevation_Models', 'Digital_Surface_Models']:
 
             # Form the directory structure and grab all the important files
             d = join(downloads, flight, 'Rasters', dem)
