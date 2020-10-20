@@ -28,8 +28,9 @@ The SnowEx Database currently is formed of 4 tables.
 
 1. **points** - Holds any data which has no other dimension beyond its value.
   E.g. Snow Depths, Federal Samplers, etc.
-2. **layers** - Holds any data collected which was collected at a single point but
-  has a vertical snow component. Each entry is at a single location with an assigned depth. E.g. Hand Hardness, Density profiles, SMP, etc.
+2. **layers** - Holds any data collected which was collected at a single point
+  but has a vertical snow component. Each entry is at a single location with an
+  assigned depth. E.g. Hand Hardness, Density profiles, SMP, etc.
 3. **images** - Holds all raster data.
 4. **sites** - Holds all site details data.
 
@@ -40,7 +41,7 @@ Every query will need a session and access to a database via name::
   # Connect to the database we made. This may not be named snowex.
   db_name = 'snowex'
 
-  # Get an engine, metadata and session object for our db
+  # Get an engine and session object for our db
   engine, session = get_db(db_name)
 
 
@@ -50,21 +51,49 @@ all points in the table::
 
     from snowxsql.data import PointData, LayerData, ImageData, SiteData
 
-    # Grab all the point data in points table
-    points = session.query(PointData).all()
+    # Grab the first 10 records from points table
+    points = session.query(PointData).limit(10).all()
 
     # Close the session
     session.close()
 
 This approach can be done with any other tables as well.
 
-
 To grab all the layers associated to a single pit::
 
-  layers = session.query(LayerData).filter(LayerData.site_id=='5S31').all()
+  # Break up queries by splitting them like the below
+  q = session.query(LayerData)
+
+  # Filter our filter query to only the records associated to pit 5S31
+  Layers = q.filter(LayerData.site_id=='5S31').all()
 
 In ORM example shown above, class attributes become column names in the
 database. In the example above, there is a column named `site_id` under our
 table layers (represented here as LayerData).
+
+Each record returned from the database using ORM will return an object with
+the associated attributes of the class used in the query. The query above
+will have a list of objects where each record has the attributes that match
+each column in the table.
+
+Functions
+~~~~~~~~~
+
+PostGIS offers a ton of very useful functions and often using them instead of
+them  locally in python can save time and memory.
+
+Using these functions with the ORM style of database interactions, there a 3
+ways we can use these functions:
+
+1. Calling them via `sqlalchemy.functions`
+2. Calling them via `geoalchemy2.functions`
+3. Calling a few directly from `snowxsql.functions`
+
+All functions available to postgres are available via option #1. They are however
+unaware of types and the object mapping that is occurring in geoalchemy2.
+Therefore especially when dealing with rasters, geoalchemy2 can be quite useful
+for prepping data right away. Not all functions though are mapped in geoalchemy2 and sometime its
+convenient to just make them for ourselves which is what is in snowXSQL.
+
 
 Checkout our :ref:`Examples` for more detail looks at queries with python.
