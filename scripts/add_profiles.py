@@ -4,9 +4,14 @@ owned by HP Marshall. Place that folder next to this repo for this script to wor
 without edit.
 
 Usage:
+    # To run with all the scripts
+    python run.py
+
+    # To run individually
     python add_profiles.py
 
 '''
+
 from os.path import join, abspath, basename, relpath
 from os import listdir
 from snowxsql.batch import UploadProfileBatch
@@ -21,6 +26,7 @@ def main():
 
     # Grab all the csvs in the PITS folder
     filenames = glob.glob(join(data_dir, '*.csv'))
+
     # Grab all the site details files
     sites = glob.glob(join(data_dir,'*site*.csv'))
 
@@ -30,9 +36,9 @@ def main():
     # Submit all profiles associated with pit at a time
     b = UploadProfileBatch(filenames=profiles, debug=False)
     b.push()
-    errors += len(b.errors)
 
-    return errors
+    return len(b.errors)
+
 
 if __name__ == '__main__':
     main()

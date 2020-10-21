@@ -77,47 +77,49 @@ def main():
     downloads = '~/Downloads/SnowEx2020_QSI/'
     downloads = abspath(expanduser(downloads))
 
+    # build our common metadata
+    base = {
     # Build our metadata
-    epsg = 26912
+    'epsg' :26912,
 
     # Add these attributes to the db entry
-    surveyors = 'QSI'
-    instrument = 'lidar'
-    site_name = 'Grand Mesa'
-    units = 'meters'
+    'surveyors': 'QSI',
+    'instrument': 'lidar',
+    'site_name': 'Grand Mesa',
+    'units': 'meters'
+    }
+
+    # descriptions of the two flights
     desc1 ='First overflight at GM with snow on, partially flown on 05-02-2020 due to cloud coverage'
     desc2 ='Second overflight at GM with snow on'
 
-    # error counting
-    errors_count = 0
-
-    # Build metadata that gets copied to all rasters
-    base = {'site_name': site_name,
-            'description': desc1,
-            'units': units,
-            'epsg': epsg,
-            'surveyors': surveyors,
-            'instrument': instrument}
-
+    # Dates
+    date1 = pd.to_datetime('02/01/2020').date()
+    date2 = pd.to_datetime('02/13/2020').date()
     # Meta Data for the first over flight
     meta1 = base.copy()
     meta1['description'] = desc1
-    meta1['date'] = pd.to_datetime('02/01/2020').date(),
+    meta1['date'] = date1,
 
     # Meta Data for the second over flight
     meta2 = base.copy()
     meta2['description'] = desc2
-    meta2['date'] = pd.to_datetime('02/13/2020').date()
+    meta2['date'] = date2
 
     # Dictionary mapping the metadata to the repsective folders
     flight_meta = {'GrandMesa2020_F1': meta1,
                    'GrandMesa2020_F2':meta2}
 
+    # Name of the data mapped from repsective folder names
     names = {'Bare_Earth_Digital_Elevation_Models':'DEM',
              'Digital_Surface_Models': 'DSM'}
 
+    # error counting
+    errors_count = 0
+
     # Loop over the flight names
     for flight in flight_meta.keys():
+
         # Loop over the two types of data to upload
         for dem in ['Bare_Earth_Digital_Elevation_Models', 'Digital_Surface_Models']:
 
@@ -133,11 +135,18 @@ def main():
 
             # Add a type to it and rename it
             data['type'] = names[dem]
+
+            # Instantiate the uploader
             rs = UploadRasterBatch(final, **data)
+
+            # Submit to the DB
             rs.push()
+
+            # Keep track of errors for run.py
             errors_count += len(rs.errors)
 
     return errors_count
+
 
 if __name__ == '__main__':
     main()

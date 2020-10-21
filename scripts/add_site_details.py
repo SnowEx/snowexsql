@@ -1,15 +1,21 @@
 '''
-Read in the SnowEx site details. Download the github repo SnowEx2020_SQLdata
-owned by HP Marshall. Place that folder next to this repo for this script to work
-without edit.
+Script uploads the site detail files.
+
+Download the github repo SnowEx2020_SQLdata owned by HP Marshall. Place that
+folder next to this repo for this script to work
+without edits.
 
 Usage:
+    # To run with all the scripts
+    python run.py
+
+    # To run individually
     python add_site_details.py
 
 '''
 from os.path import join, abspath, basename, relpath
-from os import listdir
 from snowxsql.batch import UploadSiteDetailsBatch
+import glob
 
 def main():
 
@@ -17,15 +23,19 @@ def main():
 
     # Obtain a list of Grand mesa pits
     data_dir = abspath(join('..', '..', 'SnowEx2020_SQLdata', 'PITS'))
-    filenames = [join(data_dir, f) for f in listdir(data_dir) if f.split('.')[-1]=='csv']
 
-    # Grab only site details
-    site_filenames = [f for f in filenames if 'site' in f]
-    b = UploadSiteDetailsBatch(site_filenames, epsg=26912)
+    # Grab all the site details files
+    sites = glob.glob(join(data_dir,'*site*.csv'))
+
+    # Instatiate uploader
+    b = UploadSiteDetailsBatch(sites, epsg=26912, debug=False)
+
+    # Submit site details to the db
     b.push()
 
-    # Submit all profiles associated with pit at a time
+    # Return the number of errors for tracking in run.py
     return len(b.errors)
+
 
 if __name__ == '__main__':
     main()

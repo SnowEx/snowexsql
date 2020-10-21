@@ -1,14 +1,21 @@
 '''
+This script uploads the UAVSAR raster to the database after they have been
+converted to geotifs.
+
 Usage:
 1. Download the data from the GDrive sent from HP.
 
 2. Unzip into your Downloads.
 
-3. Convert data to GeoTiffs, and reprojects it (done with conver_uavsar.py)
+3. Convert data to GeoTiffs, and reprojects it (use convert_uavsar.py)
 
 4. Run this script.
 
 Usage:
+    # To run with all the scripts
+    python run.py
+
+    # To run individually
     python add_UAVSAR.py
 
 '''
@@ -26,15 +33,20 @@ def main():
     # Sub folder name under the downloaded data that the tifs were saved to
     geotif_loc = 'geotiffs'
 
-    # Spatial Reference
-    epsg = 26912
+    data = {
+        # Tile the data going in for faster retrieval
+        'tiled':True
 
-    # Metadata
-    surveyors = 'UAVSAR team, JPL'
-    instrument = 'UAVSAR, L-band InSAR'
-    site_name = 'Grand Mesa'
-    units = '' # Add from the Annotation file
-    desc = ''
+        # Spatial Reference
+        'epsg': 26912,
+
+        # Metadata
+        'surveyors': 'UAVSAR team, JPL',
+        'instrument': 'UAVSAR, L-band InSAR',
+        'site_name': 'Grand Mesa',
+        'units': '', # Add from the Annotation file
+        'decription': '',
+    }
 
     # Expand the paths
     downloads = abspath(expanduser(downloads))
@@ -43,30 +55,39 @@ def main():
     # error counting
     errors_count = 0
 
-    # Build metadata that gets copied to all rasters
-    data = {'site_name': site_name,
-            'description': desc,
-            'units': units,
-            'epsg': epsg,
-            'surveyors': surveyors,
-            'instrument': instrument,
-            'tiled':True}
-
+    ########################## Grand Mesa #####################################
     # Grab all the grand mesa annotation files in the original data folder
     ann_files = glob.glob(join(downloads, 'grmesa*.ann'))
+
+    # Instantiate the uploader
     rs = UploadUAVSARBatch(ann_files, geotiff_dir=geotif_loc,  **data)
+
+    # Submit to the db
     rs.push()
+
+    # Keep track of number of errors for run.py
     errors_count += len(rs.errors)
 
-    # Make adjustments for lowman files
+    ############################### Idaho ######################################
+    # Make adjustments to metadata for lowman files
     data['site_name'] = 'idaho'
     data['epsg'] = 29611
+
+    # Grab all the lowman annotation files
     ann_files = glob.glob(join(downloads, 'lowman*.ann'))
+
+    # Instantiate the uploader
     rs = UploadUAVSARBatch(ann_files, geotiff_dir=geotif_loc,  **data)
+
+    # Submit to the db
     rs.push()
+
+    # Keep track of the number of errors
     errors_count += len(rs.errors)
 
+    # Return the error count so run.py can keep track
     return errors_count
+
 
 if __name__ == '__main__':
     main()

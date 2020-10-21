@@ -2,16 +2,8 @@
 Upload the SnowEx Raster for snow off over Grand Mesa 2016-2017 flown by
 ASO
 
-Usage:
-    # To run with all the scripts
-    python run.py
-
-    # To run individually
-    python add_aso_snowoff.py
-
 Spatial Reference:
     * EPSG: 32613 (Needs to be reprojected)
-
 
 We found that to match this with the other datasets:
 
@@ -22,6 +14,13 @@ We had to use the the tool: dem_geoid  from https://ti.arc.nasa.gov/tech/asr/gro
 
 dem_geoid -o test utm_12/USCOGM20160926f1a1__lowest_vf_snowEX_extent.tif
 mv utm12/test-adj.tif utm_12/USCOGM20160926f1a1__lowest_vf_snowEX_extent.tif
+
+Usage:
+    # To run with all the scripts
+    python run.py
+
+    # To run individually
+    python add_aso_snowoff.py
 '''
 
 
