@@ -37,7 +37,7 @@ setup(
     description="SQL Databse software for SnowEx data",
     entry_points={
         'console_scripts': [
-            'snowxsql=snowxsql.cli:main',
+            'clear_dataset=snowxsql.cli:clear_dataset',
         ],
     },
     install_requires=requirements,
