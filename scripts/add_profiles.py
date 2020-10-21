@@ -10,6 +10,7 @@ Usage:
 from os.path import join, abspath, basename, relpath
 from os import listdir
 from snowxsql.batch import UploadProfileBatch
+import glob
 
 def main():
 
@@ -17,22 +18,19 @@ def main():
 
     # Obtain a list of Grand mesa pits
     data_dir = abspath(join('..', '..', 'SnowEx2020_SQLdata', 'PITS'))
-    filenames = [join(data_dir, f) for f in listdir(data_dir) if f.split('.')[-1]=='csv']
 
-    # Grab only site details
-    site_filenames = [f for f in filenames if 'site' in f]
+    # Grab all the csvs in the PITS folder
+    filenames = glob.glob(join(data_dir, '*.csv'))
+    # Grab all the site details files
+    sites = glob.glob(join(data_dir,'*site*.csv'))
+
+    # Remove the site details from the total file list to get only the profiles file list
+    profiles = list(set(filenames) - set(sites))
 
     # Submit all profiles associated with pit at a time
-    for f in site_filenames:
-        base_f = basename(f)
-        info = base_f.split('_')
-        pit_id = '_'.join(info[0:2])
-        profile_filenames = [f for f in filenames if 'site' not in f and pit_id in f]
-
-        b = UploadProfileBatch(filenames=profile_filenames,
-                               site_filenames=f, debug=False)
-        b.push()
-        errors += len(b.errors)
+    b = UploadProfileBatch(filenames=profiles, debug=False)
+    b.push()
+    errors += len(b.errors)
 
     return errors
 
