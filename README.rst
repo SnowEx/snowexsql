@@ -34,7 +34,7 @@ First ensure you have following prerequisites:
 
 .. code-block:: bash
 
-  cd scripts && sh install_mac.sh
+  cd scripts/install && sh install_mac.sh
 
 
 Ubuntu
@@ -47,7 +47,7 @@ First ensure you have following prerequisites:
 
 .. code-block:: bash
 
-  cd scripts && sh install_ubuntu.sh
+  cd scripts/install && sh install_ubuntu.sh
 
 Python
 ------

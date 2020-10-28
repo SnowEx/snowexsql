@@ -33,7 +33,7 @@ First ensure you have following prequisites:
 
 .. code-block:: bash
 
-  cd scripts && sh install_mac.sh
+  cd scripts/install && sh install_mac.sh
 
 
 Ubuntu
@@ -46,7 +46,7 @@ First ensure you have following prequisites:
 
 .. code-block:: bash
 
-  cd scripts && sh install_ubuntu.sh
+  cd scripts/install && sh install_ubuntu.sh
 
 Python
 ------
@@ -57,8 +57,7 @@ Install the python package by:
   python setup.py install
 
 
-
-Setting up the Database
+Installing the Database
 -----------------------
 
 You will need to enable the GDAL Drivers and Raster support which is off by
@@ -109,17 +108,9 @@ enabled database.
   psql test -c "CREATE EXTENSION postgis; CREATE EXTENSION postgis_raster;"
   psql snowex -c "CREATE EXTENSION postgis; CREATE EXTENSION postgis_raster;"
 
-4. You will also need to increase the working memory postgis has. By Default
-it is 4MB which is tough for rasters. Show it and set it in the postgres
-console using the following statements:
 
-.. code-block:: postgres
+Then continue on to install the python source code below.
 
-  SHOW work_mem;
-  SET work_mem TO '3GB';
-
-
-Then continue on to install the source code below.
 
 Install From Source
 -------------------
@@ -132,17 +123,33 @@ You can either clone the public repository:
 
     $ git clone git://github.com/hpmarshall/SnowEx2020_SQLcode
 
-Or download the `tarball`_:
-
-.. code-block:: console
-
-    $ curl -OJL https://github.com/hpmarshall/SnowEx2020_SQLcode/tarball/master
-
 Once you have a copy of the source, you can install it with:
 
 .. code-block:: console
 
     $ python setup.py install
+
+Once you install the python package, you can populate the database.
+
+Populating the Database
+-----------------------
+
+In the `scripts/upload` folder, there is a collection of scripts to upload data
+to the database. Before each script can be run, the maintainer must download
+the datasets. Once the data is on the disk, a user can run the scripts individually
+or all together.
+
+.. code-block:: console
+
+    $ cd scripts/upload
+    $ python add_profiles.py
+
+    # or all together...
+    $ python run.py
+
+**Note:** The `run.py` script has a few questions to ask for a couple inputs
+that are required to run upload the data. Additionally, running the run.py file
+can take a few hours.
 
 
 .. _Github repo: https://github.com/hpmarshall/SnowEx2020_SQLcode

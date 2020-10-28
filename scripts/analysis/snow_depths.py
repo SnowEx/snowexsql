@@ -21,8 +21,6 @@ def get_raster_value(session, point, surveyor, date=None):
     raster value
     '''
 
-    #s = func.ST_Clip(func.ST_Rescale(gfunc.ST_Union(ImageData.raster, type_=Raster), res, -1 * res, 'Bilinear'), shp, True)
-
     # Filter by surveyors and data name DEM
     q = session.query(func.ST_Value(ImageData.raster, 1, point)).filter(ImageData.type == 'DEM')
     q = q.filter(ImageData.surveyors == surveyor)
@@ -30,13 +28,13 @@ def get_raster_value(session, point, surveyor, date=None):
     if date != None:
         q = q.filter(ImageData.date == date)
 
-    # Grab all tile that intersect the snow on boundary
-    # q = q.filter(gfunc.ST_Intersects(ImageData.raster, shp))
-
     q = q.filter(gfunc.ST_Within(point, func.ST_Envelope(ImageData.raster)))
     value = q.all()
 
-    return value[0][0]
+    if len(value) >= 1:
+        return value[0][0]
+    else:
+        return None
 
 def main():
 
@@ -55,7 +53,7 @@ def main():
 
     # Grab all depths and dates.
     q = session.query(PointData)
-    q = q.filter(PointData.type=='depth').limit(50)
+    q = q.filter(PointData.type=='depth')
     df = query_to_geopandas(q, engine)
     log.info('Found {} snow depths...'.format(len(df)))
 
@@ -71,7 +69,6 @@ def main():
         data['date'] = row['date']
 
         point = from_shape(row['geom'], srid=26912).ST_AsEWKT()
-
 
         # Get the raster value of a cell nearest center after resampling to the resolution
         snow = get_raster_value(session, point, 'QSI', date=dates[0][0])
@@ -93,13 +90,17 @@ def main():
 
     # Calculate the differences
     for n in surveyors:
-        log.info(n)
         name = '{} diff'.format(n)
         results[name] = results[n] - results['measured']
 
-        # report the stats
-        get_stats(results[name], logger=log)
+    results.to_csv('snow_depths.csv')
 
+    # report the stats
+    for d in ['usgs diff','aso diff']:
+        log.info(d)
+        get_stats(results[d], logger=log)
+
+    # Make a plot
     fig, ax = plt.subplots(1, 1, figsize = (8,8))
 
     # Plot the points colored by differences
@@ -112,7 +113,7 @@ def main():
     ax.set_xlabel('Easting [m]')
     ax.set_ylabel('Northing [m]')
     ax.set_title('USGS')
-    plt.show()
 
+    plt.show()
 if __name__ == '__main__':
     main()

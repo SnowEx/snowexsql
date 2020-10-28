@@ -162,8 +162,7 @@ class UploadProfileBatch(BatchBase):
     Class for submitting mulitple files of profile type data.
 
     Attributes:
-        smp_log_f: CSV providing metadata for profile_filenames. Cannot be
-                   used with site_filenames
+        smp_log_f: CSV providing metadata for profile_filenames.
     '''
     # Kwargs defaults
     defaults = { 'debug': True,
