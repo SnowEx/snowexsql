@@ -359,7 +359,7 @@ class DataHeader(object):
 
         self.extra_header = assign_default_kwargs(self, kwargs, self.defaults, leave=['epsg'])
 
-        self.log.info('Interpretting metdaata in {}'.format(filename))
+        self.log.info('Interpretting metadata in {}'.format(filename))
 
         # Site location files will have no data_name
         self.data_names = None

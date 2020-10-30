@@ -21,7 +21,7 @@ def main():
     # Obtain a list of Grand mesa smp files
     directory = abspath(expanduser('~/Downloads/NSIDC-upload/'))
 
-    filenames = glob.glob(directory, 'level_1_data', 'csv_resampled', '*.CSV')
+    filenames = glob.glob(join(directory, 'level_1_data', 'csv_resampled', '*.CSV'))
 
     # grab the file log excel
     smp_log_file = join(directory, 'SMP_level1.csv')

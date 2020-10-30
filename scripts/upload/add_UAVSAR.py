@@ -35,7 +35,7 @@ def main():
 
     data = {
         # Tile the data going in for faster retrieval
-        'tiled':True
+        'tiled':True,
 
         # Spatial Reference
         'epsg': 26912,
