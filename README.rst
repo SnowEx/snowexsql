@@ -19,7 +19,7 @@ Features
 Installing
 ----------
 If you are just planning on using the database, then only install the
-python package below.
+python package instructions below.
 
 If you are are database maintainers or installing it for the first time
 follow the instructions below completely.
@@ -31,6 +31,8 @@ First ensure you have following prerequisites:
 
 * Python3.5 +
 * HomeBrew
+
+Then to install the postgres database with postgis functionality run:
 
 .. code-block:: bash
 
@@ -45,6 +47,9 @@ First ensure you have following prerequisites:
 * Python3.5 +
 * wget
 
+Then to install the postgres database with postgis functionality run:
+
+
 .. code-block:: bash
 
   cd scripts/install && sh install_ubuntu.sh
@@ -56,6 +61,17 @@ Install the python package by:
 .. code-block:: bash
 
   python setup.py install
+
+If you are planning on running the tests or building the docs below also run:
+
+.. code-block:: bash
+
+  pip install -r requirements_dev.txt
+
+If you are using `conda` you may need to reinstall the following using conda:
+
+  * Jupyter notebook
+  * nbconvert
 
 Tests
 -----
@@ -85,6 +101,16 @@ Documentation
 
 There is a whole host of resources for users in the documentation. It has been
 setup for you to preview in your browser.
+
+In there you will find:
+
+* Examples of database use
+* Database structure
+* API to the python package snowxsql
+* Links to other resources
+* Notes about the data uploaded
+* Info on populating the database
+* And more!
 
 To see the documentation in your browser:
 

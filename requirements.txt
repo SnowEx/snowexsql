@@ -14,4 +14,4 @@ psycopg2-binary==2.8.5
 pandoc==1.0.2
 nbsphinx==0.7.1
 sphinx-gallery==0.7.0
-
+nbconvert==6.0.6
