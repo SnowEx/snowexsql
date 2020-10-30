@@ -53,6 +53,29 @@ class TestUploadProfileBatch(TableTestBase):
     'test_unique_count': [dict(data_name='manual_wetness', attribute_to_count='value', expected_count=1)]
             }
 
+class TestUploadProfileBatchErrors():
+    '''
+    Test uploading multiple vertical profiles
+    '''
+    files = ['doesnt_exist.csv']
+    def test_without_debug(self):
+        '''
+        Test batch uploading without debug and errors
+        '''
+
+        u = UploadProfileBatch(self.files, debug=False)
+        u.push()
+        assert len(u.errors) == 1
+
+    def test_with_debug(self):
+        '''
+        Test batch uploading with debug and errors
+        '''
+
+        with pytest.raises(Exception):
+            u = UploadProfileBatch(self.files, debug=True)
+            u.push()
+
 class TestUploadLWCProfileBatch(TableTestBase):
     '''
     Test uploading multiple two types of the LWC profiles

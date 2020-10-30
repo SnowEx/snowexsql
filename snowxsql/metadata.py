@@ -177,9 +177,6 @@ class SMPMeasurementLog(object):
         Returns:
             new_df: pandas.Dataframe with modifications
         '''
-        # interpret sampling strategy
-        # df = self.interpret_sample_strategy(df)
-
         # Apply observer map
         df = self.interpret_observers(df)
 
@@ -251,66 +248,6 @@ class SMPMeasurementLog(object):
             ind = df['pit_id'] == p
             temp = df.loc[ind]
             orientations = pd.unique(temp['orientation'])
-
-    def interpret_orientation(self, abbreviation, strategy='A'):
-        '''
-        Using the orietation information in the header of the SMP log file,
-        this functions generates a map of the orientation abbreviations to a
-        more verbose regarding the measurement orientation to the pit location
-
-        The orientation is referencing a transect on centered on the pit and
-        aligned with cardinal directions. Two strategies were implemented.
-
-        Both strategies involved transect that move each direction 50m from the
-        center of the pit and the E-W transect for both contain 10 measurements
-        The two strategies vary in how many measurements were taken in the N-S
-        transect.
-
-        Strategy A: N-S transect has 6 measurments
-        Strategy B: N-S transect has 10 measurments
-
-        This function auto applies these strategies to generate a more verbose
-        string to be used as a comment for the data entry
-
-        Args:
-            abbreviation: Abbreviated orientation
-            strategy: Sampling strategy used for the N-S transect
-        Returns:
-            note: A more verbose string describing the orientation
-        '''
-
-        portion = {'p': 'pitwall measurement', 'p_top': 'top portion of pit',
-                  'p_mid': 'mid portion', 'p_bot': 'bottom portion'}
-
-        # Manage pit references:
-        if 'pit' in abbreviation.lower():
-            note = abbreviation
-        else:
-            letter = abbreviation[0]
-            direction = cardinal_map[letter]
-
-            if letter == 'C':
-                note = ('Located at the center of the transects using sample '
-                       'strategy {}'.format(strategy))
-
-            else:
-                position = int(abbreviation[1:])
-
-                if strategy == 'A' and letter in ['N','S']:
-                    dist_map = {3:10, 2:30, 1:50}
-
-                elif strategy == 'B':
-                    dist_map = {5:10, 4:20, 3:30, 2:40, 1:50}
-                    dist = dist_map[position]
-
-                else:
-                    raise ValueError('Invalid strategy, please use A or B.'
-                                     ' See docs for more info.')
-
-                note = ('Located {}m {} of the center of the transect'
-                       ''.format(direction, dist))
-
-        return note
 
     def get_metadata(self, smp_file):
         '''
