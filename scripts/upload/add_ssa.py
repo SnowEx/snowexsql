@@ -13,14 +13,14 @@ Usage:
     python add_ssa.py
 '''
 
-from os.path import join, abspath
+from os.path import join, abspath, expanduser
 from snowxsql.batch import UploadProfileBatch
 import glob
 
 def main():
 
     # Obtain a list of SSA profiles
-    directory = abspath(join('..', '..', 'SnowEx2020_SQLdata',' SSA'))
+    directory = abspath(expanduser('~/Downloads/SSA_SnowEx20_v3'))
     filenames = glob.glob(join(directory, '*.csv'))
 
     # Instantiate the uploader

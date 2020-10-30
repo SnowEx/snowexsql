@@ -21,8 +21,8 @@ def main():
 
     errors = 0
 
-    # Obtain a list of Grand mesa pits
-    data_dir = abspath(join('..', '..', 'SnowEx2020_SQLdata', 'PITS'))
+    # Obtain a list of Grand mesa pits from the Snow Data repo
+    data_dir = abspath(join('..', '..', '..', 'SnowEx2020_SQLdata', 'PITS'))
 
     # Grab all the site details files
     sites = glob.glob(join(data_dir,'*site*.csv'))

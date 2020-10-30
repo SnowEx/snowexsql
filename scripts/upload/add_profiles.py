@@ -22,7 +22,7 @@ def main():
     errors = 0
 
     # Obtain a list of Grand mesa pits
-    data_dir = abspath(join('..', '..', 'SnowEx2020_SQLdata', 'PITS'))
+    data_dir = abspath(join('..', '..', '..', 'SnowEx2020_SQLdata', 'PITS'))
 
     # Grab all the csvs in the PITS folder
     filenames = glob.glob(join(data_dir, '*.csv'))
