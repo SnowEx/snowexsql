@@ -83,6 +83,7 @@ class BatchBase():
         self.start = time.time()
         self.log.info('Uploading {} files to database...'
                       ''.format(len(self.filenames)))
+        i = 0
 
         # Loop over a portion of files and upload them
         if self.n_files != -1:
@@ -106,6 +107,7 @@ class BatchBase():
                 self._push_one(f, **self.meta)
 
         self.session.close()
+
         # Log the ending errors
         self.report(i + 1)
 
@@ -181,6 +183,8 @@ class UploadProfileBatch(BatchBase):
         '''
 
         self.start = time.time()
+
+        i = 0 
 
         if self.smp_log_f != None:
             self.smp_log = SMPMeasurementLog(self.smp_log_f)

@@ -76,6 +76,14 @@ class TestUploadProfileBatchErrors():
             u = UploadProfileBatch(self.files, debug=True)
             u.push()
 
+    def test_without_files(self):
+        '''
+        Test that batch correctly runs with no files
+        '''
+        u = UploadProfileBatch([], debug=True)
+        u.push()
+        assert u.uploaded == 0
+        
 class TestUploadLWCProfileBatch(TableTestBase):
     '''
     Test uploading multiple two types of the LWC profiles
