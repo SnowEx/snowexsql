@@ -45,7 +45,7 @@ def main():
         'instrument': 'UAVSAR, L-band InSAR',
         'site_name': 'Grand Mesa',
         'units': '', # Add from the Annotation file
-        'decription': '',
+        'description': '',
     }
 
     # Expand the paths

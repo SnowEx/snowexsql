@@ -71,9 +71,9 @@ def main():
     u = UploadRasterBatch(final, **kwargs)
 
     # 4. Push to the database and collect the errors from push function
-    errors = u.push()
+    u.push()
 
-    return errors
+    return len(u.errors)
 
 # Add this so you can run your script directly without running run.py
 if __name__ == '__main__':

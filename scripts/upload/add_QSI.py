@@ -128,7 +128,7 @@ def main():
             files = find_files(d, 'adf', 'w001001x')
 
             out_dir = join(downloads, flight, 'Rasters', dem, 'utm_12')
-            final = reproject(files, epsg, out_dir)
+            final = reproject(files, base['epsg'], out_dir)
 
             # Grab the flight meta data
             data = flight_meta[flight]

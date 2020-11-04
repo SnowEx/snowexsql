@@ -27,7 +27,7 @@ def main():
 
     file =  '~/Downloads/SNEX20_BSU_GPR/BSU_pE_GPR_01282020_01292020_02042020/BSU_pE_GPR_01282020_01292020_02042020_decimated.csv'
 
-    meta = {
+    kwargs = {
     # Keyword argument to upload depth measurements
     'depth_is_metadata': False,
 
