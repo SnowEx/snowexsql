@@ -60,7 +60,7 @@ Install the python package by:
 
 .. code-block:: bash
 
-  python setup.py install
+  python3 setup.py install
 
 If you are planning on running the tests or building the docs below also run:
 

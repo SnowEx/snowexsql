@@ -9,7 +9,8 @@ sudo apt-get update
 sudo apt install pandoc
 
 # See  https://www.postgresql.org/download/linux/ubuntu/
-sudo apt-get install -y postgresql postgis libxml2-dev libgeos-dev libproj-dev libjson-c-dev gdal-bin libgdal-dev postgresql-13-postgis-3-scripts
+sudo apt-get install -y postgresql postgis libxml2-dev libgeos-dev libproj-dev libjson-c-dev gdal-bin libgdal-dev \
+                        postgresql-13-postgis-3-scripts python3-pip
 
 # Start the database
 sudo -u postgres pg_ctlcluster 13 main start
@@ -27,8 +28,11 @@ sudo -u postgres dropuser --if-exists $USER
 # Create the USER
 sudo -u postgres createuser -s $USER
 
-# Modify the conf file with our settings
-python modify_conf.py
+# Install the python package
+cd ../../ && python3 setup.py install --user && cd -
+
+# Use the package to modify the postgres conf file with our settings
+python3 modify_conf.py
 
 # Restart the postgres service to update the changes in the conf file
 sudo service postgresql restart
