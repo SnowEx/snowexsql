@@ -152,7 +152,6 @@ def add_date_time_keys(data, timezone='MST'):
             str_date = str(data[k].replace('T', '-'))
             d = pd.to_datetime(str_date)
             d = d.replace(tzinfo=tz)
-            print(d)
             del data[k]
             break
 
@@ -166,7 +165,7 @@ def add_date_time_keys(data, timezone='MST'):
 
         # Handle gpr data dates
         elif 'utcyear' in keys and 'utcdoy' in keys and 'utctod' in keys:
-            base = pd.to_datetime('{:d}-01-01 00:00:00 '.format(int(data['utcyear'])) + 'UTC')
+            base = pd.to_datetime('{:d}-01-01 00:00:00 '.format(int(data['utcyear'])), utc=True)
 
             # Number of days since january 1
             d = int(data['utcdoy']) - 1
@@ -324,7 +323,7 @@ def get_InSar_flight_comment(data_name, desc):
     for n in passes:
         for timing in ['start', 'stop']:
             key = blank.format(timing, n)
-            dt = desc[key]['value'].astimezone(tz)
+            dt = desc[key]['value'].replace(tzinfo=tz)
             times.append(dt.date())
             times.append(dt.time())
 
