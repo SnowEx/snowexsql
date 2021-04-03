@@ -144,12 +144,15 @@ def add_date_time_keys(data, timezone='MST'):
     '''
     keys = data.keys()
     d = None
+    tz = pytz.timezone(timezone)
 
     # Look for a single header entry for date and time.
     for k in keys:
         if 'date' in k and 'time' in k:
-            str_date = str(data[k].replace('T','-')) + ' ' + timezone
+            str_date = str(data[k].replace('T', '-'))
             d = pd.to_datetime(str_date)
+            d = d.replace(tzinfo=tz)
+            print(d)
             del data[k]
             break
 
@@ -159,6 +162,7 @@ def add_date_time_keys(data, timezone='MST'):
         if 'date' in keys and 'time' in keys:
             dstr = ' '.join([str(data['date']), str(data['time']), timezone])
             d = pd.to_datetime(dstr)
+            d = d.replace(tzinfo=tz)
 
         # Handle gpr data dates
         elif 'utcyear' in keys and 'utcdoy' in keys and 'utctod' in keys:

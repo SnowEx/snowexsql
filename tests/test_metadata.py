@@ -130,7 +130,7 @@ class TestLWCHeaderB(DataHeaderTestBase):
     Class for testing the other type of LWC headers that contain two multi sampled
     profiles.
     '''
-    dt = pd.to_datetime('2020-3-12 14:45 MST')
+    dt = datetime.datetime(2020, 3, 12, 14, 45, 0, 0, pytz.timezone('MST'))
 
     info = {
         'site_name': 'Grand Mesa',

@@ -3,7 +3,7 @@ build/*
 snowxsql.egg-info/*
 dist/*
 *.db
-*/__pycache__/*
+**/__pycache__/**
 *.cpg
 *.dbf
 *.prj
@@ -18,4 +18,5 @@ docs/_build/*
 
 .coverage
 htmlcov/*
-
+scripts/upload/test*.txt
+.idea/*
