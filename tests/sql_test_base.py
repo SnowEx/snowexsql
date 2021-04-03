@@ -1,16 +1,8 @@
-from sqlalchemy import MetaData, create_engine
-from sqlalchemy.engine import reflection
-from sqlalchemy.orm import sessionmaker
-
-import os
+from sqlalchemy import asc
 from os.path import join, dirname
 from numpy.testing import assert_almost_equal
 from snowxsql.db import get_db, initialize
-from snowxsql.upload import UploadProfileData
-from snowxsql.data import LayerData
-from snowxsql.metadata import SMPMeasurementLog, DataHeader
 
-import pytest
 
 def pytest_generate_tests(metafunc):
     '''
@@ -128,7 +120,7 @@ class TableTestBase(DBSetup):
             query = self.session.query(self.TableClass)
 
         fa = getattr(self.TableClass, filter_attribute)
-        q = query.filter(fa == filter_value).order_by(fa)
+        q = query.filter(fa == filter_value).order_by(asc(fa))
         return q
 
     def test_count(self, data_name, expected_count):
@@ -148,8 +140,8 @@ class TableTestBase(DBSetup):
 
         # Add another filter by some attribute
         q = self.get_query(filter_attribute, filter_value, query=q)
+
         records = q.all()
-        print(records)
         received = getattr(records[0], attribute_to_check)
         try:
             received = float(received)
@@ -159,7 +151,6 @@ class TableTestBase(DBSetup):
         if type(received) == float:
             assert_almost_equal(received, expected, 6)
         else:
-            print(received, expected)
             assert received == expected
 
 
