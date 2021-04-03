@@ -26,7 +26,7 @@ class TestConversionsOnDB(DBSetup):
         super().setup_class()
 
         # Upload one raster
-        raster_f = join(self.data_dir, 'be_gm1_0287', 'w001001x.adf' )
+        raster_f = join(self.data_dir, 'be_gm1_0287', 'w001001x.adf')
         u = UploadRaster(filename=raster_f, epsg=26912)
         u.submit(self.session)
 
@@ -80,7 +80,7 @@ class InSarToRasterioBase():
     temp = join(this_location, 'temp')
 
     # Data dir
-    d =  join( this_location, 'data')
+    d = join(this_location, 'data')
 
     # Input file
     input_f = ''

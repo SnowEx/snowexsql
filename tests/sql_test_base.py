@@ -126,7 +126,9 @@ class TableTestBase(DBSetup):
 
         if query == None:
             query = self.session.query(self.TableClass)
-        q = query.filter(getattr(self.TableClass, filter_attribute) == filter_value)
+
+        fa = getattr(self.TableClass, filter_attribute)
+        q = query.filter(fa == filter_value).order_by(fa)
         return q
 
     def test_count(self, data_name, expected_count):
@@ -147,7 +149,7 @@ class TableTestBase(DBSetup):
         # Add another filter by some attribute
         q = self.get_query(filter_attribute, filter_value, query=q)
         records = q.all()
-
+        print(records)
         received = getattr(records[0], attribute_to_check)
         try:
             received = float(received)
@@ -157,6 +159,7 @@ class TableTestBase(DBSetup):
         if type(received) == float:
             assert_almost_equal(received, expected, 6)
         else:
+            print(received, expected)
             assert received == expected
 
 

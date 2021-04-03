@@ -56,10 +56,12 @@ class TestReprojectRasterByEPSG():
     #     '''
     #     if isfile(self.output_f):
     #         remove(self.output_f)
+    @classmethod
+    def teardown_method(self):
+        remove(self.output_f)
 
     @pytest.mark.parametrize("input_f, epsg, bounds", [
     ('uavsar_latlon.amp1.real.tif', 26912, (748446.1945536422, 4325651.650770078, 751909.2857505103, 4328702.971977075)),
-
     ])
     def test_reproject(self, input_f, epsg, bounds):
         '''
