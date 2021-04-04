@@ -56,11 +56,11 @@ def read_InSar_annotation(ann_file):
         info = line.strip().split(';')
         comment = info[-1].strip().lower()
         info = info[0]
+
         # ignore empty strings
         if info:
             d = info.split('=')
             name, value = d[0], d[1]
-
 
             # Clean up tabs, spaces and line returns
             key = name.split('(')[0].strip().lower()
@@ -72,7 +72,7 @@ def read_InSar_annotation(ann_file):
 
             value = value.strip()
 
-            ### Cast the values that can be to numbers ###
+            # Cast the values that can be to numbers ###
             if value.strip('-').replace('.','').isnumeric():
                 if '.' in value:
                     value = float(value)
@@ -83,8 +83,8 @@ def read_InSar_annotation(ann_file):
             data[key] = {'value': value, 'units': units, 'comment':comment}
 
     # Convert times to datetimes
-    for pass_num in ['1','2']:
-        for timing in ['start','stop']:
+    for pass_num in ['1', '2']:
+        for timing in ['start', 'stop']:
             key = '{} time of acquisition for pass {}'.format(timing, pass_num)
             dt = pd.to_datetime(data[key]['value'])
             dt = dt.replace(tzinfo=pytz.timezone('UTC'))

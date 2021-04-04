@@ -26,6 +26,7 @@ def test_cardinal_to_degrees_value_error():
 mst = pytz.timezone('MST')
 this_day =  date(year=2020, month=1, day=1)
 this_time = time(hour=0, tzinfo=mst)
+
 @pytest.mark.parametrize("data, expected_date, expected_time",
 [({'date/time': '2020-01-01-00:00'}, this_day, this_time),
  ({'date/local_time': '2020-01-01-00:00'}, this_day, this_time),
@@ -34,14 +35,14 @@ this_time = time(hour=0, tzinfo=mst)
  # Test we can hanlde the milli seconds
  ({'utcyear':2019, 'utcdoy':35, 'utctod':214317.222}, date(year=2019, month=2, day=4), time(hour=14, minute=43, second=17, microsecond=222000, tzinfo=mst))
 ])
-def test_add_date_time_keys(data, expected_date, expected_time):
+def test_add_date_time_keys(data, expected_date, expected_time, ):
     '''
     Test that the date and time keys can be added from various scenarios
     '''
 
     d = add_date_time_keys(data, timezone='MST')
 
-    assert d['date'] ==expected_date
+    assert d['date'] == expected_date
     assert d['time'] == expected_time
 
     # Ensure we always remove the original keys used to interpret

@@ -295,14 +295,14 @@ def get_InSar_flight_comment(data_name, desc):
             2nd overpass duration: Feb 2 2020 2pm MST - Feb 2 2020 3pm MST
 
     Args:
-        f: Filename used to parse the data type (int, cor, amp1, amp2)
+        data_name: String name of the data being parsed (e.g. amplitude)
         desc: descriptor dictionary formed from the annotation file
 
     Returns:
         comment: A comment for the database for the uavsar file uploaded
     '''
-
-    tz = pytz.timezone('MST')
+    tz_str = 'MST'
+    tz = pytz.timezone(tz_str)
     blank = '{} time of acquisition for pass {}'
 
     # Assign the correct date to the amplitude flights which dont require both flights
@@ -324,7 +324,9 @@ def get_InSar_flight_comment(data_name, desc):
         for timing in ['start', 'stop']:
             key = blank.format(timing, n)
             dt = desc[key]['value'].replace(tzinfo=tz)
+
             times.append(dt.date())
             times.append(dt.time())
 
-    return comment.format(*times)
+    result = comment.format(*times)
+    return result
