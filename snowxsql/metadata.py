@@ -10,7 +10,6 @@ from .db import get_table_attributes
 from .projection import reproject_point_in_dict, add_geom
 from .utilities import get_logger, read_n_lines, assign_default_kwargs
 
-import utm
 import pandas as pd
 import pytz
 
@@ -88,6 +87,7 @@ def read_InSar_annotation(ann_file):
         for timing in ['start','stop']:
             key = '{} time of acquisition for pass {}'.format(timing, pass_num)
             dt = pd.to_datetime(data[key]['value'])
+            dt = dt.replace(tzinfo=pytz.timezone('UTC'))
             data[key]['value'] = dt
 
     return data
@@ -576,7 +576,6 @@ class DataHeader(object):
             header_pos = None
 
             # Site location parses all of the file
-
 
         # Find the column names and where it is in the file
         else:

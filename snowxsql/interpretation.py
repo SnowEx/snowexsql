@@ -156,7 +156,7 @@ def add_date_time_keys(data, timezone='MST'):
             break
 
     # If we didn't find date/time combined.
-    if d == None:
+    if d is None:
         # Handle SMP data dates and times
         if 'date' in keys and 'time' in keys:
             dstr = ' '.join([str(data['date']), str(data['time']), timezone])
@@ -179,7 +179,7 @@ def add_date_time_keys(data, timezone='MST'):
 
             delta = datetime.timedelta(days=d, hours=hr, minutes=mm, seconds=ss,
                                                                     milliseconds=ms)
-            d = base.astimezone(pytz.timezone(timezone)) + delta
+            d = base.astimezone(tz) + delta
 
             # Remove them
             for v in ['utcyear', 'utcdoy', 'utctod']:
