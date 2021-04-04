@@ -87,7 +87,7 @@ def read_InSar_annotation(ann_file):
         for timing in ['start', 'stop']:
             key = '{} time of acquisition for pass {}'.format(timing, pass_num)
             dt = pd.to_datetime(data[key]['value'])
-            dt = dt.replace(tzinfo=pytz.timezone('UTC'))
+            dt = dt.astimezone(pytz.timezone('MST'))
             data[key]['value'] = dt
 
     return data

@@ -24,7 +24,7 @@ def test_cardinal_to_degrees_value_error():
         d = convert_cardinal_to_degree('')
 
 mst = pytz.timezone('MST')
-this_day =  date(year=2020, month=1, day=1)
+this_day = date(year=2020, month=1, day=1)
 this_time = time(hour=0, tzinfo=mst)
 
 @pytest.mark.parametrize("data, expected_date, expected_time",
