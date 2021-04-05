@@ -306,11 +306,13 @@ class UploadUAVSARBatch(BatchBase):
             # Assign the date for the respective flights
             if 'amplitude' in dname:
                 meta['date'] = desc['start time of acquisition for pass {}'.format(dname.split(' ')[-1])]['value']
-                print(meta['date'])
 
             # Derived products always receive the date of the last overpass
             else:
                 meta['date'] = desc['start time of acquisition for pass 2']['value']
+
+            # Assign only the date not the date and time
+            meta['date'] = meta['date'].date()
 
             # Assign units
             meta['units'] = desc['{} units'.format(dname.split(' ')[0])]['value']
