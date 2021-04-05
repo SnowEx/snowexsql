@@ -1,0 +1,1 @@
+https://n5eil01u.ecs.nsidc.org/SNOWEX/SNEX20_SD.001/2020.01.28/SnowEx2020_SnowDepths_COGM_alldepths_v01.csv

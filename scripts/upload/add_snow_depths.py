@@ -16,9 +16,7 @@ def main():
     timezone = 'MST'
 
     # Read in the Grand Mesa Snow Depths Data
-    fname = abspath(join('..', '..', '..', 'SnowEx2020_SQLdata',
-                               'DEPTHS',
-                               'SnowEx2020_SD_GM_alldepths_v1.csv'))
+    fname = abspath(join('..', 'download', 'data', 'SnowEx2020_SnowDepths_COGM_alldepths_v01.csv'))
 
     # Start the Database
     db_name = 'snowex'

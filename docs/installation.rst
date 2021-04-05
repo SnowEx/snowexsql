@@ -134,9 +134,25 @@ Once you install the python package, you can populate the database.
 Populating the Database
 -----------------------
 
-In the `scripts/upload` folder, there is a collection of scripts to upload data
-to the database. Before each script can be run, the maintainer must download
-the datasets. Once the data is on the disk, a user can run the scripts individually
+1. Setup an earth login account at NSIDC_.
+Then make the following file via:
+
+.. code-block:: console
+
+    echo 'machine urs.earthdata.nasa.gov login <uid> password <password>' >> ~/.netrc
+
+2. Edit the file ~/.netrc and replace the above with your actual credentials to the earth login
+
+3. Protect that file via:
+
+.. code-block:: console
+
+    chmod 0600 ~/.netrc
+
+4. Download the data by running all the shell scripts under `./scripts/download`
+
+5. In the `./scripts/upload` folder, there is a collection of scripts to upload data
+to the database. Once the data is on the disk, a user can run the scripts individually
 or all together.
 
 .. code-block:: console
@@ -154,3 +170,4 @@ can take a few hours.
 
 .. _Github repo: https://github.com/hpmarshall/SnowEx2020_SQLcode
 .. _tarball: https://github.com/hpmarshall/SnowEx2020_SQLcode/tarball/master
+.. _NSIDC: https://urs.earthdata.nasa.gov/profile
