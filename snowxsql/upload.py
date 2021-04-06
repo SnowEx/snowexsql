@@ -245,7 +245,7 @@ class PointDataCSV(object):
         self.log.info('Adding date and time to metadata...')
         df = df.apply(lambda data: add_date_time_keys(data, timezone=self.hdr.timezone), axis=1)
 
-        self.log.info('Adding valid keywaord arguments to metadata...')
+        self.log.info('Adding valid keyword arguments to metadata...')
         # 1. Only submit valid columns to the DB
         valid = get_table_attributes(PointData)
 

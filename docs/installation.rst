@@ -59,58 +59,67 @@ Install the python package by:
 
 Installing the Database
 -----------------------
+The script under ./scripts/install will perform the following:
 
-You will need to enable the GDAL Drivers and Raster support which is off by
-default.
+1: Adds the following to the file /etc/postgresql/13/main/environment to enable rasters, for more info see `PostGIS installation`_ page under
+*2.2. Configuring raster*
 
-Follow the instructions on the `PostGIS installation`_ page under
-'2.2. Configuring raster'
+    .. code-block:: bash
 
-For enabling rasters on Linux:
+        POSTGIS_ENABLE_OUTDB_RASTERS=1
+        POSTGIS_GDAL_ENABLED_DRIVERS=ENABLE_ALL
 
-1: Add the following to the file /etc/postgresql/10/main/environment
+2. Then it will restart the PostGIS service using:
 
-.. code-block:: bash
+    .. code-block:: bash
 
-    POSTGIS_ENABLE_OUTDB_RASTERS=1
-    POSTGIS_GDAL_ENABLED_DRIVERS=ENABLE_ALL
-
-2. Then restart the PostGIS service
-
- .. code-block:: bash
-
-   sudo service postgresql restart
+        sudo service postgresql restart
 
 
 .. _PostGIS installation: http://postgis.net/docs/postgis_installation.html#install_short_version
 .. _PostGresSQL: https://www.postgresql.org/download/
 
-3. Create your tables, our main one called snowex, and another called test for
+3. Creates your tables, our main one called snowex, and another called test for
 running small unittests on.
 
-.. code-block:: bash
+    .. code-block:: bash
 
-  sudo -u <username> psql -c "CREATE DATABASE snowex; CREATE DATABASE test;"
+        sudo -u <username> psql -c "CREATE DATABASE snowex; CREATE DATABASE test;"
 
-Test that you made them correctly by logging into them without sudo.
+4. Installs the post gis extensions via:
 
-.. code-block:: bash
+    .. code-block:: bash
 
-  psql snowex
-
-This should open up the postgres console.
-
-We need to enable the postgis extensions still. This is what makes it a postgis
-enabled database.
-
-.. code-block:: bash
-
-  psql test -c "CREATE EXTENSION postgis; CREATE EXTENSION postgis_raster;"
-  psql snowex -c "CREATE EXTENSION postgis; CREATE EXTENSION postgis_raster;"
+        psql test -c "CREATE EXTENSION postgis; CREATE EXTENSION postgis_raster;"
+        psql snowex -c "CREATE EXTENSION postgis; CREATE EXTENSION postgis_raster;"
 
 
-Then continue on to install the python source code below.
+4. Create a users ubuntu and snow
 
+5. Make user snow a read only user
+
+6. Installs the python package snowxsql
+
+**Notes for Remote Access**
+
+* To allow access to your remote database modify '/etc/postgresql/13/main/postgresql.conf'
+    by uncommenting and setting the following:
+
+    .. code-block:: console
+
+        listen_addresses = '*'
+
+* Further to add remote access add the following to /etc/postgresql/13/main/postgresql.conf:
+
+    1. To add access from the unrestricted access to jupyter hub user add the line below.
+
+        .. code-block:: console
+            host    snowex          ubuntu          <IP RANGE>           trust
+
+    2. To add the read only user access from anywhere add the following.
+
+        .. code-block:: console
+            host    snowex          snow            0.0.0.0/0               md5
 
 Install From Source
 -------------------
@@ -127,12 +136,14 @@ Once you have a copy of the source, you can install it with:
 
 .. code-block:: console
 
-    $ python setup.py install
+    $ python3 setup.py install
 
 Once you install the python package, you can populate the database.
 
 Populating the Database
 -----------------------
+This is only required for the admin user setting up the database. Once the data is in the database any user will be able
+to access it.
 
 1. Setup an earth login account at NSIDC_.
 Then make the following file via:

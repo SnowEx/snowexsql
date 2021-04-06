@@ -1,7 +1,13 @@
 #! /bin/sh
 
-# Add the postgres 12 to the repos
+# Add the postgres 13 to the repos
 DATABASES="snowex test"
+
+# Users to add to the db
+USERS="snow ubuntu"
+
+# User to be readonly
+READ_ONLY="snow"
 
 sudo sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
 wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
@@ -22,11 +28,13 @@ do
   sudo -u postgres dropdb --if-exists $DB
 done
 
-# Delete the user
-sudo -u postgres dropuser --if-exists $USER
-
-# Create the USER
-sudo -u postgres createuser -s $USER
+for DB_USER in $USERS
+do
+  # Drop the db if it exists
+  sudo -u postgres dropuser --if-exists $DB_USER
+  # Create the USER
+  sudo -u postgres createuser -s $USER
+done
 
 # Install the python package
 cd ../../ && python3 setup.py install --user && cd -
@@ -48,3 +56,9 @@ do
   psql $DB -c 'CREATE EXTENSION postgis; CREATE EXTENSION postgis_raster;'
 
 done
+
+# Establish snow as a readonly user
+psql snowex -c "CREATE USER $READ_ONLY WITH PASSWORD 'hackweek';"
+psql snowex -c "GRANT CONNECT ON DATABASE snowex TO $READ_ONLY;"
+psql snowex -c "GRANT USAGE ON SCHEMA public TO $READ_ONLY;"
+psql snowex -c "GRANT SELECT ON ALL TABLES IN SCHEMA public TO $READ_ONLY;"
