@@ -64,16 +64,16 @@ The script under ./scripts/install will perform the following:
 1: Adds the following to the file /etc/postgresql/13/main/environment to enable rasters, for more info see `PostGIS installation`_ page under
 *2.2. Configuring raster*
 
-    .. code-block:: bash
+.. code-block:: bash
 
-        POSTGIS_ENABLE_OUTDB_RASTERS=1
-        POSTGIS_GDAL_ENABLED_DRIVERS=ENABLE_ALL
+    POSTGIS_ENABLE_OUTDB_RASTERS=1
+    POSTGIS_GDAL_ENABLED_DRIVERS=ENABLE_ALL
 
 2. Then it will restart the PostGIS service using:
 
-    .. code-block:: bash
+.. code-block:: bash
 
-        sudo service postgresql restart
+    sudo service postgresql restart
 
 
 .. _PostGIS installation: http://postgis.net/docs/postgis_installation.html#install_short_version
@@ -82,16 +82,16 @@ The script under ./scripts/install will perform the following:
 3. Creates your tables, our main one called snowex, and another called test for
 running small unittests on.
 
-    .. code-block:: bash
+.. code-block:: bash
 
-        sudo -u <username> psql -c "CREATE DATABASE snowex; CREATE DATABASE test;"
+    sudo -u <username> psql -c "CREATE DATABASE snowex; CREATE DATABASE test;"
 
 4. Installs the post gis extensions via:
 
-    .. code-block:: bash
+.. code-block:: bash
 
-        psql test -c "CREATE EXTENSION postgis; CREATE EXTENSION postgis_raster;"
-        psql snowex -c "CREATE EXTENSION postgis; CREATE EXTENSION postgis_raster;"
+    psql test -c "CREATE EXTENSION postgis; CREATE EXTENSION postgis_raster;"
+    psql snowex -c "CREATE EXTENSION postgis; CREATE EXTENSION postgis_raster;"
 
 
 4. Create a users ubuntu and snow
@@ -105,21 +105,23 @@ running small unittests on.
 * To allow access to your remote database modify '/etc/postgresql/13/main/postgresql.conf'
     by uncommenting and setting the following:
 
-    .. code-block:: console
+.. code-block:: console
 
-        listen_addresses = '*'
+    listen_addresses = '*'
 
 * Further to add remote access add the following to /etc/postgresql/13/main/postgresql.conf:
 
-    1. To add access from the unrestricted access to jupyter hub user add the line below.
+    1. To add access from the unrestricted access to jupyter hub user add the line below:
 
-        .. code-block:: console
-            host    snowex          ubuntu          <IP RANGE>           trust
+    .. code-block:: console
 
-    2. To add the read only user access from anywhere add the following.
+        host    snowex          ubuntu          <IP RANGE>           trust
 
-        .. code-block:: console
-            host    snowex          snow            0.0.0.0/0               md5
+    2. To add the read only user access from anywhere add the following:
+
+    .. code-block:: console
+
+        host    snowex          snow            0.0.0.0/0               md5
 
 Install From Source
 -------------------
@@ -166,18 +168,23 @@ Then make the following file via:
 to the database. Once the data is on the disk, a user can run the scripts individually
 or all together.
 
-.. code-block:: console
+.. code-block:: bash
 
-    $ cd scripts/upload
-    $ python add_profiles.py
+    cd scripts/upload
+
+    # Run individually
+    python add_profiles.py
 
     # or all together...
-    $ python run.py
+    python run.py
 
 **Note:** The `run.py` script has a few questions to ask for a couple inputs
 that are required to run upload the data. Additionally, running the run.py file
 can take a few hours.
 
+**Additional Note:**
+Running the scripts individually does not consider whether the data is in the db. So running a script twice will result
+in that data being uploaded twice!
 
 .. _Github repo: https://github.com/hpmarshall/SnowEx2020_SQLcode
 .. _tarball: https://github.com/hpmarshall/SnowEx2020_SQLcode/tarball/master
