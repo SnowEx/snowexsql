@@ -19,7 +19,7 @@ def initialize(engine):
     meta.create_all(bind=engine)
 
 
-def get_db(db_str, return_metadata=False):
+def get_db(db_str, return_metadata=False, remote_db=False):
     '''
     Returns the DB engine, MetaData, and session object
 
@@ -27,6 +27,8 @@ def get_db(db_str, return_metadata=False):
         db_str: Just the name of the database
         return_metadata: Boolean indicating whether the metadata object is
                          being returned, useful only for developers
+        remote_db: Boolean indicating whether the db of interest is remote. This determines the strings to used
+
     Returns:
         tuple: **engine** - sqlalchemy Engine object for directly sending
                             querys to the DB
@@ -40,7 +42,12 @@ def get_db(db_str, return_metadata=False):
     # TODO: This will need to change when we run this not locally, see
     # https://docs.sqlalchemy.org/en/13/core/engines.html#database-urls for
     # more info.
-    db = 'postgresql+psycopg2:///{}'.format(db_str)
+    if remote_db:
+        db = 'postgresql+psycopg2://{}'.format(db_str)
+    else:
+        # Local host assumption
+        db = 'postgresql+psycopg2:///{}'.format(db_str)
+
     # create a Session
     engine = create_engine(db, echo=False)
     Session = sessionmaker(bind=engine)

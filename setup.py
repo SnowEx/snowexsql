@@ -19,7 +19,7 @@ with open('requirements_dev.txt') as req:
 
 setup_requirements += requirements
 test_requirements = ['pytest>=3'] + requirements
-print(setup_requirements)
+
 setup(
     author="Micah Johnson",
     author_email='micah.johnson150@gmail.com',
