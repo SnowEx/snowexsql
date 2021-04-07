@@ -20,8 +20,8 @@ import glob
 def main():
 
     # Obtain a list of SSA profiles
-    directory = abspath(expanduser('~/Downloads/SSA_SnowEx20_v3/csvs'))
-    filenames = glob.glob(join(directory, '*.csv'))
+    directory = abspath(expanduser('../download/data/SNOWEX/SNEX20_SSA.001/'))
+    filenames = glob.glob(join(directory, '*/*.csv'))
 
     # Instantiate the uploader
     b = UploadProfileBatch(filenames, debug=False)
