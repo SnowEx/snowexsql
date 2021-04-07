@@ -129,29 +129,38 @@ def convert_cardinal_to_degree(cardinal):
     return degrees
 
 
-def add_date_time_keys(data, timezone='MST'):
-    '''
+def add_date_time_keys(data, in_timezone=None, out_timezone='MST'):
+    """
     Convert string info from a date/time keys in a dictionary to date and time
     objects and assign it back to the dictionary as date and time
 
     Args:
         data: dictionary containing either the keys date/time or two keys date
               and time
-        timezone: String representing Pytz valid timezone
+        in_timezone: String representing Pytz valid timezone of the data coming in
+        out_timezone: String representing Pytz valid timezone of the data being returned
 
     Returns:
         d: Python Datetime object
-    '''
+    """
     keys = data.keys()
     d = None
-    tz = pytz.timezone(timezone)
+    out_tz = pytz.timezone(out_timezone)
+    in_tz = None
+
+    # Convert timezones if it is provided
+    if in_timezone is not None:
+        in_tz = pytz.timezone(in_timezone)
+
+    # Otherwise assume incoming data is the same timezone
+    else:
+        in_tz = out_tz
 
     # Look for a single header entry for date and time.
     for k in keys:
         if 'date' in k and 'time' in k:
             str_date = str(data[k].replace('T', '-'))
             d = pd.to_datetime(str_date)
-            d = d.replace(tzinfo=tz)
             del data[k]
             break
 
@@ -159,9 +168,8 @@ def add_date_time_keys(data, timezone='MST'):
     if d is None:
         # Handle SMP data dates and times
         if 'date' in keys and 'time' in keys:
-            dstr = ' '.join([str(data['date']), str(data['time']), timezone])
+            dstr = ' '.join([str(data['date']), str(data['time'])])
             d = pd.to_datetime(dstr)
-            d = d.replace(tzinfo=tz)
 
         # Handle gpr data dates
         elif 'utcyear' in keys and 'utcdoy' in keys and 'utctod' in keys:
@@ -172,14 +180,20 @@ def add_date_time_keys(data, timezone='MST'):
 
             # Zulu time (time without colons)
             time = str(data['utctod'])
-            hr = int(time[0:2]) # hours
-            mm = int(time[2:4]) # minutes
-            ss = int(time[4:6]) # seconds
-            ms = int(float('0.' + time.split('.')[-1]) * 1000) # milliseconds
+            hr = int(time[0:2])  # hours
+            mm = int(time[2:4])  # minutes
+            ss = int(time[4:6])  # seconds
+            ms = int(float('0.' + time.split('.')[-1]) * 1000)  # milliseconds
 
             delta = datetime.timedelta(days=d, hours=hr, minutes=mm, seconds=ss,
                                                                     milliseconds=ms)
-            d = base.astimezone(tz) + delta
+            # This is the only key set that ignores in_timezone
+            d = base.astimezone(pytz.timezone('UTC')) + delta
+
+            # Avoid using in_timezone and UTC keys
+            in_timezone = None
+
+            d = d.astimezone(out_tz)
 
             # Remove them
             for v in ['utcyear', 'utcdoy', 'utctod']:
@@ -187,6 +201,13 @@ def add_date_time_keys(data, timezone='MST'):
 
         else:
             raise ValueError('Data is missing date/time info!\n{}'.format(data))
+
+    if in_timezone is not None:
+        d = d.tz_localize(in_tz)
+        d = d.astimezone(out_tz)
+
+    else:
+        d.replace(tzinfo=out_tz)
 
     data['date'] = d.date()
     data['time'] = d.timetz()
