@@ -19,12 +19,19 @@ General Gotchas
 * All raster data returned from the database is returned in Well Known Binary
   format.
 
-  
+Manual Snow Depths
+------------------
+
+* Originally downloaded from the NSIDC from `https://n5eil01u.ecs.nsidc.org/SNOWEX/SNEX20_SD.001/`
+* Data stored as centimeters
+* Named depth and can be cross referenced by instruments (e.g. magnaprobe)
+
 Snow Micropen (SMP)
 -------------------
 
-* Two SMPs were used until they both broke. Identified in the data is a 3rd SMP
-  that is a frankestein SMP put together from parts from the original two
+* Original data is sourced from the NSIDC from `https://n5eil01u.ecs.nsidc.org/SNOWEX/SNEX20_SMP.001/`
+* During the GM 2020 campaign, Two SMPs were used until they both broke. Identified in the data is a 3rd SMP
+  that is a frankestein SMP put together from parts from the original two.
 
 * SMP measurements have an orientation assigned. These are in reference to
   their location relative to the pit. Measurements were recorded in crossing
@@ -32,14 +39,8 @@ Snow Micropen (SMP)
   from the center to the North. Its also the farthest out. In each cardinal directions
   there are typically 3-5 depending on the sampling strategy.
 
-* There is a measurement log in the downloaded folder that has useful information
-  and is required for uploading these measurements to the database.
-
-* **The time from the original PNT files is not correct**. Please use the time
-  recorded in the CSV data
-
 * Profiles Resampled to every 100th sample to expedite uploads. Metadata in the
-  database contains the original sample id
+  database contains the original sample id.
 
 * SMP data depth in the original file is written positive depth from the snow
   surface toward the ground. To avoid confusion with other profiles which are
@@ -84,7 +85,7 @@ Correlation
 
 Ground Penetrating Radar (GPR)
 ------------------------------
-* `Download <https://drive.google.com/file/d/1gxP3rHoIEXeBAi0ipEKbF_ONQhYWuz_0/view>`_
+* Original data downloaded from NSIDC at `https://n5eil01u.ecs.nsidc.org/SNOWEX/SNEX20_BSU_GPR.001/`
 * The system is made by Sensors & Software, pulse EKKO Pro (pE) is the model,
   multi-polarization 1 GHz GPR
 * Tate Meehan was the surveyor for all BSU GPR data
@@ -116,12 +117,13 @@ density
 Stratigraphy
 ------------
 
-Any profile that has multiple samples are averaged and that data is used as the
-main value. The subsequent profiles representing a single sample are renamed from
-there original label to sample_<letter> in the database
-e.g. Density A --> sample_a
+* Originally downlaoded from the NSIDC at `https://n5eil01u.ecs.nsidc.org/SNOWEX/SNEX20_GM_SP.001/`
 
-Multisample profiles are:
+* Any profile that has multiple samples are averaged and that data is used as the main value. The subsequent profiles
+  representing a single sample are renamed from there original label to sample_<letter> in the database e.g.
+  Density A --> sample_a
+
+Known multisampled profiles are:
 
   * Density
   * LWC (Dielectric Constant)
@@ -138,6 +140,11 @@ LWC files contain dielectric constant data
 
 * Dielectric constants have multiple samples. The main value is the average of
   these values horizontally
+
+Specific Surface Area
+---------------------
+
+* Originally downloaded from `https://n5eil01u.ecs.nsidc.org/SNOWEX/SNEX20_SSA.001/`
 
 
 USGS Snow Off DEM
