@@ -1,8 +1,10 @@
-'''
-Read in the SnowEx CSV of snow depths and submit them to the db
-'''
+"""
+Uploads the Snowex 2020 depths to the database
 
-from os.path import join, abspath
+1. Data must be downloaded via sh ../download/download_nsidc.sh
+2A. python run.py # To run all together all at once
+2B. python add_snow_depths.py # To run individually
+"""
 
 from snowxsql.upload import *
 from snowxsql.db import get_db

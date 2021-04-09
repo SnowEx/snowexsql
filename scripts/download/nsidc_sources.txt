@@ -1,2 +1,5 @@
 https://n5eil01u.ecs.nsidc.org/SNOWEX/SNEX20_SSA.001/
+https://n5eil01u.ecs.nsidc.org/SNOWEX/SNEX20_BSU_GPR.001/
+https://n5eil01u.ecs.nsidc.org/SNOWEX/SNEX20_GM_SP.001/
+https://n5eil01u.ecs.nsidc.org/SNOWEX/SNEX20_SMP.001/
 https://n5eil01u.ecs.nsidc.org/SNOWEX/SNEX20_SD.001/

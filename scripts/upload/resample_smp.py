@@ -1,16 +1,21 @@
-'''
-Resample the SMP profiles to every 100 value
+"""
 
-Download from https://osu.app.box.com/s/7yq08y1mqpl9evgz6rfw8hu771228ryn
+Resample the SMP profiles to every 100th value and save them as CSVs to
+../download/data/SNOWEX/SNEX20_SMP.001/csv_resampled
 
-Unzip to ~/Downloads
+Rerunning the script will prompt user whether they want to overwrite the data
 
-usage:
-    python resample_smp.py
-'''
-from os.path import join, abspath, expanduser, isdir, dirname, basename
-from os import listdir, mkdir
-from snowxsql.batch import UploadProfileBatch
+Usage:
+
+1. Admin must download the SMP NSIDC package first via sh ../download/download_nsidc.sh
+2A. python resample_smp.py or...
+2B. python run.py
+
+"""
+
+from os.path import join, abspath, isdir, dirname, basename
+from os import mkdir
+import glob
 from snowxsql.utilities import get_logger
 import pandas as pd
 import shutil
@@ -58,6 +63,7 @@ def make_comparison(f):
 
     depth_precision = [0, 1, 3]
     force_precision = [1, 3, 5]
+    # Sample to every 100th sample
     downsample = 100
 
     fig, axes = plt.subplots(1, len(depth_precision) + 1)
@@ -87,7 +93,7 @@ def make_comparison(f):
 
 def resample_batch(filenames, output, downsample, header_pos=6, clean_on_start=True):
     '''
-    Resample all the file names and save to the output dir
+    Resample all the file names and save as csv to the output dir
 
     Args:
         filenames: List of smp csv files needed to be subsampled
@@ -152,9 +158,8 @@ def main():
     log.info('Preparing to resample smp profiles for uploading...')
 
     # Obtain a list of Grand mesa smp files
-    directory = abspath(expanduser('~/Downloads/NSIDC-upload/'))
-    smp_data = join(directory,'level_1_data', 'csv')
-    filenames = [join(smp_data, f) for f in listdir(smp_data) if f.split('.')[-1]=='CSV']
+    directory = abspath('../download/data/SNOWEX/SNEX20_SMP.001')
+    filenames = glob.glob(join(directory, '*/*.CSV'))
 
     # Are we making the plot to show the comparison of the effects?
     if making_comparison:
@@ -162,7 +167,7 @@ def main():
 
     else:
         # output location
-        output = join(dirname(smp_data),'csv_resampled')
+        output = join(directory, 'csv_resampled')
 
         if isdir(output):
             ans = input('\nWARNING! You are about overwrite {} previously resampled files '

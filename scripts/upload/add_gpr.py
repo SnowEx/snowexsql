@@ -1,18 +1,10 @@
 '''
-Read in the SnowEx Decimated GPR data. Uploaded SWE, Two Way Travel, Depth, to
-the database
+Read in the SnowEx 2020 Decimated GPR data. Uploaded SWE, Two Way Travel, Depth, to
+the database.
 
-Download data from Tate Meehan:
-https://drive.google.com/file/d/1gxP3rHoIEXeBAi0ipEKbF_ONQhYWuz_0/view?usp=drive_web
-
-Extract zip to Downloads
-
-Usage:
-    # To run with all the scripts
-    python run.py
-
-    # To run individually
-    python add_gpr.py
+1. Data must be downloaded via sh ../download/download_nsidc.sh
+2A. python run.py # To run all together all at once
+2B. python add_gpr.py # To run individually
 
 '''
 
@@ -23,25 +15,27 @@ import time
 from snowxsql.upload import *
 from snowxsql.db import get_db
 
-def main():
 
-    file =  '~/Downloads/SNEX20_BSU_GPR/BSU_pE_GPR_01282020_01292020_02042020/BSU_pE_GPR_01282020_01292020_02042020_decimated.csv'
+def main():
+    file = '../download/data/SNOWEX/SNEX20_BSU_GPR.001/2020.01.28/SNEX20_BSU_GPR_pE_01282020_01292020_02042020_downsampled.csv'
 
     kwargs = {
-    # Keyword argument to upload depth measurements
-    'depth_is_metadata': False,
+        # Keyword argument to upload depth measurements
+        'depth_is_metadata': False,
 
-    # Constant Metadata for thge GPR data
-    'site_name' :  'Grand Mesa',
-    'timezone' :  'MST',
-    'surveyor' :  'Tate Meehan',
-    'instrument' :  'pulse EKKO Pro multi-polarization 1 GHz GPR',
-    'epsg': 26912}
+        # Constant Metadata for the GPR data
+        'site_name': 'Grand Mesa',
+        'surveyor': 'Tate Meehan',
+        'instrument': 'pulse EKKO Pro multi-polarization 1 GHz GPR',
+        'in_timezone': 'UTC',
+        'out_timezone': 'US/Mountain',
+        'epsg': 26912
+    }
 
     # Break out the path and make it an absolute path
     file = abspath(expanduser(file))
 
-    # Start the Database
+    # Grab a db connection to a local db named snowex
     db_name = 'snowex'
     engine, session = get_db(db_name)
 

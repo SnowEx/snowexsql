@@ -1,23 +1,30 @@
-'''
-This is the main script for running all the database addition scripts.
-Each script should have a main function that returns an integer number of errors
-that occured during its execution.
+"""
+This is the main script for running ALL the database upload scripts.
 
-To add a new database script that is seen by this script, simply:
+Each script should have a main function that returns an integer number of errors
+that occurred during its execution.
+
+This script will rerun the create.py script which will prompt the user if you want to
+overwrite the db. It will also attempt to rerun the resample/data prep scripts which
+will all prompt the user whether they want to overwrite and rerun those scripts.
+
+To create a new database upload script that is seen by this script, simply:
     1. Add a new file named 'add_<anyname>.py'
     2. Inside that file add define a main function that returns the number of errors
+    3. To maintain data provenance, if your additionaly data requires preprocessing (e.g. format conversion) create
+    a script in this same folder, import it here, and then add it to the beginning around line 60 in this file.
 
 Usage:
     python run.py
+"""
 
-
-'''
 import time
 from snowxsql.utilities import get_logger
 import os
-from os.path import dirname
 import importlib
 from create import main as create
+
+# Import preprocessor functions here.
 from resample_smp import main as resample_smp
 from convert_uavsar import main as convert_uavsar
 

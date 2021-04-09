@@ -1,26 +1,18 @@
-'''
+"""
 Added ssa measurements to the database.
+1. Data must be downloaded via sh ../download/download_nsidc.sh
+2A. python run.py # To run all together all at once
+2B. python add_ssa.py # To run individually
+"""
 
-Download from https://osu.app.box.com/s/7yq08y1mqpl9evgz6rfw8hu771228ryn
-
-Unzip to ~/Downloads
-
-Usage:
-    # To run with all the scripts
-    python run.py
-
-    # To run individually
-    python add_ssa.py
-'''
-
-from os.path import join, abspath, expanduser
+from os.path import join, abspath
 from snowxsql.batch import UploadProfileBatch
 import glob
 
 def main():
 
     # Obtain a list of SSA profiles
-    directory = abspath(expanduser('../download/data/SNOWEX/SNEX20_SSA.001/'))
+    directory = abspath('../download/data/SNOWEX/SNEX20_SSA.001/')
     filenames = glob.glob(join(directory, '*/*.csv'))
 
     # Instantiate the uploader
