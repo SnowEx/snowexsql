@@ -211,9 +211,16 @@ class PointDataCSV(object):
              'density':'kg/m^3'}
 
     # Class attributes to apply
-    defaults = {'debug':True}
+    defaults = {'debug': True, 'incoming_tz': 'MST'}
 
     def __init__(self, filename, **kwargs):
+        """
+        Args:
+            filename: Path to a csv of data to upload as point data
+            debug: Boolean indicating whether to print out debug info
+            incoming_tz: Pytz valid timezone for the incoming data
+        """
+
         self.log = get_logger(__name__)
 
         # Assign defaults for this class
@@ -233,7 +240,8 @@ class PointDataCSV(object):
 
         self.log.info('Reading in CSV data from {}'.format(filename))
         df = pd.read_csv(filename, header=self.hdr.header_pos,
-                                   names=self.hdr.columns)
+                                   names=self.hdr.columns,
+                                   dtype={'date': str, 'time': str})
 
         # Assign the measurement tool verbose name
         if 'instrument' in df.columns:
@@ -243,7 +251,7 @@ class PointDataCSV(object):
 
         # Add date and time keys
         self.log.info('Adding date and time to metadata...')
-        df = df.apply(lambda data: add_date_time_keys(data, timezone=self.hdr.timezone), axis=1)
+        df = df.apply(lambda data: add_date_time_keys(data, in_timezone=self.incoming_tz), axis=1)
 
         self.log.info('Adding valid keyword arguments to metadata...')
         # 1. Only submit valid columns to the DB

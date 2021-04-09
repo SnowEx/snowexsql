@@ -9,23 +9,23 @@ import pytz
 import pytest
 import pandas as pd
 
-dt = datetime.datetime(2020, 2, 5, 13, 30, 0, 0, pytz.timezone('MST'))
-info = {'site_name':'Grand Mesa',
-         'site_id':'1N20',
-         'pit_id':'COGM1N20_20200205',
-         'date':dt.date(),
-         'time':dt.timetz(),
-         'utm_zone':12,
-         'easting':743281.0,
-         'northing':4324005.0,
-         'latitude': 39.03126190934254,
-         'longitude':-108.18948133421802,
-         'timezone':'MST',
-         'epsg': 26912
-         }
+dt = datetime.datetime(2020, 2, 5, 13, 30, 0, 0, pytz.timezone('US/Mountain'))
+info = {'site_name': 'Grand Mesa',
+        'site_id': '1N20',
+        'pit_id': 'COGM1N20_20200205',
+        'date': dt.date(),
+        'time': dt.timetz(),
+        'utm_zone': 12,
+        'easting': 743281.0,
+        'northing': 4324005.0,
+        'latitude': 39.03126190934254,
+        'longitude': -108.18948133421802,
+        'timezone': 'MST',
+        'epsg': 26912
+        }
+
 
 class DataHeaderTestBase():
-
     depth_is_metadata = True
 
     def setup_class(self):
@@ -58,7 +58,7 @@ class DataHeaderTestBase():
                 assert e in data
 
         elif dtype == dict:
-            for k,v in data.items():
+            for k, v in data.items():
                 # Skip geom for now
                 if k != 'geom':
                     self.assert_single_value(data[k], expected[k])
@@ -78,13 +78,13 @@ class DataHeaderTestBase():
 
     def test_columns(self):
         '''
-        Test the csv column names were correctly interpretted
+        Test the csv column names were correctly interpreted
         '''
         self.assert_header_attribute('columns')
 
     def test_data_names(self):
         '''
-        Test the csv column names were correctly interpretted
+        Test the csv column names were correctly interpreted
         '''
         self.assert_header_attribute('data_names')
 
@@ -105,7 +105,7 @@ class TestDensityHeader(DataHeaderTestBase):
     def setup_class(self):
         self.file = 'density.csv'
         self.data_names = ['density']
-        self.columns = ['depth','bottom_depth', 'density_sample_a', 'density_sample_b', 'density_sample_c']
+        self.columns = ['depth', 'bottom_depth', 'density_sample_a', 'density_sample_b', 'density_sample_c']
         self.multi_sample_profiles = ['density']
         self.info = info.copy()
         super().setup_class(self)
@@ -116,48 +116,52 @@ class TestLWCHeader(DataHeaderTestBase):
     Class for testing the header reading of the first type of lwc files that
     parsed.
     '''
+
     def setup_class(self):
         self.file = 'LWC.csv'
         self.data_names = ['permittivity']
-        self.columns = ['depth','bottom_depth', 'permittivity_sample_a', 'permittivity_sample_b']
+        self.columns = ['depth', 'bottom_depth', 'permittivity_sample_a', 'permittivity_sample_b']
         self.multi_sample_profiles = ['permittivity']
         self.info = info.copy()
 
         super().setup_class(self)
+
 
 class TestLWCHeaderB(DataHeaderTestBase):
     '''
     Class for testing the other type of LWC headers that contain two multi sampled
     profiles.
     '''
-    dt = datetime.datetime(2020, 3, 12, 14, 45, 0, 0, pytz.timezone('MST'))
+    dt = datetime.datetime(2020, 3, 12, 14, 45, 0, 0, pytz.timezone('US/Mountain'))
 
     info = {
         'site_name': 'Grand Mesa',
         'site_id': 'Skyway Tree',
-        'pit_id':'COGMST_20200312',
+        'pit_id': 'COGMST_20200312',
         'date': dt.date(),
         'time': dt.timetz(),
         'utm_zone': 12,
         'easting': 754173,
         'northing': 4325871,
-        'latitude':39.044956500842126,
+        'latitude': 39.044956500842126,
         'longitude': -108.0631059755992
     }
 
     def setup_class(self):
         self.file = 'LWC2.csv'
-        self.data_names = ['permittivity', 'lwc_vol','density']
-        self.columns = ['depth','bottom_depth', 'density', 'permittivity_sample_a', 'permittivity_sample_b', 'lwc_vol_sample_a', 'lwc_vol_sample_b']
-        self.multi_sample_profiles = ['permittivity','lwc_vol']
+        self.data_names = ['permittivity', 'lwc_vol', 'density']
+        self.columns = ['depth', 'bottom_depth', 'density', 'permittivity_sample_a', 'permittivity_sample_b',
+                        'lwc_vol_sample_a', 'lwc_vol_sample_b']
+        self.multi_sample_profiles = ['permittivity', 'lwc_vol']
 
         super().setup_class(self)
+
 
 class TestStratigraphyHeader(DataHeaderTestBase):
     def setup_class(self):
         self.file = 'stratigraphy.csv'
-        self.data_names = ['hand_hardness','grain_size','grain_type','manual_wetness']
-        self.columns = ['depth','bottom_depth', 'comments'] + self.data_names
+        self.data_names = ['hand_hardness', 'grain_size', 'grain_type', 'manual_wetness']
+        self.columns = ['depth', 'bottom_depth', 'comments'] + self.data_names
         self.multi_sample_profiles = []
         self.info = info.copy()
 
@@ -177,11 +181,11 @@ class TestTemperatureHeader(DataHeaderTestBase):
 
 class TestSSAHeader(DataHeaderTestBase):
     def setup_class(self):
-        dt = datetime.datetime(2020, 2, 5, 13, 40, 0, 0, pytz.timezone('MST'))
+        dt = datetime.datetime(2020, 2, 5, 13, 40, 0, 0, pytz.timezone('US/Mountain'))
 
         self.file = 'SSA.csv'
-        self.data_names = ['specific_surface_area','reflectance','sample_signal','equivalent_diameter']
-        self.columns = ['depth','comments'] + self.data_names
+        self.data_names = ['specific_surface_area', 'reflectance', 'sample_signal', 'equivalent_diameter']
+        self.columns = ['depth', 'comments'] + self.data_names
         self.multi_sample_profiles = []
         self.info = info.copy()
         self.info['instrument'] = 'IS3-SP-11-01F'
@@ -194,7 +198,7 @@ class TestSSAHeader(DataHeaderTestBase):
         super().setup_class(self)
 
 
-class TestSiteDetailseHeader(DataHeaderTestBase):
+class TestSiteDetailsHeader(DataHeaderTestBase):
     def setup_class(self):
         self.file = 'site_details.csv'
         self.data_names = None
@@ -211,12 +215,11 @@ class TestSiteDetailseHeader(DataHeaderTestBase):
         self.info['ground_vegetation'] = '[Grass]'
         self.info['vegetation_height'] = '5, nan'
         self.info['wind'] = 'Moderate'
-
         self.info['tree_canopy'] = 'No Trees'
         self.info['comments'] = ('Start temperature measurements (top) 13:48'
-                                ' End temperature measurements (bottom) 13:53'
-                                ' LWC sampler broke, no measurements were'
-                                ' possible')
+                                 ' End temperature measurements (bottom) 13:53'
+                                 ' LWC sampler broke, no measurements were'
+                                 ' possible')
         self.info['slope_angle'] = 5.0
         self.info['aspect'] = 180
         self.info['air_temp'] = None
@@ -224,14 +227,15 @@ class TestSiteDetailseHeader(DataHeaderTestBase):
 
         super().setup_class(self)
 
+
 class TestDepthsHeader(DataHeaderTestBase):
     depth_is_metadata = False
 
     def setup_class(self):
         self.file = 'depths.csv'
         self.data_names = ['depth']
-        self.columns = ['id','instrument', 'date', 'time', 'longitude',
-                        'latitude','easting', 'northing', 'elevation',
+        self.columns = ['id', 'instrument', 'date', 'time', 'longitude',
+                        'latitude', 'easting', 'northing', 'elevation',
                         'equipment', 'version_number'] + self.data_names
 
         self.multi_sample_profiles = []
@@ -239,15 +243,16 @@ class TestDepthsHeader(DataHeaderTestBase):
 
         super().setup_class(self)
 
+
 class TestGPRHeader(DataHeaderTestBase):
     '''
     Test the header information can be interpretted correctly in the GPR data
     '''
-    depth_is_metadata=False
+    depth_is_metadata = False
 
     def setup_class(self):
         self.file = 'gpr.csv'
-        self.data_names = ['density','depth','swe', 'two_way_travel']
+        self.data_names = ['density', 'depth', 'swe', 'two_way_travel']
         self.columns = ['utcyear', 'utcdoy', 'utctod', 'utmzone', 'easting',
                         'northing', 'elevation', 'avgvelocity'] + self.data_names
 
@@ -256,10 +261,12 @@ class TestGPRHeader(DataHeaderTestBase):
 
         super().setup_class(self)
 
+
 class TestSMPMeasurementLog():
     '''
     Class for testing the snowxsql.metadata.SMPMeasurementLog class.
     '''
+
     @classmethod
     def setup_class(self):
         self.data = abspath(join(dirname(__file__), 'data'))
@@ -267,8 +274,8 @@ class TestSMPMeasurementLog():
         self.df = self.smp_log.df
 
     @pytest.mark.parametrize('column, index, expected', [
-    ('surveyors',-1, 'HP Marshall'),
-    ('surveyors',0, 'Ioanna Merkouriadi'),
+        ('surveyors', -1, 'HP Marshall'),
+        ('surveyors', 0, 'Ioanna Merkouriadi'),
     ])
     def test_value(self, column, index, expected):
         '''
@@ -277,31 +284,31 @@ class TestSMPMeasurementLog():
         assert self.df[column].iloc[index] == expected
 
     @pytest.mark.parametrize("count_column, expected_count", [
-    # Assert there are 2 surveyors listed in the log
-    ('surveyors', 2),
-    # Assert there are two dates in the log
-    ('date', 2),
-    # Assert there is 4 suffixes in the log (e.g. all of them)
-    ('fname_sufix', 4),
+        # Assert there are 2 surveyors listed in the log
+        ('surveyors', 2),
+        # Assert there are two dates in the log
+        ('date', 2),
+        # Assert there is 4 suffixes in the log (e.g. all of them)
+        ('fname_sufix', 4),
     ])
     def test_unique_count(self, count_column, expected_count):
         '''
         Test surveyorss initials are renamed correctly
         '''
         assert len((self.df[count_column]).unique()) == expected_count
-        # assert self.df['surveyors'].iloc[0] == 'Ioanna Merkouriadi'
 
 
 class TestReadInSarAnnotation():
     '''
     Tests if we read in an annotation file correctly.
     '''
+
     @classmethod
     def setup_class(self):
         '''
         Read in the insar annotation file and test its values
         '''
-        f = join(dirname(__file__),'data', 'uavsar.ann')
+        f = join(dirname(__file__), 'data', 'uavsar.ann')
         self.desc = read_InSar_annotation(f)
 
     def test_dict_attr(self):
@@ -315,14 +322,14 @@ class TestReadInSarAnnotation():
             assert k in d.keys()
 
     @pytest.mark.parametrize("key, subkey, expected", [
-    # Test interpretting an int value
-    ('Interferogram Bytes Per Pixel'.lower(), 'value', 8),
-    # Test a comment assignment
-    ('Ground Range Data Starting Latitude'.lower(), 'comment', 'center of upper left ground range pixel'),
-    # Test a units assignment
-    ('Ground Range Data Latitude Spacing'.lower(), 'units', 'deg'),
-    # Test a datetime assignment
-    ('Start Time of Acquisition for Pass 1'.lower(), 'value', pd.to_datetime('2020-2-1 2:13:16 UTC'))
+        # Test interpretting an int value
+        ('Interferogram Bytes Per Pixel'.lower(), 'value', 8),
+        # Test a comment assignment
+        ('Ground Range Data Starting Latitude'.lower(), 'comment', 'center of upper left ground range pixel'),
+        # Test a units assignment
+        ('Ground Range Data Latitude Spacing'.lower(), 'units', 'deg'),
+        # Test a datetime assignment
+        ('Start Time of Acquisition for Pass 1'.lower(), 'value', pd.to_datetime('2020-2-1 2:13:16 UTC'))
     ])
     def test_desc_value(self, key, subkey, expected):
         '''

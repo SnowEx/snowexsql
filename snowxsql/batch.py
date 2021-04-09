@@ -15,6 +15,7 @@ from snowxsql.upload import UploadProfileData, UploadRaster
 from snowxsql.db import get_db
 from snowxsql.interpretation import get_InSar_flight_comment
 
+
 class BatchBase():
     '''
     Base Class for uploading multiple files to the database. This class manages
@@ -91,7 +92,7 @@ class BatchBase():
         else:
             files = self.filenames
 
-        for i,f in enumerate(files):
+        for i, f in enumerate(files):
 
             # If were not debugging script allow exceptions and report them later
             if not self.debug:
@@ -151,10 +152,10 @@ class UploadSiteDetailsBatch(BatchBase):
     Class for uploading site details files to the sites table
     '''
     # Kwargs defaults
-    defaults = { 'debug': True,
-                 'n_files': -1,
-                 'db_name': 'snowex'
-               }
+    defaults = {'debug': True,
+                'n_files': -1,
+                'db_name': 'snowex'
+                }
 
     UploaderClass = DataHeader
 
@@ -167,15 +168,14 @@ class UploadProfileBatch(BatchBase):
         smp_log_f: CSV providing metadata for profile_filenames.
     '''
     # Kwargs defaults
-    defaults = { 'debug': True,
-                 'n_files': -1,
-                 'db_name': 'snowex',
-                 'smp_log_f': None,
+    defaults = {'debug': True,
+                'n_files': -1,
+                'db_name': 'snowex',
+                'smp_log_f': None,
 
-               }
+                }
 
     UploaderClass = UploadProfileData
-
 
     def push(self):
         '''
@@ -184,7 +184,7 @@ class UploadProfileBatch(BatchBase):
 
         self.start = time.time()
 
-        i = 0 
+        i = 0
 
         if self.smp_log_f != None:
             self.smp_log = SMPMeasurementLog(self.smp_log_f)
@@ -205,7 +205,7 @@ class UploadProfileBatch(BatchBase):
         if self.n_files != -1:
             self.filenames[0:self.n_files]
 
-        for i,f in enumerate(self.filenames):
+        for i, f in enumerate(self.filenames):
             meta = self.meta.copy()
 
             if smp_file:
@@ -234,15 +234,16 @@ class UploadRasterBatch(BatchBase):
     the file extension
     '''
     # Kwargs defaults
-    defaults = { 'debug': True,
-                 'n_files': -1,
-                 'db_name': 'snowex'
-            }
+    defaults = {'debug': True,
+                'n_files': -1,
+                'db_name': 'snowex'
+                }
 
     UploaderClass = UploadRaster
 
+
 class UploadUAVSARBatch(BatchBase):
-    '''
+    """
     Class extending the functionality of Upload Raster Batch to better
     fit the UAVSAR data which has the following rasters associated to a single
     metdata file (annotation file):
@@ -257,18 +258,19 @@ class UploadUAVSARBatch(BatchBase):
 
     Requires the kwarg:
         geotiff_dir: path to directory where data was converted to geotiff
-    '''
-    # Name map for the file extension
-    dname_map = {'int':'interferogram',
-                'amp1':'amplitude of pass 1',
-                'amp2':'amplitude of pass 2',
-                'cor':'correlation'}
+    """
 
-    defaults = { 'debug': True,
-                 'n_files': -1,
-                 'db_name': 'snowex',
-                 'geotiff_dir': None # Add a keyword arg for the geotiff location
-            }
+    # Name map for the file extension
+    dname_map = {'int': 'interferogram',
+                 'amp1': 'amplitude of pass 1',
+                 'amp2': 'amplitude of pass 2',
+                 'cor': 'correlation'}
+
+    defaults = {'debug': True,
+                'n_files': -1,
+                'db_name': 'snowex',
+                'geotiff_dir': None  # Add a keyword arg for the geotiff location
+                }
 
     UploaderClass = UploadRaster
 
@@ -293,9 +295,9 @@ class UploadUAVSARBatch(BatchBase):
         for r in rasters:
             # Grab information from the filename
             f_pieces = r.split('.')
-            component = f_pieces[-2]            # Real or imaginary component
-            data_abbr = f_pieces[-3]            # Key to the data name
-            dname = self.dname_map[data_abbr]   # Data type in db
+            component = f_pieces[-2]  # Real or imaginary component
+            data_abbr = f_pieces[-3]  # Key to the data name
+            dname = self.dname_map[data_abbr]  # Data type in db
 
             # For the data type
             meta['type'] = 'insar ' + dname.split(' ')[0]

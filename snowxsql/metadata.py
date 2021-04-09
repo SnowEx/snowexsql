@@ -73,24 +73,25 @@ def read_InSar_annotation(ann_file):
             value = value.strip()
 
             # Cast the values that can be to numbers ###
-            if value.strip('-').replace('.','').isnumeric():
+            if value.strip('-').replace('.', '').isnumeric():
                 if '.' in value:
                     value = float(value)
                 else:
                     value = int(value)
 
             # Assign each entry as a dictionary with value and units
-            data[key] = {'value': value, 'units': units, 'comment':comment}
+            data[key] = {'value': value, 'units': units, 'comment': comment}
 
     # Convert times to datetimes
     for pass_num in ['1', '2']:
         for timing in ['start', 'stop']:
             key = '{} time of acquisition for pass {}'.format(timing, pass_num)
             dt = pd.to_datetime(data[key]['value'])
-            dt = dt.astimezone(pytz.timezone('MST'))
+            dt = dt.astimezone(pytz.timezone('US/Mountain'))
             data[key]['value'] = dt
 
     return data
+
 
 class SMPMeasurementLog(object):
     '''
@@ -122,16 +123,15 @@ class SMPMeasurementLog(object):
 
     '''
 
-
     def __init__(self, filename):
         self.log = get_logger(__name__)
 
         self.header, self.df = self._read(filename)
 
         # Cardinal map to interpet the orientation
-        self.cardinal_map = {'N':'North', 'NE':'Northeast', 'E':'East',
-                             'SE':'Southeast', 'S':'South', 'SW':'Southwest',
-                             'W':'West', 'NW':'Northwest', 'C':'Center'}
+        self.cardinal_map = {'N': 'North', 'NE': 'Northeast', 'E': 'East',
+                             'SE': 'Southeast', 'S': 'South', 'SW': 'Southwest',
+                             'W': 'West', 'NW': 'Northwest', 'C': 'Center'}
 
     def _read(self, filename):
         '''
@@ -154,10 +154,10 @@ class SMPMeasurementLog(object):
         n_cols = len(str_cols)
         str_cols = remap_data_names(str_cols, DataHeader.rename)
 
-        dtype = {k:str for k in str_cols}
+        dtype = {k: str for k in str_cols}
         df = pd.read_csv(filename, header=header_pos, names=str_cols,
-                                   usecols=range(n_cols), encoding='latin',
-                                   parse_dates=[0], dtype=dtype)
+                         usecols=range(n_cols), encoding='latin',
+                         parse_dates=[0], dtype=dtype)
 
         # Insure all values are 4 digits. Seems like some were not by accident
         df['fname_sufix'] = df['fname_sufix'].apply(lambda v: v.zfill(4))
@@ -186,7 +186,6 @@ class SMPMeasurementLog(object):
         df['site_id'] = df['pit_id'].copy()
 
         return df
-
 
     def _build_observers(self, header):
         '''
@@ -227,7 +226,7 @@ class SMPMeasurementLog(object):
         '''
         new_df = df.copy()
         new_df['surveyors'] = \
-                        new_df['surveyors'].apply(lambda x: self.observer_map[x])
+            new_df['surveyors'].apply(lambda x: self.observer_map[x])
         return new_df
 
     def interpret_sample_strategy(self, df):
@@ -263,6 +262,7 @@ class SMPMeasurementLog(object):
         meta = self.df.loc[ind]
         return meta.iloc[0].to_dict()
 
+
 class DataHeader(object):
     '''
     Class for managing information stored in files headers about a snow pit
@@ -278,13 +278,13 @@ class DataHeader(object):
 
     If the file is not determined to be a site details file as indicated by the
     word site in the filename, then the all header lines except the last line
-    is interpretted as header. In csv files the last line of the
-    header should be the column header which is also interpretted and stored
+    is interpreted as header. In csv files the last line of the
+    header should be the column header which is also interpreted and stored
     as a class attribute
 
     Attributes:
         info: Dictionary containing all header information, stripped of
-              unnecesary chars, all lower case, and all spaces replaced with
+              unnecessary chars, all lower case, and all spaces replaced with
               underscores
         columns: Column names of data stored in csv. None for site description
                  files which is basically all one header
@@ -294,51 +294,51 @@ class DataHeader(object):
                               triggers calculating the mean of the profiles
                               for the main value
         extra_header: Dictionary containing supplemental information to write
-                      into the .info dictionary after its genrerated. Any
+                      into the .info dictionary after its generated. Any
                       duplicate keys will be overwritten with this info.
     '''
 
     # Typical names we run into that need renaming
-    rename = {'location':'site_name',
-             'top': 'depth',
-             'height':'depth',
-             'bottom':'bottom_depth',
-             'site': 'site_id',
-             'pitid': 'pit_id',
-             'slope':'slope_angle',
-             'weather':'weather_description',
-             'sky': 'sky_cover',
-             'notes':'site_notes',
-             'sample_top_height':'depth',
-             'deq':'equivalent_diameter',
-             'operator':'surveyors',
-             'observer':'surveyors',
-             'total_snow_depth':'total_depth',
-             'smp_serial_number':'instrument',
-             'lat':'latitude',
-             'long':'longitude',
-             'lon':'longitude',
-             'twt':'two_way_travel',
-             'measurement_tool':'instrument',
-             'avgdensity':'density',
-             'avg_density':'density',
-             'dielectric_constant': 'permittivity',
-             }
+    rename = {'location': 'site_name',
+              'top': 'depth',
+              'height': 'depth',
+              'bottom': 'bottom_depth',
+              'site': 'site_id',
+              'pitid': 'pit_id',
+              'slope': 'slope_angle',
+              'weather': 'weather_description',
+              'sky': 'sky_cover',
+              'notes': 'site_notes',
+              'sample_top_height': 'depth',
+              'deq': 'equivalent_diameter',
+              'operator': 'surveyors',
+              'observer': 'surveyors',
+              'total_snow_depth': 'total_depth',
+              'smp_serial_number': 'instrument',
+              'lat': 'latitude',
+              'long': 'longitude',
+              'lon': 'longitude',
+              'twt': 'two_way_travel',
+              'measurement_tool': 'instrument',
+              'avgdensity': 'density',
+              'avg_density': 'density',
+              'dielectric_constant': 'permittivity',
+              }
 
     # Known possible profile types anything not in here will throw an error
-    available_data_names = ['density', 'permittivity','lwc_vol', 'temperature',
-                     'force', 'reflectance','sample_signal',
-                     'specific_surface_area', 'equivalent_diameter',
-                     'grain_size', 'hand_hardness', 'grain_type',
-                     'manual_wetness', 'two_way_travel', 'depth','swe']
+    available_data_names = ['density', 'permittivity', 'lwc_vol', 'temperature',
+                            'force', 'reflectance', 'sample_signal',
+                            'specific_surface_area', 'equivalent_diameter',
+                            'grain_size', 'hand_hardness', 'grain_type',
+                            'manual_wetness', 'two_way_travel', 'depth', 'swe']
 
     # Defaults to keywords arguments
-    defaults = {'timezone': 'MST',
-                'epsg':26912,
+    defaults = {'in_timezone': 'US/Mountain',
+                'out_timezone': 'US/Mountain',
+                'epsg': 26912,
                 'header_sep': ',',
-                'northern_hemisphere':True,
-                'depth_is_metadata':True}
-
+                'northern_hemisphere': True,
+                'depth_is_metadata': True}
 
     def __init__(self, filename, **kwargs):
         '''
@@ -359,7 +359,7 @@ class DataHeader(object):
 
         self.extra_header = assign_default_kwargs(self, kwargs, self.defaults, leave=['epsg'])
 
-        self.log.info('Interpretting metadata in {}'.format(filename))
+        self.log.info('Interpreting metadata in {}'.format(filename))
 
         # Site location files will have no data_name
         self.data_names = None
@@ -384,9 +384,9 @@ class DataHeader(object):
         # only submit valid  keys to db
         kwargs = {}
         valid = get_table_attributes(SiteData)
-        for k,v in self.info.items():
+        for k, v in self.info.items():
             if k in valid:
-                 kwargs[k] = v
+                kwargs[k] = v
 
         kwargs = add_geom(kwargs, self.info['epsg'])
         d = SiteData(**kwargs)
@@ -400,13 +400,13 @@ class DataHeader(object):
         result = []
         for c in columns:
             for data_name in data_names:
-                    v = c
-                    if data_name in c and c[-2]=='_':
-                        v = c.replace(data_name, '{}_sample'.format(data_name))
-                        result.append(v)
+                v = c
+                if data_name in c and c[-2] == '_':
+                    v = c.replace(data_name, '{}_sample'.format(data_name))
+                    result.append(v)
 
-                    elif c not in result and c[-2] != '_':
-                        result.append(c)
+                elif c not in result and c[-2] != '_':
+                    result.append(c)
         return result
 
     def parse_column_names(self, lines):
@@ -434,15 +434,15 @@ class DataHeader(object):
             columns: list of column names
         '''
 
-        # Minimum calumn size should match the last line of data (Assumption #2)
+        # Minimum column size should match the last line of data (Assumption #2)
         n_columns = len(lines[-1].split(','))
 
         # Use these to monitor if a larger column count is found
         header_pos_options = [0, 0]
         header_lengths = [0, 0]
 
-        for i,l in enumerate(lines):
-            # Get rid of things in parenthese.
+        for i, l in enumerate(lines):
+            # Get rid of things in parentheses.
             clean_line = l.split(',')
 
             # column count
@@ -459,20 +459,19 @@ class DataHeader(object):
                 header_pos_options[1] = header_pos_options[0]
 
             # Break if we find number in the first position (Assumption #3)
-            entry = clean_line[0].replace('-','').replace('.','')
+            entry = clean_line[0].replace('-', '').replace('.', '')
 
             if entry.isnumeric():
                 self.log.debug('Found end of header at line {}...'.format(i))
                 header_pos_options[1] = i - 1
                 break
 
-
         header_pos = header_pos_options[1]
 
         # Parse the columns header based on the size of the last line
         str_line = lines[header_pos]
         # Remove units
-        for c in ['()','[]']:
+        for c in ['()', '[]']:
             str_line = strip_encapsulated(str_line, c)
 
         raw_cols = str_line.strip('#').split(',')
@@ -481,9 +480,9 @@ class DataHeader(object):
         # Rename any column names to more standard ones
         columns = remap_data_names(columns, self.rename)
 
-        # Detmerine the profile type
+        # Determine the profile type
         (self.data_names, self.multi_sample_profiles) = \
-                                             self.determine_data_names(columns)
+            self.determine_data_names(columns)
 
         self.data_names = remap_data_names(self.data_names, self.rename)
 
@@ -513,7 +512,7 @@ class DataHeader(object):
         multi_sample_profiles = []
 
         # String of the columns for counting
-        str_cols =  ' '.join(raw_columns).replace(' ',"_").lower()
+        str_cols = ' '.join(raw_columns).replace(' ', "_").lower()
 
         for dname in self.available_data_names:
 
@@ -537,12 +536,12 @@ class DataHeader(object):
                           ''.format(', '.join(data_names)))
         else:
             raise ValueError('Unable to determine data names from'
-                            ' header/columns columns: {}'.format(", ".join(raw_columns)))
+                             ' header/columns columns: {}'.format(", ".join(raw_columns)))
 
         if multi_sample_profiles:
             self.log.info('{} contains multiple samples for each '
-                              'layer. The main value will be the average of '
-                              'these samples.'.format(', '.join(multi_sample_profiles)))
+                          'layer. The main value will be the average of '
+                          'these samples.'.format(', '.join(multi_sample_profiles)))
 
         return data_names, multi_sample_profiles
 
@@ -586,7 +585,6 @@ class DataHeader(object):
             # Only parse what we know if the header
             lines = lines[0:header_pos]
 
-
         # Clean up the lines from line returns to grab header info
         lines = [l.strip() for l in lines]
         str_data = " ".join(lines).split('#')
@@ -613,11 +611,11 @@ class DataHeader(object):
 
             # Assign non empty strings to dictionary
             if k and value:
-                data[k] = value.strip(' ').replace('"','').replace('  ',' ')
+                data[k] = value.strip(' ').replace('"', '').replace('  ', ' ')
 
         # If there is not header data then don't bother (useful for point data)
         if data:
-            data = add_date_time_keys(data, timezone=self.timezone)
+            data = add_date_time_keys(data, in_timezone=self.in_timezone, out_timezone=self.out_timezone)
 
         # Rename the info dictionary keys to more standard ones
         data = remap_data_names(data, self.rename)
@@ -655,8 +653,7 @@ class DataHeader(object):
 
         return mismatch
 
-
-    def interpret_data(self,  raw_info):
+    def interpret_data(self, raw_info):
         '''
         Some data inside the headers is inconsistently noted. This function
         adjusts such data to the correct format.
@@ -683,7 +680,7 @@ class DataHeader(object):
         info = {}
 
         # A. Parse out any nans, nones or other not-data type entries
-        for k,v in raw_info.items():
+        for k, v in raw_info.items():
             info[k] = parse_none(raw_info[k])
 
         keys = info.keys()
@@ -719,6 +716,6 @@ class DataHeader(object):
         hdr_has_coords = [c for c in info if c in important]
 
         if not cols_have_coords and not hdr_has_coords:
-            raise(ValueError('No geographic information was provided in the'
-                            ' file header or via keyword arguments.'))
+            raise (ValueError('No geographic information was provided in the'
+                              ' file header or via keyword arguments.'))
         return info
