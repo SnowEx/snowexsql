@@ -22,14 +22,14 @@ General Gotchas
 Manual Snow Depths
 ------------------
 
-* Originally downloaded from the NSIDC from `https://n5eil01u.ecs.nsidc.org/SNOWEX/SNEX20_SD.001/`
+* Originally downloaded from the NSIDC from https://n5eil01u.ecs.nsidc.org/SNOWEX/SNEX20_SD.001/
 * Data stored as centimeters
 * Named depth and can be cross referenced by instruments (e.g. magnaprobe)
 
 Snow Micropen (SMP)
 -------------------
 
-* Original data is sourced from the NSIDC from `https://n5eil01u.ecs.nsidc.org/SNOWEX/SNEX20_SMP.001/`
+* Original data is sourced from the NSIDC from https://n5eil01u.ecs.nsidc.org/SNOWEX/SNEX20_SMP.001/
 * During the GM 2020 campaign, Two SMPs were used until they both broke. Identified in the data is a 3rd SMP
   that is a frankestein SMP put together from parts from the original two.
 
@@ -85,12 +85,11 @@ Correlation
 
 Ground Penetrating Radar (GPR)
 ------------------------------
-* Original data downloaded from NSIDC at `https://n5eil01u.ecs.nsidc.org/SNOWEX/SNEX20_BSU_GPR.001/`
+* Original data downloaded from NSIDC at https://n5eil01u.ecs.nsidc.org/SNOWEX/SNEX20_BSU_GPR.001/
 * The system is made by Sensors & Software, pulse EKKO Pro (pE) is the model,
   multi-polarization 1 GHz GPR
 * Tate Meehan was the surveyor for all BSU GPR data
-* Column UTCtod is HHMMSS.sss (24 hour Zulu time of day with the colons removed.)
-* Column UTCdoy is days since January 1. So February 1 = 32.
+* Column Time is HHMMSS.sss (24 hour Zulu time of day with the colons removed.)
 * Uploaded to the DB: two_way_travel, depth, density, and swe
 
 SWE
@@ -117,7 +116,7 @@ density
 Stratigraphy
 ------------
 
-* Originally downlaoded from the NSIDC at `https://n5eil01u.ecs.nsidc.org/SNOWEX/SNEX20_GM_SP.001/`
+* Originally downlaoded from the NSIDC at https://n5eil01u.ecs.nsidc.org/SNOWEX/SNEX20_GM_SP.001/
 
 * Any profile that has multiple samples are averaged and that data is used as the main value. The subsequent profiles
   representing a single sample are renamed from there original label to sample_<letter> in the database e.g.
@@ -144,7 +143,7 @@ LWC files contain dielectric constant data
 Specific Surface Area
 ---------------------
 
-* Originally downloaded from `https://n5eil01u.ecs.nsidc.org/SNOWEX/SNEX20_SSA.001/`
+* Originally downloaded from https://n5eil01u.ecs.nsidc.org/SNOWEX/SNEX20_SSA.001/
 
 
 USGS Snow Off DEM
@@ -167,7 +166,7 @@ Bare Earth Digital Elevation Models
 
 * SNOW ON without vegetation height.
 * Stored in meters
-* labeled as `bare earth digital elevation models`
+* Lbeled as `bare earth digital elevation models`
 
 
 Digital Surface Models
