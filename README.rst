@@ -6,6 +6,8 @@ Database creation and management software for SnowEx 2019/20 data. The goal is t
 create a single source (citeable) dataset that is cross queriable for snow
 researchers.
 
+WARNING - This is under active development in preparation for SnowEx Hackweek.  Use at your own risk.  Data will change as it is QA/QC'd and the end goal is for all data in this database to be pulled from NSIDC.  The goal is for this to become a community database open to all. 
+
 Features
 --------
 
