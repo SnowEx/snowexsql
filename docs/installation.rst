@@ -9,13 +9,13 @@ Installation
 .. Stable release
 .. --------------
 ..
-.. To install a stable release of snowXSQL, run this command in your terminal:
+.. To install a stable release of snowexsql, run this command in your terminal:
 ..
 .. .. code-block:: console
 ..
-..     $ pip install snowxsql
+..     $ pip install snowexsql
 ..
-.. This is the preferred method to install snowXSQL, as it will always install the most recent stable release.
+.. This is the preferred method to install snowexsql, as it will always install the most recent stable release.
 ..
 .. If you don't have `pip`_ installed, this `Python installation guide`_ can guide
 .. you through the process.
@@ -98,7 +98,7 @@ running small unittests on.
 
 5. Make user snow a read only user
 
-6. Installs the python package snowxsql
+6. Installs the python package snowexsql
 
 **Notes for Remote Access**
 
@@ -126,7 +126,7 @@ running small unittests on.
 Install From Source
 -------------------
 
-The sources for snowXSQL can be downloaded from the `Github repo`_.
+The sources for snowexsql can be downloaded from the `Github repo`_.
 
 You can either clone the public repository:
 

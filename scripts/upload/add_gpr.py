@@ -12,8 +12,8 @@ import pandas as pd
 from os.path import join, abspath, expanduser
 import time
 
-from snowxsql.upload import *
-from snowxsql.db import get_db
+from snowexsql.upload import *
+from snowexsql.db import get_db
 
 
 def main():

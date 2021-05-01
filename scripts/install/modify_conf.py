@@ -4,7 +4,7 @@ Edits the postgres conf file
 import platform
 import os
 from subprocess import check_output
-from snowxsql.utilities import find_kw_in_lines
+from snowexsql.utilities import find_kw_in_lines
 
 def modify_postgres_conf(conf_file, entries):
     '''

@@ -1,7 +1,7 @@
 from .sql_test_base import pytest_generate_tests, TableTestBase
 import pytest
-from snowxsql.upload import UploadProfileData
-from snowxsql.data import LayerData
+from snowexsql.upload import UploadProfileData
+from snowexsql.data import LayerData
 from datetime import date, time
 import pandas as pd
 import pytz

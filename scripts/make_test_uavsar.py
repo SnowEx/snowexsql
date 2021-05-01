@@ -6,10 +6,10 @@ from os.path import join, dirname, basename, abspath, expanduser, isdir
 import os
 from os import mkdir
 import numpy as np
-from snowxsql.metadata import read_InSar_annotation
-from snowxsql.conversions import INSAR_to_rasterio,
-from snowxsql.projection import reproject_raster_by_epsg
-from snowxsql.utilities import get_logger
+from snowexsql.metadata import read_InSar_annotation
+from snowexsql.conversions import INSAR_to_rasterio,
+from snowexsql.projection import reproject_raster_by_epsg
+from snowexsql.utilities import get_logger
 import utm
 import matplotlib.pyplot as plt
 import rasterio
@@ -18,7 +18,7 @@ from rasterio.plot import show
 from rasterio.transform import Affine
 import glob
 from shutil import copyfile, rmtree
-from snowxsql.utilities import find_kw_in_lines
+from snowexsql.utilities import find_kw_in_lines
 
 log = get_logger('InSar Test Data')
 

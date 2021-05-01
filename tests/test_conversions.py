@@ -1,6 +1,6 @@
-from snowxsql.conversions import *
-from snowxsql.data import PointData, ImageData
-from snowxsql.upload import PointDataCSV, UploadRaster
+from snowexsql.conversions import *
+from snowexsql.data import PointData, ImageData
+from snowexsql.upload import PointDataCSV, UploadRaster
 
 import geopandas as gpd
 from geoalchemy2.shape import to_shape

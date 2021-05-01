@@ -8,7 +8,7 @@ Script uploads the site detail files to the database.
 """
 
 from os.path import join, abspath
-from snowxsql.batch import UploadSiteDetailsBatch
+from snowexsql.batch import UploadSiteDetailsBatch
 import glob
 
 def main():

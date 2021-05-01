@@ -1,1 +1,1 @@
-"""Unit test package for snowxsql."""
+"""Unit test package for snowexsql."""

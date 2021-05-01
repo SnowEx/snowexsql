@@ -1,4 +1,4 @@
-"""Top-level package for snowXSQL."""
+"""Top-level package for snowexsql."""
 
 __author__ = """Micah Johnson"""
 __email__ = 'micah.johnson150@gmail.com'

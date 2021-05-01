@@ -28,9 +28,9 @@ from os.path import isdir, dirname, abspath, expanduser, basename, join
 from os import mkdir
 from shutil import rmtree
 from datetime import date
-from snowxsql.batch import UploadRasterBatch
-from snowxsql.projection import reproject_raster_by_epsg
-from snowxsql.utilities import get_logger
+from snowexsql.batch import UploadRasterBatch
+from snowexsql.projection import reproject_raster_by_epsg
+from snowexsql.utilities import get_logger
 from subprocess import check_output
 from add_QSI import reproject
 

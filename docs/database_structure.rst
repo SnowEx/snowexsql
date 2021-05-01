@@ -30,7 +30,7 @@ Examples of this type of data includes:
  * GPR two way travel
  * GPR Depth
 
-This table is mapped to python with :class:`snowxsql.data.PointData`.
+This table is mapped to python with :class:`snowexsql.data.PointData`.
 
 At a minimum an single entry in python would be similar to the following:
 
@@ -77,7 +77,7 @@ Examples of this data include:
   * temperature
   * Hand hardness
 
-This table is mapped to python with :class:`snowxsql.data.LayerData`.
+This table is mapped to python with :class:`snowexsql.data.LayerData`.
 
 At a minimum an single entry would be similar to the following:
 
@@ -129,7 +129,7 @@ Examples of this include:
   * UAVSAR products
   * Lidar acquisitions
 
-This table is mapped to python with :class:`snowxsql.data.ImageData`.
+This table is mapped to python with :class:`snowexsql.data.ImageData`.
 
 At a minimum an single entry in python would be similar to the following:
 
@@ -160,7 +160,7 @@ The sites table contains all the details regarding pit site details. This
 table is formed exclusively from the `SiteDetails.csv` files that were provided
 with `stratigraphy.csv` and `density.csv` files.
 
-This table is mapped to python with :class:`snowxsql.data.SiteData`.
+This table is mapped to python with :class:`snowexsql.data.SiteData`.
 This table has a lot of columns. They are:
 
 * air_temp - Air temperature in degrees C at time of digging the pit

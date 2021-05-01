@@ -1,4 +1,4 @@
-from snowxsql.string_management import *
+from snowexsql.string_management import *
 import pytest
 import datetime
 import numpy as np

@@ -1,8 +1,8 @@
 from .sql_test_base import DBSetup, pytest_generate_tests, TableTestBase
 import pytest
 from os.path import join, dirname
-from snowxsql.batch import *
-from snowxsql.data import LayerData, SiteData, ImageData
+from snowexsql.batch import *
+from snowexsql.data import LayerData, SiteData, ImageData
 from datetime import date, time
 import pytz
 from geoalchemy2.shape import to_shape, from_shape

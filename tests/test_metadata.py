@@ -1,7 +1,7 @@
 '''
 Test all things from the metadata.py file
 '''
-from snowxsql.metadata import *
+from snowexsql.metadata import *
 from os.path import join, dirname, abspath
 import datetime
 import numpy as np
@@ -264,7 +264,7 @@ class TestGPRHeader(DataHeaderTestBase):
 
 class TestSMPMeasurementLog():
     '''
-    Class for testing the snowxsql.metadata.SMPMeasurementLog class.
+    Class for testing the snowexsql.metadata.SMPMeasurementLog class.
     '''
 
     @classmethod

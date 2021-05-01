@@ -20,7 +20,7 @@ Usage:
 
 '''
 
-from snowxsql.batch import UploadUAVSARBatch
+from snowexsql.batch import UploadUAVSARBatch
 import os
 from os.path import join, abspath, expanduser
 import glob

@@ -16,11 +16,11 @@ Usage:
 from os.path import join, abspath, isdir, dirname, basename
 from os import mkdir
 import glob
-from snowxsql.utilities import get_logger
+from snowexsql.utilities import get_logger
 import pandas as pd
 import shutil
 import matplotlib.pyplot as plt
-from snowxsql.utilities import read_n_lines
+from snowexsql.utilities import read_n_lines
 
 def open_df(smp_f, header_pos=6):
     '''

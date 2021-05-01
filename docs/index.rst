@@ -1,4 +1,4 @@
-Welcome to snowXSQL's documentation!
+Welcome to snowexsql's documentation!
 ======================================
 
 .. toctree::

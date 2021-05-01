@@ -1,4 +1,4 @@
-from snowxsql.interpretation import *
+from snowexsql.interpretation import *
 import pytest
 from datetime import date, time
 import numpy as np

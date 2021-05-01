@@ -10,10 +10,10 @@ Otherwise see main() to redefine the location where the files are stored
 
 from os.path import join, abspath, expanduser, isdir, dirname, basename
 from os import listdir, mkdir
-from snowxsql.utilities import get_logger, read_n_lines
-from snowxsql.conversions import INSAR_to_rasterio
-from snowxsql.projection import reproject_raster_by_epsg
-from snowxsql.metadata import read_InSar_annotation
+from snowexsql.utilities import get_logger, read_n_lines
+from snowexsql.conversions import INSAR_to_rasterio
+from snowexsql.projection import reproject_raster_by_epsg
+from snowexsql.metadata import read_InSar_annotation
 import shutil
 import glob
 import time

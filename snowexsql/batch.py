@@ -7,13 +7,13 @@ import time
 import pandas as pd
 import glob
 from os.path import basename, abspath, expanduser, join
-from snowxsql.metadata import DataHeader, SMPMeasurementLog, read_InSar_annotation
-from snowxsql.db import get_table_attributes
-from snowxsql.data import SiteData
-from snowxsql.utilities import get_logger, assign_default_kwargs
-from snowxsql.upload import UploadProfileData, UploadRaster
-from snowxsql.db import get_db
-from snowxsql.interpretation import get_InSar_flight_comment
+from snowexsql.metadata import DataHeader, SMPMeasurementLog, read_InSar_annotation
+from snowexsql.db import get_table_attributes
+from snowexsql.data import SiteData
+from snowexsql.utilities import get_logger, assign_default_kwargs
+from snowexsql.upload import UploadProfileData, UploadRaster
+from snowexsql.db import get_db
+from snowexsql.interpretation import get_InSar_flight_comment
 
 
 class BatchBase():
@@ -33,7 +33,7 @@ class BatchBase():
         uploaded: Integer of number of files that were successfully uploaded
 
     Functions:
-        push: Wraps snowxsql.upload.UploadProfileData to submit data.
+        push: Wraps snowexsql.upload.UploadProfileData to submit data.
               Use debug=False to allow exceptions
         report: Log the final result of uploaded files, errors, time elapsed,
                 etc.

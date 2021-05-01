@@ -6,8 +6,8 @@ from os.path import join, dirname
 
 from geoalchemy2 import functions as func
 
-from snowxsql.upload import *
-from snowxsql.functions import *
+from snowexsql.upload import *
+from snowexsql.functions import *
 from . sql_test_base import DBSetup
 
 from shapely.geometry import Point

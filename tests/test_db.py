@@ -1,5 +1,5 @@
-from snowxsql.db import *
-from snowxsql.data import PointData, LayerData, ImageData, SiteData
+from snowexsql.db import *
+from snowexsql.data import PointData, LayerData, ImageData, SiteData
 from  .sql_test_base import DBSetup
 
 from sqlalchemy import MetaData, inspect, Table

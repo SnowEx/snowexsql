@@ -36,7 +36,7 @@ The SnowEx Database currently is formed of 4 tables.
 
 Every query will need a session and access to a database via name::
 
-  from snowxsql.db import get_db
+  from snowexsql.db import get_db
 
   # Connect to the database we made. This may not be named snowex.
   db_name = 'snowex'
@@ -45,11 +45,11 @@ Every query will need a session and access to a database via name::
   engine, session = get_db(db_name)
 
 
-Each table has a class already built in the snowXSQL. At a minimum you need at
+Each table has a class already built in the snowexsql. At a minimum you need at
 least one of those classes to interact with it using this library. To grab
 all points in the table::
 
-    from snowxsql.data import PointData, LayerData, ImageData, SiteData
+    from snowexsql.data import PointData, LayerData, ImageData, SiteData
 
     # Grab the first 10 records from points table
     points = session.query(PointData).limit(10).all()
@@ -87,13 +87,13 @@ ways we can use these functions:
 
 1. Calling them via `sqlalchemy.functions`
 2. Calling them via `geoalchemy2.functions`
-3. Calling a few directly from `snowxsql.functions`
+3. Calling a few directly from `snowexsql.functions`
 
 All functions available to postgres are available via option #1. They are however
 unaware of types and the object mapping that is occurring in geoalchemy2.
 Therefore especially when dealing with rasters, geoalchemy2 can be quite useful
 for prepping data right away. Not all functions though are mapped in geoalchemy2 and sometime its
-convenient to just make them for ourselves which is what is in snowXSQL.
+convenient to just make them for ourselves which is what is in snowexsql.
 
 
 Checkout our :ref:`Examples` for more detail looks at queries with python.

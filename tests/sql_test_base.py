@@ -1,7 +1,7 @@
 from sqlalchemy import asc
 from os.path import join, dirname
 from numpy.testing import assert_almost_equal
-from snowxsql.db import get_db, initialize
+from snowexsql.db import get_db, initialize
 
 
 def pytest_generate_tests(metafunc):

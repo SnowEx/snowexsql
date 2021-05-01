@@ -8,7 +8,7 @@ Added smp measurements to the database
 """
 
 from os.path import join, abspath
-from snowxsql.batch import UploadProfileBatch
+from snowexsql.batch import UploadProfileBatch
 import glob
 
 def main():

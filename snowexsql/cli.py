@@ -1,6 +1,6 @@
-import snowxsql
-from snowxsql.data import *
-from snowxsql.db import get_db
+import snowexsql
+from snowexsql.data import *
+from snowexsql.db import get_db
 import argparse
 import pandas as pd
 

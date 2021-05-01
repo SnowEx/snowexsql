@@ -1,4 +1,4 @@
-from snowxsql.utilities import *
+from snowexsql.utilities import *
 import numpy as np
 from os.path import dirname, join
 import pytest

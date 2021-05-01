@@ -1,5 +1,5 @@
 ========
-snowXSQL
+snowexsql
 ========
 
 Database creation and management software for SnowEx 2019/20 data. The goal is to
@@ -108,7 +108,7 @@ In there you will find:
 
 * Examples of database use
 * Database structure
-* API to the python package snowxsql
+* API to the python package snowexsql
 * Links to other resources
 * Notes about the data uploaded
 * Info on populating the database

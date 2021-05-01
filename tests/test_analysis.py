@@ -1,4 +1,4 @@
-from snowxsql.analysis import *
+from snowexsql.analysis import *
 import numpy as np
 
 

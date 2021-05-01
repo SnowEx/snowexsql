@@ -19,7 +19,7 @@ Usage:
 """
 
 import time
-from snowxsql.utilities import get_logger
+from snowexsql.utilities import get_logger
 import os
 import importlib
 from create import main as create

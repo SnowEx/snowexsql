@@ -1,9 +1,9 @@
 '''
 Script used to create the database and tables for the first time
 '''
-from snowxsql.db import initialize
-from snowxsql.db import get_db
-from snowxsql.utilities import get_logger
+from snowexsql.db import initialize
+from snowexsql.db import get_db
+from snowexsql.utilities import get_logger
 
 def main():
     log = get_logger('Create DB')

@@ -8,7 +8,7 @@ Read in the SnowEx 2020 profiles from pits.
 
 from os.path import join, abspath, basename, relpath
 from os import listdir
-from snowxsql.batch import UploadProfileBatch
+from snowexsql.batch import UploadProfileBatch
 import glob
 
 def main():

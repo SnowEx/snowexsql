@@ -48,7 +48,7 @@ clean-test: ## remove test and coverage artifacts
 	rm -fr .pytest_cache
 
 lint: ## check style with flake8
-	flake8 snowxsql tests
+	flake8 snowexsql tests
 
 test: ## run tests quickly with the default Python
 	pytest
@@ -57,14 +57,14 @@ test-all: ## run tests on every Python version with tox
 	tox
 
 coverage: ## check code coverage quickly with the default Python
-	coverage run --source snowxsql -m pytest
+	coverage run --source snowexsql -m pytest
 	coverage report -m
 	coverage html
 	$(BROWSER) htmlcov/index.html
 
 docs: ## generate Sphinx HTML documentation, including API docs
 	rm -rf docs/api docs/_build
-	sphinx-apidoc -o docs snowxsql
+	sphinx-apidoc -o docs snowexsql
 	rm -rf docs/modules.rst
 	# for f in docs/api/*.rst; do\
 	# 	perl -pi -e 's/(module|package)$$// if $$. == 1' $$f ;\
@@ -88,4 +88,4 @@ install: clean ## install the package to the active Python's site-packages
 	python setup.py install
 
 line_count:
-	cloc snowxsql tests scripts
+	cloc snowexsql tests scripts

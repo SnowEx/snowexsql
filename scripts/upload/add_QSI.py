@@ -16,10 +16,10 @@ will pass them through to the final uploader
 
 '''
 
-from snowxsql.batch import UploadRasterBatch
-from snowxsql.db import get_db
-from snowxsql.utilities import find_files
-from snowxsql.utilities import get_logger
+from snowexsql.batch import UploadRasterBatch
+from snowexsql.db import get_db
+from snowexsql.utilities import find_files
+from snowexsql.utilities import get_logger
 
 import os
 import pandas as pd

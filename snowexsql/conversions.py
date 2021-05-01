@@ -9,7 +9,7 @@ from sqlalchemy.dialects import postgresql
 from rasterio import MemoryFile
 from rasterio.enums import Resampling
 from geoalchemy2.shape import to_shape
-from snowxsql.data import PointData
+from snowexsql.data import PointData
 from sqlalchemy.sql import func
 from .metadata import read_InSar_annotation
 from .utilities import get_logger

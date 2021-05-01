@@ -1,6 +1,6 @@
 build/*
 .eggs/*
-snowxsql.egg-info/*
+snowexsql.egg-info/*
 dist/*
 *.db
 **/__pycache__/**
@@ -11,7 +11,7 @@ dist/*
 *.shx
 
 docs/modules.rst
-docs/snowxsql.rst
+docs/snowexsql.rst
 docs/_build/*
 
 **/.ipynb_checkpoints/*

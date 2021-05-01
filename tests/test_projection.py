@@ -1,4 +1,4 @@
-from snowxsql.projection import *
+from snowexsql.projection import *
 import pytest
 from numpy.testing import assert_almost_equal
 from geoalchemy2.types import WKTElement

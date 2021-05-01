@@ -3,9 +3,9 @@ from sqlalchemy import MetaData, inspect
 from os import remove
 from os.path import join, dirname
 
-from snowxsql.upload import PointDataCSV
-from snowxsql.data import PointData
-from snowxsql.metadata import DataHeader
+from snowexsql.upload import PointDataCSV
+from snowexsql.data import PointData
+from snowexsql.metadata import DataHeader
 from  .sql_test_base import DBSetup, TableTestBase, pytest_generate_tests
 import datetime
 import pytest
@@ -13,7 +13,7 @@ import pytest
 
 class PointsBase(TableTestBase):
     args = []
-    kwargs = dict(timezone='MST',
+    kwargs = dict(timezone='US/Mountain',
                   depth_is_metadata=False,
                   site_name='Grand Mesa',
                   epsg=26912,

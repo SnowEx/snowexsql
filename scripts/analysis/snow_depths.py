@@ -1,11 +1,11 @@
 '''
 '''
 
-from snowxsql.data import  *
-from snowxsql.conversions import query_to_geopandas
-from snowxsql.db import get_db
-from snowxsql.utilities import get_logger
-from snowxsql.analysis import *
+from snowexsql.data import  *
+from snowexsql.conversions import query_to_geopandas
+from snowexsql.db import get_db
+from snowexsql.utilities import get_logger
+from snowexsql.analysis import *
 import geoalchemy2.functions as gfunc
 from geoalchemy2.shape import to_shape, from_shape
 from sqlalchemy.sql import func

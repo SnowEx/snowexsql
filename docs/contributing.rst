@@ -38,8 +38,8 @@ and "help wanted" is open to whoever wants to implement it.
 Write Documentation
 ~~~~~~~~~~~~~~~~~~~
 
-snowXSQL could always use more documentation, whether as part of the
-official snowXSQL docs, in docstrings, or even on the web in blog posts,
+snowexsql could always use more documentation, whether as part of the
+official snowexsql docs, in docstrings, or even on the web in blog posts,
 articles, and such.
 
 Adding an Upload Script
@@ -57,7 +57,7 @@ To do this simply:
     .. code-block:: python
 
       # You may choose to import only your batch uploader
-      from snowxsql.batch import *
+      from snowexsql.batch import *
 
       # Define your main function which will be called by run.py
       def main():
@@ -83,7 +83,7 @@ To do this simply:
    or point data tables, you will need to add their data names to metadata.py.
    This will allow the uploaders to automatically detect the multiple profiles
    in a single file. Simply add you data name to the class variable
-   `available_names <https://github.com/hpmarshall/SnowEx2020_SQLcode/blob/b4a0fb2baadedcd96fa95275c3d2262c69ed0cf4/snowxsql/metadata.py#L390>`
+   `available_names <https://github.com/hpmarshall/SnowEx2020_SQLcode/blob/b4a0fb2baadedcd96fa95275c3d2262c69ed0cf4/snowexsql/metadata.py#L390>`
    in metadata.py.
 
 
@@ -124,17 +124,17 @@ If you are proposing a feature:
 Get Started!
 ------------
 
-Ready to contribute? Here's how to set up `snowxsql` for local development.
+Ready to contribute? Here's how to set up `snowexsql` for local development.
 
-1. Fork the `snowxsql` repo on GitHub.
+1. Fork the `snowexsql` repo on GitHub.
 2. Clone your fork locally::
 
     $ git clone git@github.com:your_name_here/SnowEx2020_SQLcode.git
 
 3. Install your local copy into a virtualenv. Assuming you have virtualenvwrapper installed, this is how you set up your fork for local development::
 
-    $ mkvirtualenv snowxsql
-    $ cd snowxsql/
+    $ mkvirtualenv snowexsql
+    $ cd snowexsql/
     $ python setup.py develop
 
 4. Create a branch for local development::
@@ -176,7 +176,7 @@ Tips
 
 To run a subset of tests::
 
-$ pytest tests.test_snowxsql
+$ pytest tests.test_snowexsql
 
 
 Deploying
