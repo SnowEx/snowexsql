@@ -132,7 +132,7 @@ You can either clone the public repository:
 
 .. code-block:: console
 
-    $ git clone git://github.com/hpmarshall/SnowEx2020_SQLcode
+    $ git clone git://github.com/hpmarshall/snowexsql
 
 Once you have a copy of the source, you can install it with:
 
@@ -186,6 +186,6 @@ can take a few hours.
 Running the scripts individually does not consider whether the data is in the db. So running a script twice will result
 in that data being uploaded twice!
 
-.. _Github repo: https://github.com/hpmarshall/SnowEx2020_SQLcode
-.. _tarball: https://github.com/hpmarshall/SnowEx2020_SQLcode/tarball/master
+.. _Github repo: https://github.com/hpmarshall/snowexsql
+.. _tarball: https://github.com/hpmarshall/snowexsql/tarball/master
 .. _NSIDC: https://urs.earthdata.nasa.gov/profile

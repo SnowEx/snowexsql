@@ -15,7 +15,7 @@ Types of Contributions
 Report Bugs
 ~~~~~~~~~~~
 
-Report bugs at https://github.com/hpmarshall/SnowEx2020_SQLcode/issues.
+Report bugs at https://github.com/hpmarshall/snowexsql/issues.
 
 If you are reporting a bug, please include:
 
@@ -83,7 +83,7 @@ To do this simply:
    or point data tables, you will need to add their data names to metadata.py.
    This will allow the uploaders to automatically detect the multiple profiles
    in a single file. Simply add you data name to the class variable
-   `available_names <https://github.com/hpmarshall/SnowEx2020_SQLcode/blob/b4a0fb2baadedcd96fa95275c3d2262c69ed0cf4/snowexsql/metadata.py#L390>`
+   `available_names <https://github.com/hpmarshall/snowexsql/blob/b4a0fb2baadedcd96fa95275c3d2262c69ed0cf4/snowexsql/metadata.py#L390>`
    in metadata.py.
 
 
@@ -112,7 +112,7 @@ which blocks had tags enabled*
 Submit Feedback
 ~~~~~~~~~~~~~~~
 
-The best way to send feedback is to file an issue at https://github.com/hpmarshall/SnowEx2020_SQLcode/issues.
+The best way to send feedback is to file an issue at https://github.com/hpmarshall/snowexsql/issues.
 
 If you are proposing a feature:
 
@@ -129,7 +129,7 @@ Ready to contribute? Here's how to set up `snowexsql` for local development.
 1. Fork the `snowexsql` repo on GitHub.
 2. Clone your fork locally::
 
-    $ git clone git@github.com:your_name_here/SnowEx2020_SQLcode.git
+    $ git clone git@github.com:your_name_here/snowexsql.git
 
 3. Install your local copy into a virtualenv. Assuming you have virtualenvwrapper installed, this is how you set up your fork for local development::
 
@@ -168,7 +168,7 @@ Before you submit a pull request, check that it meets these guidelines:
    your new functionality into a function with a docstring, and add the
    feature to the list in README.rst.
 3. The pull request should work for Python 3.5, 3.6, 3.7 and 3.8, and for PyPy. Check
-..    https://travis-ci.com/hpmarshall/SnowEx2020_SQLcode/pull_requests
+..    https://travis-ci.com/hpmarshall/snowexsql/pull_requests
    and make sure that the tests pass for all supported Python versions.
 
 Tips
