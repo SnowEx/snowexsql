@@ -1,24 +1,24 @@
 """
 Module for classes that upload single files to the database.
 """
-from .data import *
-from .string_management import *
-from .interpretation import *
-from .utilities import *
+import os
+import time
+from os.path import abspath, expanduser, join
+from subprocess import STDOUT, check_output
 
-from .metadata import DataHeader
-from .db import get_table_attributes
-
+import numpy as np
 import pandas as pd
 import progressbar
-from subprocess import check_output, STDOUT
+import utm
 from geoalchemy2.elements import RasterElement, WKTElement
 from geoalchemy2.shape import from_shape
-import utm
-import os
-from os.path import join, abspath, expanduser
-import numpy as np
-import time
+
+from .data import *
+from .db import get_table_attributes
+from .interpretation import *
+from .metadata import DataHeader
+from .string_management import *
+from .utilities import *
 
 
 class UploadProfileData:
@@ -148,7 +148,8 @@ class UploadProfileData:
             df['value'] = df[data_name].astype(str)
 
         # Drop all columns were not expecting
-        drop_cols = [c for c in df.columns if c not in self.expected_attributes]
+        drop_cols = [
+            c for c in df.columns if c not in self.expected_attributes]
         df = df.drop(columns=drop_cols)
 
         # Manage nans and nones
@@ -157,7 +158,8 @@ class UploadProfileData:
 
         # Clean up comments a bit
         if 'comments' in df.columns:
-            df['comments'] = df['comments'].apply(lambda x: x.strip(' ') if type(x) == str else x)
+            df['comments'] = df['comments'].apply(
+                lambda x: x.strip(' ') if isinstance(x, str) else x)
 
         return df
 
@@ -247,11 +249,14 @@ class PointDataCSV(object):
         if 'instrument' in df.columns:
             self.log.info('Renaming instruments to more verbose names...')
             df['instrument'] = \
-                df['instrument'].apply(lambda x: remap_data_names(x, self.measurement_names))
+                df['instrument'].apply(
+                lambda x: remap_data_names(
+                    x, self.measurement_names))
 
         # Add date and time keys
         self.log.info('Adding date and time to metadata...')
-        df = df.apply(lambda data: add_date_time_keys(data, in_timezone=self.incoming_tz), axis=1)
+        df = df.apply(lambda data: add_date_time_keys(
+            data, in_timezone=self.incoming_tz), axis=1)
 
         # 1. Only submit valid columns to the DB
         self.log.info('Adding valid keyword arguments to metadata...')
@@ -265,7 +270,9 @@ class PointDataCSV(object):
         # 3. Remove columns that are not valid
         drops = \
             [c for c in df.columns if c not in valid and c not in self.hdr.data_names]
-        self.log.info('Dropping {} as they are not valid on the database...'.format(', '.join(drops)))
+        self.log.info(
+            'Dropping {} as they are not valid on the database...'.format(
+                ', '.join(drops)))
         df = df.drop(columns=drops)
 
         # replace all nans or string nones with None (none type)
@@ -293,7 +300,8 @@ class PointDataCSV(object):
         # Loop through all the entries and add them to the db
         for pt in self.hdr.data_names:
             df = self.build_data(pt)
-            self.log.info('Submitting {} points of {} to the database...'.format(len(self.df.index), pt))
+            self.log.info('Submitting {} points of {} to the database...'.format(
+                len(self.df.index), pt))
 
             bar = progressbar.ProgressBar(max_value=len(self.df.index))
 
@@ -312,7 +320,8 @@ class PointDataCSV(object):
 
         # Error reporting
         if len(self.errors) > 0:
-            self.log.error('{} points failed to upload.'.format(len(self.errors)))
+            self.log.error(
+                '{} points failed to upload.'.format(len(self.errors)))
             self.log.error('The following point indicies failed with '
                            'their corresponding errors:')
 
@@ -323,11 +332,16 @@ class PointDataCSV(object):
         """
         Uploads one point
         """
-        # Create the data structure to pass into the interacting class attributes
+        # Create the data structure to pass into the interacting class
+        # attributes
         data = row.copy()
 
         # Add geometry
-        data['geom'] = WKTElement('POINT({} {})'.format(data['easting'], data['northing']), srid=self.hdr.info['epsg'])
+        data['geom'] = WKTElement(
+            'POINT({} {})'.format(
+                data['easting'],
+                data['northing']),
+            srid=self.hdr.info['epsg'])
 
         # Create db interaction, pass data as kwargs to class submit data
         sd = PointData(**data)
@@ -364,7 +378,7 @@ class UploadRaster(object):
             cmd.append('500x500')
 
         # If nodata applied:
-        if self.no_data != None:
+        if self.no_data is not None:
             cmd.append('-N')
             cmd.append(str(self.no_data))
 
@@ -376,9 +390,12 @@ class UploadRaster(object):
         tiles = s.split("VALUES ('")[1:]
         if len(tiles) > 1:
             # -1 because the first element is not a
-            self.log.info('Raster is split into {} tiles for uploading...'.format(len(tiles)))
+            self.log.info(
+                'Raster is split into {} tiles for uploading...'.format(
+                    len(tiles)))
 
-        # Allow for tiling, the first split is always psql statement we don't need
+        # Allow for tiling, the first split is always psql statement we don't
+        # need
         for t in tiles:
             v = t.split("'::")[0]
             raster = RasterElement(v)

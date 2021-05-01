@@ -21,7 +21,7 @@ import time
 log = get_logger('grd2tif')
 
 
-def convert(filenames, output, epsg,clean_first=False):
+def convert(filenames, output, epsg, clean_first=False):
     '''
     Convert all grd files from the UAVSAR grd to tiff. Then reporjects
     the resulting files from Lat long to UTM, and then saves to the output dir
@@ -54,7 +54,8 @@ def convert(filenames, output, epsg,clean_first=False):
     log.info('Converting {} UAVSAR .grd files to geotiff...'.format(nfiles))
 
     directory = dirname(filenames[0])
-    # Loop over all the files, name them using the same name just using a different folder
+    # Loop over all the files, name them using the same name just using a
+    # different folder
     for ann in sorted(filenames):
 
         # open the ann file
@@ -66,11 +67,14 @@ def convert(filenames, output, epsg,clean_first=False):
 
         # Gather all files associated
         grd_files = glob.glob(join(directory, pattern + '.grd'))
-        log.info('Converting {} grd files to geotiff...'.format(len(grd_files)))
+        log.info(
+            'Converting {} grd files to geotiff...'.format(
+                len(grd_files)))
 
         for grd in grd_files:
-            # Save to our temporary folder and only change fname to have ext=tif
-            latlon_tiff = grd.replace(directory, temp).replace('grd','tif')
+            # Save to our temporary folder and only change fname to have
+            # ext=tif
+            latlon_tiff = grd.replace(directory, temp).replace('grd', 'tif')
 
             try:
                 # Convert the GRD to a geotiff thats projected in lat long
@@ -78,7 +82,9 @@ def convert(filenames, output, epsg,clean_first=False):
                 tiff_pattern = '.'.join(latlon_tiff.split('.')[0:-1]) + '*'
                 tif_files = glob.glob(tiff_pattern)
 
-                log.info('Reprojecting {} files to utm...'.format(len(tif_files)))
+                log.info(
+                    'Reprojecting {} files to utm...'.format(
+                        len(tif_files)))
 
                 for tif in glob.glob(tiff_pattern):
                     utm_file = tif.replace(temp, output)
@@ -94,9 +100,10 @@ def convert(filenames, output, epsg,clean_first=False):
 
     # Report errors an a convenient location for users
     if errors:
-        log.warning('{}/{} files errored out during conversion...'.format(len(errors), nfiles))
+        log.warning(
+            '{}/{} files errored out during conversion...'.format(len(errors), nfiles))
         for c in errors:
-            f,e  = c[0], c[1]
+            f, e = c[0], c[1]
             log.error('Conversion of {} errored out with:\n{}'.format(f, e))
 
     # Clean up the temp folder
@@ -104,6 +111,7 @@ def convert(filenames, output, epsg,clean_first=False):
     shutil.rmtree(temp)
 
     log.info('Completed! {:0.0f}s elapsed'.format(time.time() - start))
+
 
 def main():
 
@@ -137,7 +145,8 @@ def main():
             convert(boi_filenames, output, boi_epsg)
 
         else:
-            log.warning('Skipping conversion and overwriting of UAVSAR files...')
+            log.warning(
+                'Skipping conversion and overwriting of UAVSAR files...')
     else:
         mkdir(output)
         convert(gm_filenames, output, gm_epsg)

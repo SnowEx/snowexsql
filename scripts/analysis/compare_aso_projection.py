@@ -32,10 +32,11 @@ in_file = '/home/micah/Downloads/ASO2016-17-20200918T212934Z-001/ASO2016-17/USCO
 print('Working on Method 4...')
 in_proj = 'EPSG:32613+4979'
 out_proj = 'EPSG:26912+5703'
-check_output('gdalwarp -s_srs "{}" -t_srs "{}" {} method4.tif'.format(in_proj, out_proj, in_file), shell=True)
+check_output('gdalwarp -s_srs "{}" -t_srs "{}" {} method4.tif'.format(in_proj,
+                                                                      out_proj, in_file), shell=True)
 
 print('Performing Stats...')
-for i in range(0,5):
+for i in range(0, 5):
     if i == 0:
         print('Original:')
         f = in_file

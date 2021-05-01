@@ -2,10 +2,10 @@
 This module contains tool used directly regarding the database. This includes
 getting a session, initializing the database, getting table attributes, etc.
 '''
-from sqlalchemy import create_engine
+from sqlalchemy import MetaData, create_engine
 from sqlalchemy.orm import sessionmaker
-from .data import Base, LayerData, PointData, ImageData
-from sqlalchemy import MetaData
+
+from .data import Base, ImageData, LayerData, PointData
 
 
 def initialize(engine):
@@ -68,7 +68,7 @@ def get_table_attributes(DataCls):
     Returns a list of all the table columns to be used for each entry
     '''
 
-    valid_attributes = [att for att in dir(DataCls) if att[0] !='_']
+    valid_attributes = [att for att in dir(DataCls) if att[0] != '_']
 
     # Drop ID as it is (should) never provided
     valid_attributes = [v for v in valid_attributes if v != 'id']

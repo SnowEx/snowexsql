@@ -1,11 +1,13 @@
-from snowexsql.db import *
-from snowexsql.data import PointData, LayerData, ImageData, SiteData
-from  .sql_test_base import DBSetup
-
-from sqlalchemy import MetaData, inspect, Table
 from os import remove
-from os.path import join, dirname
+from os.path import dirname, join
+
 import pytest
+from sqlalchemy import MetaData, Table, inspect
+
+from snowexsql.data import ImageData, LayerData, PointData, SiteData
+from snowexsql.db import *
+
+from .sql_test_base import DBSetup
 
 
 class TestDB(DBSetup):

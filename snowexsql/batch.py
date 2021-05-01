@@ -3,17 +3,19 @@ Module for storing and managing mulitple file submissions to the
 the database
 '''
 
-import time
-import pandas as pd
 import glob
-from os.path import basename, abspath, expanduser, join
-from snowexsql.metadata import DataHeader, SMPMeasurementLog, read_InSar_annotation
-from snowexsql.db import get_table_attributes
+import time
+from os.path import abspath, basename, expanduser, join
+
+import pandas as pd
+
 from snowexsql.data import SiteData
-from snowexsql.utilities import get_logger, assign_default_kwargs
-from snowexsql.upload import UploadProfileData, UploadRaster
-from snowexsql.db import get_db
+from snowexsql.db import get_db, get_table_attributes
 from snowexsql.interpretation import get_InSar_flight_comment
+from snowexsql.metadata import (DataHeader, SMPMeasurementLog,
+                                read_InSar_annotation)
+from snowexsql.upload import UploadProfileData, UploadRaster
+from snowexsql.utilities import assign_default_kwargs, get_logger
 
 
 class BatchBase():
@@ -94,7 +96,8 @@ class BatchBase():
 
         for i, f in enumerate(files):
 
-            # If were not debugging script allow exceptions and report them later
+            # If were not debugging script allow exceptions and report them
+            # later
             if not self.debug:
                 try:
                     self._push_one(f, **self.meta)
@@ -137,13 +140,16 @@ class BatchBase():
                                                        files_attempted))
 
         if len(self.errors) > 0:
-            self.log.error('{} files failed to upload.'.format(len(self.errors)))
-            self.log.error('The following files failed with their corrsponding errors:')
+            self.log.error(
+                '{} files failed to upload.'.format(len(self.errors)))
+            self.log.error(
+                'The following files failed with their corrsponding errors:')
 
             for e in self.errors:
                 self.log.error('\t{} - {}'.format(e[0], e[1]))
 
-        self.log.info('Finished! Elapsed {:d}s\n'.format(int(time.time() - self.start)))
+        self.log.info('Finished! Elapsed {:d}s\n'.format(
+            int(time.time() - self.start)))
         self.session.close()
 
 
@@ -186,7 +192,7 @@ class UploadProfileBatch(BatchBase):
 
         i = 0
 
-        if self.smp_log_f != None:
+        if self.smp_log_f is not None:
             self.smp_log = SMPMeasurementLog(self.smp_log_f)
         else:
             self.smp_log = None
@@ -197,7 +203,8 @@ class UploadProfileBatch(BatchBase):
 
         # Read the data and organize it, remap the names
         if not isinstance(self.smp_log, type(None)):
-            self.log.info('Processing SMP profiles with SMP measurement log...')
+            self.log.info(
+                'Processing SMP profiles with SMP measurement log...')
             smp_file = True
             self.meta['header_sep'] = ':'
 
@@ -212,7 +219,8 @@ class UploadProfileBatch(BatchBase):
                 extras = self.smp_log.get_metadata(f)
                 meta.update(extras)
 
-            # If were not debugging script allow exceptions and report them later
+            # If were not debugging script allow exceptions and report them
+            # later
             if not self.debug:
                 try:
                     self._push_one(f, **meta)
@@ -307,7 +315,8 @@ class UploadUAVSARBatch(BatchBase):
 
             # Assign the date for the respective flights
             if 'amplitude' in dname:
-                meta['date'] = desc['start time of acquisition for pass {}'.format(dname.split(' ')[-1])]['value']
+                meta['date'] = desc['start time of acquisition for pass {}'.format(
+                    dname.split(' ')[-1])]['value']
 
             # Derived products always receive the date of the last overpass
             else:
@@ -317,14 +326,18 @@ class UploadUAVSARBatch(BatchBase):
             meta['date'] = meta['date'].date()
 
             # Assign units
-            meta['units'] = desc['{} units'.format(dname.split(' ')[0])]['value']
+            meta['units'] = desc['{} units'.format(
+                dname.split(' ')[0])]['value']
 
             # Flexibly form a comment for each of the products for dates
             comment = get_InSar_flight_comment(dname, desc)
-            # add which dem was used which dictates the file name convert e.g. ...VV_01.int.grd
-            comment += ', DEM used = {}'.format(desc['dem used in processing']['value'])
+            # add which dem was used which dictates the file name convert e.g.
+            # ...VV_01.int.grd
+            comment += ', DEM used = {}'.format(
+                desc['dem used in processing']['value'])
             # Add the polarization to the the comments
-            comment += ', Polarization = {}'.format(desc['polarization']['value'])
+            comment += ', Polarization = {}'.format(
+                desc['polarization']['value'])
             meta['description'] = comment
 
             self.log.info('Uploading {} as {}...'.format(r, meta['type']))

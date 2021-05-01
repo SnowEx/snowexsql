@@ -10,6 +10,7 @@ from snowexsql.upload import *
 from snowexsql.db import get_db
 import glob
 
+
 def main():
     # Site name
     start = time.time()
@@ -28,11 +29,18 @@ def main():
     errors = 0
 
     for f in csvs:
-        csv = PointDataCSV(f, depth_is_metadata=False, units='cm', site_name=site_name, timezone=timezone, epsg=26912)
+        csv = PointDataCSV(
+            f,
+            depth_is_metadata=False,
+            units='cm',
+            site_name=site_name,
+            timezone=timezone,
+            epsg=26912)
         csv.submit(session)
         errors += len(csv.errors)
 
     return errors
+
 
 if __name__ == '__main__':
     main()

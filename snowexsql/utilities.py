@@ -4,10 +4,12 @@ but to provide some use in the code set.
 '''
 
 import logging
-import coloredlogs
-import numpy as np
 from os import walk
 from os.path import join
+
+import coloredlogs
+import numpy as np
+
 
 def get_logger(name, debug=True, ext_logger=None,):
     """
@@ -34,6 +36,7 @@ def get_logger(name, debug=True, ext_logger=None,):
     coloredlogs.install(fmt=fmt, level=level, logger=log)
     return log
 
+
 def read_n_lines(f, nlines):
     '''
     Opens and reads nlines from a file to avoid reading an entire file.
@@ -47,8 +50,8 @@ def read_n_lines(f, nlines):
     '''
     lines = []
 
-    with open(f,'r') as fp:
-        for i,line in enumerate(fp):
+    with open(f, 'r') as fp:
+        for i, line in enumerate(fp):
             if i < nlines:
                 lines.append(line)
             else:
@@ -56,6 +59,7 @@ def read_n_lines(f, nlines):
         fp.close()
 
     return lines
+
 
 def find_files(directory, ext, pattern):
     '''
@@ -67,10 +71,10 @@ def find_files(directory, ext, pattern):
         pattern: Substring to search for in the file basename
     '''
     files = []
-    for r,ds,fs in walk(directory):
+    for r, ds, fs in walk(directory):
         for f in fs:
             if f.split('.')[-1] == ext and pattern in f:
-                files.append(join(r,f))
+                files.append(join(r, f))
     return files
 
 
@@ -87,7 +91,7 @@ def find_kw_in_lines(kw, lines, addon_str=' = '):
     '''
     str_temp = '{}' + addon_str
 
-    for i,line in enumerate(lines):
+    for i, line in enumerate(lines):
         s = str_temp.format(kw)
 
         uncommented = line.strip('#')
@@ -96,10 +100,11 @@ def find_kw_in_lines(kw, lines, addon_str=' = '):
             if s[0] == uncommented[0]:
                 break
     # No match
-    if i == len(lines)-1:
+    if i == len(lines) - 1:
         i = -1
 
     return i
+
 
 def assign_default_kwargs(object, kwargs, defaults, leave=[]):
     '''
@@ -119,11 +124,12 @@ def assign_default_kwargs(object, kwargs, defaults, leave=[]):
     mod_kwargs = kwargs.copy()
 
     # Loop over all the defaults
-    for k,v in defaults.items():
+    for k, v in defaults.items():
         # if the k was provided then use it and remove it from the kwargs
         if k in kwargs.keys():
             value = kwargs[k]
-            # Delete it so kwargs could be passed on for other use unless its requested to be left
+            # Delete it so kwargs could be passed on for other use unless its
+            # requested to be left
             if k not in leave:
                 del mod_kwargs[k]
 

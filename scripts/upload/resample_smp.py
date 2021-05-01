@@ -22,6 +22,7 @@ import shutil
 import matplotlib.pyplot as plt
 from snowexsql.utilities import read_n_lines
 
+
 def open_df(smp_f, header_pos=6):
     '''
     reads in dataframe with skipping the header
@@ -47,10 +48,11 @@ def subsample(df, ith):
         new_df: Pandas dataframe subsampled to every ith sample of the original. The original index is include for each value
     '''
 
-    idx = df.groupby(df.index//ith).idxmax()['Depth (mm)']
+    idx = df.groupby(df.index // ith).idxmax()['Depth (mm)']
     new_df = df.loc[idx]
 
     return new_df
+
 
 def make_comparison(f):
     '''
@@ -75,23 +77,30 @@ def make_comparison(f):
         ax = axes[i]
 
         # Deal with precision
-        new_df = new.round({'Depth (mm)':d_p, 'Force (N)':f_p})
+        new_df = new.round({'Depth (mm)': d_p, 'Force (N)': f_p})
 
         ax.plot(df['Force (N)'], df['Depth (mm)'], label='Raw')
-        ax.plot(new_df['Force (N)'], new_df['Depth (mm)'], label='Resampled + precision cut')
-        ax.set_title('Depth precision = {}, Force precision = {}'.format(d_p, f_p))
+        ax.plot(
+            new_df['Force (N)'],
+            new_df['Depth (mm)'],
+            label='Resampled + precision cut')
+        ax.set_title(
+            'Depth precision = {}, Force precision = {}'.format(
+                d_p, f_p))
         ax.legend()
         i += 1
 
     ax = axes[i]
     ax.plot(df['Force (N)'], df['Depth (mm)'], label='Raw')
-    ax.plot(new['Force (N)'], new_df['Depth (mm)'], label='Resampled + No Precision cut')
+    ax.plot(new['Force (N)'], new_df['Depth (mm)'],
+            label='Resampled + No Precision cut')
     ax.legend()
     ax.set_title('Original Precision'.format(d_p, f_p))
     plt.show()
 
 
-def resample_batch(filenames, output, downsample, header_pos=6, clean_on_start=True):
+def resample_batch(filenames, output, downsample,
+                   header_pos=6, clean_on_start=True):
     '''
     Resample all the file names and save as csv to the output dir
 
@@ -113,7 +122,8 @@ def resample_batch(filenames, output, downsample, header_pos=6, clean_on_start=T
 
     log.info('Resampling {} SMP profiles...'.format(len(filenames)))
 
-    # Loop over all the files, name them using the same name just using a different folder
+    # Loop over all the files, name them using the same name just using a
+    # different folder
     for f in filenames:
         base_f = basename(f)
 
@@ -129,18 +139,20 @@ def resample_batch(filenames, output, downsample, header_pos=6, clean_on_start=T
         new_df = subsample(df, downsample)
 
         # Reduce the precision of the original data without much effect
-        new_df = new_df.round({'Depth (mm)':1, 'Force (N)':3})
+        new_df = new_df.round({'Depth (mm)': 1, 'Force (N)': 3})
         out_f = join(output, base_f)
 
         # Write out the original header add some information
-        with open(out_f,'w') as fp:
+        with open(out_f, 'w') as fp:
 
             # Rename the original total samples
             original_samples = header[-1].split(":")[-1]
-            header[-1] = '# Original Total Samples: {}'.format(original_samples)
+            header[-1] = '# Original Total Samples: {}'.format(
+                original_samples)
 
             # Add a header for the fact this data is subsampled
-            header.append('# Data Subsampled To: Every {:d}th\n'.format(downsample))
+            header.append(
+                '# Data Subsampled To: Every {:d}th\n'.format(downsample))
             lines = ''.join(header)
             fp.write(lines)
             fp.close()
@@ -175,12 +187,21 @@ def main():
                         'key to abort: '.format(len(filenames), output))
 
             if ans.lower() == 'y':
-                resample_batch(filenames, output, downsample, header_pos=header_pos)
+                resample_batch(
+                    filenames,
+                    output,
+                    downsample,
+                    header_pos=header_pos)
             else:
-                log.warning('Skipping resample and overwriting of resampled files...')
+                log.warning(
+                    'Skipping resample and overwriting of resampled files...')
         else:
             mkdir(output)
-            resample_batch(filenames, output, downsample, header_pos=header_pos)
+            resample_batch(
+                filenames,
+                output,
+                downsample,
+                header_pos=header_pos)
 
 
 if __name__ == '__main__':

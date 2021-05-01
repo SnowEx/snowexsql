@@ -3,30 +3,31 @@ Module contains all conversions used for manipulating data. This includes:
 filetypes, datatypes, etc. Many tools here will be useful for most end users
 of the database.
 '''
-import geopandas as gpd
-import rasterio
-from sqlalchemy.dialects import postgresql
-from rasterio import MemoryFile
-from rasterio.enums import Resampling
-from geoalchemy2.shape import to_shape
-from snowexsql.data import PointData
-from sqlalchemy.sql import func
-from .metadata import read_InSar_annotation
-from .utilities import get_logger
-from os.path import dirname, basename, join, isdir
 import os
-import numpy as np
-import utm
-from rasterio.crs import CRS
-from rasterio.plot import show
-from rasterio.transform import Affine
-from rasterio.warp import reproject, Resampling, calculate_default_transform
-import utm
 import tempfile
+from os.path import basename, dirname, isdir, join
 
-
+import geopandas as gpd
 # Remove later
 import matplotlib.pyplot as plt
+import numpy as np
+import rasterio
+import utm
+from geoalchemy2.shape import to_shape
+from rasterio import MemoryFile
+from rasterio.crs import CRS
+from rasterio.enums import Resampling
+from rasterio.plot import show
+from rasterio.transform import Affine
+from rasterio.warp import Resampling, calculate_default_transform, reproject
+from sqlalchemy.dialects import postgresql
+from sqlalchemy.sql import func
+
+from snowexsql.data import PointData
+
+from .metadata import read_InSar_annotation
+from .utilities import get_logger
+
 
 def INSAR_to_rasterio(grd_file, desc, out_file):
     '''
@@ -41,10 +42,10 @@ def INSAR_to_rasterio(grd_file, desc, out_file):
     '''
     log = get_logger('insar_2_raster')
 
-    data_map = {'int':'interferogram',
-                'amp1':'amplitude of pass 1',
-                'amp2':'amplitude of pass 2',
-                'cor':'correlation'}
+    data_map = {'int': 'interferogram',
+                'amp1': 'amplitude of pass 1',
+                'amp2': 'amplitude of pass 2',
+                'cor': 'correlation'}
 
     # Grab just the filename and make a list splitting it on periods
     fparts = basename(grd_file).split('.')
@@ -68,8 +69,11 @@ def INSAR_to_rasterio(grd_file, desc, out_file):
 
     log.info('Using Deltas for lat/long = {} / {} degrees'.format(dlat, dlon))
 
-    # Read in the data as a tuple representing the real and imaginary components
-    log.info('Reading {} and converting it from binary...'.format(basename(grd_file)))
+    # Read in the data as a tuple representing the real and imaginary
+    # components
+    log.info(
+        'Reading {} and converting it from binary...'.format(
+            basename(grd_file)))
 
     bytes = desc['{} bytes per pixel'.format(dname.split(' ')[0])]['value']
     log.info('{} bytes per pixel = {}'.format(dname, bytes))
@@ -93,7 +97,10 @@ def INSAR_to_rasterio(grd_file, desc, out_file):
     # Lat1/lon1 are already the center so for geotiff were good to go.
     t = Affine.translation(lon1, lat1) * Affine.scale(dlon, dlat)
     ext = out_file.split('.')[-1]
-    fbase = join(dirname(out_file), '.'.join(basename(out_file).split('.')[0:-1]) + '.{}.{}')
+    fbase = join(
+        dirname(out_file), '.'.join(
+            basename(out_file).split('.')[
+                0:-1]) + '.{}.{}')
 
     for i, comp in enumerate(['real', 'imaginary']):
         if comp in z.dtype.names:
@@ -101,16 +108,16 @@ def INSAR_to_rasterio(grd_file, desc, out_file):
             out = fbase.format(comp, ext)
             log.info('Writing to {}...'.format(out))
             dataset = rasterio.open(
-                    out,
-                    'w+',
-                    driver='GTiff',
-                    height=d.shape[0],
-                    width=d.shape[1],
-                    count=1,
-                    dtype=d.dtype,
-                    crs=crs,
-                    transform=t,
-                    )
+                out,
+                'w+',
+                driver='GTiff',
+                height=d.shape[0],
+                width=d.shape[1],
+                count=1,
+                dtype=d.dtype,
+                crs=crs,
+                transform=t,
+            )
             # Write out the data
             dataset.write(d, 1)
 
@@ -132,13 +139,13 @@ def points_to_geopandas(results):
     '''
     # grab all the attributes of the class to assign
     if isinstance(results[0], PointData):
-        data = {a:[] for a in dir(PointData) if a[0:1] != '__'}
+        data = {a: [] for a in dir(PointData) if a[0:1] != '__'}
 
     for r in results:
         for k in data.keys():
             v = getattr(r, k)
 
-            if k=='geom':
+            if k == 'geom':
                 v = to_shape(v)
             data[k].append(v)
 

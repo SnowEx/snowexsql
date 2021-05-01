@@ -1,5 +1,6 @@
-from snowexsql.analysis import *
 import numpy as np
+
+from snowexsql.analysis import *
 
 
 def test_get_stats():

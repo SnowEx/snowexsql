@@ -1,5 +1,6 @@
 import numpy as np
 
+
 def get_stats(data, logger=None):
     '''
     Calculate and report the typical stats on an numpy array.
@@ -13,12 +14,12 @@ def get_stats(data, logger=None):
 
     results = {}
 
-    for stat in ['mean','min','max','std']:
+    for stat in ['mean', 'min', 'max', 'std']:
         fn = getattr(np, 'nan' + stat)
         results[stat] = fn(data)
         msg = '\t{} = {}'.format(stat, results[stat])
 
-        if logger != None:
+        if logger is not None:
             logger.info(msg)
         else:
             print(msg)

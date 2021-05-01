@@ -1,11 +1,12 @@
 '''
 Module for functions that handle anything regarding coordinate projections.
 '''
+import rasterio
 import utm
 from geoalchemy2.elements import WKTElement
-import rasterio
-from rasterio.warp import calculate_default_transform, reproject, Resampling
 from rasterio.crs import CRS
+from rasterio.warp import Resampling, calculate_default_transform, reproject
+
 
 def reproject_point_in_dict(info, is_northern=True):
     '''
@@ -24,28 +25,28 @@ def reproject_point_in_dict(info, is_northern=True):
     keys = result.keys()
 
     # Convert any coords to numbers
-    for c in ['northing','easting','latitude','longitude']:
+    for c in ['northing', 'easting', 'latitude', 'longitude']:
         if c in result.keys():
             result[c] = float(result[c])
 
     # Convert UTM coordinates to Lat long or vice versa for database storage
     if 'northing' in keys:
 
-        if type(result['utm_zone']) == str:
-                result['utm_zone'] = \
-                   int(''.join([s for s in result['utm_zone'] if s.isnumeric()]))
+        if isinstance(result['utm_zone'], str):
+            result['utm_zone'] = \
+                int(''.join([s for s in result['utm_zone'] if s.isnumeric()]))
 
         lat, long = utm.to_latlon(result['easting'], result['northing'],
-                                                     result['utm_zone'],
-                                                     northern=is_northern)
+                                  result['utm_zone'],
+                                  northern=is_northern)
 
         result['latitude'] = lat
         result['longitude'] = long
 
     elif 'latitude' in keys:
         easting, northing, utm_zone, letter = utm.from_latlon(
-                                            result['latitude'],
-                                            result['longitude'])
+            result['latitude'],
+            result['longitude'])
         result['easting'] = easting
         result['northing'] = northing
         result['utm_zone'] = utm_zone
@@ -67,8 +68,9 @@ def add_geom(info, epsg):
     '''
     # Add a geometry entry
     info['geom'] = WKTElement('SRID={}; POINT({} {})'
-                        ''.format(epsg, info['easting'], info['northing']),
-                                 extended=True)
+                              ''.format(
+                                  epsg, info['easting'], info['northing']),
+                              extended=True)
     return info
 
 

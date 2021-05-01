@@ -1,7 +1,10 @@
-from snowexsql.utilities import *
-import numpy as np
 from os.path import dirname, join
+
+import numpy as np
 import pytest
+
+from snowexsql.utilities import *
+
 
 def test_read_nline():
     '''

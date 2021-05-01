@@ -1,18 +1,18 @@
-from sqlalchemy import MetaData
 import datetime
-
 from os import remove
-from os.path import join, dirname
+from os.path import dirname, join
 
 from geoalchemy2 import functions as func
-
-from snowexsql.upload import *
-from snowexsql.functions import *
-from . sql_test_base import DBSetup
-
-from shapely.geometry import Point
-from geoalchemy2.shape import to_shape
 from geoalchemy2.elements import WKBElement
+from geoalchemy2.shape import to_shape
+from shapely.geometry import Point
+from sqlalchemy import MetaData
+
+from snowexsql.functions import *
+from snowexsql.upload import *
+
+from .sql_test_base import DBSetup
+
 
 class TestFunctions(DBSetup):
 

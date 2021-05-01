@@ -5,6 +5,7 @@ from snowexsql.db import initialize
 from snowexsql.db import get_db
 from snowexsql.utilities import get_logger
 
+
 def main():
     log = get_logger('Create DB')
     db_name = 'snowex'
@@ -21,5 +22,7 @@ def main():
 
     session.close()
     log.info('')
+
+
 if __name__ == '__main__':
     main()

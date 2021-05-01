@@ -1,8 +1,10 @@
-from snowexsql.string_management import *
-import pytest
 import datetime
+
 import numpy as np
+import pytest
 import pytz
+
+from snowexsql.string_management import *
 
 
 def test_standardize_key():

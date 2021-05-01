@@ -11,6 +11,7 @@ from os.path import join, abspath
 from snowexsql.batch import UploadProfileBatch
 import glob
 
+
 def main():
 
     # Obtain a list of Grand mesa smp files

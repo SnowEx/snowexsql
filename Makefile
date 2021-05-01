@@ -89,3 +89,9 @@ install: clean ## install the package to the active Python's site-packages
 
 line_count:
 	cloc snowexsql tests scripts
+
+pep8:
+	isort snowexsql/*.py tests/*.py
+	autopep8 --aggressive --in-place snowexsql/*.py snowexsql/*.py scripts/*/*.py 
+
+

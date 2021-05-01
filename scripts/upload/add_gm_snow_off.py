@@ -25,6 +25,7 @@ from os.path import join, abspath, expanduser
 import glob
 from add_QSI import reproject
 
+
 def main():
 
     # Location of the downloaded data
@@ -37,7 +38,7 @@ def main():
     surveyors = 'USGS'
     instrument = 'lidar'
     site_name = 'Grand Mesa'
-    units = 'meters' # Add from the Annotation file
+    units = 'meters'  # Add from the Annotation file
     desc = 'US Geological Survey 1m snow off DEM from the 3DEP'
     dtype = 'DEM'
 
@@ -54,9 +55,9 @@ def main():
             'epsg': epsg,
             'surveyors': surveyors,
             'instrument': instrument,
-            'tiled':True,
-            'type':dtype,
-            #'no_data':-999999
+            'tiled': True,
+            'type': dtype,
+            # 'no_data':-999999
             }
 
     # Grab all the annotation files in the original data folder
@@ -66,6 +67,7 @@ def main():
     errors_count += len(rs.errors)
 
     return errors_count
+
 
 if __name__ == '__main__':
     main()

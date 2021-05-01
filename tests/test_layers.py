@@ -1,12 +1,15 @@
-from .sql_test_base import pytest_generate_tests, TableTestBase
-import pytest
-from snowexsql.upload import UploadProfileData
-from snowexsql.data import LayerData
-from datetime import date, time
-import pandas as pd
-import pytz
 import datetime
+from datetime import date, time
+
 import numpy as np
+import pandas as pd
+import pytest
+import pytz
+
+from snowexsql.data import LayerData
+from snowexsql.upload import UploadProfileData
+
+from .sql_test_base import TableTestBase, pytest_generate_tests
 
 
 class TestStratigraphyProfile(TableTestBase):

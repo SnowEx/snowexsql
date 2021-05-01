@@ -42,21 +42,23 @@ def main():
     epsg = 26912
 
     # 1. Define the files, in this case only one
-    filenames = ['~/Downloads/ASO2016-17-20200918T212934Z-001/ASO2016-17/USCOGM20160926f1a1__lowest_vf_snowEX_extent.tif']
+    filenames = [
+        '~/Downloads/ASO2016-17-20200918T212934Z-001/ASO2016-17/USCOGM20160926f1a1__lowest_vf_snowEX_extent.tif']
 
     # 1B. Expand paths to full absolute paths
     filenames = [abspath(expanduser(f)) for f in filenames]
 
-    # 2. Assign any contant metadata and pass it as keyword arguments to the uploader
-    kwargs = {'instrument':'lidar',
+    # 2. Assign any contant metadata and pass it as keyword arguments to the
+    # uploader
+    kwargs = {'instrument': 'lidar',
               'surveyors': 'ASO',
               'date': date(2016, 9, 26),
               'type': 'DEM',
-              'units':'meters',
-              'description':'Snow off DEM flown by ASO for SNOWEX 2017',
-              'tiled':True,
-              'epsg':epsg,
-              'no_data':-9999
+              'units': 'meters',
+              'description': 'Snow off DEM flown by ASO for SNOWEX 2017',
+              'tiled': True,
+              'epsg': epsg,
+              'no_data': -9999
               }
 
     # # 2B. Convert image from UTM13 to 12
@@ -74,6 +76,7 @@ def main():
     u.push()
 
     return len(u.errors)
+
 
 # Add this so you can run your script directly without running run.py
 if __name__ == '__main__':

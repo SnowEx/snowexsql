@@ -1,4 +1,4 @@
-'''
+"""
 Read in the SnowEx 2020 Decimated GPR data. Uploaded SWE, Two Way Travel, Depth, to
 the database.
 
@@ -6,7 +6,7 @@ the database.
 2A. python run.py # To run all together all at once
 2B. python add_gpr.py # To run individually
 
-'''
+"""
 
 import pandas as pd
 from os.path import join, abspath, expanduser

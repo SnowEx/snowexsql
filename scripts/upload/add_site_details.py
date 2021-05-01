@@ -11,6 +11,7 @@ from os.path import join, abspath
 from snowexsql.batch import UploadSiteDetailsBatch
 import glob
 
+
 def main():
 
     errors = 0

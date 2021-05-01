@@ -47,11 +47,12 @@ def reproject(filenames, out_epsg, out_dir, adjust_vdatum=False):
         log.info('Working on {} ({}/{})...'.format(bname, i, n))
 
         # Construct a new filename
-        out = join(out_dir, bname.replace('.adf','.tif'))
+        out = join(out_dir, bname.replace('.adf', '.tif'))
         in_ras = r
         # Some files share repeating naming convention
         if isfile(out):
-            out = join(out_dir, '_'.join(split(r)[-2:]).replace('.adf','.tif'))
+            out = join(out_dir, '_'.join(
+                split(r)[-2:]).replace('.adf', '.tif'))
 
         if adjust_vdatum:
             # Adjust the vertical datum in bash from python
@@ -63,14 +64,17 @@ def reproject(filenames, out_epsg, out_dir, adjust_vdatum=False):
             # check_output('mv test-adj.tif {}'.format(''), shell=True)
             in_ras = 'test-adj.tif'
 
-        # Reproject the raster and output to the new location in bash from python
+        # Reproject the raster and output to the new location in bash from
+        # python
         log.info('Reprojecting data to EPSG:{}'.format(out_epsg))
-        check_output('gdalwarp -r bilinear -t_srs "EPSG:{}" {} {}'.format(out_epsg, in_ras, out), shell=True)
+        check_output(
+            'gdalwarp -r bilinear -t_srs "EPSG:{}" {} {}'.format(out_epsg, in_ras, out), shell=True)
 
         # Keep the new file name
         final.append(out)
 
     return final
+
 
 def main():
 
@@ -79,19 +83,19 @@ def main():
 
     # build our common metadata
     base = {
-    # Build our metadata
-    'epsg' :26912,
+        # Build our metadata
+        'epsg': 26912,
 
-    # Add these attributes to the db entry
-    'surveyors': 'QSI',
-    'instrument': 'lidar',
-    'site_name': 'Grand Mesa',
-    'units': 'meters'
+        # Add these attributes to the db entry
+        'surveyors': 'QSI',
+        'instrument': 'lidar',
+        'site_name': 'Grand Mesa',
+        'units': 'meters'
     }
 
     # descriptions of the two flights
-    desc1 ='First overflight at GM with snow on, partially flown on 05-02-2020 due to cloud coverage'
-    desc2 ='Second overflight at GM with snow on'
+    desc1 = 'First overflight at GM with snow on, partially flown on 05-02-2020 due to cloud coverage'
+    desc2 = 'Second overflight at GM with snow on'
 
     # Dates
     date1 = pd.to_datetime('02/01/2020').date()
@@ -108,10 +112,10 @@ def main():
 
     # Dictionary mapping the metadata to the repsective folders
     flight_meta = {'GrandMesa2020_F1': meta1,
-                   'GrandMesa2020_F2':meta2}
+                   'GrandMesa2020_F2': meta2}
 
     # Name of the data mapped from repsective folder names
-    names = {'Bare_Earth_Digital_Elevation_Models':'DEM',
+    names = {'Bare_Earth_Digital_Elevation_Models': 'DEM',
              'Digital_Surface_Models': 'DSM'}
 
     # error counting
@@ -121,7 +125,8 @@ def main():
     for flight in flight_meta.keys():
 
         # Loop over the two types of data to upload
-        for dem in ['Bare_Earth_Digital_Elevation_Models', 'Digital_Surface_Models']:
+        for dem in ['Bare_Earth_Digital_Elevation_Models',
+                    'Digital_Surface_Models']:
 
             # Form the directory structure and grab all the important files
             d = join(downloads, flight, 'Rasters', dem)

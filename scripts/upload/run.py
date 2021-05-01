@@ -55,7 +55,8 @@ for f in os.listdir('.'):
         # Initialize an error tracking dictionary for reporting at the end
         errors[local_mod] = 0
 
-        log.debug('Found addition script {}.py, staging for execution...'.format(local_mod))
+        log.debug(
+            'Found addition script {}.py, staging for execution...'.format(local_mod))
 
 # Clear out the database
 create()

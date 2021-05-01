@@ -1,17 +1,19 @@
-from snowexsql.conversions import *
-from snowexsql.data import PointData, ImageData
-from snowexsql.upload import PointDataCSV, UploadRaster
+import glob
+import shutil
+from os.path import join
 
 import geopandas as gpd
-from geoalchemy2.shape import to_shape
-from os.path import join
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 import pytest
-import shutil
-import glob
-from . sql_test_base import DBSetup
+from geoalchemy2.shape import to_shape
 from numpy.testing import assert_almost_equal
+
+from snowexsql.conversions import *
+from snowexsql.data import ImageData, PointData
+from snowexsql.upload import PointDataCSV, UploadRaster
+
+from .sql_test_base import DBSetup
 
 
 class TestConversionsOnDB(DBSetup):

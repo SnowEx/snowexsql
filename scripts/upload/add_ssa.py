@@ -9,6 +9,7 @@ from os.path import join, abspath
 from snowexsql.batch import UploadProfileBatch
 import glob
 
+
 def main():
 
     # Obtain a list of SSA profiles
@@ -23,6 +24,7 @@ def main():
 
     # Return the number of errors so run.py can keep track
     return len(b.errors)
+
 
 if __name__ == '__main__':
     main()

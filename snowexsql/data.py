@@ -6,14 +6,15 @@ Mapping in the sqlalchemy or ORM.
 '''
 import datetime
 
+from geoalchemy2 import Geography, Geometry, Raster
+from sqlalchemy import (Boolean, Column, Date, DateTime, Float, ForeignKey,
+                        Index, Integer, String, Time)
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy import Column, ForeignKey, Integer, String, Float, Boolean, DateTime, Time, Date
-from sqlalchemy import Index
-from sqlalchemy.orm import relationship, backref
+from sqlalchemy.orm import backref, relationship
 from sqlalchemy.sql import func
-from geoalchemy2 import Geometry, Geography, Raster
 
 Base = declarative_base()
+
 
 class SnowData(object):
     '''
@@ -26,6 +27,7 @@ class SnowData(object):
     id = Column(Integer, primary_key=True)
     site_id = Column(String(50))
 
+
 class Measurement(object):
     '''
     Base Class providing attributes required for a measurement of any kind
@@ -34,6 +36,7 @@ class Measurement(object):
     type = Column(String(50))
     units = Column(String(50))
     surveyors = Column(String(100))
+
 
 class SingleLocationData(SnowData):
     '''
@@ -47,6 +50,7 @@ class SingleLocationData(SnowData):
     utm_zone = Column(String(10))
     geom = Column(Geometry("POINT"))
     time = Column(Time(timezone=True))
+
 
 class SiteData(SingleLocationData, Base):
     '''
@@ -71,6 +75,7 @@ class SiteData(SingleLocationData, Base):
     tree_canopy = Column(String(100))
     site_notes = Column(String(1000))
 
+
 class ImageData(SnowData, Measurement, Base):
     '''
     Class representing the images table. This table holds all images/rasters
@@ -79,6 +84,7 @@ class ImageData(SnowData, Measurement, Base):
     __table_args__ = {"schema": "public"}
     raster = Column(Raster)
     description = Column(String(1000))
+
 
 class PointData(SingleLocationData, Measurement, Base):
     '''
@@ -94,7 +100,7 @@ class PointData(SingleLocationData, Measurement, Base):
     value = Column(Float)
 
     __mapper_args__ = {
-        'polymorphic_identity':'Points',
+        'polymorphic_identity': 'Points',
     }
 
 

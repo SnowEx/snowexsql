@@ -1,7 +1,7 @@
 '''
 '''
 
-from snowexsql.data import  *
+from snowexsql.data import *
 from snowexsql.conversions import query_to_geopandas
 from snowexsql.db import get_db
 from snowexsql.utilities import get_logger
@@ -15,6 +15,7 @@ import geopandas as gpd
 import progressbar
 import matplotlib.pyplot as plt
 
+
 def get_raster_value(session, point, surveyor, date=None):
     '''
     Grab the raster tiles that fall into the polygon. Resample. Attempt to get
@@ -22,10 +23,15 @@ def get_raster_value(session, point, surveyor, date=None):
     '''
 
     # Filter by surveyors and data name DEM
-    q = session.query(func.ST_Value(ImageData.raster, 1, point)).filter(ImageData.type == 'DEM')
+    q = session.query(
+        func.ST_Value(
+            ImageData.raster,
+            1,
+            point)).filter(
+        ImageData.type == 'DEM')
     q = q.filter(ImageData.surveyors == surveyor)
 
-    if date != None:
+    if date is not None:
         q = q.filter(ImageData.date == date)
 
     q = q.filter(gfunc.ST_Within(point, func.ST_Envelope(ImageData.raster)))
@@ -36,31 +42,39 @@ def get_raster_value(session, point, surveyor, date=None):
     else:
         return None
 
+
 def main():
 
     # Grab the db session
     engine, session = get_db('snowex')
 
-    surveyors = ['aso','usgs']
+    surveyors = ['aso', 'usgs']
 
-    #Setup
+    # Setup
     log = get_logger('Depths Script')
     # Get the count of QSI dates
-    dates = session.query(ImageData.date).filter(ImageData.surveyors=='QSI').distinct().all()
+    dates = session.query(ImageData.date).filter(
+        ImageData.surveyors == 'QSI').distinct().all()
 
     # Build an empy dataframe fro storing our results in
-    results = gpd.GeoDataFrame(columns=['geometry','aso','usgs', 'measured','date'])
+    results = gpd.GeoDataFrame(
+        columns=[
+            'geometry',
+            'aso',
+            'usgs',
+            'measured',
+            'date'])
 
     # Grab all depths and dates.
     q = session.query(PointData)
-    q = q.filter(PointData.type=='depth')
+    q = q.filter(PointData.type == 'depth')
     df = query_to_geopandas(q, engine)
     log.info('Found {} snow depths...'.format(len(df)))
 
     bar = progressbar.ProgressBar(max_value=len(df.index))
 
     # Loop over all the points
-    for i,row in df.iterrows():
+    for i, row in df.iterrows():
 
         # Create an empty dict and add geometryand date for each point
         data = {}
@@ -70,16 +84,17 @@ def main():
 
         point = from_shape(row['geom'], srid=26912).ST_AsEWKT()
 
-        # Get the raster value of a cell nearest center after resampling to the resolution
+        # Get the raster value of a cell nearest center after resampling to the
+        # resolution
         snow = get_raster_value(session, point, 'QSI', date=dates[0][0])
 
         for surveyor in surveyors:
-            off = get_raster_value(session, point,  surveyor.upper())
+            off = get_raster_value(session, point, surveyor.upper())
 
-            if off == None or snow == None:
+            if off is None or snow is None:
                 data[surveyor] = None
             else:
-                data[surveyor] = (snow - off) * 100 # cm
+                data[surveyor] = (snow - off) * 100  # cm
 
         results = results.append(data, ignore_index=True)
         bar.update(i)
@@ -96,15 +111,21 @@ def main():
     results.to_csv('snow_depths.csv')
 
     # report the stats
-    for d in ['usgs diff','aso diff']:
+    for d in ['usgs diff', 'aso diff']:
         log.info(d)
         get_stats(results[d], logger=log)
 
     # Make a plot
-    fig, ax = plt.subplots(1, 1, figsize = (8,8))
+    fig, ax = plt.subplots(1, 1, figsize=(8, 8))
 
     # Plot the points colored by differences
-    results.plot(ax=ax, column='usgs diff', cmap='RdBu', vmin=-50, vmax=50, legend=True)
+    results.plot(
+        ax=ax,
+        column='usgs diff',
+        cmap='RdBu',
+        vmin=-50,
+        vmax=50,
+        legend=True)
 
     # Don't use scientific notation on the axis ticks
     ax.ticklabel_format(style='plain', useOffset=False)
@@ -115,5 +136,7 @@ def main():
     ax.set_title('USGS')
 
     plt.show()
+
+
 if __name__ == '__main__':
     main()

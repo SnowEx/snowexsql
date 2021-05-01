@@ -1,12 +1,14 @@
-from snowexsql.projection import *
-import pytest
-from numpy.testing import assert_almost_equal
-from geoalchemy2.types import WKTElement
-from geoalchemy2.shape import to_shape
-from os.path import dirname, join, isfile, isdir
-from os import remove, mkdir
-from rasterio.crs import CRS
 import shutil
+from os import mkdir, remove
+from os.path import dirname, isdir, isfile, join
+
+import pytest
+from geoalchemy2.shape import to_shape
+from geoalchemy2.types import WKTElement
+from numpy.testing import assert_almost_equal
+from rasterio.crs import CRS
+
+from snowexsql.projection import *
 
 
 @pytest.mark.parametrize('info, expected',[

@@ -1,13 +1,15 @@
 """
 Test all things from the metadata.py file
 """
-from snowexsql.metadata import *
-from os.path import join, dirname, abspath
 import datetime
+from os.path import abspath, dirname, join
+
 import numpy as np
-import pytz
-import pytest
 import pandas as pd
+import pytest
+import pytz
+
+from snowexsql.metadata import *
 
 dt = datetime.datetime(2020, 2, 5, 13, 30, 0, 0, pytz.timezone('US/Mountain'))
 info = {'site_name': 'Grand Mesa',

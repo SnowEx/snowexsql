@@ -4,12 +4,14 @@ decisions being made about situations that are perhaps not universal but useful
 in the context of snowex data and creating the database.
 """
 
-from . utilities import get_logger
-import pandas as pd
-import warnings
 import datetime
+import warnings
+
 import numpy as np
+import pandas as pd
 import pytz
+
+from .utilities import get_logger
 
 
 def is_point_data(columns):
@@ -26,10 +28,11 @@ def is_point_data(columns):
     result = False
 
     # Check for point data which will contain this in the data not the header
-    if columns != None and ('latitude' in columns or 'easting' in columns):
+    if columns is not None and ('latitude' in columns or 'easting' in columns):
         result = True
 
     return result
+
 
 def manage_degrees(info):
     """
@@ -45,15 +48,16 @@ def manage_degrees(info):
     """
 
     # Manage degrees symbols
-    for k in ['aspect','slope_angle','air_temp']:
+    for k in ['aspect', 'slope_angle', 'air_temp']:
         if k in info.keys():
             v = info[k]
-            if type(v) == str and v != None:
+            if isinstance(v, str) and v is not None:
                 # Remove any degrees symbols
-                v = v.replace('\u00b0','')
-                v = v.replace('Â','')
+                v = v.replace('\u00b0', '')
+                v = v.replace('Â', '')
 
-                # Sometimes a range is used for the slope. Always pick the larger value
+                # Sometimes a range is used for the slope. Always pick the
+                # larger value
                 if '-' in v:
                     v = v.split('-')[-1]
 
@@ -64,6 +68,7 @@ def manage_degrees(info):
                     v = float(v)
                 info[k] = v
     return info
+
 
 def manage_aspect(info):
     """
@@ -81,14 +86,14 @@ def manage_aspect(info):
     # Convert Cardinal dirs to degrees
     if 'aspect' in info.keys():
         aspect = info['aspect']
-        if aspect != None and type(aspect) == str:
+        if aspect is not None and isinstance(aspect, str):
             # Check for number of numeric values.
             numeric = len([True for c in aspect if c.isnumeric()])
 
-            if numeric != len(aspect) and aspect != None:
+            if numeric != len(aspect) and aspect is not None:
                 log.warning('Aspect recorded for site {} is in cardinal '
-                'directions, converting to degrees...'
-                ''.format(info['site_id']))
+                            'directions, converting to degrees...'
+                            ''.format(info['site_id']))
                 deg = convert_cardinal_to_degree(aspect)
                 info['aspect'] = deg
     return info
@@ -109,7 +114,23 @@ def convert_cardinal_to_degree(cardinal):
         degrees: Float representing cardinal direction in degrees from north
     """
 
-    dirs = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW']
+    dirs = [
+        'N',
+        'NNE',
+        'NE',
+        'ENE',
+        'E',
+        'ESE',
+        'SE',
+        'SSE',
+        'S',
+        'SSW',
+        'SW',
+        'WSW',
+        'W',
+        'WNW',
+        'NW',
+        'NNW']
 
     # Manage extra characters separating composite dirs, make it all upper case
     d = ''.join([c.upper() for c in cardinal if c not in '/-'])
@@ -173,7 +194,8 @@ def add_date_time_keys(data, in_timezone=None, out_timezone='US/Mountain'):
 
         # Handle gpr data dates
         elif 'utcyear' in keys and 'utcdoy' in keys and 'utctod' in keys:
-            base = pd.to_datetime('{:d}-01-01 00:00:00 '.format(int(data['utcyear'])), utc=True)
+            base = pd.to_datetime(
+                '{:d}-01-01 00:00:00 '.format(int(data['utcyear'])), utc=True)
 
             # Number of days since january 1
             d = int(data['utcdoy']) - 1
@@ -185,7 +207,12 @@ def add_date_time_keys(data, in_timezone=None, out_timezone='US/Mountain'):
             ss = int(time[4:6])  # seconds
             ms = int(float('0.' + time.split('.')[-1]) * 1000)  # milliseconds
 
-            delta = datetime.timedelta(days=d, hours=hr, minutes=mm, seconds=ss, milliseconds=ms)
+            delta = datetime.timedelta(
+                days=d,
+                hours=hr,
+                minutes=mm,
+                seconds=ss,
+                milliseconds=ms)
             # This is the only key set that ignores in_timezone
             d = base.astimezone(pytz.timezone('UTC')) + delta
 
@@ -199,7 +226,8 @@ def add_date_time_keys(data, in_timezone=None, out_timezone='US/Mountain'):
             #     del data[v]
 
         else:
-            raise ValueError('Data is missing date/time info!\n{}'.format(data))
+            raise ValueError(
+                'Data is missing date/time info!\n{}'.format(data))
 
     if in_timezone is not None:
         d = d.tz_localize(in_tz)
@@ -212,6 +240,7 @@ def add_date_time_keys(data, in_timezone=None, out_timezone='US/Mountain'):
     data['time'] = d.timetz()
 
     return data
+
 
 def standardize_depth(depths, desired_format='snow_height', is_smp=False):
     """
@@ -266,8 +295,9 @@ def standardize_depth(depths, desired_format='snow_height', is_smp=False):
 
     else:
         raise ValueError('{} is an invalid depth format! Options are: {}'
-                         ''.format(', '.join(['snow_height','surface_datum'])))
+                         ''.format(', '.join(['snow_height', 'surface_datum'])))
     return new
+
 
 def avg_from_multi_sample(layer, value_type):
     """
@@ -286,12 +316,12 @@ def avg_from_multi_sample(layer, value_type):
     Returns:
         result: Nan mean of the values found
     """
-    values =[]
+    values = []
 
     for k, v in layer.items():
         if value_type in k:
             # If the bool is not nan and is not empty
-            if str(v).lower() !='nan' and bool(str(v).strip()):
+            if str(v).lower() != 'nan' and bool(str(v).strip()):
                 values.append(float(v))
 
     if values:
@@ -299,6 +329,7 @@ def avg_from_multi_sample(layer, value_type):
     else:
         result = np.nan
     return result
+
 
 def get_InSar_flight_comment(data_name, desc):
     """
@@ -325,7 +356,8 @@ def get_InSar_flight_comment(data_name, desc):
     tz = pytz.timezone(tz_str)
     blank = '{} time of acquisition for pass {}'
 
-    # Assign the correct date to the amplitude flights which dont require both flights
+    # Assign the correct date to the amplitude flights which dont require both
+    # flights
     if 'amplitude' in data_name:
         pass_num = data_name.split(' ')[-1]
         passes = [pass_num]

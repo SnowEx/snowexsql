@@ -1,9 +1,11 @@
-from snowexsql.interpretation import *
-import pytest
 from datetime import date, time
+
 import numpy as np
-import pytz
 import pandas as pd
+import pytest
+import pytz
+
+from snowexsql.interpretation import *
 
 
 @pytest.mark.filterwarnings('ignore:Assuming')

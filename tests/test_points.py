@@ -1,8 +1,11 @@
-from snowexsql.upload import PointDataCSV
-from snowexsql.data import PointData
-from .sql_test_base import TableTestBase, pytest_generate_tests
 import datetime
+
 import pytest
+
+from snowexsql.data import PointData
+from snowexsql.upload import PointDataCSV
+
+from .sql_test_base import TableTestBase, pytest_generate_tests
 
 
 class PointsBase(TableTestBase):

@@ -1,6 +1,8 @@
-from sqlalchemy import asc
-from os.path import join, dirname
+from os.path import dirname, join
+
 from numpy.testing import assert_almost_equal
+from sqlalchemy import asc
+
 from snowexsql.db import get_db, initialize
 
 

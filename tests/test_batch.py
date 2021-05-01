@@ -1,11 +1,14 @@
-from .sql_test_base import DBSetup, pytest_generate_tests, TableTestBase
-import pytest
-from os.path import join, dirname
-from snowexsql.batch import *
-from snowexsql.data import LayerData, SiteData, ImageData
 from datetime import date, time
+from os.path import dirname, join
+
+import pytest
 import pytz
-from geoalchemy2.shape import to_shape, from_shape
+from geoalchemy2.shape import from_shape, to_shape
+
+from snowexsql.batch import *
+from snowexsql.data import ImageData, LayerData, SiteData
+
+from .sql_test_base import DBSetup, TableTestBase, pytest_generate_tests
 
 
 class TestUploadSiteDetailsBatch(TableTestBase):

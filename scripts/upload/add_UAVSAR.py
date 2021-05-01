@@ -25,6 +25,7 @@ import os
 from os.path import join, abspath, expanduser
 import glob
 
+
 def main():
 
     # Location of the downloaded data
@@ -35,7 +36,7 @@ def main():
 
     data = {
         # Tile the data going in for faster retrieval
-        'tiled':True,
+        'tiled': True,
 
         # Spatial Reference
         'epsg': 26912,
@@ -44,7 +45,7 @@ def main():
         'surveyors': 'UAVSAR team, JPL',
         'instrument': 'UAVSAR, L-band InSAR',
         'site_name': 'Grand Mesa',
-        'units': '', # Add from the Annotation file
+        'units': '',  # Add from the Annotation file
         'description': '',
     }
 
@@ -60,7 +61,7 @@ def main():
     ann_files = glob.glob(join(downloads, 'grmesa*.ann'))
 
     # Instantiate the uploader
-    rs = UploadUAVSARBatch(ann_files, geotiff_dir=geotif_loc,  **data)
+    rs = UploadUAVSARBatch(ann_files, geotiff_dir=geotif_loc, **data)
 
     # Submit to the db
     rs.push()
@@ -68,7 +69,7 @@ def main():
     # Keep track of number of errors for run.py
     errors_count += len(rs.errors)
 
-    ############################### Idaho ######################################
+    ############################### Idaho ####################################
     # Make adjustments to metadata for lowman files
     data['site_name'] = 'idaho'
     data['epsg'] = 29611
@@ -77,7 +78,7 @@ def main():
     ann_files = glob.glob(join(downloads, 'lowman*.ann'))
 
     # Instantiate the uploader
-    rs = UploadUAVSARBatch(ann_files, geotiff_dir=geotif_loc,  **data)
+    rs = UploadUAVSARBatch(ann_files, geotiff_dir=geotif_loc, **data)
 
     # Submit to the db
     rs.push()

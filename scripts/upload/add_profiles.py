@@ -11,6 +11,7 @@ from os import listdir
 from snowexsql.batch import UploadProfileBatch
 import glob
 
+
 def main():
 
     errors = 0
@@ -24,7 +25,8 @@ def main():
     # Grab all the site details files
     sites = glob.glob(join(data_dir, '*/*site*.csv'))
 
-    # Remove the site details from the total file list to get only the profiles file list
+    # Remove the site details from the total file list to get only the
+    # profiles file list
     profiles = list(set(filenames) - set(sites))
 
     # Submit all profiles associated with pit at a time

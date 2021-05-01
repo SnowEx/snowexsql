@@ -3,17 +3,17 @@ Module for header classes and metadata interpreters. This includes interpreting 
 to describing data.
 """
 
-from .string_management import *
-from .interpretation import *
-from .data import SiteData
-from .db import get_table_attributes
-from .projection import reproject_point_in_dict, add_geom
-from .utilities import get_logger, read_n_lines, assign_default_kwargs
+from os.path import basename
 
 import pandas as pd
 import pytz
 
-from os.path import basename
+from .data import SiteData
+from .db import get_table_attributes
+from .interpretation import *
+from .projection import add_geom, reproject_point_in_dict
+from .string_management import *
+from .utilities import assign_default_kwargs, get_logger, read_n_lines
 
 
 def read_InSar_annotation(ann_file):
@@ -148,9 +148,11 @@ class SMPMeasurementLog(object):
 
         # parse/rename column names
         line = header[header_pos]
-        str_cols = [standardize_key(col) for col in line.lower().split(',') if col.strip()]
+        str_cols = [standardize_key(col)
+                    for col in line.lower().split(',') if col.strip()]
 
-        # Assume columns are populated left to right so if we have empty ones they are assumed at the end
+        # Assume columns are populated left to right so if we have empty ones
+        # they are assumed at the end
         n_cols = len(str_cols)
         str_cols = remap_data_names(str_cols, DataHeader.rename)
 
@@ -357,7 +359,8 @@ class DataHeader(object):
         """
         self.log = get_logger(__name__)
 
-        self.extra_header = assign_default_kwargs(self, kwargs, self.defaults, leave=['epsg'])
+        self.extra_header = assign_default_kwargs(
+            self, kwargs, self.defaults, leave=['epsg'])
 
         self.log.info('Interpreting metadata in {}'.format(filename))
 
@@ -434,7 +437,8 @@ class DataHeader(object):
             columns: list of column names
         """
 
-        # Minimum column size should match the last line of data (Assumption #2)
+        # Minimum column size should match the last line of data (Assumption
+        # #2)
         n_columns = len(lines[-1].split(','))
 
         # Use these to monitor if a larger column count is found
@@ -527,7 +531,8 @@ class DataHeader(object):
                     self.log.debug('{} is multisampled...'.format(dname))
                     multi_sample_profiles.append(dname)
 
-        # If depth is metadata (e.g. profiles) then remove it as a main variable
+        # If depth is metadata (e.g. profiles) then remove it as a main
+        # variable
         if 'depth' in data_names and self.depth_is_metadata:
             data_names.pop(data_names.index('depth'))
 
@@ -615,7 +620,10 @@ class DataHeader(object):
 
         # If there is not header data then don't bother (useful for point data)
         if data:
-            data = add_date_time_keys(data, in_timezone=self.in_timezone, out_timezone=self.out_timezone)
+            data = add_date_time_keys(
+                data,
+                in_timezone=self.in_timezone,
+                out_timezone=self.out_timezone)
 
         # Rename the info dictionary keys to more standard ones
         data = remap_data_names(data, self.rename)
@@ -700,9 +708,11 @@ class DataHeader(object):
         info = manage_aspect(info)
 
         # Convert lat/long to utm and vice versa if either exist
-        info = reproject_point_in_dict(info, is_northern=self.northern_hemisphere)
+        info = reproject_point_in_dict(
+            info, is_northern=self.northern_hemisphere)
 
-        # Check for point data which will contain this in the data not the header
+        # Check for point data which will contain this in the data not the
+        # header
         if not is_point_data(self.columns):
             info = add_geom(info, self.epsg)
 
@@ -710,7 +720,7 @@ class DataHeader(object):
         important = ['northing', 'latitude']
 
         cols_have_coords = []
-        if self.columns != None:
+        if self.columns is not None:
             cols_have_coords = [c for c in self.columns if c in important]
 
         hdr_has_coords = [c for c in info if c in important]

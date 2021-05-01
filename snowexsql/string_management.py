@@ -4,10 +4,12 @@ These functions either prep, strip, or interpret strings for headers or
 the actual data to be uploaded.
 '''
 
-import warnings
-import pandas as pd
 import datetime
+import warnings
+
 import numpy as np
+import pandas as pd
+
 
 def clean_str(messy):
     '''
@@ -35,11 +37,12 @@ def clean_str(messy):
         clean = ' '.join(result)
 
     # Remove characters anywhere in string that is undesireable
-    for ch in ['"',"'"]:
+    for ch in ['"', "'"]:
         clean = clean.replace(ch, '')
 
     clean = clean.strip(' ')
     return clean
+
 
 def standardize_key(messy):
     '''
@@ -54,12 +57,12 @@ def standardize_key(messy):
     key = messy
 
     # Remove units
-    for c in ['()','[]']:
+    for c in ['()', '[]']:
         key = strip_encapsulated(key, c)
 
     key = clean_str(key)
-    key = key.lower().replace(' ','_')
-    key = key.lower().replace('-','_')
+    key = key.lower().replace(' ', '_')
+    key = key.lower().replace('-', '_')
 
     return key
 
@@ -79,7 +82,7 @@ def remap_data_names(original, rename_map):
     '''
     remap_keys = rename_map.keys()
 
-    if type(original) == dict:
+    if isinstance(original, dict):
         new = {}
 
         for k, v in original.items():
@@ -87,7 +90,8 @@ def remap_data_names(original, rename_map):
             if k in remap_keys:
                 new_k = rename_map[k]
 
-            # handle multisample names that need changing (e.g. dielectric_constant_a)
+            # handle multisample names that need changing (e.g.
+            # dielectric_constant_a)
             elif k[-2] == '_':
                 kw = k[0:-2]
                 if kw in remap_keys:
@@ -98,7 +102,7 @@ def remap_data_names(original, rename_map):
 
             new[new_k] = v
 
-    elif type(original) == list:
+    elif isinstance(original, list):
         new = []
 
         for i, v in enumerate(original):
@@ -116,6 +120,7 @@ def remap_data_names(original, rename_map):
             new = rename_map[new]
 
     return new
+
 
 def get_encapsulated(str_line, encapsulator):
     '''
@@ -156,6 +161,7 @@ def get_encapsulated(str_line, encapsulator):
 
     return result
 
+
 def strip_encapsulated(str_line, encapsulator):
     '''
     Removes from a str anything thats encapusulated by characters and the
@@ -179,10 +185,11 @@ def strip_encapsulated(str_line, encapsulator):
 
     # Remove all the encapsulated words
     for v in result:
-        final = final.replace(lcap + v + rcap,'')
+        final = final.replace(lcap + v + rcap, '')
 
     # Make sure we remove the last one
     return final
+
 
 def parse_none(value):
     '''
@@ -198,14 +205,15 @@ def parse_none(value):
     result = value
 
     # If its a nan or none or the string is empty
-    if type(value) == str:
+    if isinstance(value, str):
         if value.lower() in ['nan', 'none'] or not value:
             result = None
-    elif type(value) == float:
+    elif isinstance(value, float):
         if np.isnan(value):
             result = None
 
     return result
+
 
 def kw_in_here(kw, d, case_sensitive=True):
     '''
