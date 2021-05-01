@@ -1,8 +1,8 @@
-'''
+"""
 Module for intentional interpretation of data/scenarios. These are often
 decisions being made about situations that are perhaps not universal but useful
 in the context of snowex data and creating the database.
-'''
+"""
 
 from . utilities import get_logger
 import pandas as pd
@@ -13,7 +13,7 @@ import pytz
 
 
 def is_point_data(columns):
-    '''
+    """
     Searches the csv column names to see if the data set is point data,
     which will have latitude or easting in the columns. If it is, return True
 
@@ -21,7 +21,7 @@ def is_point_data(columns):
         columns: List of dataframe columns
     Return:
         result: Boolean indicating if the data is point data
-    '''
+    """
 
     result = False
 
@@ -32,7 +32,7 @@ def is_point_data(columns):
     return result
 
 def manage_degrees(info):
-    '''
+    """
     Manages and interprets string values relating to degrees. Removes
     degrees symbols and interprets key word flat for slope.
 
@@ -42,7 +42,7 @@ def manage_degrees(info):
     Returns:
         info: Modificed dictionary containing string numeric representations of keys
               aspect and slope_angle
-    '''
+    """
 
     # Manage degrees symbols
     for k in ['aspect','slope_angle','air_temp']:
@@ -66,7 +66,7 @@ def manage_degrees(info):
     return info
 
 def manage_aspect(info):
-    '''
+    """
     Manages when aspect is recorded in cardinal directions and converts it to
     a degrees from North float.
 
@@ -74,7 +74,7 @@ def manage_aspect(info):
         info: Dictionary potentially containing key aspect. Converts cardinal
     Returns:
         info: Dictionary with any key named aspect converted to  a float of degrees from north
-    '''
+    """
 
     log = get_logger(__name__)
 
@@ -95,7 +95,7 @@ def manage_aspect(info):
 
 
 def convert_cardinal_to_degree(cardinal):
-    '''
+    """
     Converts cardinal directions to degrees. Also removes any / or - that
     might get used to say between two cardinal directions
 
@@ -107,7 +107,7 @@ def convert_cardinal_to_degree(cardinal):
 
     Returns:
         degrees: Float representing cardinal direction in degrees from north
-    '''
+    """
 
     dirs = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW']
 
@@ -143,7 +143,7 @@ def add_date_time_keys(data, in_timezone=None, out_timezone='US/Mountain'):
     Returns:
         d: Python Datetime object
     """
-    keys = data.keys()
+    keys = [k.lower() for k in data.keys()]
     d = None
     out_tz = pytz.timezone(out_timezone)
     in_tz = None
@@ -195,8 +195,8 @@ def add_date_time_keys(data, in_timezone=None, out_timezone='US/Mountain'):
             d = d.astimezone(out_tz)
 
             # Remove them
-            for v in ['utcyear', 'utcdoy', 'utctod']:
-                del data[v]
+            # for v in ['utcyear', 'utcdoy', 'utctod']:
+            #     del data[v]
 
         else:
             raise ValueError('Data is missing date/time info!\n{}'.format(data))
@@ -214,7 +214,7 @@ def add_date_time_keys(data, in_timezone=None, out_timezone='US/Mountain'):
     return data
 
 def standardize_depth(depths, desired_format='snow_height', is_smp=False):
-    '''
+    """
     Data that is a function of depth comes in 2 formats. Sometimes 0 is
     the snow surface, sometimes 0 is the ground. This function standardizes it
     for each profile. desired_format can be:
@@ -230,7 +230,7 @@ def standardize_depth(depths, desired_format='snow_height', is_smp=False):
                 surface_datum but with positive depths
    Returns:
         new:
-    '''
+    """
     log = get_logger(__name__)
 
     max_depth = depths.max()
@@ -270,7 +270,7 @@ def standardize_depth(depths, desired_format='snow_height', is_smp=False):
     return new
 
 def avg_from_multi_sample(layer, value_type):
-    '''
+    """
     Our database entries sometimes have multiple values. We want to extract
     those, cast them, average them and return the the value to be used as the main
     value in the database
@@ -285,7 +285,7 @@ def avg_from_multi_sample(layer, value_type):
 
     Returns:
         result: Nan mean of the values found
-    '''
+    """
     values =[]
 
     for k, v in layer.items():
@@ -301,7 +301,7 @@ def avg_from_multi_sample(layer, value_type):
     return result
 
 def get_InSar_flight_comment(data_name, desc):
-    '''
+    """
     Takes an annotation file dictionary and forms a string for the Insar
     file to add to the description of the raster entry
 
@@ -320,7 +320,7 @@ def get_InSar_flight_comment(data_name, desc):
 
     Returns:
         comment: A comment for the database for the uavsar file uploaded
-    '''
+    """
     tz_str = 'US/Mountain'
     tz = pytz.timezone(tz_str)
     blank = '{} time of acquisition for pass {}'

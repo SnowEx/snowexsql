@@ -27,9 +27,9 @@ class TestFunctions(DBSetup):
         u.submit(self.session)
 
     def test_pixel_as_point(self):
-        '''
+        """
         Test coordinate retrieval of a single pixel
-        '''
+        """
 
         # Get the first pixel as a point
         records = self.session.query(ST_PixelAsPoint(ImageData.raster, 1, 1)).scalar()
@@ -54,7 +54,6 @@ class TestFunctions(DBSetup):
     #     # Check that its the correct type
     #     for r in records:
     #         # Get the Geometry from the Well known binary format
-    #         print(q,type(q))
     #         q = self.session.scalar(r[0].ST_GeomFromEWKB())
     #
     #         assert isinstance(q, WKBElement)

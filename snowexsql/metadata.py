@@ -1,7 +1,7 @@
-'''
-Module for header classes and metadata interpeters. This includes interpetting
-data file headers or dedicated files to describing data.
-'''
+"""
+Module for header classes and metadata interpreters. This includes interpreting data file headers or dedicated files
+to describing data.
+"""
 
 from .string_management import *
 from .interpretation import *
@@ -17,7 +17,7 @@ from os.path import basename
 
 
 def read_InSar_annotation(ann_file):
-    '''
+    """
     .ann files describe the INSAR data. Use this function to read all that
     information in and return it as a dictionary
 
@@ -41,7 +41,7 @@ def read_InSar_annotation(ann_file):
     Returns:
         data: Dictionary containing a dictionary for each entry with keys
               for value, units and comments
-    '''
+    """
 
     with open(ann_file) as fp:
         lines = fp.readlines()
@@ -94,7 +94,7 @@ def read_InSar_annotation(ann_file):
 
 
 class SMPMeasurementLog(object):
-    '''
+    """
     Opens and processes the log that describes the SMP measurments. This file
     contains notes on all the measurements taken.
 
@@ -121,7 +121,7 @@ class SMPMeasurementLog(object):
                 details of measurements
         df: Dataframe containing rows of details describing each measurement
 
-    '''
+    """
 
     def __init__(self, filename):
         self.log = get_logger(__name__)
@@ -134,12 +134,12 @@ class SMPMeasurementLog(object):
                              'W': 'West', 'NW': 'Northwest', 'C': 'Center'}
 
     def _read(self, filename):
-        '''
+        """
         Read the CSV file thet contains SMP log inforamtion. Also reads in the
         header and creates a few attributes from that information:
             1. observer_map
             2. orientation_map
-        '''
+        """
         self.log.info('Reading SMP file log header')
 
         header_pos = 9
@@ -167,7 +167,7 @@ class SMPMeasurementLog(object):
         return header, df
 
     def interpret_dataframe(self, df):
-        '''
+        """
         Using various info collected from the dataframe header modify the data
         frame entries to be more verbose and standardize the database
 
@@ -176,7 +176,7 @@ class SMPMeasurementLog(object):
 
         Returns:
             new_df: pandas.Dataframe with modifications
-        '''
+        """
         # Apply observer map
         df = self.interpret_observers(df)
 
@@ -188,11 +188,11 @@ class SMPMeasurementLog(object):
         return df
 
     def _build_observers(self, header):
-        '''
+        """
         Interprets the header of the smp file log which has a map to the
         names of the oberservers names. This creates a dictionary mapping those
         string names
-        '''
+        """
         # Map for observer names and their
         observer_map = {}
 
@@ -214,7 +214,7 @@ class SMPMeasurementLog(object):
         return observer_map
 
     def interpret_observers(self, df):
-        '''
+        """
         Rename all the observers with initials in the observer_map which is
         interpeted from the header
 
@@ -223,14 +223,14 @@ class SMPMeasurementLog(object):
         Return:
             new_df: df with the observers column replaced with more verbose
                     names
-        '''
+        """
         new_df = df.copy()
         new_df['surveyors'] = \
             new_df['surveyors'].apply(lambda x: self.observer_map[x])
         return new_df
 
     def interpret_sample_strategy(self, df):
-        '''
+        """
         Look through all the measurements posted by site and attempt to
         determine the sample strategy
 
@@ -239,7 +239,7 @@ class SMPMeasurementLog(object):
         Returns:
             new_df: Same dataframe with a new column containing the sampling
                     strategy
-        '''
+        """
 
         pits = pd.unique(df['pit_id'])
 
@@ -249,13 +249,13 @@ class SMPMeasurementLog(object):
             orientations = pd.unique(temp['orientation'])
 
     def get_metadata(self, smp_file):
-        '''
+        """
         Builds a dictionary of extra header information useful for SMP
         files which lack some info regarding submission to the db
 
         S06M0874_2N12_20200131.CSV, 0874 is the suffix
 
-        '''
+        """
         s = basename(smp_file).split('.')[0].split('_')
         suffix = s[0].split('M')[-1]
         ind = self.df['fname_sufix'] == suffix
@@ -264,7 +264,7 @@ class SMPMeasurementLog(object):
 
 
 class DataHeader(object):
-    '''
+    """
     Class for managing information stored in files headers about a snow pit
     site.
 
@@ -296,7 +296,7 @@ class DataHeader(object):
         extra_header: Dictionary containing supplemental information to write
                       into the .info dictionary after its generated. Any
                       duplicate keys will be overwritten with this info.
-    '''
+    """
 
     # Typical names we run into that need renaming
     rename = {'location': 'site_name',
@@ -341,7 +341,7 @@ class DataHeader(object):
                 'depth_is_metadata': True}
 
     def __init__(self, filename, **kwargs):
-        '''
+        """
         Class for managing site details information
 
         Args:
@@ -354,7 +354,7 @@ class DataHeader(object):
                               snow depth and other variables), profiles should
                               use depth as metadata
             kwargs: keyword values to pass to the database as metadata
-        '''
+        """
         self.log = get_logger(__name__)
 
         self.extra_header = assign_default_kwargs(self, kwargs, self.defaults, leave=['epsg'])
@@ -374,13 +374,13 @@ class DataHeader(object):
         self.info = self.interpret_data(info)
 
     def submit(self, session):
-        '''
+        """
         Submit meta data to the database as site info, Do not use on profile
         headers. Only use on site_details files.
 
         Args:
             session: SQLAlchemy session object
-        '''
+        """
         # only submit valid  keys to db
         kwargs = {}
         valid = get_table_attributes(SiteData)
@@ -394,9 +394,9 @@ class DataHeader(object):
         session.commit()
 
     def rename_sample_profiles(self, columns, data_names):
-        '''
+        """
         Rename columns like density_a to density_sample_a
-        '''
+        """
         result = []
         for c in columns:
             for data_name in data_names:
@@ -410,7 +410,7 @@ class DataHeader(object):
         return result
 
     def parse_column_names(self, lines):
-        '''
+        """
         A flexible mnethod that attempts to find and standardize column names
         for csv data. Looks for a comma separated line with N entries == to the
         last line in the file. If an entry is found with more commas than the
@@ -432,7 +432,7 @@ class DataHeader(object):
 
         Returns:
             columns: list of column names
-        '''
+        """
 
         # Minimum column size should match the last line of data (Assumption #2)
         n_columns = len(lines[-1].split(','))
@@ -492,7 +492,7 @@ class DataHeader(object):
         return columns, header_pos
 
     def determine_data_names(self, raw_columns):
-        '''
+        """
         Determine the names of the data to be uploaded from the raw column
         header. Also determine if this is the type of profile file that will
         submit more than one main value (e.g. hand_hardness, grain size all in
@@ -506,7 +506,7 @@ class DataHeader(object):
                    as a main value
                   **multi_sample_profiles** - boolean representing if we will
                     average the samples for a main value (e.g. density)
-        '''
+        """
         # Names of columns we are going to submit as main values
         data_names = []
         multi_sample_profiles = []
@@ -546,7 +546,7 @@ class DataHeader(object):
         return data_names, multi_sample_profiles
 
     def _read(self, filename):
-        '''
+        """
         Read in all site details file from the PITS folder under
         SnowEx2020_SQLdata If the filename has the word site in it then we
         read everything in the file. Otherwise we use this to read all the site
@@ -562,7 +562,7 @@ class DataHeader(object):
                    **columns** - List of clean column names
                    **header_pos** - Index of the columns header for skiprows in
                                     read_csv
-       '''
+       """
 
         with open(filename, encoding='latin') as fp:
             lines = fp.readlines()
@@ -625,8 +625,8 @@ class DataHeader(object):
         return data, columns, header_pos
 
     def check_integrity(self, site_info):
-        '''
-        Compare the attritbute info to the site dictionary to insure integrity
+        """
+        Compare the attribute info to the site dictionary to insure integrity
         between datasets. Comparisons are only done as strings currently.
 
         In theory the site details header should contain identical info
@@ -640,7 +640,7 @@ class DataHeader(object):
             mismatch: Dictionary with a message about how a piece of info is
                       mismatched
 
-        '''
+        """
         mismatch = {}
 
         for k, v in self.info.items():
@@ -654,7 +654,7 @@ class DataHeader(object):
         return mismatch
 
     def interpret_data(self, raw_info):
-        '''
+        """
         Some data inside the headers is inconsistently noted. This function
         adjusts such data to the correct format.
 
@@ -676,7 +676,7 @@ class DataHeader(object):
         Returns:
             info: Dictionary of the raw_info containing interpetted info
 
-        '''
+        """
         info = {}
 
         # A. Parse out any nans, nones or other not-data type entries

@@ -1,7 +1,7 @@
-'''
+"""
 Module for classes that upload single files to the database.
-'''
-from . data import *
+"""
+from .data import *
 from .string_management import *
 from .interpretation import *
 from .utilities import *
@@ -21,11 +21,11 @@ import numpy as np
 import time
 
 
-class UploadProfileData():
-    '''
-    Class for submitting a single profile. Since layers are uploaded layer by
-    layer this allows for submitting them one file at a time.
-    '''
+class UploadProfileData:
+    """
+    Class for submitting a single profile. Since layers are uploaded layer by layer this allows for submitting them
+    one file at a time.
+    """
     expected_attributes = [c for c in dir(LayerData) if c[0] != '_']
 
     def __init__(self, profile_filename, **kwargs):
@@ -43,9 +43,8 @@ class UploadProfileData():
         # Read in data
         self.df = self._read(profile_filename)
 
-
     def _read(self, profile_filename):
-        '''
+        """
         Read in a profile file. Managing the number of lines to skip and
         adjusting column names
 
@@ -54,12 +53,12 @@ class UploadProfileData():
                              profile
         Returns:
             df: pd.dataframe contain csv data with standardized column names
-        '''
-        # header=0 because docs say to if using skiprows and columns
+        """
+        # header=0 because docs say to if using skip rows and columns
         df = pd.read_csv(profile_filename, header=0,
-                                           skiprows= self.hdr.header_pos,
-                                           names=self.hdr.columns,
-                                           encoding='latin')
+                         skiprows=self.hdr.header_pos,
+                         names=self.hdr.columns,
+                         encoding='latin')
 
         # If SMP profile convert depth to cm
         depth_fmt = 'snow_height'
@@ -82,11 +81,11 @@ class UploadProfileData():
 
         delta = abs(df['depth'].max() - df['depth'].min())
         self.log.info('File contains {} profiles each with {} layers across '
-                     '{:0.2f} cm'.format(len(self.hdr.data_names), len(df), delta))
+                      '{:0.2f} cm'.format(len(self.hdr.data_names), len(df), delta))
         return df
 
     def check(self, site_info):
-        '''
+        """
         Checks to be applied before submitting data
         Currently checks for:
 
@@ -97,23 +96,23 @@ class UploadProfileData():
 
         Raises:
             ValueError: If any mismatches are found
-        '''
+        """
 
         # Ensure information matches between site details and profile headers
         mismatch = self.hdr.check_integrity(site_info)
 
         if len(mismatch.keys()) > 0:
             self.log.error('Header Error with {}'.format(self.filename))
-            for k,v in mismatch.items():
+            for k, v in mismatch.items():
                 self.log.error('\t{}: {}'.format(k, v))
                 raise ValueError('Site Information Header and Profile Header '
                                  'do not agree!\n Key: {} does yields {} from '
                                  'here and {} from site info.'.format(k,
-                                                             self.hdr.info[k],
-                                                             site_info[k]))
+                                                                      self.hdr.info[k],
+                                                                      site_info[k]))
 
     def build_data(self, data_name):
-        '''
+        """
         Build out the original dataframe with the metdata to avoid doing it
         during the submission loop. Removes all other main profile columns and
         assigns data_name as the value column
@@ -123,7 +122,7 @@ class UploadProfileData():
 
         Returns:
             df: Dataframe ready for submission
-        '''
+        """
 
         df = self.df.copy()
 
@@ -163,13 +162,13 @@ class UploadProfileData():
         return df
 
     def submit(self, session):
-        '''
+        """
         Submit values to the db from dictionary. Manage how some profiles have
         multiple values and get submitted individual
 
         Args:
             session: SQLAlchemy session
-        '''
+        """
         long_upload = False
 
         # Construct a dataframe with all metadata
@@ -185,7 +184,7 @@ class UploadProfileData():
                 long_upload = False
 
             # Grab each row, convert it to dict and join it with site info
-            for i,row in df.iterrows():
+            for i, row in df.iterrows():
                 data = row.to_dict()
 
                 # self.log.debug('\tAdding {} for {} at {}cm'.format(value_type, data['site_id'], data['depth']))
@@ -198,17 +197,18 @@ class UploadProfileData():
 
         self.log.debug('Profile Submitted!\n')
 
+
 class PointDataCSV(object):
-    '''
+    """
     Class for submitting whole csv files of point data
-    '''
+    """
 
     # Remapping for special keywords for snowdepth measurements
-    measurement_names = {'mp':'magnaprobe','m2':'mesa', 'pr':'pit ruler'}
+    measurement_names = {'mp': 'magnaprobe', 'm2': 'mesa', 'pr': 'pit ruler'}
 
     # Units to apply
-    units = {'depth':'cm','two_way_travel':'ns','swe':'mm',
-             'density':'kg/m^3'}
+    units = {'depth': 'cm', 'two_way_travel': 'ns', 'swe': 'mm',
+             'density': 'kg/m^3'}
 
     # Class attributes to apply
     defaults = {'debug': True, 'incoming_tz': 'MST'}
@@ -234,14 +234,14 @@ class PointDataCSV(object):
         self.points_uploaded = 0
 
     def _read(self, filename):
-        '''
+        """
         Read in the csv
-        '''
+        """
 
         self.log.info('Reading in CSV data from {}'.format(filename))
         df = pd.read_csv(filename, header=self.hdr.header_pos,
-                                   names=self.hdr.columns,
-                                   dtype={'date': str, 'time': str})
+                         names=self.hdr.columns,
+                         dtype={'date': str, 'time': str})
 
         # Assign the measurement tool verbose name
         if 'instrument' in df.columns:
@@ -253,8 +253,8 @@ class PointDataCSV(object):
         self.log.info('Adding date and time to metadata...')
         df = df.apply(lambda data: add_date_time_keys(data, in_timezone=self.incoming_tz), axis=1)
 
-        self.log.info('Adding valid keyword arguments to metadata...')
         # 1. Only submit valid columns to the DB
+        self.log.info('Adding valid keyword arguments to metadata...')
         valid = get_table_attributes(PointData)
 
         # 2. Add all kwargs that were valid
@@ -264,7 +264,7 @@ class PointDataCSV(object):
 
         # 3. Remove columns that are not valid
         drops = \
-        [c for c in df.columns  if c not in valid and c not in self.hdr.data_names]
+            [c for c in df.columns if c not in valid and c not in self.hdr.data_names]
         self.log.info('Dropping {} as they are not valid on the database...'.format(', '.join(drops)))
         df = df.drop(columns=drops)
 
@@ -273,9 +273,9 @@ class PointDataCSV(object):
         return df
 
     def build_data(self, data_name):
-        '''
-        Pad the dataframe with metdata or make info more verbose
-        '''
+        """
+        Pad the dataframe with metadata or make info more verbose
+        """
         # Assign our main value to the value column
         df = self.df.copy()
         df['value'] = self.df[data_name].copy()
@@ -289,7 +289,6 @@ class PointDataCSV(object):
 
         return df
 
-
     def submit(self, session):
         # Loop through all the entries and add them to the db
         for pt in self.hdr.data_names:
@@ -298,7 +297,7 @@ class PointDataCSV(object):
 
             bar = progressbar.ProgressBar(max_value=len(self.df.index))
 
-            for i,row in df.iterrows():
+            for i, row in df.iterrows():
                 if self.debug:
                     self.add_one(session, row)
                 else:
@@ -321,14 +320,14 @@ class PointDataCSV(object):
                 self.log.error('\t{} - {}'.format(e[0], e[1]))
 
     def add_one(self, session, row):
-        '''
+        """
         Uploads one point
-        '''
+        """
         # Create the data structure to pass into the interacting class attributes
         data = row.copy()
 
         # Add geometry
-        data['geom'] = WKTElement('POINT({} {})'.format(data['easting'],data['northing']), srid=self.hdr.info['epsg'])
+        data['geom'] = WKTElement('POINT({} {})'.format(data['easting'], data['northing']), srid=self.hdr.info['epsg'])
 
         # Create db interaction, pass data as kwargs to class submit data
         sd = PointData(**data)
@@ -338,26 +337,26 @@ class PointDataCSV(object):
 
 
 class UploadRaster(object):
-    '''
+    """
     Class for uploading a single tifs to the database. Utilizes the raster2pgsql
     command and then parses it for delivery via python.
-    '''
+    """
 
-    defaults = {'epsg':26912,
-                'tiled':False,
+    defaults = {'epsg': 26912,
+                'tiled': False,
                 'no_data': None}
 
-    def __init__(self, filename,  **kwargs):
+    def __init__(self, filename, **kwargs):
         self.log = get_logger(__name__)
         self.filename = filename
         self.data = assign_default_kwargs(self, kwargs, self.defaults)
 
     def submit(self, session):
-        '''
+        """
         Submit the data to the db using ORM
-        '''
+        """
         # This produces a PSQL command with auto tiling
-        cmd = ['raster2pgsql','-s', str(self.epsg)]
+        cmd = ['raster2pgsql', '-s', str(self.epsg)]
 
         # Add tiling if requested
         if self.tiled == True:

@@ -1,6 +1,6 @@
-'''
+"""
 Test all things from the metadata.py file
-'''
+"""
 from snowexsql.metadata import *
 from os.path import join, dirname, abspath
 import datetime
@@ -29,7 +29,7 @@ class DataHeaderTestBase():
     depth_is_metadata = True
 
     def setup_class(self):
-        '''
+        """
         columns: list of column names
         multi_sample_profiles: Boolean indicating whether to average samples
         data_names: list of names of profiles to upload
@@ -37,16 +37,16 @@ class DataHeaderTestBase():
         info: Dictionary of the header information
         file: Basename of the file were testing in the data folder
         depth_is_metadata: Boolean indicating whether to include depth as a main variable
-        '''
+        """
 
         data = abspath(join(dirname(__file__), 'data'))
         self.header = DataHeader(join(data, self.file), depth_is_metadata=self.depth_is_metadata)
         self.name = self.file.split('.')[0]
 
     def assert_header_attribute(self, attr):
-        '''
+        """
         Assert that the header class has an specific attribute
-        '''
+        """
         data = getattr(self.header, attr)
         expected = getattr(self, attr)
         dtype = type(expected)
@@ -67,9 +67,9 @@ class DataHeaderTestBase():
             self.assert_single_value(data, expected)
 
     def assert_single_value(self, value, expected):
-        '''
+        """
         Handle assert on floats and everything else
-        '''
+        """
         dtype = type(expected)
         if dtype == float:
             np.testing.assert_almost_equal(value, expected, decimal=3)
@@ -77,15 +77,15 @@ class DataHeaderTestBase():
             assert value == expected
 
     def test_columns(self):
-        '''
+        """
         Test the csv column names were correctly interpreted
-        '''
+        """
         self.assert_header_attribute('columns')
 
     def test_data_names(self):
-        '''
+        """
         Test the csv column names were correctly interpreted
-        '''
+        """
         self.assert_header_attribute('data_names')
 
     def test_info(self):
@@ -95,9 +95,9 @@ class DataHeaderTestBase():
         self.assert_header_attribute('multi_sample_profiles')
 
     def test_header_pos(self):
-        '''
+        """
         Test the location of the in the file of the column header (Nth line)
-        '''
+        """
         self.assert_header_attribute('multi_sample_profiles')
 
 
@@ -112,10 +112,10 @@ class TestDensityHeader(DataHeaderTestBase):
 
 
 class TestLWCHeader(DataHeaderTestBase):
-    '''
+    """
     Class for testing the header reading of the first type of lwc files that
     parsed.
-    '''
+    """
 
     def setup_class(self):
         self.file = 'LWC.csv'
@@ -128,10 +128,10 @@ class TestLWCHeader(DataHeaderTestBase):
 
 
 class TestLWCHeaderB(DataHeaderTestBase):
-    '''
+    """
     Class for testing the other type of LWC headers that contain two multi sampled
     profiles.
-    '''
+    """
     dt = datetime.datetime(2020, 3, 12, 14, 45, 0, 0, pytz.timezone('US/Mountain'))
 
     info = {
@@ -245,9 +245,9 @@ class TestDepthsHeader(DataHeaderTestBase):
 
 
 class TestGPRHeader(DataHeaderTestBase):
-    '''
+    """
     Test the header information can be interpretted correctly in the GPR data
-    '''
+    """
     depth_is_metadata = False
 
     def setup_class(self):
@@ -263,9 +263,9 @@ class TestGPRHeader(DataHeaderTestBase):
 
 
 class TestSMPMeasurementLog():
-    '''
+    """
     Class for testing the snowexsql.metadata.SMPMeasurementLog class.
-    '''
+    """
 
     @classmethod
     def setup_class(self):
@@ -278,9 +278,9 @@ class TestSMPMeasurementLog():
         ('surveyors', 0, 'Ioanna Merkouriadi'),
     ])
     def test_value(self, column, index, expected):
-        '''
+        """
         Test surveyorss initials are renamed correctly
-        '''
+        """
         assert self.df[column].iloc[index] == expected
 
     @pytest.mark.parametrize("count_column, expected_count", [
@@ -292,29 +292,29 @@ class TestSMPMeasurementLog():
         ('fname_sufix', 4),
     ])
     def test_unique_count(self, count_column, expected_count):
-        '''
+        """
         Test surveyorss initials are renamed correctly
-        '''
+        """
         assert len((self.df[count_column]).unique()) == expected_count
 
 
 class TestReadInSarAnnotation():
-    '''
+    """
     Tests if we read in an annotation file correctly.
-    '''
+    """
 
     @classmethod
     def setup_class(self):
-        '''
+        """
         Read in the insar annotation file and test its values
-        '''
+        """
         f = join(dirname(__file__), 'data', 'uavsar.ann')
         self.desc = read_InSar_annotation(f)
 
     def test_dict_attr(self):
-        '''
+        """
         Test the desc diction is structured the way we expect
-        '''
+        """
         d = self.desc['Interferogram Bytes Per Pixel'.lower()]
 
         # An entry has the correcy dict keys
@@ -332,9 +332,9 @@ class TestReadInSarAnnotation():
         ('Start Time of Acquisition for Pass 1'.lower(), 'value', pd.to_datetime('2020-2-1 2:13:16 UTC'))
     ])
     def test_desc_value(self, key, subkey, expected):
-        '''
+        """
         Test each value is interpreted as expected from the ANN file
-        '''
+        """
         data = self.desc[key][subkey]
         dtype = type(data)
 

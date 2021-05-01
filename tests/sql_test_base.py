@@ -5,11 +5,11 @@ from snowexsql.db import get_db, initialize
 
 
 def pytest_generate_tests(metafunc):
-    '''
+    """
     Function used to parametrize functions. If the function is in the
     params keys then run it. Otherwise run all the tests normally.
-    '''
-    # Was params provided?
+    """
+    # Were params provided?
     if hasattr(metafunc.cls, 'params'):
         if metafunc.function.__name__ in metafunc.cls.params.keys():
             funcarglist = metafunc.cls.params[metafunc.function.__name__]
@@ -18,16 +18,17 @@ def pytest_generate_tests(metafunc):
                 argnames, [[funcargs[name] for name in argnames] for funcargs in funcarglist]
             )
 
+
 class DBSetup:
-    '''
-    Base class for all our tests. Ensures that we clean up after every class
-    thats run
-    '''
+    """
+    Base class for all our tests. Ensures that we clean up after every class thats run
+    """
+
     @classmethod
     def setup_class(self):
-        '''
+        """
         Setup the database one time for testing
-        '''
+        """
         self.db = 'test'
         self.data_dir = join(dirname(__file__), 'data')
 
@@ -37,12 +38,11 @@ class DBSetup:
 
     @classmethod
     def teardown_class(self):
-        '''
+        """
         Remove the databse
-        '''
+        """
         self.metadata.drop_all(bind=self.engine)
         self.session.close()  # optional, depends on use case
-
 
     def teardown(self):
         self.session.flush()
@@ -50,9 +50,9 @@ class DBSetup:
 
 
 class TableTestBase(DBSetup):
-    '''
+    """
     Test any table by picking
-    '''
+    """
     # Class to use to upload the data
     UploaderClass = None
 
@@ -68,19 +68,19 @@ class TableTestBase(DBSetup):
     # First filter to be applied is count_attribute == data_name
     count_attribute = 'type'
 
-
     # Define params which is a dictionary of test names and their args
     params = {
-    'test_count':[dict(data_name=None, expected_count=None)],
-    'test_value': [dict(data_name=None, attribute_to_check=None, filter_attribute=None, filter_value=None, expected=None)],
-    'test_unique_count': [dict(data_name=None, attribute_to_count=None, expected_count=None)]
-            }
+        'test_count': [dict(data_name=None, expected_count=None)],
+        'test_value': [
+            dict(data_name=None, attribute_to_check=None, filter_attribute=None, filter_value=None, expected=None)],
+        'test_unique_count': [dict(data_name=None, attribute_to_count=None, expected_count=None)]
+    }
 
     @classmethod
     def setup_class(self):
-        '''
+        """
         Setup the database one time for testing
-        '''
+        """
         super().setup_class()
 
         # Batches always provide a list of files
@@ -104,7 +104,7 @@ class TableTestBase(DBSetup):
             u.submit(self.session)
 
     def get_query(self, filter_attribute, filter_value, query=None):
-        '''
+        """
         Return the base query using an attribute and value that it is supposed
         to be
 
@@ -114,9 +114,9 @@ class TableTestBase(DBSetup):
             query: If were extended a query use it instead of forming a new one
         Return:
             q: Uncompiled SQLalchemy Query object
-        '''
+        """
 
-        if query == None:
+        if query is None:
             query = self.session.query(self.TableClass)
 
         fa = getattr(self.TableClass, filter_attribute)
@@ -124,17 +124,17 @@ class TableTestBase(DBSetup):
         return q
 
     def test_count(self, data_name, expected_count):
-        '''
+        """
         Test the record count of a data type
-        '''
+        """
         q = self.get_query(self.count_attribute, data_name)
         records = q.all()
         assert len(records) == expected_count
 
     def test_value(self, data_name, attribute_to_check, filter_attribute, filter_value, expected):
-        '''
+        """
         Test that the first value in a filtered record search is as expected
-        '''
+        """
         # Filter  to the data type were querying
         q = self.get_query(self.count_attribute, data_name)
 
@@ -153,11 +153,10 @@ class TableTestBase(DBSetup):
         else:
             assert received == expected
 
-
     def test_unique_count(self, data_name, attribute_to_count, expected_count):
-        '''
+        """
         Test that the number of unique values in a given attribute is as expected
-        '''
+        """
         # Add another filter by some attribute
         q = self.get_query(self.count_attribute, data_name)
         records = q.all()
