@@ -1,20 +1,18 @@
-from datetime import date, time
+import datetime
 from os.path import dirname, join
-
 import pytest
 import pytz
-from geoalchemy2.shape import from_shape, to_shape
 
 from snowexsql.batch import *
 from snowexsql.data import ImageData, LayerData, SiteData
 
-from .sql_test_base import DBSetup, TableTestBase, pytest_generate_tests
+from .sql_test_base import TableTestBase, pytest_generate_tests
 
 
 class TestUploadSiteDetailsBatch(TableTestBase):
-    '''
-    Test uploading mulitple site details files to the sites table
-    '''
+    """
+    Test uploading multiple site details files to the sites table
+    """
 
     args = [['site_5S21.csv', 'site_details.csv']]
     kwargs = {'db_name': 'test', 'epsg': 26912}
@@ -30,9 +28,9 @@ class TestUploadSiteDetailsBatch(TableTestBase):
 
         # Test certain values were assigned
         'test_value': [dict(data_name='1N20', attribute_to_check='slope_angle', filter_attribute='date',
-                            filter_value=date(2020, 2, 5), expected=5),
+                            filter_value=datetime.date(2020, 2, 5), expected=5),
                        dict(data_name='5S21', attribute_to_check='ground_roughness', filter_attribute='date',
-                            filter_value=date(2020, 2, 1), expected='Smooth')],
+                            filter_value=datetime.date(2020, 2, 1), expected='Smooth')],
         # dummy test just fill this spot since a single site only has 1 of each attribute
         'test_unique_count': [dict(data_name='1N20', attribute_to_count='date', expected_count=1)]
     }
@@ -43,9 +41,9 @@ class TestUploadSiteDetailsBatch(TableTestBase):
 
 
 class TestUploadProfileBatch(TableTestBase):
-    '''
+    """
     Test uploading multiple vertical profiles
-    '''
+    """
 
     args = [['stratigraphy.csv', 'temperature.csv']]
     kwargs = {'db_name': 'test', 'timezone': 'UTC'}
@@ -65,42 +63,42 @@ class TestUploadProfileBatch(TableTestBase):
 
 
 class TestUploadProfileBatchErrors():
-    '''
+    """
     Test uploading multiple vertical profiles
-    '''
+    """
     files = ['doesnt_exist.csv']
 
     def test_without_debug(self):
-        '''
+        """
         Test batch uploading without debug and errors
-        '''
+        """
 
         u = UploadProfileBatch(self.files, debug=False)
         u.push()
         assert len(u.errors) == 1
 
     def test_with_debug(self):
-        '''
+        """
         Test batch uploading with debug and errors
-        '''
+        """
 
         with pytest.raises(Exception):
             u = UploadProfileBatch(self.files, debug=True)
             u.push()
 
     def test_without_files(self):
-        '''
+        """
         Test that batch correctly runs with no files
-        '''
+        """
         u = UploadProfileBatch([], debug=True)
         u.push()
         assert u.uploaded == 0
 
 
 class TestUploadLWCProfileBatch(TableTestBase):
-    '''
+    """
     Test uploading multiple two types of the LWC profiles
-    '''
+    """
 
     args = [['LWC.csv', 'LWC2.csv']]
     kwargs = {'db_name': 'test', 'timezone': 'UTC'}
@@ -117,10 +115,9 @@ class TestUploadLWCProfileBatch(TableTestBase):
 
 
 class TestUploadSMPBatch(TableTestBase):
-    '''
+    """
     Test whether we can assign meta info from an smp log to 2 profiles
-    '''
-
+    """
     args = [['S19M1013_5S21_20200201.CSV', 'S06M0874_2N12_20200131.CSV']]
     kwargs = {'db_name': 'test', 'in_timezone': 'UTC', 'smp_log_f': 'smp_log.csv', 'units': 'Newtons'}
     UploaderClass = UploadProfileBatch
@@ -139,7 +136,7 @@ class TestUploadSMPBatch(TableTestBase):
             dict(data_name='force', attribute_to_check='comments', filter_attribute='depth', filter_value=-0.4,
                  expected='started 1-2 cm below surface'),
             dict(data_name='force', attribute_to_check='time', filter_attribute='id', filter_value=1,
-                 expected=time(hour=16, minute=16, second=49, tzinfo=pytz.FixedOffset(-360))),
+                 expected=datetime.time(hour=16, minute=16, second=49, tzinfo=pytz.FixedOffset(-360))),
             dict(data_name='force', attribute_to_check='units', filter_attribute='depth', filter_value=-0.4,
                  expected='Newtons'),
 
@@ -153,9 +150,9 @@ class TestUploadSMPBatch(TableTestBase):
         ('2N12', 154)
     ])
     def test_single_profile_count(self, site, count):
-        '''
+        """
         Ensure that each site can be filtered to its 10 points in its own profile
-        '''
+        """
         records = self.session.query(LayerData).filter(LayerData.site_id == site).all()
         depth = [r.depth for r in records]
         value = [r.value for r in records]
@@ -164,9 +161,9 @@ class TestUploadSMPBatch(TableTestBase):
 
 
 class TestUploadRasterBatch(TableTestBase):
-    '''
+    """
     Class testing the batch uploading of rasters
-    '''
+    """
     args = [['be_gm1_0287/w001001x.adf', 'be_gm1_0328/w001001x.adf']]
     kwargs = {'db_name': 'test', 'type': 'dem', 'surveyors': 'QSI',
               'units': 'meters',
@@ -187,10 +184,10 @@ class TestUploadRasterBatch(TableTestBase):
 
 
 class TestUploadUAVSARBatch(TableTestBase):
-    '''
+    """
     Test test the UAVSAR uploader by providing one ann file which should upload
     all of the uavsar images.
-    '''
+    """
     surveyors = 'UAVSAR team, JPL'
     # Upload all uav
     d = join(dirname(__file__), 'data', 'uavsar')
@@ -215,7 +212,7 @@ class TestUploadUAVSARBatch(TableTestBase):
             dict(data_name='insar interferogram real', attribute_to_check='units', filter_attribute='surveyors',
                  filter_value=surveyors, expected='Linear Power and Phase in Radians'),
             dict(data_name='insar amplitude', attribute_to_check='date', filter_attribute='surveyors',
-                 filter_value=surveyors, expected=date(2020, 1, 31)),
+                 filter_value=surveyors, expected=datetime.date(2020, 1, 31)),
             dict(data_name='insar correlation', attribute_to_check='instrument', filter_attribute='surveyors',
                  filter_value=surveyors, expected='UAVSAR, L-band InSAR'),
             ],
@@ -232,9 +229,9 @@ class TestUploadUAVSARBatch(TableTestBase):
         ('interferogram imaginary', ['duration', 'overpass', '1st', '2nd', 'polarization', 'dem']),
     ])
     def test_description_generation(self, data_name, kw):
-        '''
+        """
         Asserts each kw is found in the description of the data
-        '''
+        """
         name = 'insar {}'.format(data_name)
         records = self.session.query(ImageData.description).filter(ImageData.type == name).all()
 

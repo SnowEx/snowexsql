@@ -1,36 +1,24 @@
-'''
+"""
 Module contains all conversions used for manipulating data. This includes:
 filetypes, datatypes, etc. Many tools here will be useful for most end users
 of the database.
-'''
-import os
-import tempfile
-from os.path import basename, dirname, isdir, join
-
+"""
+from os.path import basename, dirname, join
 import geopandas as gpd
-# Remove later
-import matplotlib.pyplot as plt
 import numpy as np
 import rasterio
-import utm
 from geoalchemy2.shape import to_shape
 from rasterio import MemoryFile
 from rasterio.crs import CRS
-from rasterio.enums import Resampling
-from rasterio.plot import show
 from rasterio.transform import Affine
-from rasterio.warp import Resampling, calculate_default_transform, reproject
 from sqlalchemy.dialects import postgresql
-from sqlalchemy.sql import func
 
-from snowexsql.data import PointData
-
-from .metadata import read_InSar_annotation
+from .data import PointData
 from .utilities import get_logger
 
 
 def INSAR_to_rasterio(grd_file, desc, out_file):
-    '''
+    """
     Reads in the UAVSAR interferometry file and saves the real and complex
     value and writes them to GeoTiffs. Requires a .ann file in the same
     directory to describe the data.
@@ -39,7 +27,7 @@ def INSAR_to_rasterio(grd_file, desc, out_file):
         grd_file: File containing the UAVsAR data
         desc: dictionary of the annotation file.
         out_file: Directory to output the converted files
-    '''
+    """
     log = get_logger('insar_2_raster')
 
     data_map = {'int': 'interferogram',
@@ -91,7 +79,7 @@ def INSAR_to_rasterio(grd_file, desc, out_file):
     # Reshape it to match what the text file says the image is
     z = z.reshape(nrow, ncol)
 
-    # Build the tranform and CRS
+    # Build the transform and CRS
     crs = CRS.from_user_input("EPSG:4326")
 
     # Lat1/lon1 are already the center so for geotiff were good to go.
@@ -128,7 +116,7 @@ def INSAR_to_rasterio(grd_file, desc, out_file):
 
 
 def points_to_geopandas(results):
-    '''
+    """
     Converts a successful query list into a geopandas data frame
 
     Args:
@@ -136,7 +124,7 @@ def points_to_geopandas(results):
 
     Returns:
         df: geopandas.GeoDataFrame instance
-    '''
+    """
     # grab all the attributes of the class to assign
     if isinstance(results[0], PointData):
         data = {a: [] for a in dir(PointData) if a[0:1] != '__'}
@@ -154,7 +142,7 @@ def points_to_geopandas(results):
 
 
 def query_to_geopandas(query, engine):
-    '''
+    """
     Convert a GeoAlchemy2 Query meant for postgis to a geopandas dataframe
 
     Args:
@@ -163,7 +151,7 @@ def query_to_geopandas(query, engine):
 
     Returns:
         df: geopandas.GeoDataFrame instance
-    '''
+    """
     # Fill out the variables in the query
     sql = query.statement.compile(dialect=postgresql.dialect())
 
@@ -174,7 +162,7 @@ def query_to_geopandas(query, engine):
 
 
 def raster_to_rasterio(session, rasters):
-    '''
+    """
     Retrieve the numpy array of a raster by converting to a temporary file
 
     Args:
@@ -184,7 +172,7 @@ def raster_to_rasterio(session, rasters):
     Returns:
         dataset: list of rasterio datasets
 
-    '''
+    """
     datasets = []
     for r in rasters:
         bdata = bytes(r[0])

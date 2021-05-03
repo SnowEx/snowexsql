@@ -1,9 +1,9 @@
-'''
+"""
 Module contains all the data models for the database. Classes here actually
 represent tables where columns are mapped as attributed. Any class inheriting
 from Base is a real table in the database. This is called Object Relational
 Mapping in the sqlalchemy or ORM.
-'''
+"""
 import datetime
 
 from geoalchemy2 import Geography, Geometry, Raster
@@ -17,9 +17,9 @@ Base = declarative_base()
 
 
 class SnowData(object):
-    '''
+    """
     Base class for which all data will have these attributes
-    '''
+    """
     site_name = Column(String(250))
     date = Column(Date)
     time_created = Column(DateTime(timezone=True), server_default=func.now())
@@ -29,9 +29,9 @@ class SnowData(object):
 
 
 class Measurement(object):
-    '''
+    """
     Base Class providing attributes required for a measurement of any kind
-    '''
+    """
     instrument = Column(String(50))
     type = Column(String(50))
     units = Column(String(50))
@@ -39,9 +39,9 @@ class Measurement(object):
 
 
 class SingleLocationData(SnowData):
-    '''
+    """
     Base class for points and profiles
-    '''
+    """
     latitude = Column(Float)
     longitude = Column(Float)
     northing = Column(Float)
@@ -53,10 +53,10 @@ class SingleLocationData(SnowData):
 
 
 class SiteData(SingleLocationData, Base):
-    '''
+    """
     Table for storing pit site meta data, This table doesn't represent any
     main data record but only support data for each site
-    '''
+    """
     __tablename__ = 'sites'
     __table_args__ = {"schema": "public"}
 
@@ -77,9 +77,9 @@ class SiteData(SingleLocationData, Base):
 
 
 class ImageData(SnowData, Measurement, Base):
-    '''
+    """
     Class representing the images table. This table holds all images/rasters
-    '''
+    """
     __tablename__ = 'images'
     __table_args__ = {"schema": "public"}
     raster = Column(Raster)
@@ -87,11 +87,11 @@ class ImageData(SnowData, Measurement, Base):
 
 
 class PointData(SingleLocationData, Measurement, Base):
-    '''
+    """
     Class representing the points table. This table holds all point data.
     Here a single data entry is a single coordinate pair with a single value
     e.g. snow depths
-    '''
+    """
     __tablename__ = 'points'
     __table_args__ = {"schema": "public"}
 
@@ -105,12 +105,12 @@ class PointData(SingleLocationData, Measurement, Base):
 
 
 class LayerData(SingleLocationData, Measurement, Base):
-    '''
+    """
     Class representing the layers table. This table holds all layers or
     profile data. Here a single data entry is a single value at depth in the
     snowpack and a single coordinate pair.  e.g. SMP profiles, Hand hardness,
     temperature etc...
-    '''
+    """
     __tablename__ = 'layers'
     __table_args__ = {"schema": "public"}
 
