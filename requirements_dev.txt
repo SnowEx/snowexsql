@@ -1,19 +1,14 @@
--r requirements.txt
 pip==19.2.3
+-r requirements.txt
+-r docs/requirements.txt
 bump2version==0.5.11
 wheel==0.33.6
 watchdog==0.9.0
 flake8==3.7.8
 coverage==4.5.4
-Sphinx==1.8.5
 twine==1.14.0
 pytest==6.2.3
 pytest-runner==5.1
-nbsphinx==0.7.1
-sphinx-gallery==0.7.0
-nbconvert==6.0.6
 snowmicropyn
-pandoc==1.0.2
 jupyterlab==2.1.5
 matplotlib==3.2.2
-psycopg2-binary
