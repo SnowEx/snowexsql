@@ -15,7 +15,7 @@ Types of Contributions
 Report Bugs
 ~~~~~~~~~~~
 
-Report bugs at https://github.com/hpmarshall/snowexsql/issues.
+Report bugs at https://github.com/SnowEx/snowexsql/issues.
 
 If you are reporting a bug, please include:
 
@@ -83,7 +83,7 @@ To do this simply:
    or point data tables, you will need to add their data names to metadata.py.
    This will allow the uploaders to automatically detect the multiple profiles
    in a single file. Simply add you data name to the class variable
-   `available_names <https://github.com/hpmarshall/snowexsql/blob/b4a0fb2baadedcd96fa95275c3d2262c69ed0cf4/snowexsql/metadata.py#L390>`
+   `available_names <https://github.com/SnowEx/snowexsql/blob/b4a0fb2baadedcd96fa95275c3d2262c69ed0cf4/snowexsql/metadata.py#L390>`
    in metadata.py.
 
 
@@ -112,7 +112,7 @@ which blocks had tags enabled*
 Submit Feedback
 ~~~~~~~~~~~~~~~
 
-The best way to send feedback is to file an issue at https://github.com/hpmarshall/snowexsql/issues.
+The best way to send feedback is to file an issue at https://github.com/SnowEx/snowexsql/issues.
 
 If you are proposing a feature:
 
@@ -168,7 +168,7 @@ Before you submit a pull request, check that it meets these guidelines:
    your new functionality into a function with a docstring, and add the
    feature to the list in README.rst.
 3. The pull request should work for Python 3.5, 3.6, 3.7 and 3.8, and for PyPy. Check
-..    https://travis-ci.com/hpmarshall/snowexsql/pull_requests
+..    https://travis-ci.com/SnowEx/snowexsql/pull_requests
    and make sure that the tests pass for all supported Python versions.
 
 Tips
