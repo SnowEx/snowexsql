@@ -2,6 +2,10 @@
 snowexsql
 ========
 
+.. image:: https://readthedocs.org/projects/snowexsql/badge/?version=latest
+    :target: https://snowexsql.readthedocs.io/en/latest/?badge=latest
+    :alt: Documentation Status
+
 Database creation and management software for SnowEx 2019/20 data. The goal is to
 create a single source (citeable) dataset that is cross queriable for snow
 researchers.
