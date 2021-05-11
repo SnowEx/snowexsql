@@ -14,15 +14,14 @@ with open('requirements.txt') as req:
     requirements = req.read().split('\n')
 
 with open('requirements_dev.txt') as req:
-    # Ignore the -r on the first line
-    setup_requirements = req.read().split('\n')[1:]
+    # Ignore the -r on the two lines
+    setup_requirements = req.read().split('\n')[2:]
 
 setup_requirements += requirements
 test_requirements = ['pytest>=3'] + requirements
 
 setup(
     author="Micah Johnson",
-    author_email='micah.johnson150@gmail.com',
     python_requires='>=3.5',
     classifiers=[
         'Development Status :: 2 - Pre-Alpha',
@@ -34,7 +33,7 @@ setup(
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
     ],
-    description="SQL Databse software for SnowEx data",
+    description="SQL Database software for SnowEx data",
     entry_points={
         'console_scripts': [
             'clear_dataset=snowexsql.cli:clear_dataset',
