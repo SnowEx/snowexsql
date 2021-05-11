@@ -1,7 +1,7 @@
 API Documentation
 =================
 
-Information on specific functions, classes, and methods.
+Information on snowexsql functions, classes, and modules.
 
 .. toctree::
    :maxdepth: 4

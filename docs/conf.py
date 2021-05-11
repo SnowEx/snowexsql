@@ -19,6 +19,7 @@
 #
 import os
 import sys
+import datetime
 sys.path.insert(0, os.path.abspath('..'))
 
 import snowexsql
@@ -47,7 +48,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'snowexsql'
-copyright = "2020, HP Marshall"
+copyright = f"{datetime.datetime.now().year}, Boise State University SnowEx Hackweek"
 author = "Micah Johnson"
 
 # The version info for the project you're documenting, acts as replacement
