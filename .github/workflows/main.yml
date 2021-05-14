@@ -19,13 +19,21 @@ jobs:
       matrix:
         python-version: [3.8]
 
-    steps:
-      - uses: katoza/postgis:13-3.1
-        with:
-          postgresql password: 'snowex_testing'   # This environment variable sets the superuser password for PostgreSQL, maybe string or secrets, the default superuser is defined by the input environment variable: postgresql user.
-          postgresql user: 'snowex_tester'  # This optional environment variable is used in conjunction with postgresql password to set a user and its password. This variable will create the specified user with superuser power and a database with the same name. If it is not specified, then the default user of 'postgres' will be used.
-          postgresql db: 'test'
+    services:
 
+      postgis:
+        image: kartoza/postgis:13-3.1
+        environment:
+          POSTGRES_PASSWORD: snowex_testing
+          POSTGRES_USER: snowex_tester
+          POSTGRES_DB: test
+
+        ports:
+          - 5432:5432
+        healthcheck:
+          test: "exit 0"
+
+    steps:
       - uses: actions/checkout@v2
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v2
