@@ -30,8 +30,6 @@ jobs:
 
         ports:
           - 5432:5432
-        healthcheck:
-          test: "exit 0"
 
     steps:
       - uses: actions/checkout@v2
