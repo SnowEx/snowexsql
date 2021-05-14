@@ -23,7 +23,7 @@ jobs:
 
       postgis:
         image: kartoza/postgis:13-3.1
-        environment:
+        env:
           POSTGRES_PASSWORD: snowex_testing
           POSTGRES_USER: snowex_tester
           POSTGRES_DB: test
