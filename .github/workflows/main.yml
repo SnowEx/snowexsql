@@ -20,9 +20,8 @@ jobs:
         python-version: [3.8]
 
     steps:
-      - uses: katoza/postgis-action@v1
+      - uses: katoza/postgis:13-3.1
         with:
-          postgresql version: '13-3.1'  # See https://https://hub.docker.com/r/mdillon/postgis for available versions, if it is not specified, use the default value 'latest'
           postgresql password: 'snowex_testing'   # This environment variable sets the superuser password for PostgreSQL, maybe string or secrets, the default superuser is defined by the input environment variable: postgresql user.
           postgresql user: 'snowex_tester'  # This optional environment variable is used in conjunction with postgresql password to set a user and its password. This variable will create the specified user with superuser power and a database with the same name. If it is not specified, then the default user of 'postgres' will be used.
           postgresql db: 'test'
