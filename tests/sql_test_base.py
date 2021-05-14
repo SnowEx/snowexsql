@@ -31,7 +31,7 @@ class DBSetup:
         """
         Setup the database one time for testing
         """
-        self.db = 'test'
+        self.db = 'snowex_tester:snowex_testing@localhost/test'
         self.data_dir = join(dirname(__file__), 'data')
 
         self.engine, self.session, self.metadata = get_db(self.db, return_metadata=True)
@@ -92,10 +92,12 @@ class TableTestBase(DBSetup):
         else:
             self.args[0] = join(self.data_dir, self.args[0])
 
-        # Incase we have a smp_log file make it point to the data folder too
+        # In case we have a smp_log file make it point to the data folder too
         if 'smp_log_f' in self.kwargs.keys():
             if self.kwargs['smp_log_f'] != None:
                 self.kwargs['smp_log_f'] = join(self.data_dir, self.kwargs['smp_log_f'])
+
+        self.kwargs['db_name'] = self.db
 
         u = self.UploaderClass(*self.args, **self.kwargs)
 
@@ -149,7 +151,7 @@ class TableTestBase(DBSetup):
             received = float(received)
         except:
             pass
-
+        print(expected, received)
         if type(received) == float:
             assert_almost_equal(received, expected, 6)
         else:

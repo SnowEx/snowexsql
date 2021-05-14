@@ -15,7 +15,7 @@ class TestUploadSiteDetailsBatch(TableTestBase):
     """
 
     args = [['site_5S21.csv', 'site_details.csv']]
-    kwargs = {'db_name': 'test', 'epsg': 26912}
+    kwargs = {'epsg': 26912}
     UploaderClass = UploadSiteDetailsBatch
     TableClass = SiteData
     count_attribute = 'site_id'
@@ -46,7 +46,7 @@ class TestUploadProfileBatch(TableTestBase):
     """
 
     args = [['stratigraphy.csv', 'temperature.csv']]
-    kwargs = {'db_name': 'test', 'timezone': 'UTC'}
+    kwargs = {'timezone': 'UTC'}
     UploaderClass = UploadProfileBatch
     TableClass = LayerData
 
@@ -101,7 +101,7 @@ class TestUploadLWCProfileBatch(TableTestBase):
     """
 
     args = [['LWC.csv', 'LWC2.csv']]
-    kwargs = {'db_name': 'test', 'timezone': 'UTC'}
+    kwargs = {'timezone': 'UTC'}
     UploaderClass = UploadProfileBatch
     TableClass = LayerData
 
@@ -119,7 +119,7 @@ class TestUploadSMPBatch(TableTestBase):
     Test whether we can assign meta info from an smp log to 2 profiles
     """
     args = [['S19M1013_5S21_20200201.CSV', 'S06M0874_2N12_20200131.CSV']]
-    kwargs = {'db_name': 'test', 'in_timezone': 'UTC', 'smp_log_f': 'smp_log.csv', 'units': 'Newtons'}
+    kwargs = {'in_timezone': 'UTC', 'smp_log_f': 'smp_log.csv', 'units': 'Newtons'}
     UploaderClass = UploadProfileBatch
     TableClass = LayerData
     attribute = 'depth'
@@ -165,7 +165,7 @@ class TestUploadRasterBatch(TableTestBase):
     Class testing the batch uploading of rasters
     """
     args = [['be_gm1_0287/w001001x.adf', 'be_gm1_0328/w001001x.adf']]
-    kwargs = {'db_name': 'test', 'type': 'dem', 'surveyors': 'QSI',
+    kwargs = {'type': 'dem', 'surveyors': 'QSI',
               'units': 'meters',
               'epsg': 26912}
     UploaderClass = UploadRasterBatch
@@ -192,7 +192,7 @@ class TestUploadUAVSARBatch(TableTestBase):
     # Upload all uav
     d = join(dirname(__file__), 'data', 'uavsar')
     args = [['uavsar.ann']]
-    kwargs = {'db_name': 'test', 'surveyors': surveyors,
+    kwargs = { 'surveyors': surveyors,
               'epsg': 26912,
               'geotiff_dir': d,
               'instrument': 'UAVSAR, L-band InSAR'}
