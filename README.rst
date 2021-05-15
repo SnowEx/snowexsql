@@ -6,8 +6,8 @@ Welcome to snowexsql
     :target: https://snowexsql.readthedocs.io/en/latest/?badge=latest
     :alt: Documentation Status
 
-.. image::https://github.com/SnowEx/snowexsql/actions/workflows/main.yml/badge.svg
-    :target: https://github.com/SnowEx/snowexsql/actions/workflows/main.yml/badge.svg
+.. image:: https://img.shields.io/github/workflow/status/SnowEx/snowexsql/snowexsql
+    :target: https://github.com/SnowEx/snowexsql/actions/workflows/main.yml
     :alt: Testing Status
 
 Database creation and management software for SnowEx data. The goal is to
@@ -54,7 +54,7 @@ Ubuntu
 
 First ensure you have following prerequisites:
 
-* Python3.5 +
+* Python3.6 +
 * wget
 
 Then to install the postgres database with postgis functionality run:
@@ -93,7 +93,7 @@ Quickly test your installation by running:
   pytest
 
 This will run a series of tests that create a small database and confirm
-that samples of the data sets in the SnowEx2020_SQLdata folder can be
+that samples of the data sets references in `./scripts/upload` folder can be
 uploaded seamlessly. These tests can serve as a nice way to see how to
 interact with the database but also serve to confirm our reproduciblity.
 
