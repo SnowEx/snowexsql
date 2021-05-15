@@ -104,7 +104,7 @@ def convert_cardinal_to_degree(cardinal):
     Converts cardinal directions to degrees. Also removes any / or - that
     might get used to say between two cardinal directions
 
-    e.g. S/SW turns into SSW which is interpetted as halfway between those
+    e.g. S/SW turns into SSW which is interpreted as halfway between those
     two directions allowing for 22.5 degree increments.
 
     Args:

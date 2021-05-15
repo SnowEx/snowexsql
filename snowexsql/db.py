@@ -43,8 +43,8 @@ def get_db(db_str, return_metadata=False):
     # more info.
     db = f'postgresql+psycopg2://{db_str}'
 
-    # create a Session
-    engine = create_engine(db, echo=False)
+    # create a Session in US/Mountain TZ
+    engine = create_engine(db, echo=False, connect_args={"options": "-c timezone=us/mountain"})
     Session = sessionmaker(bind=engine)
     metadata = MetaData(bind=engine)
     session = Session(expire_on_commit=False)

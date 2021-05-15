@@ -101,7 +101,6 @@ class TestUploadLWCProfileBatch(TableTestBase):
     """
 
     args = [['LWC.csv', 'LWC2.csv']]
-    kwargs = {'timezone': 'UTC'}
     UploaderClass = UploadProfileBatch
     TableClass = LayerData
 

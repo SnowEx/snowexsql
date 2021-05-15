@@ -13,10 +13,10 @@ from .sql_test_base import TableTestBase, pytest_generate_tests
 
 
 class TestStratigraphyProfile(TableTestBase):
-    '''
+    """
     Test that all the profiles from the Stratigraphy file were uploaded and
     have integrity
-    '''
+    """
 
     args = ['stratigraphy.csv']
     kwargs = {'timezone': 'US/Mountain'}
