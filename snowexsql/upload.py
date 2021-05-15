@@ -372,6 +372,10 @@ class UploadRaster(object):
         # This produces a PSQL command with auto tiling
         cmd = ['raster2pgsql', '-s', str(self.epsg)]
 
+        # Remove any invalid columns
+        valid = get_table_attributes(ImageData)
+        data = {k:v for k,v in self.data.items() if k in valid}
+
         # Add tiling if requested
         if self.tiled == True:
             cmd.append('-t')
@@ -399,7 +403,7 @@ class UploadRaster(object):
         for t in tiles:
             v = t.split("'::")[0]
             raster = RasterElement(v)
-            self.data['raster'] = raster
-            r = ImageData(**self.data)
+            data['raster'] = raster
+            r = ImageData(**data)
             session.add(r)
             session.commit()

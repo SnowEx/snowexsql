@@ -6,6 +6,10 @@ Welcome to snowexsql
     :target: https://snowexsql.readthedocs.io/en/latest/?badge=latest
     :alt: Documentation Status
 
+.. image::https://github.com/SnowEx/snowexsql/actions/workflows/main.yml/badge.svg
+    :target: https://github.com/SnowEx/snowexsql/actions/workflows/main.yml/badge.svg
+    :alt: Testing Status
+
 Database creation and management software for SnowEx data. The goal is to
 create a single source (citeable) dataset that is cross queriable for snow
 researchers.
