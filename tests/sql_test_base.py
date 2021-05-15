@@ -151,7 +151,7 @@ class TableTestBase(DBSetup):
             received = float(received)
         except:
             pass
-        print(expected, received)
+
         if type(received) == float:
             assert_almost_equal(received, expected, 6)
         else:
