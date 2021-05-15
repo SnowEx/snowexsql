@@ -5,8 +5,6 @@ name: snowexsql
 on:
   # Triggers the workflow on push or pull request events but only for the master branch
   push:
-    branches: [ master, adding_ci_#25 ]
-  pull_request:
     branches: [ master ]
 
   workflow_dispatch:
@@ -17,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [3.8]
+        python-version: [3.6, 3.7, 3.8, 3.9]
 
     services:
 
