@@ -1,24 +1,18 @@
 """
 Module for classes that upload single files to the database.
 """
-import os
-import time
-from os.path import abspath, expanduser, join
+
+
 from subprocess import STDOUT, check_output
-
-import numpy as np
-import pandas as pd
 import progressbar
-import utm
 from geoalchemy2.elements import RasterElement, WKTElement
-from geoalchemy2.shape import from_shape
-
-from .data import *
+import pandas as pd
+from .data import PointData, LayerData, ImageData
 from .db import get_table_attributes
-from .interpretation import *
+from .interpretation import standardize_depth, add_date_time_keys
 from .metadata import DataHeader
-from .string_management import *
-from .utilities import *
+from .string_management import parse_none, remap_data_names
+from .utilities import get_logger,  get_file_creation_date, assign_default_kwargs
 
 
 class UploadProfileData:
@@ -42,6 +36,9 @@ class UploadProfileData:
 
         # Read in data
         self.df = self._read(profile_filename)
+
+        # Use the files creation date as the date accessed for NSIDC citation
+        self.date_accessed = get_file_creation_date(self.filename)
 
     def _read(self, profile_filename):
         """
@@ -113,7 +110,7 @@ class UploadProfileData:
 
     def build_data(self, data_name):
         """
-        Build out the original dataframe with the metdata to avoid doing it
+        Build out the original dataframe with the metadata to avoid doing it
         during the submission loop. Removes all other main profile columns and
         assigns data_name as the value column
 
@@ -131,6 +128,7 @@ class UploadProfileData:
             df[k] = v
 
         df['type'] = data_name
+        df['date_accessed'] = self.date_accessed
 
         # Get the average if its multisample profile
         if data_name in self.multi_sample_profiles:
@@ -228,6 +226,9 @@ class PointDataCSV(object):
         # Assign defaults for this class
         self.kwargs = assign_default_kwargs(self, kwargs, self.defaults)
 
+        # Use the files creation date as the date accessed for NSIDC citation
+        self.date_accessed = get_file_creation_date(filename)
+
         self.hdr = DataHeader(filename, **self.kwargs)
         self.df = self._read(filename)
 
@@ -277,6 +278,10 @@ class PointDataCSV(object):
 
         # replace all nans or string nones with None (none type)
         df = df.apply(lambda x: parse_none(x))
+
+        # Assign the access date for citation
+        df['date_accessed'] = self.date_accessed
+
         return df
 
     def build_data(self, data_name):
@@ -364,6 +369,7 @@ class UploadRaster(object):
         self.log = get_logger(__name__)
         self.filename = filename
         self.data = assign_default_kwargs(self, kwargs, self.defaults)
+        self.date_accessed = get_file_creation_date(self.filename)
 
     def submit(self, session):
         """
@@ -375,6 +381,7 @@ class UploadRaster(object):
         # Remove any invalid columns
         valid = get_table_attributes(ImageData)
         data = {k: v for k, v in self.data.items() if k in valid}
+        data['date_accessed'] = self.date_accessed
 
         # Add tiling if requested
         if self.tiled == True:

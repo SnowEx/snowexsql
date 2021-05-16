@@ -1,18 +1,14 @@
-import datetime
-from os import remove
-from os.path import dirname, join
+from os.path import join
 
 import numpy as np
-from geoalchemy2.elements import WKTElement
 from geoalchemy2.shape import to_shape
 from geoalchemy2.types import Raster
-from rasterio.plot import show
 from shapely.geometry import Point
-from sqlalchemy import MetaData
-
+from sqlalchemy import func
 from snowexsql.conversions import raster_to_rasterio
 from snowexsql.functions import ST_PixelAsPoint
-from snowexsql.upload import *
+from snowexsql.upload import UploadRaster
+from snowexsql.data import ImageData
 
 from .sql_test_base import DBSetup, TableTestBase, pytest_generate_tests
 
