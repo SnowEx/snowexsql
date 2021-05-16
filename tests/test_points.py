@@ -1,7 +1,5 @@
 import datetime
 
-import pytest
-
 from snowexsql.data import PointData
 from snowexsql.upload import PointDataCSV
 
@@ -88,6 +86,12 @@ class TestSnowDepths(PointsBase):
         r = self.session.query(PointData.geom).limit(1).one()
         assert r[0].srid == 26912
 
+    def test_date_accessed(self):
+        """
+        Tests that the date accessed is auto assigned on upload
+        """
+        result = self.session.query(PointData.date_accessed).limit(1).all()
+        assert type(result[0][0]) is datetime.date
 
 class TestGPRPointData(PointsBase):
     gpr_dt = datetime.date(2019, 1, 28)

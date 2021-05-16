@@ -154,5 +154,5 @@ def get_file_creation_date(file):
                 the system
     """
 
-    result = datetime.datetime.fromtimestamp(getctime(file))
+    result = datetime.datetime.fromtimestamp(getctime(file)).date()
     return result
