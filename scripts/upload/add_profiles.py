@@ -31,7 +31,7 @@ def main():
     profiles = list(set(filenames) - set(sites))
 
     # Submit all profiles associated with pit at a time
-    b = UploadProfileBatch(filenames=profiles, debug=True)
+    b = UploadProfileBatch(filenames=profiles, debug=True, doi="https://doi.org/10.5067/DUD2VZEVBJ7S")
     b.push()
 
     return len(b.errors)

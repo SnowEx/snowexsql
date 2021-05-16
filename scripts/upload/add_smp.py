@@ -28,6 +28,7 @@ def main():
         'site_name': 'Grand Mesa',
         'units': 'Newtons',
         'out_timezone': 'UTC',
+        'doi': 'https://doi.org/10.5067/ZYW6IHFRYDSE'
     }
     # Instantiate the uploader
     b = UploadProfileBatch(filenames, **kwargs)

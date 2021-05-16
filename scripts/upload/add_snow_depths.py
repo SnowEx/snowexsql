@@ -16,7 +16,7 @@ def main():
     # Site name
     start = time.time()
     site_name = 'Grand Mesa'
-    timezone = 'MST'
+    timezone = 'US/Mountain'
 
     # Read in the Grand Mesa Snow Depths Data
     base = abspath(join('../download/data/SNOWEX/SNEX20_SD.001/'))
@@ -36,7 +36,9 @@ def main():
             units='cm',
             site_name=site_name,
             timezone=timezone,
-            epsg=26912)
+            epsg=26912,
+            doi="https://doi.org/10.5067/9IA978JIACAR")
+
         csv.submit(session)
         errors += len(csv.errors)
 

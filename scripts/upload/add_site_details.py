@@ -24,7 +24,7 @@ def main():
     sites = glob.glob(join(data_dir, '*/*site*.csv'))
 
     # Instantiate uploader
-    b = UploadSiteDetailsBatch(sites, epsg=26912, debug=False)
+    b = UploadSiteDetailsBatch(sites, epsg=26912, debug=False, doi="https://doi.org/10.5067/DUD2VZEVBJ7S")
 
     # Submit site details to the db
     b.push()
