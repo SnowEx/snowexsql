@@ -8,12 +8,13 @@ the database.
 
 """
 
-import pandas as pd
-from os.path import join, abspath, expanduser
 import time
+from os.path import abspath, expanduser, join
 
-from snowexsql.upload import *
+import pandas as pd
+
 from snowexsql.db import get_db
+from snowexsql.upload import *
 
 
 def main():

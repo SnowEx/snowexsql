@@ -6,9 +6,10 @@ Uploads the Snowex 2020 depths to the database
 2B. python add_snow_depths.py # To run individually
 """
 
-from snowexsql.upload import *
-from snowexsql.db import get_db
 import glob
+
+from snowexsql.db import get_db
+from snowexsql.upload import *
 
 
 def main():

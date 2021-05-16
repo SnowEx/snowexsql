@@ -1,13 +1,16 @@
+import os
 import shutil
+from os.path import isdir, join
+
 import pytest
 from numpy.testing import assert_almost_equal
-import os
-from os.path import isdir, join
+from sqlalchemy import func
+
 from snowexsql.conversions import *
 from snowexsql.data import ImageData, PointData
-from snowexsql.upload import PointDataCSV, UploadRaster
 from snowexsql.metadata import read_InSar_annotation
-from sqlalchemy import func
+from snowexsql.upload import PointDataCSV, UploadRaster
+
 from .sql_test_base import DBSetup
 
 

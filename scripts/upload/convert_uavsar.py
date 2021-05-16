@@ -8,15 +8,16 @@ Unzip to ~/Downloads
 Otherwise see main() to redefine the location where the files are stored
 '''
 
-from os.path import join, abspath, expanduser, isdir, dirname, basename
-from os import listdir, mkdir
-from snowexsql.utilities import get_logger, read_n_lines
-from snowexsql.conversions import INSAR_to_rasterio
-from snowexsql.projection import reproject_raster_by_epsg
-from snowexsql.metadata import read_InSar_annotation
-import shutil
 import glob
+import shutil
 import time
+from os import listdir, mkdir
+from os.path import abspath, basename, dirname, expanduser, isdir, join
+
+from snowexsql.conversions import INSAR_to_rasterio
+from snowexsql.metadata import read_InSar_annotation
+from snowexsql.projection import reproject_raster_by_epsg
+from snowexsql.utilities import get_logger, read_n_lines
 
 log = get_logger('grd2tif')
 

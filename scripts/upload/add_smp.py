@@ -7,9 +7,10 @@ Added smp measurements to the database
 3B. python add_smp.py # To run individually
 """
 
-from os.path import join, abspath
-from snowexsql.batch import UploadProfileBatch
 import glob
+from os.path import abspath, join
+
+from snowexsql.batch import UploadProfileBatch
 
 
 def main():

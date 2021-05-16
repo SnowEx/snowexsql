@@ -19,11 +19,12 @@ Citation:
 U.S. Geological Survey, 20171101, USGS NED Original Product Resolution CO MesaCo-QL2 2015 12SYJ515455 IMG 2017: U.S. Geological Survey.
 '''
 
-from snowexsql.batch import UploadRasterBatch
-import os
-from os.path import join, abspath, expanduser
 import glob
+import os
+from os.path import abspath, expanduser, join
+
 from add_QSI import reproject
+from snowexsql.batch import UploadRasterBatch
 
 
 def main():

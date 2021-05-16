@@ -20,10 +20,11 @@ Usage:
 
 '''
 
-from snowexsql.batch import UploadUAVSARBatch
-import os
-from os.path import join, abspath, expanduser
 import glob
+import os
+from os.path import abspath, expanduser, join
+
+from snowexsql.batch import UploadUAVSARBatch
 
 
 def main():

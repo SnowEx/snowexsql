@@ -13,14 +13,15 @@ Usage:
 
 """
 
-from os.path import join, abspath, isdir, dirname, basename
-from os import mkdir
 import glob
-from snowexsql.utilities import get_logger
-import pandas as pd
 import shutil
+from os import mkdir
+from os.path import abspath, basename, dirname, isdir, join
+
 import matplotlib.pyplot as plt
-from snowexsql.utilities import read_n_lines
+import pandas as pd
+
+from snowexsql.utilities import get_logger, read_n_lines
 
 
 def open_df(smp_f, header_pos=6):

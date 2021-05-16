@@ -18,15 +18,14 @@ Usage:
     python run.py
 """
 
-import time
-from snowexsql.utilities import get_logger
-import os
 import importlib
-from create import main as create
+import os
+import time
 
-# Import preprocessor functions here.
-from resample_smp import main as resample_smp
 from convert_uavsar import main as convert_uavsar
+from create import main as create
+from resample_smp import main as resample_smp
+from snowexsql.utilities import get_logger
 
 start = time.time()
 log = get_logger('Populate')

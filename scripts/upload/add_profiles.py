@@ -6,10 +6,11 @@ Read in the SnowEx 2020 profiles from pits.
 2B. python add_profiles.py # To run individually
 """
 
-from os.path import join, abspath, basename, relpath
-from os import listdir
-from snowexsql.batch import UploadProfileBatch
 import glob
+from os import listdir
+from os.path import abspath, basename, join, relpath
+
+from snowexsql.batch import UploadProfileBatch
 
 
 def main():

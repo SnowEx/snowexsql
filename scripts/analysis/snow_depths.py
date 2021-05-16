@@ -1,19 +1,20 @@
 '''
 '''
 
-from snowexsql.data import *
+import geoalchemy2.functions as gfunc
+import geopandas as gpd
+import matplotlib.pyplot as plt
+import progressbar
+from geoalchemy2.shape import from_shape, to_shape
+from geoalchemy2.types import Raster
+from shapely.geometry import Point, Polygon
+from sqlalchemy.sql import func
+
+from snowexsql.analysis import *
 from snowexsql.conversions import query_to_geopandas
+from snowexsql.data import *
 from snowexsql.db import get_db
 from snowexsql.utilities import get_logger
-from snowexsql.analysis import *
-import geoalchemy2.functions as gfunc
-from geoalchemy2.shape import to_shape, from_shape
-from sqlalchemy.sql import func
-from shapely.geometry import Polygon, Point
-from geoalchemy2.types import Raster
-import geopandas as gpd
-import progressbar
-import matplotlib.pyplot as plt
 
 
 def get_raster_value(session, point, surveyor, date=None):

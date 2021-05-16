@@ -5,9 +5,10 @@ Added ssa measurements to the database.
 2B. python add_ssa.py # To run individually
 """
 
-from os.path import join, abspath
-from snowexsql.batch import UploadProfileBatch
 import glob
+from os.path import abspath, join
+
+from snowexsql.batch import UploadProfileBatch
 
 
 def main():

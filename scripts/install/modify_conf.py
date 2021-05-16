@@ -1,9 +1,10 @@
 '''
 Edits the postgres conf file
 '''
-import platform
 import os
+import platform
 from subprocess import check_output
+
 from snowexsql.utilities import find_kw_in_lines
 
 

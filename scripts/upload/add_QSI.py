@@ -16,16 +16,16 @@ will pass them through to the final uploader
 
 '''
 
+import os
+import shutil
+from os.path import abspath, basename, expanduser, isdir, isfile, join, split
+from subprocess import check_output
+
+import pandas as pd
+
 from snowexsql.batch import UploadRasterBatch
 from snowexsql.db import get_db
-from snowexsql.utilities import find_files
-from snowexsql.utilities import get_logger
-
-import os
-import pandas as pd
-from os.path import join, abspath, expanduser, isdir, basename, isfile, split
-import shutil
-from subprocess import check_output
+from snowexsql.utilities import find_files, get_logger
 
 
 def reproject(filenames, out_epsg, out_dir, adjust_vdatum=False):

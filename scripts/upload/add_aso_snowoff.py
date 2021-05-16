@@ -24,15 +24,16 @@ Usage:
 '''
 
 
-from os.path import isdir, dirname, abspath, expanduser, basename, join
-from os import mkdir
-from shutil import rmtree
 from datetime import date
+from os import mkdir
+from os.path import abspath, basename, dirname, expanduser, isdir, join
+from shutil import rmtree
+from subprocess import check_output
+
+from add_QSI import reproject
 from snowexsql.batch import UploadRasterBatch
 from snowexsql.projection import reproject_raster_by_epsg
 from snowexsql.utilities import get_logger
-from subprocess import check_output
-from add_QSI import reproject
 
 
 def main():

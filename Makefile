@@ -91,7 +91,7 @@ line_count:
 	cloc snowexsql tests scripts
 
 pep8:
-	isort snowexsql/*.py tests/*.py
+	isort snowexsql/*.py tests/*.py scripts/*/*.py
 	autopep8 --aggressive --in-place snowexsql/*.py snowexsql/*.py scripts/*/*.py 
 
 

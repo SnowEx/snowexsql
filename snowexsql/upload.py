@@ -374,7 +374,7 @@ class UploadRaster(object):
 
         # Remove any invalid columns
         valid = get_table_attributes(ImageData)
-        data = {k:v for k,v in self.data.items() if k in valid}
+        data = {k: v for k, v in self.data.items() if k in valid}
 
         # Add tiling if requested
         if self.tiled == True:
