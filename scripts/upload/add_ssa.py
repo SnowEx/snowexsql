@@ -18,7 +18,10 @@ def main():
     filenames = glob.glob(join(directory, '*/*.csv'))
 
     # Instantiate the uploader
-    b = UploadProfileBatch(filenames, debug=False, doi="https://doi.org/10.5067/SNMM6NGGKWIT")
+    b = UploadProfileBatch(
+        filenames,
+        debug=False,
+        doi="https://doi.org/10.5067/SNMM6NGGKWIT")
 
     # Submit to the db
     b.push()

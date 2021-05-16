@@ -3,11 +3,12 @@ Module for storing misc. type functions that don't warrant a separate module
 but to provide some use in the code set.
 """
 
-import coloredlogs
 import datetime
 import logging
 from os import walk
-from os.path import join, getctime
+from os.path import getctime, join
+
+import coloredlogs
 
 
 def get_logger(name, debug=True, ext_logger=None,):
@@ -140,6 +141,7 @@ def assign_default_kwargs(object, kwargs, defaults, leave=[]):
         setattr(object, k, value)
 
     return mod_kwargs
+
 
 def get_file_creation_date(file):
     """

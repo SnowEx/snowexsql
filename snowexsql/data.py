@@ -7,7 +7,7 @@ Mapping in the sqlalchemy or ORM.
 import datetime
 
 from geoalchemy2 import Geometry, Raster
-from sqlalchemy import (Column, Date, DateTime, Float, Integer, String, Time)
+from sqlalchemy import Column, Date, DateTime, Float, Integer, String, Time
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.sql import func
 
@@ -26,6 +26,7 @@ class SnowData(object):
     site_id = Column(String(50))
     doi = Column(String(50))
     date_accessed = Column(Date)
+
 
 class Measurement(object):
     """

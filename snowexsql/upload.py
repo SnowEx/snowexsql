@@ -4,15 +4,18 @@ Module for classes that upload single files to the database.
 
 
 from subprocess import STDOUT, check_output
+
+import pandas as pd
 import progressbar
 from geoalchemy2.elements import RasterElement, WKTElement
-import pandas as pd
-from .data import PointData, LayerData, ImageData
+
+from .data import ImageData, LayerData, PointData
 from .db import get_table_attributes
-from .interpretation import standardize_depth, add_date_time_keys
+from .interpretation import add_date_time_keys, standardize_depth
 from .metadata import DataHeader
 from .string_management import parse_none, remap_data_names
-from .utilities import get_logger,  get_file_creation_date, assign_default_kwargs
+from .utilities import (assign_default_kwargs, get_file_creation_date,
+                        get_logger)
 
 
 class UploadProfileData:

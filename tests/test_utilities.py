@@ -1,5 +1,5 @@
-from os.path import dirname
 from datetime import date
+from os.path import dirname
 
 import pytest
 
