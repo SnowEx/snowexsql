@@ -32,7 +32,7 @@ import snowexsql
 
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
-extensions = ['sphinx.ext.autodoc', 'sphinx.ext.viewcode', 'nbsphinx', 'sphinx_gallery.load_style','sphinx.ext.autosectionlabel']
+extensions = ['sphinx.ext.autodoc','sphinxcontrib.apidoc', 'sphinx.ext.viewcode', 'nbsphinx', 'sphinx_gallery.load_style','sphinx.ext.autosectionlabel']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -50,6 +50,12 @@ master_doc = 'index'
 project = 'snowexsql'
 copyright = f"{datetime.datetime.now().year}, Boise State University SnowEx Hackweek"
 author = "Micah Johnson"
+
+# API
+project_dir =  os.path.abspath(os.path.dirname(os.getcwd()))
+apidoc_module_dir = os.path.join(project_dir, project)
+apidoc_output_dir = os.path.abspath('./')
+
 
 # The version info for the project you're documenting, acts as replacement
 # for |version| and |release|, also used in various other places throughout

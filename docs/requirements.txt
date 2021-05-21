@@ -3,3 +3,4 @@ sphinx-gallery==0.7.0
 nbconvert==6.0.6
 Sphinx==1.8.5
 pandoc==1.0.2
+sphinxcontrib-apidoc==0.3.0
