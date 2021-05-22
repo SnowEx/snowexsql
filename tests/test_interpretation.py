@@ -117,10 +117,10 @@ def test_get_InSar_flight_comment(data_name, expected):
     """
     blank = '{} time of acquisition for pass {}'
 
-    desc = {blank.format('start', '1'): {'value': pd.to_datetime('2020-01-01 10:00:00 MST')},
-            blank.format('stop', '1'): {'value': pd.to_datetime('2020-01-01 12:00:00 MST')},
-            blank.format('start', '2'): {'value': pd.to_datetime('2020-02-01 10:00:00 MST')},
-            blank.format('stop', '2'): {'value': pd.to_datetime('2020-02-01 12:00:00 MST')}}
+    desc = {blank.format('start', '1'): {'value': pd.to_datetime('2020-01-01 10:00:00 UTC')},
+            blank.format('stop', '1'): {'value': pd.to_datetime('2020-01-01 12:00:00 UTC')},
+            blank.format('start', '2'): {'value': pd.to_datetime('2020-02-01 10:00:00 UTC')},
+            blank.format('stop', '2'): {'value': pd.to_datetime('2020-02-01 12:00:00 UTC')}}
 
     comment = get_InSar_flight_comment(data_name, desc)
     assert comment == expected
