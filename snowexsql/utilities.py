@@ -1,14 +1,14 @@
-'''
+"""
 Module for storing misc. type functions that don't warrant a separate module
 but to provide some use in the code set.
-'''
+"""
 
+import datetime
 import logging
 from os import walk
-from os.path import join
+from os.path import getctime, join
 
 import coloredlogs
-import numpy as np
 
 
 def get_logger(name, debug=True, ext_logger=None,):
@@ -16,7 +16,7 @@ def get_logger(name, debug=True, ext_logger=None,):
     Retrieve a colored logs logger and assign a custom name to it.
 
     Args:
-        Name: Name of the loggger
+        name: Name of the loggger
         debug: Boolean for where to show debug statements
         ext_logger: Recieves a logger object and installs colored logs to it.
     Returns:
@@ -38,16 +38,16 @@ def get_logger(name, debug=True, ext_logger=None,):
 
 
 def read_n_lines(f, nlines):
-    '''
+    """
     Opens and reads nlines from a file to avoid reading an entire file.
     Useful for reading headers
 
     Args:
         f: filename to open
-        n_lines: number of lines to read in
+        nlines: number of lines to read in
     Returns:
         lines: list of lines from file nlines long
-    '''
+    """
     lines = []
 
     with open(f, 'r') as fp:
@@ -62,14 +62,14 @@ def read_n_lines(f, nlines):
 
 
 def find_files(directory, ext, pattern):
-    '''
+    """
     Finds filesnames using the extension and a substring pattern
 
     Args:
         directory: Directory to search
         ext: File extension to search for
         pattern: Substring to search for in the file basename
-    '''
+    """
     files = []
     for r, ds, fs in walk(directory):
         for f in fs:
@@ -79,7 +79,7 @@ def find_files(directory, ext, pattern):
 
 
 def find_kw_in_lines(kw, lines, addon_str=' = '):
-    '''
+    """
     Returns the index of a list of strings that had a kw in it
 
     Args:
@@ -88,7 +88,7 @@ def find_kw_in_lines(kw, lines, addon_str=' = '):
         addon_str: String to append to your key word to help filter
     Return:
         i: Integer of the index of a line containing a kw. -1 otherwise
-    '''
+    """
     str_temp = '{}' + addon_str
 
     for i, line in enumerate(lines):
@@ -107,7 +107,7 @@ def find_kw_in_lines(kw, lines, addon_str=' = '):
 
 
 def assign_default_kwargs(object, kwargs, defaults, leave=[]):
-    '''
+    """
     Assign keyword arguments to class attributes. If a key in the default
     is not in the kwargs then its value becomes the value in the default.
     Any value found in the defaults is removed from the kwargs
@@ -119,7 +119,7 @@ def assign_default_kwargs(object, kwargs, defaults, leave=[]):
         leave: List of attributes to leave in mod_kwargs
     Returns:
         mod_kwargs: kwargs with all keys in the defaults removed from it.
-    '''
+    """
 
     mod_kwargs = kwargs.copy()
 
@@ -141,3 +141,20 @@ def assign_default_kwargs(object, kwargs, defaults, leave=[]):
         setattr(object, k, value)
 
     return mod_kwargs
+
+
+def get_file_creation_date(file):
+    """
+    Returns the files creation date as a datetime object. Useful for assuming
+    a date accessed of data for NSIDC citation
+
+    Args:
+        file:
+
+    Returns:
+        result: A datetime object of when the file was created according to
+                the system
+    """
+
+    result = datetime.datetime.fromtimestamp(getctime(file)).date()
+    return result

@@ -6,11 +6,9 @@ Mapping in the sqlalchemy or ORM.
 """
 import datetime
 
-from geoalchemy2 import Geography, Geometry, Raster
-from sqlalchemy import (Boolean, Column, Date, DateTime, Float, ForeignKey,
-                        Index, Integer, String, Time)
+from geoalchemy2 import Geometry, Raster
+from sqlalchemy import Column, Date, DateTime, Float, Integer, String, Time
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import backref, relationship
 from sqlalchemy.sql import func
 
 Base = declarative_base()
@@ -26,6 +24,8 @@ class SnowData(object):
     time_updated = Column(DateTime(timezone=True), onupdate=func.now())
     id = Column(Integer, primary_key=True)
     site_id = Column(String(50))
+    doi = Column(String(50))
+    date_accessed = Column(Date)
 
 
 class Measurement(object):

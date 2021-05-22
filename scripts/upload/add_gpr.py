@@ -30,7 +30,8 @@ def main():
         'instrument': 'pulse EKKO Pro multi-polarization 1 GHz GPR',
         'in_timezone': 'UTC',
         'out_timezone': 'US/Mountain',
-        'epsg': 26912
+        'epsg': 26912,
+        'doi': 'https://doi.org/10.5067/Q2LFK0QSVGS2'
     }
 
     # Break out the path and make it an absolute path

@@ -1,9 +1,7 @@
 import datetime
-from datetime import date, time
+from datetime import date
 
 import numpy as np
-import pandas as pd
-import pytest
 import pytz
 
 from snowexsql.data import LayerData
@@ -63,7 +61,7 @@ class TestStratigraphyProfile(TableTestBase):
             dict(data_name='manual_wetness', attribute_to_count='value', expected_count=1),
             # Test only 3 hand hardness categories were used
             dict(data_name='hand_hardness', attribute_to_count='value', expected_count=3),
-            # Test only 2 graint type categories were used
+            # Test only 2 grain type categories were used
             dict(data_name='grain_type', attribute_to_count='value', expected_count=2),
             # Test only 2 grain_sizes were used
             dict(data_name='grain_size', attribute_to_count='value', expected_count=2),
@@ -71,12 +69,19 @@ class TestStratigraphyProfile(TableTestBase):
         ]
     }
 
+    def test_date_accessed(self):
+        """
+        Tests that the date accessed is auto assigned on upload
+        """
+        result = self.session.query(LayerData.date_accessed).limit(1).all()
+        assert type(result[0][0]) is date
+
 
 class TestDensityProfile(TableTestBase):
-    '''
+    """
     Test that a density file is uploaded correctly including sample
     averaging for the main value.
-    '''
+    """
 
     args = ['density.csv']
     kwargs = {'timezone': 'MST'}
@@ -104,17 +109,17 @@ class TestDensityProfile(TableTestBase):
     }
 
     def test_bottom_depth(self):
-        '''
+        """
         Insure bottom depth info is not lost after standardizing it
-        '''
+        """
         records = self.session.query(LayerData.bottom_depth).filter(LayerData.id <= 2).all()
         assert records[0][0] - records[1][0] == 10
 
 
 class TestLWCProfile(TableTestBase):
-    '''
+    """
     Test the permittivity file is uploaded correctly
-    '''
+    """
 
     args = ['LWC.csv']
     kwargs = {'timezone': 'MST'}
@@ -144,9 +149,9 @@ class TestLWCProfile(TableTestBase):
 
 
 class TestLWCProfileB(TableTestBase):
-    '''
+    """
     Test the permittivity file is uploaded correctly
-    '''
+    """
 
     args = ['LWC2.csv']
     kwargs = {'timezone': 'MST'}
@@ -189,9 +194,9 @@ class TestLWCProfileB(TableTestBase):
 
 
 class TestTemperatureProfile(TableTestBase):
-    '''
+    """
     Test that a temperature profile is uploaded to the DB correctly
-    '''
+    """
 
     args = ['temperature.csv']
     kwargs = {'timezone': 'MST'}
@@ -217,9 +222,9 @@ class TestTemperatureProfile(TableTestBase):
 
 
 class TestSSAProfile(TableTestBase):
-    '''
+    """
     Test that all profiles from an SSA file are uploaded correctly
-    '''
+    """
 
     args = ['SSA.csv']
     kwargs = {'timezone': 'MST'}
@@ -253,9 +258,9 @@ class TestSSAProfile(TableTestBase):
 
 
 class TestSMPProfile(TableTestBase):
-    '''
+    """
     Test SMP profile is uploaded with all its attributes and valid data
-    '''
+    """
 
     args = ['S06M0874_2N12_20200131.CSV']
     kwargs = {'timezone': 'UTC', 'units': 'Newtons', 'header_sep': ':'}
