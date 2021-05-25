@@ -5,8 +5,8 @@ services:
   postgres:
     image: kartoza/postgis:13-3.1
     environment:
-      POSTGRES_PASSWORD: snowex_testing
-      POSTGRES_USER: snowex_tester
+      POSTGRES_PASSWORD: builder
+      POSTGRES_USER: db_builder
       POSTGRES_DB: test
       TZ: 'US/Mountain'
       PGTZ: 'US/Mountain'

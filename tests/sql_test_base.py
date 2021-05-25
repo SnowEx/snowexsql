@@ -23,7 +23,7 @@ def pytest_generate_tests(metafunc):
 
 class DBSetup:
     """
-    Base class for all our tests. Ensures that we clean up after every class thats run
+    Base class for all our tests. Ensures that we clean up after every class that's run
     """
 
     @classmethod
@@ -31,10 +31,11 @@ class DBSetup:
         """
         Setup the database one time for testing
         """
-        self.db = 'snowex_tester:snowex_testing@localhost/test'
+        self.db = 'localhost/test'
         self.data_dir = join(dirname(__file__), 'data')
+        creds = join(dirname(__file__), 'credentials.json')
 
-        self.engine, self.session, self.metadata = get_db(self.db, return_metadata=True)
+        self.engine, self.session, self.metadata = get_db(self.db, credentials=creds, return_metadata=True)
 
         initialize(self.engine)
 
@@ -98,7 +99,7 @@ class TableTestBase(DBSetup):
                 self.kwargs['smp_log_f'] = join(self.data_dir, self.kwargs['smp_log_f'])
 
         self.kwargs['db_name'] = self.db
-
+        self.kwargs['credentials'] = join(dirname(__file__), 'credentials.json')
         u = self.UploaderClass(*self.args, **self.kwargs)
 
         # Allow for batches and single upload
@@ -147,6 +148,7 @@ class TableTestBase(DBSetup):
 
         records = q.all()
         received = getattr(records[0], attribute_to_check)
+
         try:
             received = float(received)
         except:
