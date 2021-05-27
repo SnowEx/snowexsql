@@ -26,6 +26,8 @@ jobs:
           POSTGRES_PASSWORD: db_builder
           POSTGRES_USER: builder
           POSTGRES_DB: test
+          TZ: 'US/Mountain'
+          PGTZ: 'US/Mountain'
 
         ports:
           - 5432:5432
