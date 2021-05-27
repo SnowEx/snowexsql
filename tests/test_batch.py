@@ -74,7 +74,7 @@ class TestUploadProfileBatchErrors():
         Test batch uploading without debug and errors
         """
 
-        u = UploadProfileBatch(self.files, debug=False)
+        u = UploadProfileBatch(self.files, credentials=join(dirname(__file__), 'credentials.json'), debug=False)
         u.push()
         assert len(u.errors) == 1
 
@@ -91,7 +91,7 @@ class TestUploadProfileBatchErrors():
         """
         Test that batch correctly runs with no files
         """
-        u = UploadProfileBatch([], debug=True)
+        u = UploadProfileBatch([], credentials=join(dirname(__file__), 'credentials.json'), debug=True)
         u.push()
         assert u.uploaded == 0
 
