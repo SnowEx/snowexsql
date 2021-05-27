@@ -5,9 +5,9 @@ services:
   postgres:
     image: kartoza/postgis:13-3.1
     environment:
-      POSTGRES_PASSWORD: builder
-      POSTGRES_USER: db_builder
-      POSTGRES_DB: test
+      POSTGRES_PASSWORD: 'db_builder'
+      POSTGRES_USER: 'builder'
+      POSTGRES_DB: 'test'
       TZ: 'US/Mountain'
       PGTZ: 'US/Mountain'
     ports:
