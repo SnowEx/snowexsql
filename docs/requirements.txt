@@ -1,6 +1,6 @@
-nbsphinx==0.7.1
-sphinx-gallery==0.7.0
-nbconvert==6.0.6
-Sphinx==1.8.5
+nbsphinx==0.8.5
+sphinx-gallery==0.9.0
+nbconvert==6.0.7
+sphinx==4.0.2
 pandoc==1.0.2
 sphinxcontrib-apidoc==0.3.0
