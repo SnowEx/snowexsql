@@ -23,9 +23,11 @@ jobs:
       postgis:
         image: kartoza/postgis:13-3.1
         env:
-          POSTGRES_PASSWORD: snowex_testing
-          POSTGRES_USER: snowex_tester
+          POSTGRES_PASSWORD: db_builder
+          POSTGRES_USER: builder
           POSTGRES_DB: test
+          TZ: 'US/Mountain'
+          PGTZ: 'US/Mountain'
 
         ports:
           - 5432:5432

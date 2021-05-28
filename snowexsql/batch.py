@@ -1,16 +1,13 @@
-'''
-Module for storing and managing mulitple file submissions to the
+"""
+Module for storing and managing multiple file submissions to the
 the database
-'''
+"""
 
 import glob
 import time
 from os.path import abspath, basename, expanduser, join
 
-import pandas as pd
-
-from snowexsql.data import SiteData
-from snowexsql.db import get_db, get_table_attributes
+from snowexsql.db import get_db
 from snowexsql.interpretation import get_InSar_flight_comment
 from snowexsql.metadata import (DataHeader, SMPMeasurementLog,
                                 read_InSar_annotation)
@@ -18,8 +15,8 @@ from snowexsql.upload import UploadProfileData, UploadRaster
 from snowexsql.utilities import assign_default_kwargs, get_logger
 
 
-class BatchBase():
-    '''
+class BatchBase:
+    """
     Base Class for uploading multiple files to the database. This class manages
     uploading, managing logging and timing, and reporting of errors
 
@@ -39,19 +36,23 @@ class BatchBase():
               Use debug=False to allow exceptions
         report: Log the final result of uploaded files, errors, time elapsed,
                 etc.
-    '''
+    """
 
-    defaults = {}
+    defaults = {'db_name': 'localhost/snowex',
+                'credentials': 'credentials.json',
+                'debug': True,
+                'n_files': -1}
+
     UploaderClass = None
 
     def __init__(self, filenames, **kwargs):
-        '''
+        """
         Assigns attributes from kwargs and their defaults from self.defaults
         Also opens and assigns the database connection
 
         Args:
             profile_filenames: List of valid files to be uploaded to the database
-            db_name: String name of database this will interact with, default=snowex
+            db_name: String name of database this will interact with, default=localhost/snowex
 
             debug: Boolean that allows exceptions when uploading files, when
                  True no exceptions are allowed. Default=True
@@ -60,10 +61,9 @@ class BatchBase():
             kwargs: Any keywords that can be passed along to the UploadProfile
                     Class. Any kwargs not recognized will be merged into a
                     comment.
-        '''
+        """
         self.filenames = filenames
         self.meta = assign_default_kwargs(self, kwargs, self.defaults)
-
         # Grab logger
         self.log = get_logger(__name__)
 
@@ -71,17 +71,18 @@ class BatchBase():
         self.errors = []
         self.uploaded = 0
 
-        # Grab db
+        # Grab db using credentials
         self.log.info('Accessing Database {}'.format(self.db_name))
-        engine, self.session = get_db(self.db_name)
+        engine, self.session = get_db(self.db_name, credentials=self.credentials)
+
         self.log.info('Preparing to upload {} files...'.format(len(filenames)))
 
     def push(self):
-        '''
+        """
         Push all the data to the database tracking errors
         If class is instantiated with debug=True exceptions will
         error out. Otherwise any errors will be passed over and counted/reported
-        '''
+        """
 
         self.start = time.time()
         self.log.info('Uploading {} files to database...'
@@ -116,12 +117,12 @@ class BatchBase():
         self.report(i + 1)
 
     def _push_one(self, f, **kwargs):
-        '''
+        """
         Manage what pushing a single file is to use with debug options.
 
         Args:
             f: valid file to upload
-        '''
+        """
 
         d = self.UploaderClass(f, **kwargs)
 
@@ -130,12 +131,12 @@ class BatchBase():
         self.uploaded += 1
 
     def report(self, files_attempted):
-        '''
+        """
         Report timing and errors that occurred
 
         Args:
             files_attempted: Number of files attempted
-        '''
+        """
         self.log.info("{} / {} files uploaded.".format(self.uploaded,
                                                        files_attempted))
 
@@ -154,39 +155,28 @@ class BatchBase():
 
 
 class UploadSiteDetailsBatch(BatchBase):
-    '''
+    """
     Class for uploading site details files to the sites table
-    '''
-    # Kwargs defaults
-    defaults = {'debug': True,
-                'n_files': -1,
-                'db_name': 'snowex'
-                }
-
+    """
     UploaderClass = DataHeader
 
 
 class UploadProfileBatch(BatchBase):
-    '''
-    Class for submitting mulitple files of profile type data.
+    """
+    Class for submitting multiple files of profile type data.
 
     Attributes:
         smp_log_f: CSV providing metadata for profile_filenames.
-    '''
-    # Kwargs defaults
-    defaults = {'debug': True,
-                'n_files': -1,
-                'db_name': 'snowex',
-                'smp_log_f': None,
-
-                }
+    """
+    # Extend the kwargs defaults
+    defaults = {'smp_log_f': None, **BatchBase.defaults}
 
     UploaderClass = UploadProfileData
 
     def push(self):
-        '''
+        """
         An overwritten push function to account for managing SMP meta data.
-        '''
+        """
 
         self.start = time.time()
 
@@ -198,7 +188,6 @@ class UploadProfileBatch(BatchBase):
             self.smp_log = None
 
         # Keep track of whether we using a site details file for each profile
-        individual_meta_files = False
         smp_file = False
 
         # Read the data and organize it, remap the names
@@ -237,16 +226,10 @@ class UploadProfileBatch(BatchBase):
 
 
 class UploadRasterBatch(BatchBase):
-    '''
+    """
     Given a folder, looks through and uploads all rasters with the matching
     the file extension
-    '''
-    # Kwargs defaults
-    defaults = {'debug': True,
-                'n_files': -1,
-                'db_name': 'snowex'
-                }
-
+    """
     UploaderClass = UploadRaster
 
 
@@ -254,7 +237,7 @@ class UploadUAVSARBatch(BatchBase):
     """
     Class extending the functionality of Upload Raster Batch to better
     fit the UAVSAR data which has the following rasters associated to a single
-    metdata file (annotation file):
+    metadata file (annotation file):
         * Correlation
         * Amplitude of pass 1
         * Amplitude of pass 2
@@ -274,19 +257,16 @@ class UploadUAVSARBatch(BatchBase):
                  'amp2': 'amplitude of pass 2',
                  'cor': 'correlation'}
 
-    defaults = {'debug': True,
-                'n_files': -1,
-                'db_name': 'snowex',
-                'geotiff_dir': None  # Add a keyword arg for the geotiff location
-                }
+    # Extend the kwargs by adding a geotiff dir for the uavsar conversion
+    defaults = {'geotiff_dir': None, **BatchBase.defaults}
 
     UploaderClass = UploadRaster
 
     def _push_one(self, f, **kwargs):
-        '''
+        """
         Here we overwrite _push_one to push a set of rasters associated to the
         annotation file instead a single raster
-        '''
+        """
 
         # Copy the metadata for modifying and open the ann file
         meta = kwargs.copy()

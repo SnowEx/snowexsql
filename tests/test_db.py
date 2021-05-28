@@ -82,5 +82,5 @@ def test_getting_db(return_metadata, expected_objs):
     Test we can receive a connection and opt out of getting the metadata
     """
 
-    result = get_db('snowex_tester:snowex_testing@localhost/test', return_metadata=return_metadata)
+    result = get_db('builder:db_builder@localhost/test', return_metadata=return_metadata)
     assert len(result) == expected_objs

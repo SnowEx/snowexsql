@@ -7,6 +7,8 @@ Uploads the Snowex 2020 depths to the database
 """
 
 import glob
+import time
+from os.path import abspath, join
 
 from snowexsql.db import get_db
 from snowexsql.upload import *
@@ -22,8 +24,8 @@ def main():
     base = abspath(join('../download/data/SNOWEX/SNEX20_SD.001/'))
 
     # Start the Database
-    db_name = 'snowex'
-    engine, session = get_db(db_name)
+    db_name = 'localhost/snowex'
+    engine, session = get_db(db_name, credentials='./credentials.json')
 
     csvs = glob.glob(join(base, '*/*.csv'))
 

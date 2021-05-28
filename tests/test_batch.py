@@ -3,6 +3,7 @@ from os.path import dirname, join
 
 import pytest
 import pytz
+from sqlalchemy import func
 
 from snowexsql.batch import *
 from snowexsql.data import ImageData, LayerData, SiteData
@@ -74,7 +75,7 @@ class TestUploadProfileBatchErrors():
         Test batch uploading without debug and errors
         """
 
-        u = UploadProfileBatch(self.files, debug=False)
+        u = UploadProfileBatch(self.files, credentials=join(dirname(__file__), 'credentials.json'), debug=False)
         u.push()
         assert len(u.errors) == 1
 
@@ -91,7 +92,7 @@ class TestUploadProfileBatchErrors():
         """
         Test that batch correctly runs with no files
         """
-        u = UploadProfileBatch([], debug=True)
+        u = UploadProfileBatch([], credentials=join(dirname(__file__), 'credentials.json'), debug=True)
         u.push()
         assert u.uploaded == 0
 
@@ -211,14 +212,22 @@ class TestUploadUAVSARBatch(TableTestBase):
                  filter_value='Linear Power and Phase in Radians', expected='UAVSAR team, JPL'),
             dict(data_name='insar interferogram real', attribute_to_check='units', filter_attribute='surveyors',
                  filter_value=surveyors, expected='Linear Power and Phase in Radians'),
-            dict(data_name='insar amplitude', attribute_to_check='date', filter_attribute='surveyors',
-                 filter_value=surveyors, expected=datetime.date(2020, 1, 31)),
             dict(data_name='insar correlation', attribute_to_check='instrument', filter_attribute='surveyors',
                  filter_value=surveyors, expected='UAVSAR, L-band InSAR'),
             ],
         # Test we have two dates for the insar amplitude overapasses
         'test_unique_count': [dict(data_name='insar amplitude', attribute_to_count='date', expected_count=2), ]
     }
+
+
+    def test_uavsar_date(self):
+        """
+        Github actions is failing on a test pulling 1 of 2 uavsar dates. This is likely because the dates are not in
+        the same order as our tests are expecting. This test accomplishes the same test but adds assurance around which
+        date is being checked.
+        """
+        results = self.session.query(func.min(ImageData.date)).filter(ImageData.type == 'insar amplitude').all()
+        assert results[0][0] == datetime.date(2020, 1, 31)
 
     @pytest.mark.parametrize("data_name, kw", [
         # Check the single pass products have a few key words
@@ -228,6 +237,7 @@ class TestUploadUAVSARBatch(TableTestBase):
         ('interferogram real', ['duration', 'overpass', '1st', '2nd', 'polarization', 'dem']),
         ('interferogram imaginary', ['duration', 'overpass', '1st', '2nd', 'polarization', 'dem']),
     ])
+
     def test_description_generation(self, data_name, kw):
         """
         Asserts each kw is found in the description of the data

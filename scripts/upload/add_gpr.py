@@ -38,8 +38,8 @@ def main():
     file = abspath(expanduser(file))
 
     # Grab a db connection to a local db named snowex
-    db_name = 'snowex'
-    engine, session = get_db(db_name)
+    db_name = 'localhost/snowex'
+    engine, session = get_db(db_name, credentials='./credentials.json')
 
     # Instantiate the point uploader
     csv = PointDataCSV(file, **kwargs)
