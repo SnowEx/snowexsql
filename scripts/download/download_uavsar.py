@@ -1,3 +1,15 @@
+"""
+Originally written by HPM in matlab. Transcribed by Micah J. into python.
+Script uses the urls, polarizations and file types to download uavsar data. It will not overwrite files
+so if you want to re-download fresh manually remove the output_dir.
+
+Warning: Canceling the script mid run will produce a file partially written. Rerunning the script will think the
+file is already downloaded and skip it. You will have to remove that file if you want to re-download it.
+
+usage:
+    python3 download_uavsar.py
+"""
+
 import requests
 import os
 from os.path import join, isdir, isfile, basename
@@ -66,8 +78,13 @@ def download_uavsar(url, base_flight_name, output_dir='./data/uavsar', polarizat
                 print(f"{local} already exists, skipping download!")
 
         # Download the ann file always.
-        stream_download(remote.replace(f"{ext}.grd", "ann"), local.replace(f"{ext}.grd", "ann"))
+        remote = remote.replace(f"{ext}.grd", "ann")
+        local = local.replace(f"{ext}.grd", "ann")
 
+        if not isfile(local):
+            stream_download(remote, local)
+        else:
+            print(f"{local} already exists, skipping download!")
 
 def main():
     """
