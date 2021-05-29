@@ -1,4 +1,4 @@
-'''
+"""
 This script uploads the UAVSAR raster to the database after they have been
 converted to geotifs.
 
@@ -18,10 +18,9 @@ Usage:
     # To run individually
     python add_UAVSAR.py
 
-'''
+"""
 
 import glob
-import os
 from os.path import abspath, expanduser, join
 
 from snowexsql.batch import UploadUAVSARBatch
@@ -30,7 +29,7 @@ from snowexsql.batch import UploadUAVSARBatch
 def main():
 
     # Location of the downloaded data
-    downloads = '~/Downloads/SnowEx2020_UAVSAR'
+    downloads = '../download/data/uavsar'
 
     # Sub folder name under the downloaded data that the tifs were saved to
     geotif_loc = 'geotiffs'
@@ -48,6 +47,7 @@ def main():
         'site_name': 'Grand Mesa',
         'units': '',  # Add from the Annotation file
         'description': '',
+        'doi': "https://asf.alaska.edu/doi/uavsar/#R0ARICRBAKYE"
     }
 
     # Expand the paths
@@ -59,7 +59,7 @@ def main():
 
     ########################## Grand Mesa #####################################
     # Grab all the grand mesa annotation files in the original data folder
-    ann_files = glob.glob(join(downloads, 'grmesa*.ann'))
+    ann_files = glob.glob(join(downloads, 'grmesa_*.ann'))
 
     # Instantiate the uploader
     rs = UploadUAVSARBatch(ann_files, geotiff_dir=geotif_loc, **data)
@@ -76,7 +76,8 @@ def main():
     data['epsg'] = 29611
 
     # Grab all the lowman annotation files
-    ann_files = glob.glob(join(downloads, 'lowman*.ann'))
+    ann_files = glob.glob(join(downloads, 'lowman_*.ann'))
+    ann_files = glob.glob(join(downloads, 'silver_*.ann'))
 
     # Instantiate the uploader
     rs = UploadUAVSARBatch(ann_files, geotiff_dir=geotif_loc, **data)
@@ -87,7 +88,7 @@ def main():
     # Keep track of the number of errors
     errors_count += len(rs.errors)
 
-    # Return the error count so run.py can keep track
+    Return the error count so run.py can keep track
     return errors_count
 
 

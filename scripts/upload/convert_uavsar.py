@@ -1,4 +1,4 @@
-'''
+"""
 Convert UAVSAR data to geotiffs then reproject to UTM before uploading to db
 
 Download from HP Marshalls Google Drive
@@ -6,7 +6,7 @@ Download from HP Marshalls Google Drive
 Unzip to ~/Downloads
 
 Otherwise see main() to redefine the location where the files are stored
-'''
+"""
 
 import glob
 import shutil
@@ -23,7 +23,7 @@ log = get_logger('grd2tif')
 
 
 def convert(filenames, output, epsg, clean_first=False):
-    '''
+    """
     Convert all grd files from the UAVSAR grd to tiff. Then reporjects
     the resulting files from Lat long to UTM, and then saves to the output dir
 
@@ -32,7 +32,7 @@ def convert(filenames, output, epsg, clean_first=False):
         output: directory to output files to
         epsg: epsg of the resulting file
         clean_first: Boolean indicating whether to clear out the output folder first
-    '''
+    """
     # Keep track of errors, time elapsed, and number of files completed
     start = time.time()
     errors = []
@@ -64,15 +64,18 @@ def convert(filenames, output, epsg, clean_first=False):
 
         # Form a pattern based on the annotation filename
         base_f = basename(ann)
-        pattern = '.'.join(base_f.split('.')[0:-1]) + '*'
+        pattern = '.'.join(base_f.split('.')[0:-1]) + '*.grd'
 
         # Gather all files associated
-        grd_files = glob.glob(join(directory, pattern + '.grd'))
+        grd_files = glob.glob(join(directory, pattern))
+        grd_files = set(grd_files)
+
         log.info(
             'Converting {} grd files to geotiff...'.format(
                 len(grd_files)))
 
         for grd in grd_files:
+
             # Save to our temporary folder and only change fname to have
             # ext=tif
             latlon_tiff = grd.replace(directory, temp).replace('grd', 'tif')
@@ -121,7 +124,7 @@ def main():
     boi_epsg = 26911
 
     # Folder to look for .grd files
-    directory = '~/Downloads/SnowEx2020_UAVSAR'
+    directory = '../download/data/uavsar'
 
     # Folder to output inside of the directory
     output = 'geotiffs'
@@ -131,9 +134,11 @@ def main():
     output = join(directory, output)
 
     # Gather all .ann files
-    gm_filenames = glob.glob(join(directory, 'grmesa*.ann'))
-    boi_filenames = glob.glob(join(directory, 'lowman*.ann'))
-    nfiles = len(boi_filenames) + len(gm_filenames)
+    gm_filenames = glob.glob(join(directory, 'grmesa_*.ann'))
+    boi_filenames = glob.glob(join(directory, 'lowman_*.ann'))
+    rcew_filenames = glob.glob(join(directory, 'silver_*.ann'))
+
+    nfiles = len(boi_filenames) + len(gm_filenames) + len(rcew_filenames)
 
     if isdir(output):
         ans = input('\nWARNING! You are about overwrite {} previously '
@@ -142,17 +147,24 @@ def main():
                     ''.format(nfiles, output))
 
         if ans.lower() == 'y':
+            log.info('Converting Grand Mesa...')
             convert(gm_filenames, output, gm_epsg, clean_first=True)
+            log.info('Converting Boise/Lowman...')
             convert(boi_filenames, output, boi_epsg)
+            log.info('Converting Reynolds Creek/Silver...')
+            convert(rcew_filenames, output, boi_epsg)
 
         else:
             log.warning(
                 'Skipping conversion and overwriting of UAVSAR files...')
     else:
         mkdir(output)
+        log.info('Converting Grand Mesa...')
         convert(gm_filenames, output, gm_epsg)
+        log.info('Converting Boise/Lowman...')
         convert(boi_filenames, output, boi_epsg)
-
+        log.info('Converting Reynolds Creek/Silver...')
+        convert(rcew_filenames, output, boi_epsg)
 
 if __name__ == '__main__':
     main()
