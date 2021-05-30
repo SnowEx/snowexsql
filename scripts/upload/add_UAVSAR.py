@@ -19,7 +19,7 @@ Usage:
     python add_UAVSAR.py
 
 """
-
+import sys
 import glob
 from os.path import abspath, expanduser, join
 
@@ -27,6 +27,11 @@ from snowexsql.batch import UploadUAVSARBatch
 
 
 def main():
+
+    region = 'all'
+
+    if len(sys.argv) > 1:
+        region = sys.argv[1]
 
     # Location of the downloaded data
     downloads = '../download/data/uavsar'
@@ -57,39 +62,67 @@ def main():
     # error counting
     errors_count = 0
 
-    ########################## Grand Mesa #####################################
-    # Grab all the grand mesa annotation files in the original data folder
-    ann_files = glob.glob(join(downloads, 'grmesa_*.ann'))
+    if region in ['all', 'grand_mesa']:
+        print('Uploading Grand Mesa')
+        ########################## Grand Mesa #####################################
+        # Grab all the grand mesa annotation files in the original data folder
+        ann_files = glob.glob(join(downloads, 'grmesa_*.ann'))
 
-    # Instantiate the uploader
-    rs = UploadUAVSARBatch(ann_files, geotiff_dir=geotif_loc, **data)
+        # Instantiate the uploader
+        rs = UploadUAVSARBatch(ann_files, geotiff_dir=geotif_loc, **data)
 
-    # Submit to the db
-    rs.push()
+        # Submit to the db
+        rs.push()
 
-    # Keep track of number of errors for run.py
-    errors_count += len(rs.errors)
+        # Keep track of number of errors for run.py
+        errors_count += len(rs.errors)
 
-    ############################### Idaho ####################################
-    # Make adjustments to metadata for lowman files
-    data['site_name'] = 'idaho'
-    data['epsg'] = 29611
+        # Memory clean up
+        del rs
 
-    # Grab all the lowman annotation files
-    ann_files = glob.glob(join(downloads, 'lowman_*.ann'))
-    ann_files = glob.glob(join(downloads, 'silver_*.ann'))
+    if region in ['all', 'lowman']:
+        print('Uploading Lowman')
+        ############################### Idaho - Lowman ####################################
+        # Make adjustments to metadata for lowman files
+        data['site_name'] = 'idaho'
+        data['epsg'] = 29611
 
-    # Instantiate the uploader
-    rs = UploadUAVSARBatch(ann_files, geotiff_dir=geotif_loc, **data)
+        # Grab all the lowman and reynolds annotation files
+        ann_files = glob.glob(join(downloads, 'lowman_*.ann'))
 
-    # Submit to the db
-    rs.push()
+        # Instantiate the uploader
+        rs = UploadUAVSARBatch(ann_files, geotiff_dir=geotif_loc, **data)
 
-    # Keep track of the number of errors
-    errors_count += len(rs.errors)
+        # Submit to the db
+        rs.push()
 
-    Return the error count so run.py can keep track
-    return errors_count
+        # Keep track of the number of errors
+        errors_count += len(rs.errors)
+
+        # Memory clean up
+        del rs
+
+    if region in ['all', 'reynolds']:
+        print("Uploading Reynolds Creek")
+        ############################### Idaho - Reynolds ####################################
+        # Make adjustments to metadata for lowman files
+        data['site_name'] = 'idaho'
+        data['epsg'] = 29611
+
+        # Grab all the lowman and reynolds annotation files
+        ann_files = glob.glob(join(downloads, 'silver_*.ann'))
+
+        # Instantiate the uploader
+        rs = UploadUAVSARBatch(ann_files, geotiff_dir=geotif_loc, **data)
+
+        # Submit to the db
+        rs.push()
+
+        # Keep track of the number of errors
+        errors_count += len(rs.errors)
+
+        # Return the error count so run.py can keep track
+        return errors_count
 
 
 if __name__ == '__main__':
