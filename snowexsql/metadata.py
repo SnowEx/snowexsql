@@ -58,7 +58,7 @@ def read_InSar_annotation(ann_file):
         info = info[0]
 
         # ignore empty strings
-        if info:
+        if info and "=" in info:
             d = info.split('=')
             name, value = d[0], d[1]
 
