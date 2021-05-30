@@ -68,28 +68,29 @@ for DB in $DATABASES
   do
     echo Creating $DB database
     # Create the dbs that the database build owns
-    createdb -O $DB_BUILDER $DB
+    sudo -u postgres createdb -O $DB_BUILDER $DB
 
     # Install postgis
-    psql $DB -c 'CREATE EXTENSION postgis; CREATE EXTENSION postgis_raster;'
+    sudo -u postgres psql $DB -c 'CREATE EXTENSION postgis; CREATE EXTENSION postgis_raster;'
     python3 ../upload/create.py --overwrite --db $DB --credentials ../upload/credentials.json
   done
 
 # Establish builder as our uploading user
-psql snowex -c "GRANT CONNECT ON DATABASE snowex TO $DB_BUILDER;"
-psql snowex -c "GRANT CONNECT ON DATABASE test TO $DB_BUILDER;"
-psql snowex -c "GRANT USAGE ON SCHEMA public TO $DB_BUILDER;"
-psql snowex -c "GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO $DB_BUILDER;"
+sudo -u postgres psql snowex -c "GRANT CONNECT ON DATABASE snowex TO $DB_BUILDER;"
+sudo -u postgres psql snowex -c "GRANT CONNECT ON DATABASE test TO $DB_BUILDER;"
+sudo -u postgres psql snowex -c "GRANT USAGE ON SCHEMA public TO $DB_BUILDER;"
+sudo -u postgres psql snowex -c "GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO $DB_BUILDER;"
+
 
 # Establish snow as a readonly user based on
 # https://medium.com/@swaplord/grant-read-only-access-to-postgresql-a-database-for-a-user-35c57897dd0b
-psql snowex -c "GRANT CONNECT ON DATABASE snowex TO $READ_ONLY;"
-psql snowex -c "GRANT USAGE ON SCHEMA public TO $READ_ONLY;"
+sudo -u postgres psql snowex -c "GRANT CONNECT ON DATABASE snowex TO $READ_ONLY;"
+sudo -u postgres psql snowex -c "GRANT USAGE ON SCHEMA public TO $READ_ONLY;"
 
 # Create the tables
 
 #psql snowex -c "ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES TO $READ_ONLY;"
-psql snowex -c "GRANT SELECT ON sites TO $READ_ONLY;"
-psql snowex -c "GRANT SELECT ON points TO $READ_ONLY;"
-psql snowex -c "GRANT SELECT ON layers TO $READ_ONLY;"
-psql snowex -c "GRANT SELECT ON images TO $READ_ONLY;"
+sudo -u postgres psql snowex -c "GRANT SELECT ON sites TO $READ_ONLY;"
+sudo -u postgres psql snowex -c "GRANT SELECT ON points TO $READ_ONLY;"
+sudo -u postgres psql snowex -c "GRANT SELECT ON layers TO $READ_ONLY;"
+sudo -u postgres psql snowex -c "GRANT SELECT ON images TO $READ_ONLY;"
