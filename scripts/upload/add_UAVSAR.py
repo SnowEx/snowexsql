@@ -50,8 +50,8 @@ def main():
         'surveyors': 'UAVSAR team, JPL',
         'instrument': 'UAVSAR, L-band InSAR',
         'site_name': 'Grand Mesa',
-        'units': '',  # Add from the Annotation file
-        'description': '',
+        'units': None,  # Add from the Annotation file
+        'description': '',  # Added from the annotation file
         'doi': "https://asf.alaska.edu/doi/uavsar/#R0ARICRBAKYE"
     }
 
@@ -80,49 +80,50 @@ def main():
         # Memory clean up
         del rs
 
-    if region in ['all', 'lowman']:
-        print('Uploading Lowman')
-        ############################### Idaho - Lowman ####################################
-        # Make adjustments to metadata for lowman files
-        data['site_name'] = 'idaho'
-        data['epsg'] = 29611
+    # if region in ['all', 'lowman']:
+    #     print('Uploading Lowman')
+    #     ############################### Idaho - Lowman ####################################
+    #     # Make adjustments to metadata for lowman files
+    #     data['site_name'] = 'idaho'
+    #     data['epsg'] = 29611
+    #
+    #     # Grab all the lowman and reynolds annotation files
+    #     ann_files = glob.glob(join(downloads, 'lowman_*.ann'))
+    #
+    #     # Instantiate the uploader
+    #     rs = UploadUAVSARBatch(ann_files, geotiff_dir=geotif_loc, **data)
+    #
+    #     # Submit to the db
+    #     rs.push()
+    #
+    #     # Keep track of the number of errors
+    #     errors_count += len(rs.errors)
+    #
+    #     # Memory clean up
+    #     del rs
+    #
+    # if region in ['all', 'reynolds']:
+    #     print("Uploading Reynolds Creek")
 
-        # Grab all the lowman and reynolds annotation files
-        ann_files = glob.glob(join(downloads, 'lowman_*.ann'))
-
-        # Instantiate the uploader
-        rs = UploadUAVSARBatch(ann_files, geotiff_dir=geotif_loc, **data)
-
-        # Submit to the db
-        rs.push()
-
-        # Keep track of the number of errors
-        errors_count += len(rs.errors)
-
-        # Memory clean up
-        del rs
-
-    if region in ['all', 'reynolds']:
-        print("Uploading Reynolds Creek")
         ############################### Idaho - Reynolds ####################################
-        # Make adjustments to metadata for lowman files
-        data['site_name'] = 'idaho'
-        data['epsg'] = 29611
-
-        # Grab all the lowman and reynolds annotation files
-        ann_files = glob.glob(join(downloads, 'silver_*.ann'))
-
-        # Instantiate the uploader
-        rs = UploadUAVSARBatch(ann_files, geotiff_dir=geotif_loc, **data)
-
-        # Submit to the db
-        rs.push()
-
-        # Keep track of the number of errors
-        errors_count += len(rs.errors)
-
-        # Return the error count so run.py can keep track
-        return errors_count
+        # # Make adjustments to metadata for lowman files
+        # data['site_name'] = 'idaho'
+        # data['epsg'] = 29611
+        #
+        # # Grab all the lowman and reynolds annotation files
+        # ann_files = glob.glob(join(downloads, 'silver_*.ann'))
+        #
+        # # Instantiate the uploader
+        # rs = UploadUAVSARBatch(ann_files, geotiff_dir=geotif_loc, **data)
+        #
+        # # Submit to the db
+        # rs.push()
+        #
+        # # Keep track of the number of errors
+        # errors_count += len(rs.errors)
+        #
+        # # Return the error count so run.py can keep track
+        # return errors_count
 
 
 if __name__ == '__main__':

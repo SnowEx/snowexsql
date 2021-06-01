@@ -1,0 +1,7 @@
+# From ASO Sources, Add back in when we have more memory in the instance
+https://asopublic.s3-us-west-1.amazonaws.com/USID/RY/2020/0218/ASO_Reynolds_mosaic_2020Feb18-19_AllData_and_Reports.zip
+https://asopublic.s3-us-west-1.amazonaws.com/USCO/GE/2020/0214/ASO_EastRiver_mosaic_2020Feb14-20_AllData_and_Reports.zip
+https://asopublic.s3-us-west-1.amazonaws.com/USCO/GT/2020/0220/ASO_TaylorRiver_mosaic_2020Feb20_AllData_and_Reports.zip
+
+# UAVSAR
+

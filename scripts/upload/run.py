@@ -11,7 +11,7 @@ will all prompt the user whether they want to overwrite and rerun those scripts.
 To create a new database upload script that is seen by this script, simply:
     1. Add a new file named 'add_<anyname>.py'
     2. Inside that file add define a main function that returns the number of errors
-    3. To maintain data provenance, if your additionaly data requires preprocessing (e.g. format conversion) create
+    3. To maintain data provenance, if your additionally data requires preprocessing (e.g. format conversion) create
     a script in this same folder, import it here, and then add it to the beginning around line 60 in this file.
 
 Usage:

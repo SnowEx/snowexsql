@@ -61,11 +61,11 @@ def main():
             # 'no_data':-999999
             }
 
-    # Grab all the annotation files in the original data folder
-    files = glob.glob(join(downloads, '*.tif'))
-    rs = UploadRasterBatch(files, **data)
-    rs.push()
-    errors_count += len(rs.errors)
+    # Grab all the annotation files in the original data folder, 
+    # files = glob.glob(join(downloads, '*.tif'))
+    # rs = UploadRasterBatch(files, **data)
+    # rs.push()
+    # errors_count += len(rs.errors)
 
     return errors_count
 

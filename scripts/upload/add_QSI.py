@@ -1,4 +1,4 @@
-'''
+"""
 Usage:
     # To run with all the scripts
     python run.py
@@ -14,7 +14,7 @@ Note: because rasters are so different in structure and metadata the metadata
 needs to be provided as key word arguments to the UploadRasterBatch which
 will pass them through to the final uploader
 
-'''
+"""
 
 import os
 import shutil
@@ -24,14 +24,13 @@ from subprocess import check_output
 import pandas as pd
 
 from snowexsql.batch import UploadRasterBatch
-from snowexsql.db import get_db
 from snowexsql.utilities import find_files, get_logger
 
 
 def reproject(filenames, out_epsg, out_dir, adjust_vdatum=False):
-    '''
+    """
     Reproject the data and then adjust the vertical datum
-    '''
+    """
     log = get_logger('reprojection')
     final = []
 
@@ -110,11 +109,11 @@ def main():
     meta2['description'] = desc2
     meta2['date'] = date2
 
-    # Dictionary mapping the metadata to the repsective folders
-    flight_meta = {'GrandMesa2020_F1': meta1,
-                   'GrandMesa2020_F2': meta2}
+    # Dictionary mapping the metadata to the respective folders
+    flight_meta = {}#{'GrandMesa2020_F1': meta1, # Temporarily suppressed
+                   #  'GrandMesa2020_F2': meta2}
 
-    # Name of the data mapped from repsective folder names
+    # Name of the data mapped from respective folder names
     names = {'Bare_Earth_Digital_Elevation_Models': 'DEM',
              'Digital_Surface_Models': 'DSM'}
 
