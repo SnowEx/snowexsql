@@ -18,4 +18,30 @@ while read url ; do \
               $url; \
               sleep 1 ;
 done <$SOURCE
+
+# Unzip
 find . -name "*.zip" | while read filename; do unzip -o -d "`dirname "$filename"`" "$filename"; done;
+
+# Reproject the files into the NAD 83 from WGS84
+REPROJECTED=$DATA/reprojected
+mkdir -p $REPROJECTED
+
+# Reproject the files
+CO_FILES=$(find $DATA/USCO -type f -name "*swe*.tif" -o -name "*_snowdepth*.tif")
+ID_FILES=$(find $DATA/USID -type f -name "*swe*.tif" -o -name "*_snowdepth*.tif")
+
+# Reproject Colorado Files
+for f in $CO_FILES
+  do
+    echo "Reprojecting $f from 32612 to 26912"
+    out=$(basename $f)
+    gdalwarp -t_srs EPSG:26912 -r bilinear $f "$REPROJECTED/$out"
+  done
+
+# Reproject Idaho files
+for f in $ID_FILES
+  do
+    echo "Reprojecting $f from 32611 to 26911"
+    out=$(basename $f)
+    gdalwarp -t_srs EPSG:26911 -r bilinear $f "$REPROJECTED/$out"
+  done
