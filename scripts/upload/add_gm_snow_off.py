@@ -1,4 +1,4 @@
-'''
+"""
 1. To download the data, run sh download_snow_off.sh
 2. Run this script.
 
@@ -17,7 +17,7 @@ Spatial Reference Original:
 
 Citation:
 U.S. Geological Survey, 20171101, USGS NED Original Product Resolution CO MesaCo-QL2 2015 12SYJ515455 IMG 2017: U.S. Geological Survey.
-'''
+"""
 
 import glob
 import os
@@ -49,7 +49,7 @@ def main():
     # error counting
     errors_count = 0
 
-    # Build metadata that gets copied to all rasters
+    # Build metadata that gets copied to all rasters being uploaded
     data = {'site_name': site_name,
             'description': desc,
             'units': units,
@@ -58,14 +58,14 @@ def main():
             'instrument': instrument,
             'tiled': True,
             'type': dtype,
-            # 'no_data':-999999
+            'doi': 'https://doi.org/10.3133/fs20203062'
             }
 
-    # Grab all the annotation files in the original data folder, 
-    # files = glob.glob(join(downloads, '*.tif'))
-    # rs = UploadRasterBatch(files, **data)
-    # rs.push()
-    # errors_count += len(rs.errors)
+    # Grab all the geotiff,
+    files = glob.glob(join(downloads, '*.tif'))
+    rs = UploadRasterBatch(files, **data)
+    rs.push()
+    errors_count += len(rs.errors)
 
     return errors_count
 
