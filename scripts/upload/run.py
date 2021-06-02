@@ -58,7 +58,7 @@ for f in os.listdir('.'):
             'Found addition script {}.py, staging for execution...'.format(local_mod))
 
 # Clear out the database
-create()
+create(overwrite=True)
 
 # Offer to resample the smp data
 resample_smp()

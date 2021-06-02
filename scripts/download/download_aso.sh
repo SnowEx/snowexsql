@@ -26,9 +26,8 @@ find . -name "*.zip" | while read filename; do unzip -o -d "`dirname "$filename"
 REPROJECTED=$DATA/reprojected
 mkdir -p $REPROJECTED
 
-# Reproject the files
+# Reproject the Colorado files
 CO_FILES=$(find $DATA/USCO -type f -name "*swe*.tif" -o -name "*_snowdepth*.tif")
-ID_FILES=$(find $DATA/USID -type f -name "*swe*.tif" -o -name "*_snowdepth*.tif")
 
 # Reproject Colorado Files
 for f in $CO_FILES
@@ -38,10 +37,11 @@ for f in $CO_FILES
     gdalwarp -t_srs EPSG:26912 -r bilinear $f "$REPROJECTED/$out"
   done
 
-# Reproject Idaho files
-for f in $ID_FILES
-  do
-    echo "Reprojecting $f from 32611 to 26911"
-    out=$(basename $f)
-    gdalwarp -t_srs EPSG:26911 -r bilinear $f "$REPROJECTED/$out"
-  done
+# TODO: Unsurpress the ID files for projection
+# ID_FILES=$(find $DATA/USID -type f -name "*swe*.tif" -o -name "*_snowdepth*.tif")
+#for f in $ID_FILES
+#  do
+#    echo "Reprojecting $f from 32611 to 26911"
+#    out=$(basename $f)
+#    gdalwarp -t_srs EPSG:26911 -r bilinear $f "$REPROJECTED/$out"
+#  done
