@@ -15,6 +15,10 @@ while read url ; do \
               --recursive \
               --reject "index.html*" \
               --reject "*.xml*" \
+              --reject "*.PNG*" \
+              --reject "*.PNT*" \
+              --reject "*.jpg*" \
+              --reject "*.png*" \
               -nH \
               -nc \
               $url; \
