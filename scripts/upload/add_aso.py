@@ -34,20 +34,29 @@ def main():
 
     ########################################### Grand MESA #############################################################
     # 1st flight Snow depth
-    f = join(reprojected, "ASO_GrandMesa_Mosaic_2020Feb1-2_snowdepth_50m.tif")
-    uploaders.append(UploadRasterBatch([f], date=date(2020, 2, 2), type="depth", units="meters", **kwargs))
+    # f = join(reprojected, "ASO_GrandMesa_Mosaic_2020Feb1-2_snowdepth_50m.tif")
+    # uploaders.append(UploadRasterBatch([f], date=date(2020, 2, 2), type="depth", units="meters", **kwargs))
 
     # 1st flight SWE
     f = join(reprojected, "ASO_GrandMesa_Mosaic_2020Feb1-2_swe_50m.tif")
     uploaders.append(UploadRasterBatch([f], date=date(2020, 2, 2), type="swe", units="meters", **kwargs))
 
-    # 2nd flight snow depth
-    f =  join(reprojected, "ASO_GrandMesa_Mosaic_2020Feb13_snowdepth_50m.tif")
-    uploaders.append(UploadRasterBatch([f], date=date(2020, 2, 13), type="depth", units="meters", **kwargs))
+    # # 2nd flight snow depth
+    # f =  join(reprojected, "ASO_GrandMesa_Mosaic_2020Feb13_snowdepth_50m.tif")
+    # uploaders.append(UploadRasterBatch([f], date=date(2020, 2, 13), type="depth", units="meters", **kwargs))
 
     # 2nd flight snow depth
     f = join(reprojected, "ASO_GrandMesa_Mosaic_2020Feb13_swe_50m.tif")
     uploaders.append(UploadRasterBatch([f], date=date(2020, 2, 13), type="swe", units="meters", **kwargs))
+
+    # Upload th 3m products
+    kwargs['description'] = "3m snow depth product"
+
+    f = join(reprojected, "ASO_GrandMesa_2020Feb1-2_snowdepth_3m.tif")
+    uploaders.append(UploadRasterBatch([f], date=date(2020, 2, 2), type="depth", units="meters", **kwargs))
+
+    f = join(reprojected, "ASO_GrandMesa_2020Feb13_snowdepth_3m.tif")
+    uploaders.append(UploadRasterBatch([f], date=date(2020, 2, 13), type="depth", units="meters", **kwargs))
 
     ########################################### East River #############################################################
 

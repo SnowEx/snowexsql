@@ -20,10 +20,8 @@ U.S. Geological Survey, 20171101, USGS NED Original Product Resolution CO MesaCo
 """
 
 import glob
-import os
 from os.path import abspath, expanduser, join
 
-from add_QSI import reproject
 from snowexsql.batch import UploadRasterBatch
 
 

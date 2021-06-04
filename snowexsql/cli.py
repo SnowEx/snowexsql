@@ -2,7 +2,6 @@ import argparse
 
 import pandas as pd
 
-import snowexsql
 from snowexsql.data import *
 from snowexsql.db import get_db
 
@@ -35,8 +34,16 @@ def clear_dataset():
         '--database',
         '-db',
         dest='db',
-        default='snowex',
+        default='localhost/snowex',
         help='name of the postgres database to connect to')
+
+    parser.add_argument(
+        '--credentials',
+        '-c',
+        dest='credentials',
+        default='./credentials.json',
+        help='path to a json containing username and password keys')
+
 
     args = parser.parse_args()
 
@@ -49,11 +56,14 @@ def clear_dataset():
         'SiteData': SiteData,
         'PointData': PointData,
         'LayerData': LayerData}
+
     TableClass = tables[args.table_class]
+
     print('Using the {} table to query...'.format(
         args.table_class.replace('data', '')))
+
     # Grab database session
-    engine, session = get_db(args.db)
+    engine, session = get_db(args.db, credentials=args.credentials)
 
     # Form the query
     q = session.query(TableClass)
