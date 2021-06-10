@@ -18,7 +18,7 @@ from snowexsql.upload import *
 
 
 def main():
-    file = '../download/data/SNOWEX/SNEX20_BSU_GPR.001/2020.01.28/SNEX20_BSU_GPR_pE_01282020_01292020_02042020_downsampled.csv'
+    file = '../download/data/SNOWEX/SNEX20_BSU_GPR.001/2020.01.28/SNEX20_BSU_GPR_pE_01282020_01292020_02042020.csv'
 
     kwargs = {
         # Keyword argument to upload depth measurements
@@ -26,7 +26,7 @@ def main():
 
         # Constant Metadata for the GPR data
         'site_name': 'Grand Mesa',
-        'surveyor': 'Tate Meehan',
+        'surveyors': 'Tate Meehan',
         'instrument': 'pulse EKKO Pro multi-polarization 1 GHz GPR',
         'in_timezone': 'UTC',
         'out_timezone': 'US/Mountain',
