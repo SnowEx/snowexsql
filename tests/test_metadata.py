@@ -22,7 +22,7 @@ info = {'site_name': 'Grand Mesa',
         'northing': 4324005.0,
         'latitude': 39.03126190934254,
         'longitude': -108.18948133421802,
-        'timezone': 'MST',
+        'timezone': 'US/Mountain',
         'epsg': 26912
         }
 

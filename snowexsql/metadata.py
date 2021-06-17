@@ -348,9 +348,9 @@ class DataHeader(object):
 
         Args:
             filename: File for a site details file containing
-            header_sep: key value pairs in header information separtor (: , etc)
+            header_sep: key value pairs in header information separator (: , etc)
             northern_hemisphere: Bool describing if the pit location is in the
-                                 northern_hemisphere for converting utms coords
+                                 northern_hemisphere for converting utm coordinatess
             depth_is_metadata: Whether or not to include depth as a main
                               variable (useful for point data that contains
                               snow depth and other variables), profiles should
