@@ -27,7 +27,8 @@ def main():
         # Constant metadata
         'site_name': 'Grand Mesa',
         'units': 'Newtons',
-        'out_timezone': 'UTC',
+        'in_timezone': 'UTC',
+        'out_timezone': 'US/Mountain',
         'doi': 'https://doi.org/10.5067/ZYW6IHFRYDSE'
     }
     # Instantiate the uploader

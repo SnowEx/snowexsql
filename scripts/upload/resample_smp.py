@@ -16,7 +16,7 @@ Usage:
 import glob
 import shutil
 from os import mkdir
-from os.path import abspath, basename, dirname, isdir, join
+from os.path import abspath, basename, isdir, join
 
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -25,7 +25,7 @@ from snowexsql.utilities import get_logger, read_n_lines
 
 
 def open_df(smp_f, header_pos=6):
-    '''
+    """
     reads in dataframe with skipping the header
 
     Args:
@@ -33,13 +33,13 @@ def open_df(smp_f, header_pos=6):
         header_pos: Integer representing the number of lines the header info is
     Returns:
         df: Pandas dataframe containing the SMP profile
-    '''
+    """
     df = pd.read_csv(smp_f, header=header_pos)
     return df
 
 
 def subsample(df, ith):
-    '''
+    """
     Returns a dataframe resampled to every ith point of the original
 
     Args:
@@ -47,7 +47,7 @@ def subsample(df, ith):
         ith: The number to grab a sample, e.g. every 100 samples
     Returns:
         new_df: Pandas dataframe subsampled to every ith sample of the original. The original index is include for each value
-    '''
+    """
 
     idx = df.groupby(df.index // ith).idxmax()['Depth (mm)']
     new_df = df.loc[idx]
@@ -56,12 +56,12 @@ def subsample(df, ith):
 
 
 def make_comparison(f):
-    '''
+    """
     Plots the differences in resampling and precision cutting
 
     Args:
         f: csv with 6 lines of header for an SMP profile
-    '''
+    """
     df = open_df(f)
 
     depth_precision = [0, 1, 3]
@@ -102,7 +102,7 @@ def make_comparison(f):
 
 def resample_batch(filenames, output, downsample,
                    header_pos=6, clean_on_start=True):
-    '''
+    """
     Resample all the file names and save as csv to the output dir
 
     Args:
@@ -110,7 +110,7 @@ def resample_batch(filenames, output, downsample,
         output: directory to output files to
         downsample: Number of samples to subsample at (e.g. downsample=100 is subsampled to every 100th sample)
         clean_on_start: Remove the output folder at the start when running
-    '''
+    """
 
     log = get_logger('SMP Resample')
 
