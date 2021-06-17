@@ -187,7 +187,7 @@ class UploadProfileBatch(BatchBase):
         else:
             self.smp_log = None
 
-        # Keep track of whether we using a site details file for each profile
+        # Keep track of whether we are using a site details file for each profile
         smp_file = False
 
         # Read the data and organize it, remap the names

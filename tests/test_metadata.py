@@ -124,6 +124,21 @@ class TestLWCHeader(DataHeaderTestBase):
         self.data_names = ['permittivity']
         self.columns = ['depth', 'bottom_depth', 'permittivity_sample_a', 'permittivity_sample_b']
         self.multi_sample_profiles = ['permittivity']
+
+        info = {'site_name': 'Grand Mesa',
+                'site_id': '1N20',
+                'pit_id': 'COGM1N20_20200205',
+                'date': dt.date(),
+                'time': dt.timetz(),
+                'utm_zone': 12,
+                'easting': 743281.0,
+                'northing': 4324005.0,
+                'latitude': 39.03126190934254,
+                'longitude': -108.18948133421802,
+                'timezone': 'MST',
+                'epsg': 26912
+                }
+
         self.info = info.copy()
 
         super().setup_class(self)
@@ -262,6 +277,44 @@ class TestGPRHeader(DataHeaderTestBase):
         self.info = info.copy()
 
         super().setup_class(self)
+
+
+class TestSMPHeader(DataHeaderTestBase):
+    """
+    Test interpreting an SMP header without a SMP Log file
+    """
+    depth_is_metadata = True
+
+    def setup_class(self):
+        self.file = 'S19M1013_5S21_20200201.CSV'
+        self.data_names = ['force']
+        self.columns = ['original_index', 'depth'] + self.data_names
+        self.multi_sample_profiles = []
+
+        data = abspath(join(dirname(__file__), 'data'))
+        self.header = DataHeader(join(data, self.file), instrument='snowmicropen', header_sep=':', in_timezone='UTC',
+                                 out_timezone='US/Mountain', depth_is_metadata=self.depth_is_metadata)
+        self.name = self.file.split('.')[0]
+
+        self.dt = datetime.datetime(2020, 2, 1, 16, 16, 49, 0, pytz.timezone('US/Mountain'))
+
+        self.info = {'site_name': 'Grand Mesa',
+                     'site_id': '1N20',
+                     'pit_id': 'COGM1N20_20200205',
+                     'date': self.dt.date(),
+                     'time': self.dt.timetz(),
+                     'utm_zone': 12,
+                     'easting': 744567.291603435,
+                     'northing': 4322689.382277083,
+                     'latitude': 39.01906204223633,
+                     'longitude': -108.17510986328125,
+                     'timezone': 'US/Mountain',
+                     'epsg': 26912,
+                     'instrument': 'snowmicropen',
+                     'original_total_samples': '242000',
+                     'data_subsampled_to': 'Every 1000th',
+                     'smp_serial_number': '19'
+                     }
 
 
 class TestSMPMeasurementLog():

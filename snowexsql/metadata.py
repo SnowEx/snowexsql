@@ -552,8 +552,7 @@ class DataHeader(object):
 
     def _read(self, filename):
         """
-        Read in all site details file from the PITS folder under
-        SnowEx2020_SQLdata If the filename has the word site in it then we
+        Read in all site details file for a pit If the filename has the word site in it then we
         read everything in the file. Otherwise we use this to read all the site
         data up to the header of the profile.
 
@@ -591,7 +590,7 @@ class DataHeader(object):
             lines = lines[0:header_pos]
 
         # Clean up the lines from line returns to grab header info
-        lines = [l.strip() for l in lines]
+        lines = [ln.strip() for ln in lines]
         str_data = " ".join(lines).split('#')
 
         # Keep track of the number of lines with # in it for data opening
@@ -601,8 +600,8 @@ class DataHeader(object):
         data = {}
 
         # Collect key value pairs from the information above the column header
-        for l in str_data:
-            d = l.split(self.header_sep)
+        for ln in str_data:
+            d = ln.split(self.header_sep)
 
             # Key is always the first entry in comma sep list
             k = standardize_key(d[0])
