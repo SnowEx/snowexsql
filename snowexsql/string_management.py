@@ -1,8 +1,8 @@
-'''
+"""
 Module for functions that interpret various strings encountered in files.
 These functions either prep, strip, or interpret strings for headers or
 the actual data to be uploaded.
-'''
+"""
 
 import datetime
 import warnings
@@ -12,9 +12,9 @@ import pandas as pd
 
 
 def clean_str(messy):
-    '''
+    """
     Removes unwanted character in a str that we encounter alot
-    '''
+    """
     clean = messy
 
     # Strip of any chars that are beginning and end
@@ -45,7 +45,7 @@ def clean_str(messy):
 
 
 def standardize_key(messy):
-    '''
+    """
     Preps a key for use in dataframe columns or dictionary. Makes everything
     lowercase, removes units, replaces spaces with underscores.
 
@@ -53,7 +53,7 @@ def standardize_key(messy):
         messy: string to be cleaned
     Returns:
         clean: String minus all characters and patterns of no interest
-    '''
+    """
     key = messy
 
     # Remove units
@@ -64,11 +64,14 @@ def standardize_key(messy):
     key = key.lower().replace(' ', '_')
     key = key.lower().replace('-', '_')
 
+    # This removes csv byte order mark for files in utf-8 while were encoding with latin
+    key = ''.join([c for c in key if c not in 'ï»¿'])
+
     return key
 
 
 def remap_data_names(original, rename_map):
-    '''
+    """
     Remaps keys in a dictionary according to the rename dictionary. Also can be
     used for lists where the entries in the list can be renamed
 
@@ -79,7 +82,7 @@ def remap_data_names(original, rename_map):
     Returns:
         new: List/dictionary containing the names remapped
 
-    '''
+    """
     remap_keys = rename_map.keys()
 
     if isinstance(original, dict):
@@ -123,7 +126,7 @@ def remap_data_names(original, rename_map):
 
 
 def get_encapsulated(str_line, encapsulator):
-    '''
+    """
     Returns items found in the encapsulator, useful for finding units
 
     Args:
@@ -135,7 +138,7 @@ def get_encapsulated(str_line, encapsulator):
     e.g.
         line = 'density (kg/m^3), temperature (C)'
         ['kg/m^3', 'C'] = get_encapsulated(line, '()')
-    '''
+    """
 
     result = []
 
@@ -163,7 +166,7 @@ def get_encapsulated(str_line, encapsulator):
 
 
 def strip_encapsulated(str_line, encapsulator):
-    '''
+    """
     Removes from a str anything thats encapusulated by characters and the
     encapsulating chars themselves
 
@@ -172,7 +175,7 @@ def strip_encapsulated(str_line, encapsulator):
         encapsulator: string of characters encapsulating info to be removed
     Returns:
         final: String without anything between encapsulators
-    '''
+    """
     final = str_line
     result = get_encapsulated(final, encapsulator)
 
@@ -192,7 +195,7 @@ def strip_encapsulated(str_line, encapsulator):
 
 
 def parse_none(value):
-    '''
+    """
     parses values looking for NANs, Nones, etc...
 
     Args:
@@ -201,7 +204,7 @@ def parse_none(value):
     Returns:
         result: If string value is nan or none, then return None type otherwise
                 return original value
-    '''
+    """
     result = value
 
     # If its a nan or none or the string is empty
@@ -216,7 +219,7 @@ def parse_none(value):
 
 
 def kw_in_here(kw, d, case_sensitive=True):
-    '''
+    """
     Determines if the keyword is found in any of the entries in the List
     If any match is found returns true
 
@@ -236,7 +239,7 @@ def kw_in_here(kw, d, case_sensitive=True):
     Returns:
         Bool: Indicating the keyword was found
 
-    '''
+    """
     if isinstance(d, dict):
         d_keys = d.keys()
     else:

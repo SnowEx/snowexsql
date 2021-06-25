@@ -1,22 +1,19 @@
-import datetime
-
-import numpy as np
 import pytest
-import pytz
-
 from snowexsql.string_management import *
 
 
-def test_standardize_key():
+@pytest.mark.parametrize("in_str, expected", [
+    ('SMP instrument #', 'smp_instrument_#'),
+    ('Dielectric Constant A', 'dielectric_constant_a'),
+    ('Specific surface area (m^2/kg)', 'specific_surface_area'),
+    # Ensure we remove a csv byte order mark in latin encoding
+    ("ï»¿Camera", "camera")]
+    )
+def test_standardize_key(in_str, expected):
     """
     Test whether we can clean out the column header from a csv and standardize them
     """
-    # Test whether we replace spaces with underscores, all lowercase, removed units
-    test = ['SMP instrument #', 'Dielectric Constant A', 'Specific surface area (m^2/kg)']
-    result = ['smp_instrument_#', 'dielectric_constant_a', 'specific_surface_area']
-
-    for i, t in enumerate(test):
-        assert standardize_key(t) == result[i]
+    assert standardize_key(in_str) == expected
 
 
 @pytest.mark.parametrize('args, kwargs', [
