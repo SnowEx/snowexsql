@@ -8,7 +8,7 @@ from rasterio.crs import CRS
 from rasterio.warp import Resampling, calculate_default_transform, reproject
 
 
-def reproject_point_in_dict(info, is_northern=True):
+def reproject_point_in_dict(info, is_northern=True, zone_number=12):
     """
     Searches the info dictionary and converts from lat long to northing easting
     and vice versa if either are missing.
@@ -32,7 +32,7 @@ def reproject_point_in_dict(info, is_northern=True):
     if 'latitude' in keys:
         easting, northing, utm_zone, letter = utm.from_latlon(
             result['latitude'],
-            result['longitude'])
+            result['longitude'],  force_zone_number=zone_number)
         result['easting'] = easting
         result['northing'] = northing
         result['utm_zone'] = utm_zone

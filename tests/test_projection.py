@@ -19,6 +19,8 @@ from snowexsql.projection import *
     # Test ignoring easting in another projection
     ({'latitude': 39.008078, 'longitude': -108.184794, 'utm_wgs84_easting': 743766.4795, 'utm_wgs84_northing': 4321444.155},
      {'easting': 743766.480, 'northing': 4321444.155}),
+    # Confirm we force the zone to zone 12
+    ({'latitude':39.097464, 'longitude':-107.862476}, {'northing':4332280.1658, 'easting':771338.607})
 ])
 def test_reproject_point_in_dict(info, expected):
     """
