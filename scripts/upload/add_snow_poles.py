@@ -21,7 +21,7 @@ def main():
     timezone = 'US/Mountain'
 
     # Read in the Grand Mesa Snow Depths Data
-    f = abspath('../download/data/SnowEx2020.snowdepth.snowstakes.alldepths_clean_v8.csv')
+    f = abspath('../download/data/SnowEx2020.snowdepth.snowstakes.alldepths_clean_v9.csv')
 
     # Start the Database
     db_name = 'localhost/snowex'
@@ -32,7 +32,8 @@ def main():
         depth_is_metadata=False,
         units='cm',
         site_name=site_name,
-        timezone=timezone,
+        surveyors='Catherine Breen, Cassie Lumbrazo',
+        instrument='camera-trap',
         epsg=26912,
         doi=None)
 

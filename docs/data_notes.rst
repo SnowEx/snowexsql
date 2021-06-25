@@ -163,4 +163,6 @@ poles. A ratio calculated using the full length of the pole (304.8cm), and uniqu
 pixels to centimeters.
 
 * Depths are in centimeters
-* Instrument assigned in the db is `photo_derived`
+* Instrument assigned in the db is `camera-trap`
+* Equipment is assigned `camera id = < CAMERA COLUMN >`
+* Data is not published yet and was received via email.

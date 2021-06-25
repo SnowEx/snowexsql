@@ -257,7 +257,7 @@ class PointDataCSV(object):
                 lambda x: remap_data_names(
                     x, self.measurement_names))
 
-        # Add date and time keys
+          # Add date and time keys
         self.log.info('Adding date and time to metadata...')
         df = df.apply(lambda data: add_date_time_keys(
             data, in_timezone=self.incoming_tz), axis=1)
@@ -275,6 +275,11 @@ class PointDataCSV(object):
         for v in valid:
             if v in self.kwargs.keys():
                 df[v] = self.kwargs[v]
+
+        # Add a camera id to the description if camera is in the cols (For camera derived snow depths)
+        if 'camera' in df.columns:
+            self.log.info('Adding camera id to equipment column...')
+            df['equipment'] = df.apply(lambda row: f'camera id = {row["camera"]}', axis=1)
 
         # 3. Remove columns that are not valid
         drops = \
