@@ -16,7 +16,7 @@ from .metadata import DataHeader
 from .string_management import parse_none, remap_data_names
 from .utilities import (assign_default_kwargs, get_file_creation_date,
                         get_logger)
-
+from .projection import reproject_point_in_dict
 
 class UploadProfileData:
     """
@@ -214,7 +214,7 @@ class PointDataCSV(object):
              'density': 'kg/m^3'}
 
     # Class attributes to apply
-    defaults = {'debug': True, 'incoming_tz': 'MST'}
+    defaults = {'debug': True, 'incoming_tz': 'US/Mountain'}
 
     def __init__(self, filename, **kwargs):
         """
@@ -265,6 +265,11 @@ class PointDataCSV(object):
         # 1. Only submit valid columns to the DB
         self.log.info('Adding valid keyword arguments to metadata...')
         valid = get_table_attributes(PointData)
+
+        # 2. Add northing/Easting if necessary
+        if 'easting' not in df.columns or 'northing' not in df.columns:
+            self.log.info('Adding UTM Northing/Easting to data...')
+            df = df.apply(lambda row: reproject_point_in_dict(row), axis=1)
 
         # 2. Add all kwargs that were valid
         for v in valid:

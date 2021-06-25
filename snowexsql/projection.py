@@ -1,6 +1,6 @@
-'''
+"""
 Module for functions that handle anything regarding coordinate projections.
-'''
+"""
 import rasterio
 import utm
 from geoalchemy2.elements import WKTElement
@@ -9,7 +9,7 @@ from rasterio.warp import Resampling, calculate_default_transform, reproject
 
 
 def reproject_point_in_dict(info, is_northern=True):
-    '''
+    """
     Searches the info dictionary and converts from lat long to northing easting
     and vice versa if either are missing.
 
@@ -20,7 +20,7 @@ def reproject_point_in_dict(info, is_northern=True):
     Returns:
         result: Dictionary containing all previous information plus a coordinates
                 reprojected counter part
-    '''
+    """
     result = info.copy()
     keys = result.keys()
 
@@ -29,8 +29,16 @@ def reproject_point_in_dict(info, is_northern=True):
         if c in result.keys():
             result[c] = float(result[c])
 
+    if 'latitude' in keys:
+        easting, northing, utm_zone, letter = utm.from_latlon(
+            result['latitude'],
+            result['longitude'])
+        result['easting'] = easting
+        result['northing'] = northing
+        result['utm_zone'] = utm_zone
+
     # Convert UTM coordinates to Lat long or vice versa for database storage
-    if 'northing' in keys:
+    elif 'northing' in keys:
 
         if isinstance(result['utm_zone'], str):
             result['utm_zone'] = \
@@ -43,19 +51,11 @@ def reproject_point_in_dict(info, is_northern=True):
         result['latitude'] = lat
         result['longitude'] = long
 
-    elif 'latitude' in keys:
-        easting, northing, utm_zone, letter = utm.from_latlon(
-            result['latitude'],
-            result['longitude'])
-        result['easting'] = easting
-        result['northing'] = northing
-        result['utm_zone'] = utm_zone
-
     return result
 
 
 def add_geom(info, epsg):
-    '''
+    """
     Adds the WKBElement to the dictionary
 
     Args:
@@ -65,7 +65,7 @@ def add_geom(info, epsg):
     Returns:
         info: Dictionary containing everything it originally did plus a geom
               key with WKTElement value
-    '''
+    """
     # Add a geometry entry
     info['geom'] = WKTElement('SRID={}; POINT({} {})'
                               ''.format(
@@ -75,14 +75,14 @@ def add_geom(info, epsg):
 
 
 def reproject_raster_by_epsg(input_f, output_f, epsg):
-    '''
+    """
     Reproject a geotiff raster from one epsg to another
 
     Args:
         input_f: Input path to a geotiff
         output_f: Output  location of a reprojected geotiff
         epsg: Valid projection reference number
-    '''
+    """
 
     dst_crs = 'EPSG:{}'.format(epsg)
 
