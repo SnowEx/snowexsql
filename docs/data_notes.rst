@@ -32,21 +32,18 @@ Snow Micropen (SMP)
 * Original data is sourced from the NSIDC from https://n5eil01u.ecs.nsidc.org/SNOWEX/SNEX20_SMP.001/
 * During the GM 2020 campaign, Two SMPs were used until they both broke. Identified in the data is a 3rd SMP
   that is a frankestein SMP put together from parts from the original two.
-
 * SMP measurements have an orientation assigned. These are in reference to
   their location relative to the pit. Measurements were recorded in crossing
   transects aligned with cardinal directions and centered on the pit. N1 = 50M
   from the center to the North. Its also the farthest out. In each cardinal directions
   there are typically 3-5 depending on the sampling strategy.
-
 * Profiles Resampled to every 100th sample to expedite uploads. Metadata in the
   database contains the original sample id.
-
 * SMP data depth in the original file is written positive depth from the snow
   surface toward the ground. To avoid confusion with other profiles which are
   stored in snow height format, SMP depths are written to the database negative
   from the surface (snow surface datum format).
-
+* Depth data is converted to centimeters
 
 UAVSAR
 ------
@@ -157,21 +154,15 @@ covers the entire survey site.
 * Downloaded using `./download_snow_off.sh`
 * Labeled as `snow off digital elevation model`
 
-Quantum Spatial Inc.
---------------------
-Raster dems from QSI.
+Camera Derived Snow Depths
+--------------------------
 
-Bare Earth Digital Elevation Models
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Camera traps were installed in front of red painted PVC pipes with yellow duct-taped bands at the top and set to take
+2-3 daily timelapse images. Depths were extracted by counting the number of pixels between the top and bottom of the
+poles. A ratio calculated using the full length of the pole (304.8cm), and unique to each camera, was used to convert
+pixels to centimeters.
 
-* SNOW ON without vegetation height.
-* Stored in meters
-* Lbeled as `bare earth digital elevation models`
-
-
-Digital Surface Models
-~~~~~~~~~~~~~~~~~~~~~~
-
-* SNOW ON with vegetation height.
-* Stored in meters
-* labeled as `digital surface models`
+* Depths are in centimeters
+* Instrument assigned in the db is `camera-trap`
+* Equipment is assigned `camera id = < CAMERA COLUMN >`
+* Data is not published yet and was received via email.

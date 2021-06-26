@@ -144,7 +144,6 @@ def convert_cardinal_to_degree(cardinal):
         i = dirs.index(d)
         degrees = i * (360. / len(dirs))
     else:
-        print(repr(d))
         raise ValueError('Invalid cardinal direction {}!'.format(cardinal))
 
     return degrees
@@ -178,11 +177,11 @@ def add_date_time_keys(data, in_timezone=None, out_timezone='US/Mountain'):
         in_tz = out_tz
 
     # Look for a single header entry for date and time.
-    for k in keys:
-        if 'date' in k and 'time' in k:
+    for k in data.keys():
+        kl = k.lower()
+        if 'date' in kl and 'time' in kl:
             str_date = str(data[k].replace('T', '-'))
             d = pd.to_datetime(str_date)
-            del data[k]
             break
 
     # If we didn't find date/time combined.

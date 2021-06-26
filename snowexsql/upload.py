@@ -16,7 +16,7 @@ from .metadata import DataHeader
 from .string_management import parse_none, remap_data_names
 from .utilities import (assign_default_kwargs, get_file_creation_date,
                         get_logger)
-
+from .projection import reproject_point_in_dict
 
 class UploadProfileData:
     """
@@ -214,7 +214,7 @@ class PointDataCSV(object):
              'density': 'kg/m^3'}
 
     # Class attributes to apply
-    defaults = {'debug': True, 'incoming_tz': 'MST'}
+    defaults = {'debug': True, 'incoming_tz': 'US/Mountain'}
 
     def __init__(self, filename, **kwargs):
         """
@@ -257,7 +257,7 @@ class PointDataCSV(object):
                 lambda x: remap_data_names(
                     x, self.measurement_names))
 
-        # Add date and time keys
+          # Add date and time keys
         self.log.info('Adding date and time to metadata...')
         df = df.apply(lambda data: add_date_time_keys(
             data, in_timezone=self.incoming_tz), axis=1)
@@ -266,10 +266,20 @@ class PointDataCSV(object):
         self.log.info('Adding valid keyword arguments to metadata...')
         valid = get_table_attributes(PointData)
 
+        # 2. Add northing/Easting if necessary
+        if 'easting' not in df.columns or 'northing' not in df.columns:
+            self.log.info('Adding UTM Northing/Easting to data...')
+            df = df.apply(lambda row: reproject_point_in_dict(row), axis=1)
+
         # 2. Add all kwargs that were valid
         for v in valid:
             if v in self.kwargs.keys():
                 df[v] = self.kwargs[v]
+
+        # Add a camera id to the description if camera is in the cols (For camera derived snow depths)
+        if 'camera' in df.columns:
+            self.log.info('Adding camera id to equipment column...')
+            df['equipment'] = df.apply(lambda row: f'camera id = {row["camera"]}', axis=1)
 
         # 3. Remove columns that are not valid
         drops = \

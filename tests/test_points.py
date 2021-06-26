@@ -129,3 +129,36 @@ class TestGPRPointData(PointsBase):
             dict(data_name='swe', attribute_to_count='date', expected_count=3)
         ]
     }
+
+class TestPoleDepthData(PointsBase):
+    dt = datetime.date(2020, 2, 1)
+
+    args = ['pole_depths.csv']
+    kwargs = dict(timezone='US/Mountain',
+                  depth_is_metadata=False,
+                  site_name='Grand Mesa',
+                  epsg=26912,
+                  surveyors='TEST')
+    params = {
+        'test_count': [
+            # Test that we uploaded 14 records
+            dict(data_name='depth', expected_count=14)
+        ],
+
+        'test_value': [
+            # Test the actual value of the dataset
+            dict(data_name='depth', attribute_to_check='value', filter_attribute='date', filter_value=dt,
+                 expected=101.2728),
+         ],
+
+        'test_unique_count': [
+            # Test we have 3 unique dates
+            dict(data_name='depth', attribute_to_count='time', expected_count=3)
+        ]
+    }
+    def test_camera_description(self):
+        """
+        Tests that camera id is added to the description on upload
+        """
+        result = self.session.query(PointData.equipment).filter(PointData.date==datetime.date(2020, 1, 27)).all()
+        assert 'camera id = W1B' == result[0][0]

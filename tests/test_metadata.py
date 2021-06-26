@@ -22,8 +22,6 @@ info = {'site_name': 'Grand Mesa',
         'northing': 4324005.0,
         'latitude': 39.03126190934254,
         'longitude': -108.18948133421802,
-        'timezone': 'US/Mountain',
-        'epsg': 26912
         }
 
 
@@ -60,7 +58,9 @@ class DataHeaderTestBase():
                 assert e in data
 
         elif dtype == dict:
-            for k, v in data.items():
+            received_keys = list(data.keys())
+            for k, v in expected.items():
+                assert k in received_keys
                 # Skip geom for now
                 if k != 'geom':
                     self.assert_single_value(data[k], expected[k])
@@ -135,8 +135,6 @@ class TestLWCHeader(DataHeaderTestBase):
                 'northing': 4324005.0,
                 'latitude': 39.03126190934254,
                 'longitude': -108.18948133421802,
-                'timezone': 'MST',
-                'epsg': 26912
                 }
 
         self.info = info.copy()
@@ -227,7 +225,6 @@ class TestSiteDetailsHeader(DataHeaderTestBase):
         self.info['ground_roughness'] = 'rough, rocks in places'
         self.info['precip'] = None
         self.info['sky_cover'] = 'Few (< 1/4 of sky)'
-        self.info['Wind'] = 'Moderate'
         self.info['ground_condition'] = 'Frozen'
         self.info['ground_vegetation'] = '[Grass]'
         self.info['vegetation_height'] = '5, nan'
@@ -256,14 +253,16 @@ class TestDepthsHeader(DataHeaderTestBase):
                         'equipment', 'version_number'] + self.data_names
 
         self.multi_sample_profiles = []
-        self.info = info.copy()
+
+        # No header in the depths file
+        self.info = {}
 
         super().setup_class(self)
 
 
 class TestGPRHeader(DataHeaderTestBase):
     """
-    Test the header information can be interpretted correctly in the GPR data
+    Test the header information can be interpreted correctly in the GPR data
     """
     depth_is_metadata = False
 
@@ -274,7 +273,9 @@ class TestGPRHeader(DataHeaderTestBase):
                         'northing', 'elevation', 'avgvelocity'] + self.data_names
 
         self.multi_sample_profiles = []
-        self.info = info.copy()
+
+        # no header in the GPR file
+        self.info = {}
 
         super().setup_class(self)
 
@@ -298,22 +299,16 @@ class TestSMPHeader(DataHeaderTestBase):
 
         self.dt = datetime.datetime(2020, 2, 1, 16, 16, 49, 0, pytz.timezone('US/Mountain'))
 
-        self.info = {'site_name': 'Grand Mesa',
-                     'site_id': '1N20',
-                     'pit_id': 'COGM1N20_20200205',
-                     'date': self.dt.date(),
+        self.info = {'date': self.dt.date(),
                      'time': self.dt.timetz(),
                      'utm_zone': 12,
                      'easting': 744567.291603435,
                      'northing': 4322689.382277083,
                      'latitude': 39.01906204223633,
                      'longitude': -108.17510986328125,
-                     'timezone': 'US/Mountain',
-                     'epsg': 26912,
                      'instrument': 'snowmicropen',
                      'original_total_samples': '242000',
                      'data_subsampled_to': 'Every 1000th',
-                     'smp_serial_number': '19'
                      }
 
 
