@@ -264,7 +264,7 @@ class TestSMPProfile(TableTestBase):
     """
 
     args = ['S06M0874_2N12_20200131.CSV']
-    kwargs = {'timezone': 'UTC', 'units': 'Newtons', 'header_sep': ':'}
+    kwargs = {'timezone': 'UTC', 'units': 'Newtons', 'header_sep': ':', 'instrument':'snowmicropen'}
     UploaderClass = UploadProfileData
     TableClass = LayerData
     dt = datetime.datetime(2020, 1, 31, 22, 42, 14, 0, pytz.FixedOffset(-360))
@@ -288,10 +288,10 @@ class TestSMPProfile(TableTestBase):
 
     def test_instrument_id_comment(self):
         """
-        Test that the SMP serial ID is added to the comment column of a smp profile
+        Test that the SMP serial ID is added to the comment column of a smp profile inspit of an instrument being passed
         """
         result = self.session.query(LayerData.comments).limit(1).one()
-        assert 'serial no. = 6' in result[0]
+        assert 'serial no. = 06' in result[0]
 
     def test_original_fname_comment(self):
         """

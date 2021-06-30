@@ -72,8 +72,11 @@ class UploadProfileData:
             depth_fmt = 'surface_datum'
 
             # SMP serial number and original filename for provenance to the comment
-            df['comments'] = f"fname = {basename(profile_filename)}, " \
-                              f"serial no. = {self.hdr.info['instrument']}"
+            f = basename(profile_filename)
+            serial_no = f.split('SMP_')[-1][1:3]
+
+            df['comments'] = f"fname = {f}, " \
+                              f"serial no. = {serial_no}"
 
         # Standardize all depth data
         new_depth = standardize_depth(df['depth'],
