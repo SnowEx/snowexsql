@@ -8,6 +8,7 @@ from subprocess import STDOUT, check_output
 import pandas as pd
 import progressbar
 from geoalchemy2.elements import RasterElement, WKTElement
+from os.path import basename
 
 from .data import ImageData, LayerData, PointData
 from .db import get_table_attributes
@@ -60,13 +61,22 @@ class UploadProfileData:
                          names=self.hdr.columns,
                          encoding='latin')
 
-        # If SMP profile convert depth to cm
+        # Special SMP specific tasks
         depth_fmt = 'snow_height'
         is_smp = False
         if 'force' in df.columns:
+            # Convert depth from mm to cm
             df['depth'] = df['depth'].div(10)
             is_smp = True
+            # Make the data negative from snow surface
             depth_fmt = 'surface_datum'
+
+            # SMP serial number and original filename for provenance to the comment
+            f = basename(profile_filename)
+            serial_no = f.split('SMP_')[-1][1:3]
+
+            df['comments'] = f"fname = {f}, " \
+                              f"serial no. = {serial_no}"
 
         # Standardize all depth data
         new_depth = standardize_depth(df['depth'],

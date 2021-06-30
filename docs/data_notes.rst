@@ -37,8 +37,7 @@ Snow Micropen (SMP)
   transects aligned with cardinal directions and centered on the pit. N1 = 50M
   from the center to the North. Its also the farthest out. In each cardinal directions
   there are typically 3-5 depending on the sampling strategy.
-* Profiles Resampled to every 100th sample to expedite uploads. Metadata in the
-  database contains the original sample id.
+* Profiles Resampled to every 100th sample to expedite uploads.
 * SMP data depth in the original file is written positive depth from the snow
   surface toward the ground. To avoid confusion with other profiles which are
   stored in snow height format, SMP depths are written to the database negative

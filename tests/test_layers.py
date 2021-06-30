@@ -3,6 +3,7 @@ from datetime import date
 
 import numpy as np
 import pytz
+import os
 
 from snowexsql.data import LayerData
 from snowexsql.upload import UploadProfileData
@@ -263,7 +264,7 @@ class TestSMPProfile(TableTestBase):
     """
 
     args = ['S06M0874_2N12_20200131.CSV']
-    kwargs = {'timezone': 'UTC', 'units': 'Newtons', 'header_sep': ':'}
+    kwargs = {'timezone': 'UTC', 'units': 'Newtons', 'header_sep': ':', 'instrument':'snowmicropen'}
     UploaderClass = UploadProfileData
     TableClass = LayerData
     dt = datetime.datetime(2020, 1, 31, 22, 42, 14, 0, pytz.FixedOffset(-360))
@@ -284,3 +285,18 @@ class TestSMPProfile(TableTestBase):
         ],
         'test_unique_count': [dict(data_name='force', attribute_to_count='date', expected_count=1)]
     }
+
+    def test_instrument_id_comment(self):
+        """
+        Test that the SMP serial ID is added to the comment column of a smp profile inspit of an instrument being passed
+        """
+        result = self.session.query(LayerData.comments).limit(1).one()
+        assert 'serial no. = 06' in result[0]
+
+    def test_original_fname_comment(self):
+        """
+        Test that the original SMP file name is added to the comment column of a smp profile. This is done for
+        provenance so users can determine the original dataset location
+        """
+        result = self.session.query(LayerData.comments).limit(1).one()
+        assert f'fname = {os.path.basename(self.args[0])}' in result[0]
