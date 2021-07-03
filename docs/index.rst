@@ -8,6 +8,7 @@ Welcome to snowexsql's documentation!
    database_structure
    data_notes
    examples
+   cheat_sheet
    qgis
    api
    contributing
