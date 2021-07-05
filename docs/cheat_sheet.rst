@@ -7,7 +7,7 @@ Cheat Sheets
 Below is a list of common things you will likely want to use for querying in the database
 
 Querying
----------
+--------
 The table below shows a handful of useful ways to query the database.
 
 
@@ -41,7 +41,7 @@ The table below shows a handful of useful ways to query the database.
 
 
 Database Tables
-----------------
+---------------
 The table below shows the SQL table names to Python Object Relational Mapping (ORM) classes with descriptions of data
 in them
 
@@ -70,7 +70,7 @@ in them
      - Raster Data
 
 Useful `snowexsql` Functions
---------------------------
+----------------------------
 The table below shows useful tools built with this library
 
 .. list-table::
