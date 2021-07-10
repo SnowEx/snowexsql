@@ -6,9 +6,8 @@ Uploads the SnowEx 2020 depths derived from cameras looking at poles to the data
 2B. python add_snow_poles.py # To run individually
 """
 
-import glob
 import time
-from os.path import abspath, join
+from os.path import abspath
 
 from snowexsql.db import get_db
 from snowexsql.upload import *
@@ -18,10 +17,9 @@ def main():
     # Site name
     start = time.time()
     site_name = 'Grand Mesa'
-    timezone = 'US/Mountain'
 
     # Read in the Grand Mesa Snow Depths Data
-    f = abspath('../download/data/SnowEx2020.snowdepth.snowstakes.alldepths_clean_v9.csv')
+    f = abspath('../download/data/SnowEx2020.snowdepth.snowstakes.alldepths_clean_v10.csv')
 
     # Start the Database
     db_name = 'localhost/snowex'
@@ -34,6 +32,7 @@ def main():
         site_name=site_name,
         surveyors='Catherine Breen, Cassie Lumbrazo',
         instrument='camera-trap',
+        in_timezone='US/Mountain',
         epsg=26912,
         doi=None)
 
