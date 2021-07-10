@@ -32,7 +32,7 @@ class TestConversionsOnDB(DBSetup):
 
         # Upload some point data
         fname = join(self.data_dir, 'depths.csv')
-        csv = PointDataCSV(fname, depth_is_metadata=False, units='cm', site_name='Grand Mesa', timezone='MST',
+        csv = PointDataCSV(fname, depth_is_metadata=False, units='cm', site_name='Grand Mesa',
                            epsg=26912)
         csv.submit(self.session)
 
@@ -51,6 +51,63 @@ class TestConversionsOnDB(DBSetup):
 
         # Confirm value count
         assert df['value'].count() == 10
+
+    def test_query_to_geopandas_w_geom(self):
+        """
+        Test converting a sqlalchemy query of points to geopandas df
+        """
+        qry = self.session.query(PointData)
+        df = query_to_geopandas(qry, self.engine)
+
+        # Confirm the type
+        assert isinstance(df, gpd.GeoDataFrame)
+
+        # Confirm value count
+        assert df['value'].count() == 10
+
+    def test_query_to_geopandas_wo_geom(self):
+        """
+        Test converting a sqlalchemy query of points to geopandas df where the geom column is not == 'geom'
+        """
+        # Query the centroids of all the raster tiles and use that as the geometry column in geopandas
+        qry = self.session.query(func.ST_Centroid(func.ST_Envelope(ImageData.raster)))
+        df = query_to_geopandas(qry, self.engine, geom_col='ST_Centroid_1')
+
+        # Confirm the type
+        assert isinstance(df, gpd.GeoDataFrame)
+
+        # Confirm value count
+        assert df['ST_Centroid_1'].count() == 1
+
+    def test_points_to_geopandas(self):
+        """
+        Test converting returned records of points to geopandas df
+        """
+        records = self.session.query(PointData).all()
+        df = points_to_geopandas(records)
+
+        # Confirm the type
+        assert isinstance(df, gpd.GeoDataFrame)
+
+        # Confirm we have geometry
+        assert 'geom' in df.columns
+
+        # Confirm value count
+        assert df['value'].count() == 10
+
+    def test_query_to_pandas(self):
+        """
+        Test converting a query of a query to a dataframe using Imagedata which has no geom column
+        """
+        qry = self.session.query(ImageData.id, ImageData.date)
+        df = query_to_pandas(qry, self.engine)
+
+        # Confirm the type
+        assert isinstance(df, pd.DataFrame)
+
+        # Confirm value count
+        assert df['id'].count() == 1
+
 
     def test_raster_to_rasterio(self):
         """
