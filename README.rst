@@ -10,7 +10,7 @@ Welcome to snowexsql
     :target: https://github.com/SnowEx/snowexsql/actions/workflows/main.yml
     :alt: Testing Status
 
-.. image:: https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/micahjohnson150/2034019acc40a963bd02d2fcbb31c5a9/raw/snowexsql__heads_main.json
+.. image:: https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/micahjohnson150/2034019acc40a963bd02d2fcbb31c5a9/raw/snowexsql__heads_master.json
     :alt: Code Coverage
 
 Database creation and management software for SnowEx data. The goal is to
