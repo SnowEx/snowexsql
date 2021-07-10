@@ -6,6 +6,7 @@ of the database.
 from os.path import basename, dirname, join
 
 import geopandas as gpd
+import pandas as pd
 import numpy as np
 import rasterio
 from geoalchemy2.shape import to_shape
@@ -142,9 +143,10 @@ def points_to_geopandas(results):
     return df
 
 
-def query_to_geopandas(query, engine):
+def query_to_geopandas(query, engine, **kwargs):
     """
-    Convert a GeoAlchemy2 Query meant for postgis to a geopandas dataframe
+    Convert a GeoAlchemy2 Query meant for postgis to a geopandas dataframe. Requires that a geometry column is
+    included
 
     Args:
         query: GeoAlchemy2.Query Object
@@ -157,10 +159,28 @@ def query_to_geopandas(query, engine):
     sql = query.statement.compile(dialect=postgresql.dialect())
 
     # Get dataframe from geopandas using the query and engine
-    df = gpd.GeoDataFrame.from_postgis(sql, engine)
+    df = gpd.GeoDataFrame.from_postgis(sql, engine, **kwargs)
 
     return df
 
+def query_to_pandas(query, engine, **kwargs):
+    """
+    Convert a GeoAlchemy2 Query meant for postgis to a pandas dataframe.
+
+    Args:
+        query: Query Object
+        engine: sqlalchemy engine
+
+    Returns:
+        df: pandas.DataFrame instance
+    """
+    # Fill out the variables in the query
+    sql = query.statement.compile(dialect=postgresql.dialect())
+
+    # Get dataframe from geopandas using the query and engine
+    df = pd.read_sql(sql, engine, **kwargs)
+
+    return df
 
 def raster_to_rasterio(session, rasters):
     """
@@ -168,7 +188,7 @@ def raster_to_rasterio(session, rasters):
 
     Args:
         session: sqlalchemy session object
-        raster: list of geoalchemy2.types.Raster
+        raster: list of :py:class:`geoalchemy2.types.Raster`
 
     Returns:
         dataset: list of rasterio datasets
