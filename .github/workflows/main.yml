@@ -43,8 +43,45 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y postgis
           python -m pip install --upgrade pip
-          pip install pytest
+          pip install pytest coverage
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
       - name: Test with pytest
         run: |
           pytest -s
+
+      # Run coverage only once
+      - if: ${{ matrix.python-version == '3.9' }}
+        name: Get Coverage for badge
+        run: |
+          # Run coverage save the results
+          coverage run --source snowexsql -m pytest
+          SUMMARY=`coverage report -m | grep TOTAL`
+
+          # Save results as ENV var
+          COVERAGE=$(python -c "print('$SUMMARY'.split(' ')[-1])")
+          echo "COVERAGE=$COVERAGE" >> $GITHUB_ENV
+
+          # var REF = 'refs/pull/27/merge.json';
+          REF=${{ github.ref }}
+          # console.log('github.ref: ' + REF);
+          echo "github.ref: $REF"
+          # var PATHS = REF.split('/');
+          IFS='/' read -ra PATHS <<< "$REF"
+          # var BRANCH_NAME = PATHS[1] + PATHS[2];
+          BRANCH_NAME="${PATHS[1]}_${PATHS[2]}"
+          # console.log(BRANCH_NAME); // 'pull_27'
+          echo $BRANCH_NAME
+          # process.env.BRANCH = 'pull_27';
+          echo "BRANCH=$(echo ${BRANCH_NAME})" >> $GITHUB_ENV
+
+      - if: ${{ matrix.python-version == '3.9' }}
+        name: Create the Badge
+        uses: schneegans/dynamic-badges-action@v1.0.0
+        with:
+          auth: ${{ secrets.GIST_SECRET }}
+          gistID: 2034019acc40a963bd02d2fcbb31c5a9
+          filename: snowexsql__${{ env.BRANCH }}.json
+          label: Test Coverage
+          message: ${{ env.COVERAGE }}
+          color: green
+          namedLogo: jest
