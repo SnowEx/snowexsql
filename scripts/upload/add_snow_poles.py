@@ -31,7 +31,7 @@ def main():
         units='cm',
         site_name=site_name,
         surveyors='Catherine Breen, Cassie Lumbrazo',
-        instrument='camera-trap',
+        instrument='camera',
         in_timezone='US/Mountain',
         epsg=26912,
         doi=None)

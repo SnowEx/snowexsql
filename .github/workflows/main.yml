@@ -81,7 +81,6 @@ jobs:
           auth: ${{ secrets.GIST_SECRET }}
           gistID: 2034019acc40a963bd02d2fcbb31c5a9
           filename: snowexsql__${{ env.BRANCH }}.json
-          label: Test Coverage
+          label: Coverage
           message: ${{ env.COVERAGE }}
           color: green
-          namedLogo: jest
