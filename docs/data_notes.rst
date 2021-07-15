@@ -156,12 +156,12 @@ covers the entire survey site.
 Camera Derived Snow Depths
 --------------------------
 
-Camera traps were installed in front of red painted PVC pipes with yellow duct-taped bands at the top and set to take
+Cameras were installed in front of red painted PVC pipes with yellow duct-taped bands at the top and set to take
 2-3 daily timelapse images. Depths were extracted by counting the number of pixels between the top and bottom of the
 poles. A ratio calculated using the full length of the pole (304.8cm), and unique to each camera, was used to convert
 pixels to centimeters.
 
 * Depths are in centimeters
-* Instrument assigned in the db is `camera-trap`
+* Instrument assigned in the db is `camera`
 * Equipment is assigned `camera id = < CAMERA COLUMN >`
 * Data is not published yet and was received via email.
