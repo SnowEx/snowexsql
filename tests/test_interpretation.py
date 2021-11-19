@@ -47,7 +47,9 @@ this_time = time(hour=0, tzinfo=mst)
                           ({'date': '012820', 'time': '161549.557'}, 'UTC', date(year=2020, month=1, day=28),
                            time(hour=9, minute=15, second=49, microsecond=557000, tzinfo=mst)),
                           ({'Date&Time': '1/27/2020 11:00'}, 'US/Mountain', date(year=2020, month=1, day=27),
-                           time(hour=11, tzinfo=mst))
+                           time(hour=11, tzinfo=mst)),
+                          ({'date': '1/27/2020'}, None, date(year=2020, month=1, day=27),
+                           time(hour=0))
                           ])
 def test_add_date_time_keys(data, in_tz, expected_date, expected_time):
     """
