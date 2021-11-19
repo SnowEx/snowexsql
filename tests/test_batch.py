@@ -137,7 +137,7 @@ class TestUploadSMPBatch(TableTestBase):
             dict(data_name='force', attribute_to_check='comments', filter_attribute='depth', filter_value=-0.4,
                  expected='started 1-2 cm below surface'),
             dict(data_name='force', attribute_to_check='time', filter_attribute='id', filter_value=1,
-                 expected=datetime.time(hour=16, minute=16, second=49, tzinfo=pytz.FixedOffset(-360))),
+                 expected=datetime.time(hour=16, minute=16, second=49, tzinfo=pytz.FixedOffset(-420))),
             dict(data_name='force', attribute_to_check='units', filter_attribute='depth', filter_value=-0.4,
                  expected='Newtons'),
 

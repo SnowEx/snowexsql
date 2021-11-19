@@ -21,7 +21,7 @@ class TestStratigraphyProfile(TableTestBase):
     kwargs = {'timezone': 'US/Mountain'}
     UploaderClass = UploadProfileData
     TableClass = LayerData
-    dt = datetime.datetime(2020, 2, 5, 13, 30, 0, 0, pytz.FixedOffset(-360))
+    dt = datetime.datetime(2020, 2, 5, 13, 30, 0, 0, pytz.FixedOffset(-420))
 
     params = {
         'test_count': [dict(data_name='hand_hardness', expected_count=5)],
@@ -267,7 +267,7 @@ class TestSMPProfile(TableTestBase):
     kwargs = {'timezone': 'UTC', 'units': 'Newtons', 'header_sep': ':', 'instrument':'snowmicropen'}
     UploaderClass = UploadProfileData
     TableClass = LayerData
-    dt = datetime.datetime(2020, 1, 31, 22, 42, 14, 0, pytz.FixedOffset(-360))
+    dt = datetime.datetime(2020, 1, 31, 22, 42, 14, 0, pytz.FixedOffset(-420))
 
     params = {
         'test_count': [dict(data_name='force', expected_count=154)],
