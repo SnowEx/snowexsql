@@ -1,5 +1,5 @@
 
-name: snowexsql
+name: snowexsql testing
 
 # Controls when the action will run.
 on:
@@ -12,10 +12,9 @@ on:
 
 jobs:
   build:
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
     strategy:
       matrix:
-        os: [ ubuntu-latest, macOS-latest, windows-latest ]
         python-version: [3.6, 3.7, 3.8, 3.9]
 
     services:
@@ -50,7 +49,7 @@ jobs:
           pytest -s
 
       # Run coverage only once
-      - if: ${{ matrix.python-version == '3.9' && matrix.os == 'ubuntu-latest'}}
+      - if: ${{ matrix.python-version == '3.9'}}
         name: Get Coverage for badge
         run: |
           # Run coverage save the results
@@ -74,7 +73,7 @@ jobs:
           # process.env.BRANCH = 'pull_27';
           echo "BRANCH=$(echo ${BRANCH_NAME})" >> $GITHUB_ENV
 
-      - if: ${{ matrix.python-version == '3.9' && matrix.os == 'ubuntu-latest'}}
+      - if: ${{ matrix.python-version == '3.9'}}
         name: Create the Badge
         uses: schneegans/dynamic-badges-action@v1.0.0
         with:
@@ -84,3 +83,40 @@ jobs:
           label: Coverage
           message: ${{ env.COVERAGE }}
           color: green
+
+
+name: snowexsql build
+
+# Controls when the action will run.
+on:
+  # Triggers the workflow on push or pull request events but only for the master branch
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macOS-latest, windows-latest]
+        python-version: [3.6, 3.7, 3.8, 3.9]
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install dependencies
+        run: |
+            pip install --upgrade pip setuptools wheel
+            python -m pip install -r requirements.txt
+            python setup.py install
+
+      - name: Install Validation
+        run: |
+            python -c "import snowexsql"
+
+
