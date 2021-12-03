@@ -190,6 +190,9 @@ def add_date_time_keys(data, in_timezone=None, out_timezone='US/Mountain'):
         if 'date' in keys and 'time' in keys:
             dstr = ' '.join([str(data['date']), str(data['time'])])
             d = pd.to_datetime(dstr)
+        
+        elif 'date' in keys:
+            d = pd.to_datetime(data['date'])
 
         # Handle gpr data dates
         elif 'utcyear' in keys and 'utcdoy' in keys and 'utctod' in keys:
