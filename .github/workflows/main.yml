@@ -12,10 +12,10 @@ on:
 
 jobs:
   build:
-
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     strategy:
       matrix:
+        os: [ ubuntu-latest, macOS-latest, windows-latest ]
         python-version: [3.6, 3.7, 3.8, 3.9]
 
     services:
@@ -50,7 +50,7 @@ jobs:
           pytest -s
 
       # Run coverage only once
-      - if: ${{ matrix.python-version == '3.9' }}
+      - if: ${{ matrix.python-version == '3.9' && matrix.os == 'ubuntu-latest'}}
         name: Get Coverage for badge
         run: |
           # Run coverage save the results
@@ -74,7 +74,7 @@ jobs:
           # process.env.BRANCH = 'pull_27';
           echo "BRANCH=$(echo ${BRANCH_NAME})" >> $GITHUB_ENV
 
-      - if: ${{ matrix.python-version == '3.9' }}
+      - if: ${{ matrix.python-version == '3.9' && matrix.os == 'ubuntu-latest'}}
         name: Create the Badge
         uses: schneegans/dynamic-badges-action@v1.0.0
         with:
