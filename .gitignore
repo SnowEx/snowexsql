@@ -17,6 +17,7 @@ docs/_build/*
 **/.ipynb_checkpoints/*
 
 .coverage
+coverage.xml
 htmlcov/*
 scripts/upload/test*.txt
 .idea/*
