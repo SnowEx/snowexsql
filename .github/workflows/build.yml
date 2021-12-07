@@ -1,0 +1,37 @@
+
+
+name: snowexsql build
+
+# Controls when the action will run.
+on:
+  # Triggers the workflow on push or pull request events but only for the master branch
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macOS-latest]
+        python-version: [3.6, 3.7, 3.8, 3.9]
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install Macos/Linux dependencies
+        run: |
+            pip install --upgrade pip setuptools wheel
+            python -m pip install -r requirements.txt
+            python setup.py install
+      - name: Install Validation
+        run: |
+            python -c "import snowexsql"
+
+
