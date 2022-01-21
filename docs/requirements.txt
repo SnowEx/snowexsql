@@ -4,5 +4,5 @@ nbconvert==6.0.7
 sphinx==4.0.2
 pandoc==1.0.2
 sphinxcontrib-apidoc==0.3.0
-ipython==7.23.1
+ipython==7.31.1
 
