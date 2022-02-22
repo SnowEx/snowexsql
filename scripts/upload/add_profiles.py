@@ -25,10 +25,9 @@ def main():
 
     # Grab all the site details files
     sites = glob.glob(join(data_dir, '*/*site*.csv'))
-
+    summaries = glob.glob(join(data_dir, '*/*Summary*.csv'))
     # Remove the site details from the total file list to get only the
-    # profiles file list
-    profiles = list(set(filenames) - set(sites))
+    profiles = list(set(filenames) - set(sites) - set(summaries))
 
     # Submit all profiles associated with pit at a time
     b = UploadProfileBatch(
