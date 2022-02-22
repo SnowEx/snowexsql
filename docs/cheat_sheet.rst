@@ -10,6 +10,13 @@ Querying
 --------
 The table below shows a handful of useful ways to query the database.
 
+All querys can be built and expanded on by:
+
+```
+qry = session.query(<TABLE>)
+qry = qry.filter(<CONDITION>)
+# Continue on chaining filters
+```
 
 .. list-table:: Querying
    :widths: 10 100 1000
@@ -27,17 +34,25 @@ The table below shows a handful of useful ways to query the database.
      - :python:`qry.filter(PointData.date.in_([date1, date2]))`
      - Filter by matching a value in a list
 
+   * - :python:`.is_()`, :python:`isnot()`
+     - :python:`qry.filter(LayerData.instrument.isnot(None))`
+     - Filter a column that are/are not Null
+
    * - :python:`.contains()`
      - :python:`qry.filter(LayerData.comments).contains('graupel'))`
      - Filter by finding a substring
 
    * - :python:`.distinct()`
-     - :python:`qry.filter(RasterData.surveyors).distinct()`
+     - :python:`session.query(RasterData.surveyors).distinct()`
      - Reduce result to unique values
 
    * - :python:`.limit()`
-     - :python:`qry.filter(PointsData).limit(10)`
-     - Limit the number of records returned
+     - :python:`session.query(PointsData).limit(10)`
+     - Limit the number of records returned, useful for testing
+
+   * - :python:`.count()`
+     - :python:`qry.filter(PointsData).count()`
+     - Count the number of records matching query/filtering
 
 
 Database Tables
@@ -149,3 +164,22 @@ The table below shows useful tools that can be used in python from postgis. Thes
      - :python:`session.query(func.ST_Within(SiteData.geom, shp))`
      - Get data within polygon
 
+   * - `ST_Distance <https://postgis.net/docs/ST_Distance.html>`_
+     - :python:`session.query(func.ST_Distance(PointData.geom, shp))`
+     - Get distances between points
+
+
+Common Issues
+-------------
+
+Useful tools for debugging
+
+.. list-table:: **Debugging Tools**
+   :widths: 20 180
+   :header-rows: 1
+
+   * - `session.rollback()`
+     - Rolls back the last query, useful for querys that fail after execution.
+
+   * - `session.close()`
+     - Closes your connection with the DB. Useful when using jupyter notebooks

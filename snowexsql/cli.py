@@ -20,16 +20,24 @@ def clear_dataset():
         dest='types',
         nargs='+',
         help='Names of the data to delete')
+
     parser.add_argument(
         '--surveyors',
         '-s',
         dest='surveyors',
         help='Name of the surveyors to filter the data to delete')
+
     parser.add_argument(
         '--date',
         '-d',
         dest='date',
         help='Date of the data to file by')
+
+    parser.add_argument(
+        '--doi',
+        dest='doi',
+        help='Entries can be filtered by a DOI value')
+
     parser.add_argument(
         '--database',
         '-db',
@@ -43,7 +51,6 @@ def clear_dataset():
         dest='credentials',
         default='./credentials.json',
         help='path to a json containing username and password keys')
-
 
     args = parser.parse_args()
 
@@ -86,6 +93,11 @@ def clear_dataset():
         d = pd.to_datetime(args.date).date()
         print('Filtering results to the date {}...'.format(d))
         q = q.filter(TableClass.date == d)
+
+    # Filter by date
+    if args.doi is not None:
+        print('Filtering results to doi = {}...'.format(args.doi))
+        q = q.filter(TableClass.doi == args.doi)
 
     # Form a count query
     count = q.count()
