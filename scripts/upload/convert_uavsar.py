@@ -137,10 +137,10 @@ def main():
     gm_filenames = glob.glob(join(directory, 'grmesa_*.ann'))
 
     # TODO: Unsurpress IDAHO files after hackweek
-    # boi_filenames = glob.glob(join(directory, 'lowman_*.ann'))
-    # rcew_filenames = glob.glob(join(directory, 'silver_*.ann'))
+    boi_filenames = glob.glob(join(directory, 'lowman_*.ann'))
+    rcew_filenames = glob.glob(join(directory, 'silver_*.ann'))
 
-    nfiles = len(gm_filenames) #+ len(boi_filenames) + len(rcew_filenames)
+    nfiles = len(gm_filenames) + len(boi_filenames) + len(rcew_filenames)
 
     if isdir(output):
         ans = input('\nWARNING! You are about overwrite {} previously '
@@ -151,10 +151,10 @@ def main():
         if ans.lower() == 'y':
             log.info('Converting Grand Mesa...')
             convert(gm_filenames, output, gm_epsg, clean_first=True)
-            # log.info('Converting Boise/Lowman...')
-            # convert(boi_filenames, output, boi_epsg)
-            # log.info('Converting Reynolds Creek/Silver...')
-            # convert(rcew_filenames, output, boi_epsg)
+            log.info('Converting Boise/Lowman...')
+            convert(boi_filenames, output, boi_epsg)
+            log.info('Converting Reynolds Creek/Silver...')
+            convert(rcew_filenames, output, boi_epsg)
 
         else:
             log.warning(
@@ -163,10 +163,10 @@ def main():
         mkdir(output)
         log.info('Converting Grand Mesa...')
         convert(gm_filenames, output, gm_epsg)
-        # log.info('Converting Boise/Lowman...')
-        # convert(boi_filenames, output, boi_epsg)
-        # log.info('Converting Reynolds Creek/Silver...')
-        # convert(rcew_filenames, output, boi_epsg)
+        log.info('Converting Boise/Lowman...')
+        convert(boi_filenames, output, boi_epsg)
+        log.info('Converting Reynolds Creek/Silver...')
+        convert(rcew_filenames, output, boi_epsg)
 
 if __name__ == '__main__':
     main()
