@@ -8,7 +8,9 @@ from subprocess import STDOUT, check_output
 import pandas as pd
 import progressbar
 from geoalchemy2.elements import RasterElement, WKTElement
-from os.path import basename
+from os.path import basename, exists, join
+from os import makedirs, remove
+import boto3
 
 from .data import ImageData, LayerData, PointData
 from .db import get_table_attributes
@@ -18,6 +20,7 @@ from .string_management import parse_none, remap_data_names
 from .utilities import (assign_default_kwargs, get_file_creation_date,
                         get_logger)
 from .projection import reproject_point_in_dict
+
 
 class UploadProfileData:
     """
@@ -378,6 +381,82 @@ class PointDataCSV(object):
         self.points_uploaded += 1
 
 
+class COGHandler:
+    def __init__(self, tif_file, s3_bucket="m3w-snowex", s3_prefix="cogs",
+                 tmp_dir="/tmp/snowex_cog_temporary"):
+        self.tif_file = tif_file
+        self.s3_bucket = s3_bucket
+        self.s3_prefix = s3_prefix
+        self.tmp_dir = tmp_dir
+        if not exists(tmp_dir):
+            makedirs(tmp_dir)
+        self._cog_path = None
+        self._cog_uri = None
+
+    def create_cog(self, nodata=None):
+        """
+        Create a cloud optimized geotif from tif
+        Returns:
+            path to COG
+        """
+        cmd = [
+            "gdal_translate",
+            "-co", "COMPRESS=DEFLATE",
+            "-co", "ZLEVEL=9",  # Use highest compression
+            "-co", "PREDICTOR=2",  # Compression predictor
+            "-co", "TILED=YES",  # Apply default (256x256) tiling
+            "-ot", "Byte",  # Convert data to byte type
+        ]
+        if nodata is not None:
+            cmd += ["-a_nodata", f"{nodata}"]
+
+        output_file = join(self.tmp_dir, basename(self.tif_file))
+        cmd += [
+            self.tif_file,  # Input file
+            output_file  # Output file
+        ]
+        s = check_output(cmd, stderr=STDOUT).decode('utf-8')
+        self._cog_path = output_file
+        return output_file
+
+    def _remove_cog(self):
+        """
+        Deletes cog file
+        """
+        if exists(self._cog_path):
+            remove(self._cog_path)
+        else:
+            raise RuntimeError(
+                f"Cannot remove the COG {self._cog_path}"
+                f" because it does not exist"
+            )
+
+    def upload_to_s3(self):
+        """
+        upload COG to s3
+        Returns:
+            s3 uri
+        """
+        # TODO set region based on env var
+        if exists(self._cog_path):
+            key_name = join(self.s3_prefix, basename(self._cog_path))
+            s3 = boto3.resource('s3')
+            s3.meta.client.upload_file(
+                self._cog_path,  # local file
+                self.s3_bucket,  # bucket name
+                key_name  # key name
+            )
+        else:
+            raise RuntimeError(
+                f"Cannot upload COG {self._cog_path}"
+                f" because it does not exist"
+            )
+        # delete cog
+        self._remove_cog()
+        # return uri
+        return join(self.s3_bucket, key_name)
+
+
 class UploadRaster(object):
     """
     Class for uploading a single tifs to the database. Utilizes the raster2pgsql
@@ -385,7 +464,6 @@ class UploadRaster(object):
     """
 
     defaults = {'epsg': 26912,
-                'tiled': False,
                 'no_data': None}
 
     def __init__(self, filename, **kwargs):
@@ -398,27 +476,56 @@ class UploadRaster(object):
         """
         Submit the data to the db using ORM
         """
-        # This produces a PSQL command with auto tiling
-        cmd = ['raster2pgsql', '-s', str(self.epsg)]
-
+        # TODO:
+        """
+            * Give database node the ability to read from S3
+            * Convert raster to cog (make and clean up temp dir)
+            * add bucket name
+            * upload raster to bucket
+            * change command to use url instead of uploading
+            * firgure out how to parse what is being piped
+        example: https://www.crunchydata.com/blog/postgis-raster-and-crunchy-bridge
+        docs: https://postgis.net/docs/using_raster_dataman.html#RT_Cloud_Rasters
+        """
         # Remove any invalid columns
         valid = get_table_attributes(ImageData)
         data = {k: v for k, v in self.data.items() if k in valid}
         data['date_accessed'] = self.date_accessed
 
-        # Add tiling if requested
-        if self.tiled == True:
-            cmd.append('-t')
-            cmd.append('500x500')
+        # create cog and upload to s3
+        cog_handler = COGHandler(self.filename)
+        cog_handler.create_cog()
+        s3_url = cog_handler.upload_to_s3()
+
+        # This produces a PSQL command with auto tiling
+        cmd = [
+            'raster2pgsql', '-s', str(self.epsg),
+            '-t', '256x256',
+            '-R', f'/vsis3/{s3_url}',
+            ''
+        ]
 
         # If nodata applied:
         if self.no_data is not None:
             cmd.append('-N')
             cmd.append(str(self.no_data))
 
-        cmd.append(self.filename)
+        # cmd.append(self.filename)
         self.log.debug('Executing: {}'.format(' '.join(cmd)))
         s = check_output(cmd, stderr=STDOUT).decode('utf-8')
+        # raster2pgsql -s 26912 -t 256x256 -R /vsicurl/s3://m3w-snowex/cogs/uavsar_utm.amp1.real.tif
+
+        """
+                example raster2pgsql
+                raster2pgsql \
+                  -s 990000 \        # SRID of the data
+                  -t 256x256 \       # Tile raster
+                  -I \               # Index the table  # TODO: what?
+                  -R \               # Load as "out-db", metadata only
+                  /vsicurl/$url \    # File to reference
+                  pop12 \            # Table name to use
+                  | psql $DATABASE_URL
+        """
 
         # Split the SQL command at values (' which is the start of every one
         tiles = s.split("VALUES ('")[1:]
