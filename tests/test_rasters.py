@@ -70,7 +70,7 @@ class TestTiledRaster(DBSetup):
         Test two rasters uploaded
         """
         records = self.session.query(ImageData.id).all()
-        assert len(records) == 4
+        assert len(records) == 9
 
     def test_tiled_raster_size(self):
         """
@@ -80,8 +80,8 @@ class TestTiledRaster(DBSetup):
         datasets = raster_to_rasterio(self.session, rasters)
 
         for d in datasets:
-            assert d.width <= 500
-            assert d.height <= 500
+            assert d.width <= 256
+            assert d.height <= 256
 
     def test_raster_point_retrieval(self):
         """
