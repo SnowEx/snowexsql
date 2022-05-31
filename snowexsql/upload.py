@@ -405,7 +405,7 @@ class COGHandler:
             "-co", "ZLEVEL=9",  # Use highest compression
             "-co", "PREDICTOR=2",  # Compression predictor
             "-co", "TILED=YES",  # Apply default (256x256) tiling
-            "-ot", "Byte",  # Convert data to byte type
+            # "-ot", "Byte",  # Convert data to byte type
         ]
         if nodata is not None:
             cmd += ["-a_nodata", f"{nodata}"]
@@ -484,7 +484,9 @@ class UploadRaster(object):
             * upload raster to bucket
             * change command to use url instead of uploading
             * firgure out how to parse what is being piped
-        example: https://www.crunchydata.com/blog/postgis-raster-and-crunchy-bridge
+        example:
+            - https://www.crunchydata.com/blog/postgis-raster-and-crunchy-bridge
+            - https://www.crunchydata.com/blog/waiting-for-postgis-3.2-secure-cloud-raster-access
         docs: https://postgis.net/docs/using_raster_dataman.html#RT_Cloud_Rasters
         """
         # Remove any invalid columns
@@ -500,6 +502,7 @@ class UploadRaster(object):
         # This produces a PSQL command with auto tiling
         cmd = [
             'raster2pgsql', '-s', str(self.epsg),
+            # '-I',
             '-t', '256x256',
             '-R', f'/vsis3/{s3_url}',
             ''
@@ -513,9 +516,9 @@ class UploadRaster(object):
         # cmd.append(self.filename)
         self.log.debug('Executing: {}'.format(' '.join(cmd)))
         s = check_output(cmd, stderr=STDOUT).decode('utf-8')
-        # raster2pgsql -s 26912 -t 256x256 -R /vsicurl/s3://m3w-snowex/cogs/uavsar_utm.amp1.real.tif
 
         """
+         #  raster2pgsql -s 26912 -t 256x256 -R /vsis3/m3w-snowex/cogs/uavsar_utm.amp1.real.tif fakedata
                 example raster2pgsql
                 raster2pgsql \
                   -s 990000 \        # SRID of the data
