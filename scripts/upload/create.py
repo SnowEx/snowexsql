@@ -27,15 +27,6 @@ def main(overwrite=False, db='snowex', credentials='./credentials.json'):
             sql = f'GRANT SELECT ON {t} TO snow;'
             log.info(f'Adding read only permissions for table {t}...')
             engine.execute(sql)
-            if t == "images":
-                # enable out db COG reading
-                log.info(f"Allowing cloud COG reading for {t}")
-                engine.execute(
-                    f"ALTER DATABASE {t} SET postgis.enable_outdb_rasters = true;"
-                )
-                engine.execute(
-                    f"ALTER DATABASE {t} SET postgis.gdal_enabled_drivers TO 'ENABLE_ALL';"
-                )
     else:
         log.warning('Aborted. Database has not been modified.\n')
 
