@@ -3,11 +3,13 @@ version: '2.1'
 services:
 
   postgres:
-    image: kartoza/postgis:13-3.1
+    image: kartoza/postgis:14-3.2
     environment:
       POSTGRES_PASSWORD: 'db_builder'
       POSTGRES_USER: 'builder'
       POSTGRES_DB: 'test'
+      POSTGIS_GDAL_ENABLED_DRIVERS: 'ENABLE_ALL'
+      POSTGIS_ENABLE_OUTDB_RASTERS: 'True'
       TZ: 'US/Mountain'
       PGTZ: 'US/Mountain'
     ports:

@@ -8,9 +8,10 @@ from subprocess import STDOUT, check_output
 import pandas as pd
 import progressbar
 from geoalchemy2.elements import RasterElement, WKTElement
-from os.path import basename, exists, join
+from os.path import basename, exists, join, abspath, expanduser
 from os import makedirs, remove
 import boto3
+import logging
 
 from .data import ImageData, LayerData, PointData
 from .db import get_table_attributes
@@ -20,6 +21,8 @@ from .string_management import parse_none, remap_data_names
 from .utilities import (assign_default_kwargs, get_file_creation_date,
                         get_logger)
 from .projection import reproject_point_in_dict
+
+LOG = logging.getLogger("snowexsql.upload")
 
 
 class UploadProfileData:
@@ -383,15 +386,19 @@ class PointDataCSV(object):
 
 class COGHandler:
     def __init__(self, tif_file, s3_bucket="m3w-snowex", s3_prefix="cogs",
-                 tmp_dir="/tmp/snowex_cog_temporary"):
+                 cog_dir="~/snowex_cog_storage", use_s3=True):
         self.tif_file = tif_file
         self.s3_bucket = s3_bucket
         self.s3_prefix = s3_prefix
-        self.tmp_dir = tmp_dir
-        if not exists(tmp_dir):
-            makedirs(tmp_dir)
+        self.tmp_dir = abspath(expanduser(cog_dir))
+        self.use_s3 = use_s3
+        if not exists(cog_dir):
+            LOG.info(f"Making directory {cog_dir}")
+            makedirs(cog_dir)
         self._cog_path = None
         self._cog_uri = None
+        self._key_name = None
+        self._sql_path = None
 
     def create_cog(self, nodata=None):
         """
@@ -431,30 +438,54 @@ class COGHandler:
                 f" because it does not exist"
             )
 
-    def upload_to_s3(self):
+    def persist_cog(self):
         """
-        upload COG to s3
+        persist COG either locally or in S3
+        Args:
+            to_s3: boolean whether it is local or S3
         Returns:
-            s3 uri
+            S3 or local path
         """
         # TODO set region based on env var
         if exists(self._cog_path):
-            key_name = join(self.s3_prefix, basename(self._cog_path))
-            s3 = boto3.resource('s3')
-            s3.meta.client.upload_file(
-                self._cog_path,  # local file
-                self.s3_bucket,  # bucket name
-                key_name  # key name
-            )
+            if self.use_s3:
+                self._key_name = join(self.s3_prefix, basename(self._cog_path))
+                s3 = boto3.resource('s3')
+                s3.meta.client.upload_file(
+                    self._cog_path,  # local file
+                    self.s3_bucket,  # bucket name
+                    self._key_name  # key name
+                )
+                result = join(self.s3_bucket, self._key_name)
+                # delete cog
+                self._remove_cog()
+            else:
+                # COG is already stored locally
+                result = self._cog_path
         else:
             raise RuntimeError(
                 f"Cannot upload COG {self._cog_path}"
                 f" because it does not exist"
             )
-        # delete cog
-        self._remove_cog()
-        # return uri
-        return join(self.s3_bucket, key_name)
+        self._sql_path = result
+        return result
+
+    def to_sql_command(self, epsg, no_data):
+        # This produces a PSQL command with auto tiling
+        cog_path = f'/vsis3/{self._sql_path}' if self.use_s3 else self._sql_path
+        cmd = [
+            'raster2pgsql', '-s', str(epsg),
+            # '-I',
+            '-t', '256x256',
+            '-R', cog_path,
+        ]
+
+        # If nodata applied:
+        if no_data is not None:
+            cmd.append('-N')
+            cmd.append(str(no_data))
+
+        return cmd
 
 
 class UploadRaster(object):
@@ -463,8 +494,11 @@ class UploadRaster(object):
     command and then parses it for delivery via python.
     """
 
-    defaults = {'epsg': 26912,
-                'no_data': None}
+    defaults = {
+        'epsg': 26912,
+        'no_data': None,
+        'use_s3': True
+    }
 
     def __init__(self, filename, **kwargs):
         self.log = get_logger(__name__)
@@ -495,40 +529,12 @@ class UploadRaster(object):
         data['date_accessed'] = self.date_accessed
 
         # create cog and upload to s3
-        cog_handler = COGHandler(self.filename)
+        cog_handler = COGHandler(self.filename, use_s3=self.use_s3)
         cog_handler.create_cog()
-        s3_url = cog_handler.upload_to_s3()
-
-        # This produces a PSQL command with auto tiling
-        cmd = [
-            'raster2pgsql', '-s', str(self.epsg),
-            # '-I',
-            '-t', '256x256',
-            '-R', f'/vsis3/{s3_url}',
-            ''
-        ]
-
-        # If nodata applied:
-        if self.no_data is not None:
-            cmd.append('-N')
-            cmd.append(str(self.no_data))
-
-        # cmd.append(self.filename)
+        cog_handler.persist_cog()
+        cmd = cog_handler.to_sql_command(self.epsg, self.no_data)
         self.log.debug('Executing: {}'.format(' '.join(cmd)))
         s = check_output(cmd, stderr=STDOUT).decode('utf-8')
-
-        """
-         #  raster2pgsql -s 26912 -t 256x256 -R /vsis3/m3w-snowex/cogs/uavsar_utm.amp1.real.tif fakedata
-                example raster2pgsql
-                raster2pgsql \
-                  -s 990000 \        # SRID of the data
-                  -t 256x256 \       # Tile raster
-                  -I \               # Index the table  # TODO: what?
-                  -R \               # Load as "out-db", metadata only
-                  /vsicurl/$url \    # File to reference
-                  pop12 \            # Table name to use
-                  | psql $DATABASE_URL
-        """
 
         # Split the SQL command at values (' which is the start of every one
         tiles = s.split("VALUES ('")[1:]

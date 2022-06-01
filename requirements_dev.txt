@@ -12,3 +12,4 @@ pytest-runner==5.1
 snowmicropyn
 jupyterlab==2.2.10
 matplotlib==3.2.2
+moto==3.1.11
