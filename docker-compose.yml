@@ -16,3 +16,5 @@ services:
       - 5432:5432
     healthcheck:
       test: "exit 0"
+    volumes:
+      - $PWD/:$PWD/  # amazing this works. Allows for outdb testing of local rasters

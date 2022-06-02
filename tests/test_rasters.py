@@ -124,14 +124,14 @@ class TestCogHandler:
 
     def test_to_sql_local(self, local_handler, tmp_outputs):
         local_handler.persist_cog()
-        result = local_handler.to_sql_command(26912, None)
+        result = local_handler.to_sql_command(26912, no_data=None)
         assert result == [
             'raster2pgsql', '-s', '26912', '-t', '256x256',
             '-R', join(tmp_outputs, 'uavsar_utm.amp1.real.tif')]
 
     def test_to_sql_s3(self, s3_handler):
         s3_handler.persist_cog()
-        result = s3_handler.to_sql_command(26912, None)
+        result = s3_handler.to_sql_command(26912, no_data=None)
         assert result == [
             'raster2pgsql', '-s', '26912', '-t', '256x256',
             '-R', f'/vsis3/{self.BUCKET_NAME}/cogs/uavsar_utm.amp1.real.tif'

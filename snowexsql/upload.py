@@ -1,8 +1,7 @@
 """
 Module for classes that upload single files to the database.
 """
-
-
+import os
 from subprocess import STDOUT, check_output
 
 import pandas as pd
@@ -385,16 +384,33 @@ class PointDataCSV(object):
 
 
 class COGHandler:
+    """
+    Class to convert TIFs to COGs, persist them, and generate the command to
+    insert them into the db
+    """
+    AWS_REGION = os.getenv("AWS_DEFAULT_REGION", "us-west-2")
+
     def __init__(self, tif_file, s3_bucket="m3w-snowex", s3_prefix="cogs",
-                 cog_dir="~/snowex_cog_storage", use_s3=True):
+                 cog_dir="./snowex_cog_storage", use_s3=True):
+        """
+        Args:
+            tif_file: local or abs bath to file that will be persisted
+            s3_bucket: optional s3 bucket name
+            s3_prefix: optional s3 bucket prefix
+            cog_dir: option local directory for storing cog files
+            use_s3: boolean whether or not we persist files in S3
+        """
         self.tif_file = tif_file
         self.s3_bucket = s3_bucket
         self.s3_prefix = s3_prefix
         self.tmp_dir = abspath(expanduser(cog_dir))
         self.use_s3 = use_s3
-        if not exists(cog_dir):
-            LOG.info(f"Making directory {cog_dir}")
-            makedirs(cog_dir)
+        for d in [self.tmp_dir, cog_dir]:
+            if not exists(d):
+                LOG.info(f"Making directory {d}")
+                makedirs(d)
+
+        # state variables
         self._cog_path = None
         self._cog_uri = None
         self._key_name = None
@@ -403,6 +419,8 @@ class COGHandler:
     def create_cog(self, nodata=None):
         """
         Create a cloud optimized geotif from tif
+        Args:
+            nodata: no data value
         Returns:
             path to COG
         """
@@ -412,7 +430,6 @@ class COGHandler:
             "-co", "ZLEVEL=9",  # Use highest compression
             "-co", "PREDICTOR=2",  # Compression predictor
             "-co", "TILED=YES",  # Apply default (256x256) tiling
-            # "-ot", "Byte",  # Convert data to byte type
         ]
         if nodata is not None:
             cmd += ["-a_nodata", f"{nodata}"]
@@ -422,13 +439,14 @@ class COGHandler:
             self.tif_file,  # Input file
             output_file  # Output file
         ]
-        s = check_output(cmd, stderr=STDOUT).decode('utf-8')
+        LOG.info('Executing: {}'.format(' '.join(cmd)))
+        check_output(cmd, stderr=STDOUT).decode('utf-8')
         self._cog_path = output_file
         return output_file
 
     def _remove_cog(self):
         """
-        Deletes cog file
+        Delete COG file. This should be used of the files are persisted in S3
         """
         if exists(self._cog_path):
             remove(self._cog_path)
@@ -441,23 +459,20 @@ class COGHandler:
     def persist_cog(self):
         """
         persist COG either locally or in S3
-        Args:
-            to_s3: boolean whether it is local or S3
         Returns:
             S3 or local path
         """
-        # TODO set region based on env var
         if exists(self._cog_path):
             if self.use_s3:
                 self._key_name = join(self.s3_prefix, basename(self._cog_path))
-                s3 = boto3.resource('s3')
+                s3 = boto3.resource('s3', region_name=self.AWS_REGION)
                 s3.meta.client.upload_file(
                     self._cog_path,  # local file
                     self.s3_bucket,  # bucket name
                     self._key_name  # key name
                 )
                 result = join(self.s3_bucket, self._key_name)
-                # delete cog
+                # delete cog since it is stored in S3
                 self._remove_cog()
             else:
                 # COG is already stored locally
@@ -470,7 +485,15 @@ class COGHandler:
         self._sql_path = result
         return result
 
-    def to_sql_command(self, epsg, no_data):
+    def to_sql_command(self, epsg, no_data=None):
+        """
+        Generate command to insert into database
+        Args:
+            epsg: string EPSG
+            no_data: optional nodata value
+        Returns:
+            list of raster2pgsql command
+        """
         # This produces a PSQL command with auto tiling
         cog_path = f'/vsis3/{self._sql_path}' if self.use_s3 else self._sql_path
         cmd = [
@@ -497,7 +520,7 @@ class UploadRaster(object):
     defaults = {
         'epsg': 26912,
         'no_data': None,
-        'use_s3': True
+        'use_s3': True  # boolean whether or not we're storing files in S3
     }
 
     def __init__(self, filename, **kwargs):
@@ -508,20 +531,11 @@ class UploadRaster(object):
 
     def submit(self, session):
         """
-        Submit the data to the db using ORM
-        """
-        # TODO:
-        """
-            * Give database node the ability to read from S3
-            * Convert raster to cog (make and clean up temp dir)
-            * add bucket name
-            * upload raster to bucket
-            * change command to use url instead of uploading
-            * firgure out how to parse what is being piped
-        example:
+        Submit the data to the db using ORM. This uses out_db rasters either
+        locally or in AWS S3. Good articles below
             - https://www.crunchydata.com/blog/postgis-raster-and-crunchy-bridge
             - https://www.crunchydata.com/blog/waiting-for-postgis-3.2-secure-cloud-raster-access
-        docs: https://postgis.net/docs/using_raster_dataman.html#RT_Cloud_Rasters
+            - https://postgis.net/docs/using_raster_dataman.html#RT_Cloud_Rasters
         """
         # Remove any invalid columns
         valid = get_table_attributes(ImageData)
@@ -532,7 +546,9 @@ class UploadRaster(object):
         cog_handler = COGHandler(self.filename, use_s3=self.use_s3)
         cog_handler.create_cog()
         cog_handler.persist_cog()
-        cmd = cog_handler.to_sql_command(self.epsg, self.no_data)
+        cmd = cog_handler.to_sql_command(
+            self.epsg, no_data=self.no_data
+        )
         self.log.debug('Executing: {}'.format(' '.join(cmd)))
         s = check_output(cmd, stderr=STDOUT).decode('utf-8')
 

@@ -27,9 +27,12 @@ jobs:
           POSTGRES_DB: test
           TZ: 'US/Mountain'
           PGTZ: 'US/Mountain'
-
+          POSTGIS_GDAL_ENABLED_DRIVERS: 'ENABLE_ALL'
+          POSTGIS_ENABLE_OUTDB_RASTERS: 'True'
         ports:
           - 5432:5432
+        volumes:
+          - $PWD/:$PWD/
 
     steps:
       - uses: actions/checkout@v2
