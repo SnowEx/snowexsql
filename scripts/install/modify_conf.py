@@ -4,6 +4,7 @@ Edits the postgres conf file
 import os
 import platform
 from subprocess import check_output
+import argparse
 
 from snowexsql.utilities import find_kw_in_lines
 
@@ -59,13 +60,30 @@ if __name__ == '__main__':
     # Modify and output the conf file to its original location
     # Settings semi based on
     # https://postgis.net/workshops/postgis-intro/tuning.html
+
+    parser = argparse.ArgumentParser(description='Modify postgres configuration')
+    parser.add_argument(
+        '-vsi', '--gdal_vsi_options', dest="vsi_opts", type=str, nargs="+",
+        default=[], required=False,
+        help='list of gdal_vsi_options for the config. \n'
+             'Example: -vsi AWS_ACCESS_KEY_ID=<key> AWS_SECRET_ACCESS_KEY=<key>'
+    )
+
+    args = parser.parse_args()
+    vsi_opts = args.vsi_opts
+    if vsi_opts:
+        extra_opts = {
+            "postgis.gdal_vsi_options": " ".join(vsi_opts)
+        }
+
     conf_updates = {'shared_buffers': '500MB',
                     'work_mem': "3000MB",
                     'maintenance_work_mem': '128MB',
                     'wal_buffers': '1MB',
                     'random_page_cost': '2.0',
                     'postgis.enable_outdb_rasters': 1,
-                    'postgis.gdal_enabled_drivers': "'ENABLE_ALL'"
+                    'postgis.gdal_enabled_drivers': "'ENABLE_ALL'",
+                    **extra_opts
                     }
 
     this_os = platform.system().lower()
