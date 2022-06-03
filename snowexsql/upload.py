@@ -449,8 +449,8 @@ class COGHandler:
         """
         Delete COG file. This should be used of the files are persisted in S3
         """
-        if exists(self._cog_path):
-            remove(self._cog_path)
+        if self._cog_path.exists():
+            remove(str(self._cog_path))
         else:
             raise RuntimeError(
                 f"Cannot remove the COG {self._cog_path}"
@@ -465,10 +465,10 @@ class COGHandler:
         """
         if exists(self._cog_path):
             if self.use_s3:
-                self._key_name = join(self.s3_prefix, basename(self._cog_path))
+                self._key_name = join(self.s3_prefix, self._cog_path.name)
                 s3 = boto3.resource('s3', region_name=self.AWS_REGION)
                 s3.meta.client.upload_file(
-                    self._cog_path,  # local file
+                    str(self._cog_path),  # local file
                     self.s3_bucket,  # bucket name
                     self._key_name  # key name
                 )

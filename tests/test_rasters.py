@@ -45,7 +45,7 @@ class TestRaster(TableTestBase):
 
     # Define params which is a dictionary of test names and their args
     params = {
-        'test_count': [dict(data_name='dem', expected_count=1)],
+        'test_count': [dict(data_name='dem', expected_count=16)],
         'test_value': [dict(data_name='dem', attribute_to_check='description',
                             filter_attribute='id', filter_value=1,
                             expected='test')],
