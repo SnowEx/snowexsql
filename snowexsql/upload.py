@@ -3,7 +3,7 @@ Module for classes that upload single files to the database.
 """
 import os
 from subprocess import STDOUT, check_output
-
+from pathlib import Path
 import pandas as pd
 import progressbar
 from geoalchemy2.elements import RasterElement, WKTElement
@@ -400,15 +400,14 @@ class COGHandler:
             cog_dir: option local directory for storing cog files
             use_s3: boolean whether or not we persist files in S3
         """
-        self.tif_file = tif_file
+        self.tif_file = Path(tif_file)
         self.s3_bucket = s3_bucket
         self.s3_prefix = s3_prefix
-        self.tmp_dir = abspath(expanduser(cog_dir))
+        self.tmp_dir = Path(cog_dir).expanduser().absolute()
         self.use_s3 = use_s3
-        for d in [self.tmp_dir, cog_dir]:
-            if not exists(d):
-                LOG.info(f"Making directory {d}")
-                makedirs(d)
+        if not self.tmp_dir.exists():
+            LOG.info(f"Making directory {self.tmp_dir}")
+            makedirs(self.tmp_dir)
 
         # state variables
         self._cog_path = None
@@ -434,10 +433,12 @@ class COGHandler:
         if nodata is not None:
             cmd += ["-a_nodata", f"{nodata}"]
 
-        output_file = join(self.tmp_dir, basename(self.tif_file))
+        output_file = Path(self.tmp_dir)\
+            .joinpath(self.tif_file.name)\
+            .with_suffix(".tif")
         cmd += [
-            self.tif_file,  # Input file
-            output_file  # Output file
+            str(self.tif_file),  # Input file
+            str(output_file)  # Output file
         ]
         LOG.info('Executing: {}'.format(' '.join(cmd)))
         check_output(cmd, stderr=STDOUT).decode('utf-8')
@@ -471,7 +472,7 @@ class COGHandler:
                     self.s3_bucket,  # bucket name
                     self._key_name  # key name
                 )
-                result = join(self.s3_bucket, self._key_name)
+                result = Path(self.s3_bucket).joinpath(self._key_name)
                 # delete cog since it is stored in S3
                 self._remove_cog()
             else:
@@ -495,12 +496,15 @@ class COGHandler:
             list of raster2pgsql command
         """
         # This produces a PSQL command with auto tiling
-        cog_path = f'/vsis3/{self._sql_path}' if self.use_s3 else self._sql_path
+        if self.use_s3:
+            cog_path = Path("/vsis3").joinpath(self._sql_path)
+        else:
+            cog_path = self._sql_path
         cmd = [
             'raster2pgsql', '-s', str(epsg),
             # '-I',
             '-t', '256x256',
-            '-R', cog_path,
+            '-R', str(cog_path),
         ]
 
         # If nodata applied:

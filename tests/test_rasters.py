@@ -32,7 +32,10 @@ class TestRaster(TableTestBase):
     args = [join('be_gm1_0328', 'w001001x.adf')]
 
     # Keyword args to pass to the uploader class
-    kwargs = {'type': 'dem', 'epsg': 26912, 'description': 'test'}
+    kwargs = {
+        'type': 'dem', 'epsg': 26912, 'description': 'test',
+        'use_s3': False
+    }
 
     # Always define this using a table class from data.py and is used for ORM
     TableClass = ImageData
