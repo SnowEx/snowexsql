@@ -50,7 +50,7 @@ class TestRaster(TableTestBase):
                             filter_attribute='id', filter_value=1,
                             expected='test')],
         'test_unique_count': [dict(data_name='dem', attribute_to_count='id',
-                                   expected_count=1)]
+                                   expected_count=16)]
     }
 
 
