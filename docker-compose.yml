@@ -3,14 +3,18 @@ version: '2.1'
 services:
 
   postgres:
-    image: kartoza/postgis:13-3.1
+    image: kartoza/postgis:14-3.2
     environment:
       POSTGRES_PASSWORD: 'db_builder'
       POSTGRES_USER: 'builder'
       POSTGRES_DB: 'test'
-      TZ: 'US/Mountain'
-      PGTZ: 'US/Mountain'
+      POSTGIS_GDAL_ENABLED_DRIVERS: 'ENABLE_ALL'
+      POSTGIS_ENABLE_OUTDB_RASTERS: 'True'
+      TZ: 'MST'
+      PGTZ: 'MST'
     ports:
       - 5432:5432
     healthcheck:
       test: "exit 0"
+    volumes:
+      - $PWD/:$PWD/  # amazing this works. Allows for outdb testing of local rasters

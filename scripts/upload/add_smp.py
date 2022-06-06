@@ -51,7 +51,7 @@ def main():
         'site_name': 'Grand Mesa',
         'units': 'Newtons',
         'in_timezone': 'UTC',
-        'out_timezone': 'US/Mountain',
+        'out_timezone': 'MST',
         'instrument': 'snowmicropen',
         'header_sep': ':',
         'doi': 'https://doi.org/10.5067/ZYW6IHFRYDSE',

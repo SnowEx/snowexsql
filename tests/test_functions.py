@@ -22,8 +22,8 @@ class TestFunctions(DBSetup):
         '''
         super().setup_class()
 
-        self.raster_f = join(self.data_dir,'be_gm1_0328', 'w001001x.adf' )
-        u = UploadRaster(filename=self.raster_f, epsg=26912)
+        self.raster_f = join(self.data_dir, 'be_gm1_0328', 'w001001x.adf')
+        u = UploadRaster(filename=self.raster_f, epsg=26912, use_s3=False)
         u.submit(self.session)
 
     def test_pixel_as_point(self):
@@ -32,7 +32,7 @@ class TestFunctions(DBSetup):
         """
 
         # Get the first pixel as a point
-        records = self.session.query(ST_PixelAsPoint(ImageData.raster, 1, 1)).scalar()
+        records = self.session.query(ST_PixelAsPoint(ImageData.raster, 1, 1)).limit(1).scalar()
 
         # Get the Geometry from the Well known binary format
         q = self.session.scalar(records.ST_GeomFromEWKB())

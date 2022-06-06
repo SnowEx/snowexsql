@@ -166,14 +166,17 @@ class TestUploadRasterBatch(TableTestBase):
     Class testing the batch uploading of rasters
     """
     args = [['be_gm1_0287/w001001x.adf', 'be_gm1_0328/w001001x.adf']]
-    kwargs = {'type': 'dem', 'surveyors': 'QSI',
-              'units': 'meters',
-              'epsg': 26912}
+    kwargs = {
+        'type': 'dem', 'surveyors': 'QSI',
+        'units': 'meters',
+        'epsg': 26912,
+        'use_s3': False
+    }
     UploaderClass = UploadRasterBatch
     TableClass = ImageData
 
     params = {
-        'test_count': [dict(data_name='dem', expected_count=2)],
+        'test_count': [dict(data_name='dem', expected_count=32)],
         'test_value': [dict(data_name='dem', attribute_to_check='surveyors', filter_attribute='id', filter_value=1,
                             expected='QSI'),
                        dict(data_name='dem', attribute_to_check='units', filter_attribute='id', filter_value=1,
@@ -193,19 +196,22 @@ class TestUploadUAVSARBatch(TableTestBase):
     # Upload all uav
     d = join(dirname(__file__), 'data', 'uavsar')
     args = [['uavsar.ann']]
-    kwargs = { 'surveyors': surveyors,
-              'epsg': 26912,
-              'geotiff_dir': d,
-              'instrument': 'UAVSAR, L-band InSAR'}
+    kwargs = {
+        'surveyors': surveyors,
+        'epsg': 26912,
+        'geotiff_dir': d,
+        'instrument': 'UAVSAR, L-band InSAR',
+        'use_s3': False
+    }
 
     UploaderClass = UploadUAVSARBatch
     TableClass = ImageData
 
     params = {
-        'test_count': [dict(data_name='insar amplitude', expected_count=2),
-                       dict(data_name='insar correlation', expected_count=1),
-                       dict(data_name='insar interferogram real', expected_count=1),
-                       dict(data_name='insar interferogram imaginary', expected_count=1)],
+        'test_count': [dict(data_name='insar amplitude', expected_count=18),
+                       dict(data_name='insar correlation', expected_count=9),
+                       dict(data_name='insar interferogram real', expected_count=9),
+                       dict(data_name='insar interferogram imaginary', expected_count=9)],
 
         'test_value': [
             dict(data_name='insar interferogram imaginary', attribute_to_check='surveyors', filter_attribute='units',

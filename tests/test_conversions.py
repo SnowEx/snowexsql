@@ -27,7 +27,7 @@ class TestConversionsOnDB(DBSetup):
 
         # Upload one raster
         raster_f = join(self.data_dir, 'be_gm1_0287', 'w001001x.adf')
-        u = UploadRaster(filename=raster_f, epsg=26912)
+        u = UploadRaster(filename=raster_f, epsg=26912, use_s3=False)
         u.submit(self.session)
 
         # Upload some point data
@@ -77,7 +77,7 @@ class TestConversionsOnDB(DBSetup):
         assert isinstance(df, gpd.GeoDataFrame)
 
         # Confirm value count
-        assert df['ST_Centroid_1'].count() == 1
+        assert df['ST_Centroid_1'].count() == 16
 
     def test_points_to_geopandas(self):
         """
@@ -106,7 +106,7 @@ class TestConversionsOnDB(DBSetup):
         assert isinstance(df, pd.DataFrame)
 
         # Confirm value count
-        assert df['id'].count() == 1
+        assert df['id'].count() == 16
 
 
     def test_raster_to_rasterio(self):
