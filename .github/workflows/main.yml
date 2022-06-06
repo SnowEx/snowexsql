@@ -25,8 +25,8 @@ jobs:
           POSTGRES_PASSWORD: db_builder
           POSTGRES_USER: builder
           POSTGRES_DB: test
-          TZ: 'US/Mountain'
-          PGTZ: 'US/Mountain'
+          TZ: 'MST'
+          PGTZ: 'MST'
           POSTGIS_GDAL_ENABLED_DRIVERS: 'ENABLE_ALL'
           POSTGIS_ENABLE_OUTDB_RASTERS: 'True'
         ports:
