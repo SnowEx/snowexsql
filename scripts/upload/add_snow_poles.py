@@ -32,7 +32,7 @@ def main():
         site_name=site_name,
         surveyors='Catherine Breen, Cassie Lumbrazo',
         instrument='camera',
-        in_timezone='US/Mountain',
+        in_timezone='MST',
         epsg=26912,
         doi=None)
 

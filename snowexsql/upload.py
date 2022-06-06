@@ -229,7 +229,7 @@ class PointDataCSV(object):
              'density': 'kg/m^3'}
 
     # Class attributes to apply
-    defaults = {'debug': True, 'incoming_tz': 'US/Mountain'}
+    defaults = {'debug': True, 'incoming_tz': 'MST'}
 
     def __init__(self, filename, **kwargs):
         """

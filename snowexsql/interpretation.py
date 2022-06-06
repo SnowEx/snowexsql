@@ -149,7 +149,7 @@ def convert_cardinal_to_degree(cardinal):
     return degrees
 
 
-def add_date_time_keys(data, in_timezone=None, out_timezone='US/Mountain'):
+def add_date_time_keys(data, in_timezone=None, out_timezone='MST'):
     """
     Convert string info from a date/time keys in a dictionary to date and time
     objects and assign it back to the dictionary as date and time
@@ -354,7 +354,7 @@ def get_InSar_flight_comment(data_name, desc):
     Returns:
         comment: A comment for the database for the uavsar file uploaded
     """
-    tz_str = 'US/Mountain'
+    tz_str = 'MST'
     tz = pytz.timezone(tz_str)
     blank = '{} time of acquisition for pass {}'
 
