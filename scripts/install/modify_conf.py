@@ -71,10 +71,9 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
     vsi_opts = args.vsi_opts
+    extra_opts = {}
     if vsi_opts:
-        extra_opts = {
-            "postgis.gdal_vsi_options": " ".join(vsi_opts)
-        }
+        extra_opts["postgis.gdal_vsi_options"] = " ".join(vsi_opts)
 
     conf_updates = {'shared_buffers': '500MB',
                     'work_mem': "3000MB",

@@ -20,7 +20,7 @@ jobs:
     services:
 
       postgis:
-        image: kartoza/postgis:13-3.1
+        image: kartoza/postgis:14-3.2
         env:
           POSTGRES_PASSWORD: db_builder
           POSTGRES_USER: builder
