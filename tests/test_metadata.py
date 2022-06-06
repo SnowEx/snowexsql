@@ -11,7 +11,7 @@ import pytz
 
 from snowexsql.metadata import *
 
-dt = datetime.datetime(2020, 2, 5, 13, 30, 0, 0, pytz.timezone('US/Mountain'))
+dt = datetime.datetime(2020, 2, 5, 13, 30, 0, 0, pytz.timezone('MST'))
 info = {'site_name': 'Grand Mesa',
         'site_id': '1N20',
         'pit_id': 'COGM1N20_20200205',
@@ -147,7 +147,7 @@ class TestLWCHeaderB(DataHeaderTestBase):
     Class for testing the other type of LWC headers that contain two multi sampled
     profiles.
     """
-    dt = datetime.datetime(2020, 3, 12, 14, 45, 0, 0, pytz.timezone('US/Mountain'))
+    dt = datetime.datetime(2020, 3, 12, 14, 45, 0, 0, pytz.timezone('MST'))
 
     info = {
         'site_name': 'Grand Mesa',
@@ -196,7 +196,7 @@ class TestTemperatureHeader(DataHeaderTestBase):
 
 class TestSSAHeader(DataHeaderTestBase):
     def setup_class(self):
-        dt = datetime.datetime(2020, 2, 5, 13, 40, 0, 0, pytz.timezone('US/Mountain'))
+        dt = datetime.datetime(2020, 2, 5, 13, 40, 0, 0, pytz.timezone('MST'))
 
         self.file = 'SSA.csv'
         self.data_names = ['specific_surface_area', 'reflectance', 'sample_signal', 'equivalent_diameter']
@@ -294,10 +294,12 @@ class TestSMPHeader(DataHeaderTestBase):
 
         data = abspath(join(dirname(__file__), 'data'))
         self.header = DataHeader(join(data, self.file), instrument='snowmicropen', header_sep=':', in_timezone='UTC',
-                                 out_timezone='US/Mountain', depth_is_metadata=self.depth_is_metadata)
+                                 out_timezone='MST', depth_is_metadata=self.depth_is_metadata)
         self.name = self.file.split('.')[0]
 
-        self.dt = datetime.datetime(2020, 2, 1, 16, 16, 49, 0, pytz.timezone('US/Mountain'))
+        self.dt = datetime.datetime(
+            2020, 2, 1, 16, 16, 49, 0, pytz.timezone('MST')
+        )
 
         self.info = {'date': self.dt.date(),
                      'time': self.dt.timetz(),

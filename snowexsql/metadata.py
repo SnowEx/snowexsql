@@ -87,7 +87,7 @@ def read_InSar_annotation(ann_file):
         for timing in ['start', 'stop']:
             key = '{} time of acquisition for pass {}'.format(timing, pass_num)
             dt = pd.to_datetime(data[key]['value'])
-            dt = dt.astimezone(pytz.timezone('US/Mountain'))
+            dt = dt.astimezone(pytz.timezone('MST'))
             data[key]['value'] = dt
 
     return data
@@ -335,8 +335,8 @@ class DataHeader(object):
                             'manual_wetness', 'two_way_travel', 'depth', 'swe']
 
     # Defaults to keywords arguments
-    defaults = {'in_timezone': 'US/Mountain',
-                'out_timezone': 'US/Mountain',
+    defaults = {'in_timezone': 'MST',
+                'out_timezone': 'MST',
                 'epsg': 26912,
                 'header_sep': ',',
                 'northern_hemisphere': True,

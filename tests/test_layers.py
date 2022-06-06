@@ -18,10 +18,13 @@ class TestStratigraphyProfile(TableTestBase):
     """
 
     args = ['stratigraphy.csv']
-    kwargs = {'timezone': 'US/Mountain'}
+    kwargs = {'timezone': 'MST'}
     UploaderClass = UploadProfileData
     TableClass = LayerData
-    dt = datetime.datetime(2020, 2, 5, 13, 30, 0, 0, pytz.FixedOffset(-420))
+    dt = datetime.datetime(
+        2020, 2, 5, 13, 30, 0, 0,
+        pytz.timezone('MST')
+    )
 
     params = {
         'test_count': [dict(data_name='hand_hardness', expected_count=5)],

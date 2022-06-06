@@ -5,3 +5,4 @@ geoalchemy2>=0.6,<1.0
 geopandas>=0.7,<1.0
 psycopg2-binary>=2.9.0,<2.10.0
 rasterio>=1.1.5
+boto3>=1.23.7,<1.24

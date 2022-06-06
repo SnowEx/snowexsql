@@ -15,21 +15,24 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [3.6, 3.7, 3.8, 3.9]
+        python-version: [3.7, 3.8, 3.9]
 
     services:
 
       postgis:
-        image: kartoza/postgis:13-3.1
+        image: kartoza/postgis:14-3.2
         env:
           POSTGRES_PASSWORD: db_builder
           POSTGRES_USER: builder
           POSTGRES_DB: test
-          TZ: 'US/Mountain'
-          PGTZ: 'US/Mountain'
-
+          TZ: 'MST'
+          PGTZ: 'MST'
+          POSTGIS_GDAL_ENABLED_DRIVERS: 'ENABLE_ALL'
+          POSTGIS_ENABLE_OUTDB_RASTERS: 'True'
         ports:
           - 5432:5432
+        volumes:
+          - /home/runner/work/:/home/runner/work/
 
     steps:
       - uses: actions/checkout@v2
@@ -40,10 +43,10 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y postgis
+          sudo apt-get install -y postgis gdal-bin
           python -m pip install --upgrade pip
           pip install pytest coverage
-          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          if [ -f requirements_dev.txt ]; then pip install -r requirements_dev.txt; fi
       - name: Test with pytest
         run: |
           pytest -s
