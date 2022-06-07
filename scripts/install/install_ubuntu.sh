@@ -1,6 +1,6 @@
 #! /bin/sh
 
-# Add the postgres 13 to the repos
+# Add the postgres 14 to the repos
 DATABASES="snowex test"
 
 # Users to add to the db
@@ -22,12 +22,12 @@ sudo apt install pandoc
 
 # See  https://www.postgresql.org/download/linux/ubuntu/
 sudo apt-get install -y postgresql postgis libxml2-dev libgeos-dev libproj-dev libjson-c-dev gdal-bin libgdal-dev \
-                        postgresql-13-postgis-3-scripts python3-pip unzip
+                        postgresql-14-postgis-3-scripts python3-pip unzip
 
 # Start the database
-sudo -u postgres pg_ctlcluster 13 main stop
+sudo -u postgres pg_ctlcluster 14 main stop
 
-sudo -u postgres pg_ctlcluster 13 main start
+sudo -u postgres pg_ctlcluster 14 main start
 
 # Perform some clean up just in case
 for DB in $DATABASES
