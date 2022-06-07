@@ -90,7 +90,7 @@ if __name__ == '__main__':
     # Manage the os
     if this_os == 'linux':
         modify_postgres_conf(
-            '/etc/postgresql/13/main/postgresql.conf',
+            '/etc/postgresql/14/main/postgresql.conf',
             conf_updates)
     elif this_os == 'darwin':
         modify_postgres_conf(
