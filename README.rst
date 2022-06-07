@@ -13,20 +13,22 @@ Welcome to snowexsql
 .. image:: https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/micahjohnson150/2034019acc40a963bd02d2fcbb31c5a9/raw/snowexsql__heads_master.json
     :alt: Code Coverage
 
-Database creation and management software for SnowEx data. The goal is to
-create a single source (citeable) dataset that is cross queriable for snow
-researchers.
+Database access and tools for using the `SnowEx database`_. This tool is
+simply a client for accessing the database using python
+
+.. _SnowEx database: https://www.github.com/SnowEx/snowex_db
 
 WARNING - This is under active development in preparation for SnowEx Hackweek.  Use at your own risk.  Data will change as it is QA/QC'd and the end goal is for all data in this database to be pulled from NSIDC.  The goal is for this to become a community database open to all. 
 
 Features
 --------
 
-* Database management for SnowEx Data
-* Manage Site, Point, Profile and Raster Data
-* Populate the snowex database
-* Convenient GIS tools
-* PostGreSQL Database end point for researchers
+* Database access for SnowEx Database
+* Analysis tools
+* Useful conversions to pandas and geopandas
+* Lots of examples_
+
+.. _examples: https://snowexsql.readthedocs.io/en/latest/examples.html
 
 
 Installing
@@ -37,38 +39,16 @@ python package instructions below.
 If you are are database maintainers or installing it for the first time
 follow the instructions below completely.
 
-Mac OS
-~~~~~~
+I just want to use it
+---------------------
+Install using pip:
 
-First ensure you have following prerequisites:
+.. code-block::
 
-* Python3.5 +
-* HomeBrew
+    pip install snowexsql
 
-Then to install the postgres database with postgis functionality run:
-
-.. code-block:: bash
-
-  cd scripts/install && sh install_mac.sh
-
-
-Ubuntu
-~~~~~~
-
-First ensure you have following prerequisites:
-
-* Python3.6 +
-* wget
-
-Then to install the postgres database with postgis functionality run:
-
-
-.. code-block:: bash
-
-  cd scripts/install && sh install_ubuntu.sh
-
-Python
-------
+I want to contribute!
+---------------------
 Install the python package by:
 
 .. code-block:: bash
@@ -95,11 +75,6 @@ Quickly test your installation by running:
 
   pytest
 
-This will run a series of tests that create a small database and confirm
-that samples of the data sets references in `./scripts/upload` folder can be
-uploaded seamlessly. These tests can serve as a nice way to see how to
-interact with the database but also serve to confirm our reproduciblity.
-
 The goal of this project is to have high fidelity in data
 interpretation/submission to the database. To see the current
 test coverage run:
@@ -122,13 +97,11 @@ In there you will find:
 * API to the python package snowexsql
 * Links to other resources
 * Notes about the data uploaded
-* Info on populating the database
 * And more!
 
 To see the documentation in your browser:
 
-**Warning**: To see the examples/gallery you will need to populate the
-database before running this command. Otherwise they will be left with the
+**Warning**: To see the examples/gallery, the snowex db needs to be up. Otherwise they will be left with the
 last image submitted to GitHub.
 
 .. code-block:: bash
