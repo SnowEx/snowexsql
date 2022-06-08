@@ -1,12 +1,8 @@
-import datetime
-from os import remove
-from os.path import dirname, join
+from os.path import join
 
-from geoalchemy2 import functions as func
 from geoalchemy2.elements import WKBElement
 from geoalchemy2.shape import to_shape
 from shapely.geometry import Point
-from sqlalchemy import MetaData
 
 from snowexsql.functions import *
 from .sql_test_base import DBSetup
@@ -16,9 +12,9 @@ import pytest
 class TestFunctions(DBSetup):
 
     def setup_class(self):
-        '''
+        """
         Setup the database one time for testing
-        '''
+        """
         super().setup_class()
 
         self.raster_f = join(self.data_dir, 'be_gm1_0328', 'w001001x.adf')

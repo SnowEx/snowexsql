@@ -15,7 +15,7 @@ Hack Week 2021 (2021-07-15)
 * Timezones all in Mountain Standard
 
 Repo Split (2022 - TBD)
-----------------
+-----------------------
 
 * Repo was split into an access client and a db builder to reduce overhead
 * snowexsql is now an access client and python tools to make life easy
