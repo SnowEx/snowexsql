@@ -14,8 +14,8 @@ Hack Week 2021 (2021-07-15)
 * Uploaded with fully reproducible DB using Snowex Data for Grand Mesa 2020
 * Timezones all in Mountain Standard
 
-Repo Split (2022 - TBD)
------------------------
+0.2.0 Repo Split (2022-06-20)
+-----------------------------
 
 * Repo was split into an access client and a db builder to reduce overhead
 * snowexsql is now an access client and python tools to make life easy
