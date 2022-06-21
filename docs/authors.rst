@@ -5,11 +5,15 @@ Credits
 Development Lead
 ----------------
 
-* Micah Johnson <https://github.com/micahjohnson150>
-* HP Marshall <https://github.com/hpmarshall>
+* `Micah Johnson`_
+.. _Micah Johnson: https://github.com/micahjohnson150>
+* `HP Marshall`_
+.. _HP Marshall: https://github.com/hpmarshall
 
 
 Contributors
 ------------
 
-None yet. Why not be the first?
+* `Micah Sandusky`_
+.. _Micah Sandusky: https://github.com/micah-prime
+

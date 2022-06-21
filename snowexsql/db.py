@@ -7,7 +7,7 @@ import json
 from sqlalchemy import MetaData, create_engine
 from sqlalchemy.orm import sessionmaker
 
-from .data import Base, ImageData, LayerData, PointData
+from .data import Base
 
 
 def initialize(engine):

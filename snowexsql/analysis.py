@@ -2,7 +2,7 @@ import numpy as np
 
 
 def get_stats(data, logger=None):
-    '''
+    """
     Calculate and report the typical stats on an numpy array.
 
     Args:
@@ -10,7 +10,7 @@ def get_stats(data, logger=None):
         logger: Use a logger to report stats
     Return:
         result: Dictionary containing statistics
-    '''
+    """
 
     results = {}
 
