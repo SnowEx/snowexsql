@@ -20,5 +20,5 @@ docs/_build/*
 coverage.xml
 htmlcov/*
 scripts/upload/test*.txt
-.idea/*
+.idea/
 scripts/download/data/*
