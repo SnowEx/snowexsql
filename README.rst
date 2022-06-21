@@ -10,6 +10,10 @@ Welcome to snowexsql
     :target: https://github.com/SnowEx/snowexsql/actions/workflows/main.yml
     :alt: Testing Status
 
+.. image:: https://img.shields.io/pypi/v/snowexsql.svg
+    :target: https://pypi.org/project/snowexsql/
+    :alt: Code Coverage
+
 .. image:: https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/micahjohnson150/2034019acc40a963bd02d2fcbb31c5a9/raw/snowexsql__heads_master.json
     :alt: Code Coverage
 
@@ -35,9 +39,6 @@ Installing
 ----------
 If you are just planning on using the database, then only install the
 python package instructions below.
-
-If you are are database maintainers or installing it for the first time
-follow the instructions below completely.
 
 I just want to use it
 ---------------------

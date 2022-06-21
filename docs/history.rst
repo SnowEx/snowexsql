@@ -20,4 +20,5 @@ Hack Week 2021 (2021-07-15)
 * Repo was split into an access client and a db builder to reduce overhead
 * snowexsql is now an access client and python tools to make life easy
 * snowex_db_ is now a repo containing all necessary assets to build db.
+
 .. _snowex_db: https://github.com/SnowEx/snowex_db
