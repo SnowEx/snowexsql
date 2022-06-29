@@ -10,8 +10,8 @@ services:
       POSTGRES_DB: 'test'
       POSTGIS_GDAL_ENABLED_DRIVERS: 'ENABLE_ALL'
       POSTGIS_ENABLE_OUTDB_RASTERS: 'True'
-      TZ: 'MST'
-      PGTZ: 'MST'
+      TZ: 'UTC'
+      PGTZ: 'UTC'
     ports:
       - 5432:5432
     healthcheck:
