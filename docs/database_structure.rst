@@ -53,7 +53,7 @@ This table has the following columns:
 * northing - Northing coordinate projected in UTM in meters
 * site_id - Unique identifier to pit location
 * site_name - Name describing the general survey area ( e.g. Grand Mesa)
-* surveyors - Name of the people who acquired the data
+* observers - Name of the people who acquired the data
 * time - Time (MST) that the data was collected
 * time_updated - Time this entry was last modified
 * type - Name of the data collected
@@ -97,6 +97,7 @@ This table contains the following columns:
 * depth - Depth in centimeters in the snowpack that the data was collected
 * easting - UTM projected coordinate in the east direction in meters
 * elevation - Elevation at the site or acquisition in meters
+* flags - data that was flagged typically just pits
 * geom - GIS software friendly version of the coordinates of where the data was collected in UTM.
 * id - Unique identifier that is automatically assigned when uploaded
 * instrument - Name of the instrument used to collect the data
@@ -108,7 +109,7 @@ This table contains the following columns:
 * sample_c - 1 of potentially three samples that could have been taken for this measurement, e.g. density
 * site_id - Unique identifier to pit location
 * site_name - Name describing the general survey area ( e.g. Grand Mesa)
-* surveyors - Names of the people performing the acquisition
+* observers - Names of the people performing the acquisition
 * time - Time (MST) at the beginning of acquisition
 * time_created - Time this entry was uploaded
 * time_updated - Time this entry was last modified
@@ -146,7 +147,7 @@ This table contains the following columns:
 * raster - Raster data in Well Known Binary Format (WKB) best generated using `raster2psql` in the command line
 * site_id - Unique identifier to pit location
 * site_name - Name describing the general survey area ( e.g. Grand Mesa)
-* surveyors - Names of the people or organization that acquired the data
+* observers - Names of the people or organization that acquired the data
 * time_created - Time this entry was uploaded
 * time_updated - Time this entry was last modified
 * type - Name of the data collected
