@@ -54,10 +54,10 @@ def get_db(db_str, credentials=None, return_metadata=False):
     else:
         db = f"{prefix}{db_str}"
 
-    # Always create a Session in US/Mountain TZ
+    # Always create a Session in UTC time
     engine = create_engine(
         db, echo=False, connect_args={
-            "options": "-c timezone=us/mountain"})
+            "options": "-c timezone=UTC"})
 
     Session = sessionmaker(bind=engine)
     metadata = MetaData(bind=engine)

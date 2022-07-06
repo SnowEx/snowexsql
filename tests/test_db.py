@@ -14,7 +14,7 @@ class TestDB(DBSetup):
     base_atts = ['site_name', 'date', 'site_id']
     single_loc_atts = ['latitude', 'longitude', 'easting', 'elevation', 'utm_zone', 'geom', 'time']
 
-    meas_atts = ['instrument', 'type', 'units', 'surveyors']
+    meas_atts = ['instrument', 'type', 'units', 'observers']
 
     site_atts = base_atts + single_loc_atts + \
                 ['slope_angle', 'aspect', 'air_temp', 'total_depth',

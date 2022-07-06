@@ -23,7 +23,6 @@ class SnowData(object):
     time_created = Column(DateTime(timezone=True), server_default=func.now())
     time_updated = Column(DateTime(timezone=True), onupdate=func.now())
     id = Column(Integer, primary_key=True)
-    site_id = Column(String(50))
     doi = Column(String(50))
     date_accessed = Column(Date)
 
@@ -35,7 +34,7 @@ class Measurement(object):
     instrument = Column(String(50))
     type = Column(String(50))
     units = Column(String(50))
-    surveyors = Column(String(100))
+    observers = Column(String(100))
 
 
 class SingleLocationData(SnowData):
@@ -47,9 +46,10 @@ class SingleLocationData(SnowData):
     northing = Column(Float)
     easting = Column(Float)
     elevation = Column(Float)
-    utm_zone = Column(String(10))
+    utm_zone = Column(Integer)
     geom = Column(Geometry("POINT"))
     time = Column(Time(timezone=True))
+    site_id = Column(String(50))
 
 
 class SiteData(SingleLocationData, Base):
@@ -60,6 +60,7 @@ class SiteData(SingleLocationData, Base):
     __tablename__ = 'sites'
     __table_args__ = {"schema": "public"}
 
+    pit_id = Column(String(50))
     slope_angle = Column(Float)
     aspect = Column(Float)
     air_temp = Column(Float)
@@ -116,9 +117,11 @@ class LayerData(SingleLocationData, Measurement, Base):
 
     depth = Column(Float)
     site_id = Column(String(50))
+    pit_id = Column(String(50))
     bottom_depth = Column(Float)
     comments = Column(String(1000))
     sample_a = Column(String(20))
     sample_b = Column(String(20))
     sample_c = Column(String(20))
     value = Column(String(50))
+    flags = Column(String(20))

@@ -22,3 +22,10 @@ Hack Week 2021 (2021-07-15)
 * snowex_db_ is now a repo containing all necessary assets to build db.
 
 .. _snowex_db: https://github.com/SnowEx/snowex_db
+
+0.3.0 (2022-07-6)
+-----------------------------
+
+* New columns were added to the LayerData table for flags
+* Converted surveyors to observers
+* Changed utm zone to be an integer
