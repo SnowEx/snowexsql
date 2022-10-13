@@ -1,15 +1,18 @@
+import logging
 from contextlib import contextmanager
 from sqlalchemy.sql import func
 import geopandas as gpd
 from shapely.geometry import box
-from geoalchemy2.shape import from_shape
+from geoalchemy2.shape import from_shape, to_shape
 import geoalchemy2.functions as gfunc
+from geoalchemy2.types import Raster
 
 from snowexsql.db import get_db
 from snowexsql.data import SiteData, PointData, LayerData, ImageData
-from snowexsql.conversions import query_to_geopandas
+from snowexsql.conversions import query_to_geopandas, raster_to_rasterio
 
 
+LOG = logging.getLogger(__name__)
 DB_NAME = 'snow:hackweek@db.snowexdata.org/snowex'
 
 
@@ -53,9 +56,14 @@ class BaseDataset:
                 filter_col = getattr(cls.MODEL, k)
                 if isinstance(v, list):
                     qry = qry.filter(filter_col.in_([v]))
-                    #TODO: LOG.debug
+                    LOG.debug(
+                        f"filtering {k} to value {v}"
+                    )
                 else:
                     qry = qry.filter(filter_col == v)
+                    LOG.debug(
+                        f"filtering {k} to list {v}"
+                    )
             else:
                 raise ValueError(f"{k} is not an allowed filter")
         return qry
@@ -117,9 +125,13 @@ class PointMeasurements(BaseDataset):
             raise ValueError("pt and buffer must be given together")
         with db_session() as (session, engine):
             try:
-                if shp:
+                if shp is not None:
                     qry = session.query(cls.MODEL)
-                    qry = qry.filter(func.ST_Within(PointData.geom, shp))
+                    qry = qry.filter(
+                        func.ST_Within(
+                            PointData.geom, from_shape(shp, srid=crs)
+                        )
+                    )
                     qry = cls.extend_qry(qry, **kwargs)
                     df = query_to_geopandas(qry, engine)
                 else:
@@ -149,33 +161,46 @@ class LayerMeasurements(BaseDataset):
 class RasterMeasurements(BaseDataset):
     MODEL = ImageData
 
-    # @classmethod
-    # def from_area(cls):
-    #     # Building a buffer which will give us a buffer object around our point
-    #     buffer = session.query(
-    #         gfunc.ST_SetSRID(gfunc.ST_Buffer(from_shape(geom), buffer_dist),
-    #                          crs)).all()[0][0]
-    #
-    #     # Convert to a shapely shapefile object
-    #     circle = to_shape(buffer)
-    #
-    #     # Convert to a geopandas dataframe
-    #     df_circle = gpd.GeoSeries(circle)
-    #
-    #     # Grab the rasters, union them and convert them as tiff when done
-    #     q = session.query(
-    #         func.ST_AsTiff(func.ST_Union(ImageData.raster, type_=Raster)))
-    #
-    #     # Only grab rasters that are the bare earth DEM from USGS
-    #     q = q.filter(ImageData.type == 'depth').filter(
-    #         ImageData.observers == 'ASO Inc.')
-    #     q = q.filter(ImageData.date == dt)
-    #
-    #     # And grab rasters touching the circle
-    #     q = q.filter(gfunc.ST_Intersects(ImageData.raster, buffer))
-    #
-    #     # Execute the query
-    #     rasters = q.all()
-    #
-    #     # Get the rasterio object of the raster
-    #     dataset = raster_to_rasterio(session, rasters)[0]
+    @classmethod
+    def from_area(cls, shp=None, pt=None, buffer=None, crs=26912, **kwargs):
+        if shp is None and pt is None:
+            raise ValueError(
+                "We need a shape description or a point and buffer")
+        if (pt is not None and buffer is None) or (
+                buffer is not None and pt is None):
+            raise ValueError("pt and buffer must be given together")
+        with db_session() as (session, engine):
+            try:
+                # Grab the rasters, union them and convert them as tiff when done
+                q = session.query(
+                    func.ST_AsTiff(
+                        func.ST_Union(ImageData.raster, type_=Raster)
+                    )
+                )
+                q = cls.extend_qry(q, **kwargs)
+                if shp:
+                    q = q.filter(
+                        gfunc.ST_Intersects(
+                            ImageData.raster,
+                            from_shape(shp, srid=crs)
+                        )
+                    )
+                else:
+                    qry_pt = from_shape(pt)
+                    qry = session.query(
+                        gfunc.ST_SetSRID(
+                            func.ST_Buffer(qry_pt, buffer), crs
+                        )
+                    )
+                    buffered_pt = qry.all()[0][0]
+                    # And grab rasters touching the circle
+                    q = q.filter(gfunc.ST_Intersects(ImageData.raster, buffered_pt))
+                    # Execute the query
+                rasters = q.all()
+                # Get the rasterio object of the raster
+                dataset = raster_to_rasterio(session, rasters)[0]
+                return dataset
+
+            except Exception as e:
+                session.close()
+                raise e
