@@ -24,6 +24,13 @@ simply a client for accessing the database using python
 
 WARNING - This is under active development in preparation for SnowEx Hackweek.  Use at your own risk.  Data will change as it is QA/QC'd and the end goal is for all data in this database to be pulled from NSIDC.  The goal is for this to become a community database open to all. 
 
+DOI
+---
+* SnowEx Hackweek 2022
+
+.. image:: https://zenodo.org/badge/DOI/10.5281/zenodo.7618102.svg
+   :target: https://doi.org/10.5281/zenodo.7618102
+
 Features
 --------
 
