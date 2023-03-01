@@ -42,51 +42,6 @@ snowexsql could always use more documentation, whether as part of the
 official snowexsql docs, in docstrings, or even on the web in blog posts,
 articles, and such.
 
-Adding an Upload Script
-~~~~~~~~~~~~~~~~~~~~~~~
-
-One way of making the database more valuable is to expand what data it holds.
-To do this simply:
-
-1. Add a python script under `./scripts` using the naming convention
-   `add_<Your_awesome_data>.py`, this will allow for it to be detected by the
-   `run.py` script automatically.
-
-2. Add the follow code:
-
-    .. code-block:: python
-
-      # You may choose to import only your batch uploader
-      from snowexsql.batch import *
-
-      # Define your main function which will be called by run.py
-      def main():
-        '''
-        Uploader script for <My Data>
-        '''
-        # 1. Define the files to be uploaded.
-
-        # 2. Assign any constant metadata and pass it as keyword arguments to the uploader
-
-        # 3, Pass them to you batch uploader you need
-
-        # 4. Push to the database and collect the errors from push function
-
-        errors = [] # replace me with your errors = <your_batch_class>.push()
-        return errors
-
-      # Add this so you can run your script directly without running run.py
-      if __name__ == 'main':
-        main()
-
-3. If you are uploading a file with multiple datasets inside of it to the Layers
-   or point data tables, you will need to add their data names to metadata.py.
-   This will allow the uploaders to automatically detect the multiple profiles
-   in a single file. Simply add you data name to the class variable
-   `available_names <https://github.com/SnowEx/snowexsql/blob/b4a0fb2baadedcd96fa95275c3d2262c69ed0cf4/snowexsql/metadata.py#L390>`
-   in metadata.py.
-
-
 Adding Jupyter Notebooks
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
