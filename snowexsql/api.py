@@ -17,7 +17,9 @@ DB_NAME = 'snow:hackweek@db.snowexdata.org/snowex'
 
 
 @contextmanager
-def db_session():
+def db_session(db_name):
+    # use default_name
+    db_name = db_name or DB_NAME
     engine, session = get_db(DB_NAME)
     yield session, engine
     session.close()
@@ -25,7 +27,7 @@ def db_session():
 
 def get_points():
     # Lets grab a single row from the points table
-    with db_session() as session:
+    with db_session(DB_NAME) as session:
         qry = session.query(PointData).limit(1)
         # Execute that query!
         result = qry.all()
@@ -33,6 +35,8 @@ def get_points():
 
 class BaseDataset:
     MODEL = None
+    # Use this database name
+    DB_NAME = DB_NAME
 
     ALLOWED_QRY_KWRAGS = [
         "site_name", "site_id", "date", "instrument", "observers", "type"
@@ -49,10 +53,12 @@ class BaseDataset:
     @classmethod
     def extend_qry(cls, qry, **kwargs):
         for k, v in kwargs.items():
+            # Handle special operations
             if k in cls.SPECIAL_KWARGS:
                 if k == "limit":
                     qry = qry.limit(v)
             elif k in cls.ALLOWED_QRY_KWRAGS:
+                # standard filtering using qry.filter
                 filter_col = getattr(cls.MODEL, k)
                 if isinstance(v, list):
                     qry = qry.filter(filter_col.in_([v]))
@@ -65,33 +71,46 @@ class BaseDataset:
                         f"filtering {k} to list {v}"
                     )
             else:
+                # Error out for not-allowed kwargs
                 raise ValueError(f"{k} is not an allowed filter")
         return qry
 
     @property
     def all_types(self):
-        with db_session() as (session, engine):
+        """
+        Return all types of the data
+        """
+        with db_session(self.DB_NAME) as (session, engine):
             qry = session.query(self.MODEL.type).distinct()
             result = qry.all()
         return result
 
     @property
     def all_dates(self):
-        with db_session() as (session, engine):
+        """
+        Return all distinct dates in the data
+        """
+        with db_session(self.DB_NAME) as (session, engine):
             qry = session.query(self.MODEL.date).distinct()
             result = qry.all()
         return result
 
     @property
     def all_observers(self):
-        with db_session() as (session, engine):
+        """
+        Return all distinct observers in the data
+        """
+        with db_session(self.DB_NAME) as (session, engine):
             qry = session.query(self.MODEL.observers).distinct()
             result = qry.all()
         return result
 
     @property
     def all_instruments(self):
-        with db_session() as (session, engine):
+        """
+        Return all distinct instruments in the data
+        """
+        with db_session(self.DB_NAME) as (session, engine):
             qry = session.query(self.MODEL.instrument).distinct()
             result = qry.all()
         return result
@@ -102,13 +121,14 @@ class PointMeasurements(BaseDataset):
 
     @classmethod
     def from_filter(cls, **kwargs):
-        with db_session() as (session, engine):
+        with db_session(cls.DB_NAME) as (session, engine):
             try:
                 qry = session.query(cls.MODEL)
                 qry = cls.extend_qry(qry, **kwargs)
                 df = query_to_geopandas(qry, engine)
             except Exception as e:
                 session.close()
+                LOG.error("Failed query for PointData")
                 raise e
 
         return df
@@ -116,14 +136,23 @@ class PointMeasurements(BaseDataset):
     @classmethod
     def from_area(cls, shp=None, pt=None, buffer=None, crs=26912, **kwargs):
         """
+        Get pointdata within a specific shapefile or within a point and a
+        known buffer
         Args:
-            shp:
+            shp: shapely geometry in which to filter
+            pt: shapely point that will have a buffer applied in order
+                to find search area
+            buffer: in same units as point
+            crs: crs to use
+            kwargs for more filtering or limiting
+        Returns: Geopandas dataframe of results
+
         """
         if shp is None and pt is None:
             raise ValueError("We need a shape description or a point and buffer")
         if (pt is not None and buffer is None) or (buffer is not None and pt is None):
             raise ValueError("pt and buffer must be given together")
-        with db_session() as (session, engine):
+        with db_session(cls.DB_NAME) as (session, engine):
             try:
                 if shp is not None:
                     qry = session.query(cls.MODEL)
@@ -169,7 +198,7 @@ class RasterMeasurements(BaseDataset):
         if (pt is not None and buffer is None) or (
                 buffer is not None and pt is None):
             raise ValueError("pt and buffer must be given together")
-        with db_session() as (session, engine):
+        with db_session(cls.DB_NAME) as (session, engine):
             try:
                 # Grab the rasters, union them and convert them as tiff when done
                 q = session.query(
