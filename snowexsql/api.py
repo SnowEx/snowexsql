@@ -16,6 +16,10 @@ LOG = logging.getLogger(__name__)
 DB_NAME = 'snow:hackweek@db.snowexdata.org/snowex'
 
 
+class LargeQueryCheckException(RuntimeError):
+    pass
+
+
 @contextmanager
 def db_session(db_name):
     # use default_name
@@ -41,7 +45,10 @@ class BaseDataset:
     ALLOWED_QRY_KWRAGS = [
         "site_name", "site_id", "date", "instrument", "observers", "type"
     ]
+    # TODO: special args could include date_greater_equal, date_less_equal
     SPECIAL_KWARGS = ["limit"]
+    # Default max record count
+    MAX_RECORD_COUNT = 1000
 
     @staticmethod
     def build_box(xmin, ymin, xmax, ymax, crs):
@@ -52,15 +59,18 @@ class BaseDataset:
 
     @classmethod
     def extend_qry(cls, qry, **kwargs):
+
+        # use the default kwargs
         for k, v in kwargs.items():
             # Handle special operations
-            if k in cls.SPECIAL_KWARGS:
-                if k == "limit":
-                    qry = qry.limit(v)
-            elif k in cls.ALLOWED_QRY_KWRAGS:
+            if k in cls.ALLOWED_QRY_KWRAGS:
                 # standard filtering using qry.filter
                 filter_col = getattr(cls.MODEL, k)
                 if isinstance(v, list):
+                    if k == "date":
+                        raise ValueError(
+                            "We cannot search for a list of dates"
+                        )
                     qry = qry.filter(filter_col.in_([v]))
                     LOG.debug(
                         f"filtering {k} to value {v}"
@@ -70,9 +80,23 @@ class BaseDataset:
                     LOG.debug(
                         f"filtering {k} to list {v}"
                     )
+            elif k in cls.SPECIAL_KWARGS:
+                if k == "limit":
+                    qry = qry.limit(v)
             else:
                 # Error out for not-allowed kwargs
                 raise ValueError(f"{k} is not an allowed filter")
+
+        # Safe guard against accidental giant requests
+        count = qry.count()
+        if count > cls.MAX_RECORD_COUNT and "limit" not in kwargs:
+            raise LargeQueryCheckException(
+                f"Query will return {count} number of records,"
+                f" but we have a default max of {cls.MAX_RECORD_COUNT}."
+                f" If you want to proceed, set the 'limit' filter"
+                f" to the desired number of records."
+            )
+
         return qry
 
     @property
@@ -185,6 +209,7 @@ class PointMeasurements(BaseDataset):
 
 class LayerMeasurements(BaseDataset):
     MODEL = LayerData
+    # TODO: layer analysis methods?
 
 
 class RasterMeasurements(BaseDataset):
