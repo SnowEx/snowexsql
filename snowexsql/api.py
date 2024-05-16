@@ -59,6 +59,8 @@ class BaseDataset:
 
     @classmethod
     def extend_qry(cls, qry, **kwargs):
+        if cls.MODEL is None:
+            raise ValueError("You must use a class with a MODEL.")
 
         # use the default kwargs
         for k, v in kwargs.items():
@@ -173,8 +175,11 @@ class PointMeasurements(BaseDataset):
 
         """
         if shp is None and pt is None:
-            raise ValueError("We need a shape description or a point and buffer")
-        if (pt is not None and buffer is None) or (buffer is not None and pt is None):
+            raise ValueError(
+                "Inputs must be a shape description or a point and buffer"
+            )
+        if (pt is not None and buffer is None) or \
+                (buffer is not None and pt is None):
             raise ValueError("pt and buffer must be given together")
         with db_session(cls.DB_NAME) as (session, engine):
             try:

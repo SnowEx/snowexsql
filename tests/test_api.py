@@ -1,5 +1,5 @@
 from os.path import join, dirname
-
+import geopandas as gpd
 import numpy as np
 import pytest
 from datetime import date
@@ -113,5 +113,22 @@ class TestPointMeasurements:
             clz.from_filter(**kwargs)
 
     def test_from_area(self, clz):
-        # TODO: this test
-        pass
+        shp = gpd.points_from_xy(
+            [743766.4794971556], [4321444.154620216], crs="epsg:26912"
+        ).buffer(10)[0]
+        result = clz.from_area(
+            shp=shp,
+            date=date(2019, 10, 30)
+        )
+        assert len(result) == 2
+        assert all(result["value"] == 4.50196)
+
+    def test_from_area_point(self, clz):
+        pts = gpd.points_from_xy([743766.4794971556], [4321444.154620216])
+        crs = "26912"
+        result = clz.from_area(
+            pt=pts[0], buffer=10, crs=crs,
+            date=date(2019, 10, 30)
+        )
+        assert len(result) == 2
+        assert all(result["value"] == 4.50196)
