@@ -70,11 +70,25 @@ If you are using `conda` you may need to reinstall the following using conda:
 Tests
 -----
 
+Before testing, in a seperate terminal, we need to run a local instance
+of the database. This can be done with
+
+.. code-block:: bash
+
+  docker-compose up -d
+
+When you are finished testing, make sure to turn the docker off
+
+.. code-block:: bash
+
+  docker-compose down
+
+
 Quickly test your installation by running:
 
 .. code-block:: bash
 
-  pytest
+  python3 -m pytest tests/
 
 The goal of this project is to have high fidelity in data
 interpretation/submission to the database. To see the current

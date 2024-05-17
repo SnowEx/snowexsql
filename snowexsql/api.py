@@ -43,7 +43,8 @@ class BaseDataset:
     DB_NAME = DB_NAME
 
     ALLOWED_QRY_KWRAGS = [
-        "site_name", "site_id", "date", "instrument", "observers", "type"
+        "site_name", "site_id", "date", "instrument", "observers", "type",
+        "utm_zone"
     ]
     # TODO: special args could include date_greater_equal, date_less_equal
     SPECIAL_KWARGS = ["limit"]
@@ -58,7 +59,19 @@ class BaseDataset:
         ).set_crs(crs)
 
     @classmethod
-    def extend_qry(cls, qry, **kwargs):
+    def _check_size(cls, qry, kwargs):
+        # Safe guard against accidental giant requests
+        count = qry.count()
+        if count > cls.MAX_RECORD_COUNT and "limit" not in kwargs:
+            raise LargeQueryCheckException(
+                f"Query will return {count} number of records,"
+                f" but we have a default max of {cls.MAX_RECORD_COUNT}."
+                f" If you want to proceed, set the 'limit' filter"
+                f" to the desired number of records."
+            )
+
+    @classmethod
+    def extend_qry(cls, qry, check_size=True, **kwargs):
         if cls.MODEL is None:
             raise ValueError("You must use a class with a MODEL.")
 
@@ -82,6 +95,8 @@ class BaseDataset:
                     LOG.debug(
                         f"filtering {k} to list {v}"
                     )
+            # TODO: call special kwargs after other kwargs
+            # to avoid limit before filter
             elif k in cls.SPECIAL_KWARGS:
                 if k == "limit":
                     qry = qry.limit(v)
@@ -89,15 +104,8 @@ class BaseDataset:
                 # Error out for not-allowed kwargs
                 raise ValueError(f"{k} is not an allowed filter")
 
-        # Safe guard against accidental giant requests
-        count = qry.count()
-        if count > cls.MAX_RECORD_COUNT and "limit" not in kwargs:
-            raise LargeQueryCheckException(
-                f"Query will return {count} number of records,"
-                f" but we have a default max of {cls.MAX_RECORD_COUNT}."
-                f" If you want to proceed, set the 'limit' filter"
-                f" to the desired number of records."
-            )
+        if check_size:
+            cls._check_size(qry, kwargs)
 
         return qry
 
@@ -147,6 +155,10 @@ class PointMeasurements(BaseDataset):
 
     @classmethod
     def from_filter(cls, **kwargs):
+        """
+        Get data for the class by filtering by allowed arguments. The allowed
+        filters are cls.ALLOWED_QRY_KWRAGS.
+        """
         with db_session(cls.DB_NAME) as (session, engine):
             try:
                 qry = session.query(cls.MODEL)
@@ -162,15 +174,15 @@ class PointMeasurements(BaseDataset):
     @classmethod
     def from_area(cls, shp=None, pt=None, buffer=None, crs=26912, **kwargs):
         """
-        Get pointdata within a specific shapefile or within a point and a
-        known buffer
+        Get data for the class within a specific shapefile or
+        within a point and a known buffer
         Args:
             shp: shapely geometry in which to filter
             pt: shapely point that will have a buffer applied in order
                 to find search area
             buffer: in same units as point
-            crs: crs to use
-            kwargs for more filtering or limiting
+            crs: integer crs to use
+            kwargs: for more filtering or limiting (cls.ALLOWED_QRY_KWRAGS)
         Returns: Geopandas dataframe of results
 
         """
@@ -187,10 +199,10 @@ class PointMeasurements(BaseDataset):
                     qry = session.query(cls.MODEL)
                     qry = qry.filter(
                         func.ST_Within(
-                            PointData.geom, from_shape(shp, srid=crs)
+                            cls.MODEL.geom, from_shape(shp, srid=crs)
                         )
                     )
-                    qry = cls.extend_qry(qry, **kwargs)
+                    qry = cls.extend_qry(qry, check_size=True, **kwargs)
                     df = query_to_geopandas(qry, engine)
                 else:
                     qry_pt = from_shape(pt)
@@ -202,8 +214,8 @@ class PointMeasurements(BaseDataset):
 
                     buffered_pt = qry.all()[0][0]
                     qry = session.query(cls.MODEL)
-                    qry = qry.filter(func.ST_Within(PointData.geom, buffered_pt))
-                    qry = cls.extend_qry(qry, **kwargs)
+                    qry = qry.filter(func.ST_Within(cls.MODEL.geom, buffered_pt))
+                    qry = cls.extend_qry(qry, check_size=True, **kwargs)
                     df = query_to_geopandas(qry, engine)
             except Exception as e:
                 session.close()
@@ -212,8 +224,12 @@ class PointMeasurements(BaseDataset):
         return df
 
 
-class LayerMeasurements(BaseDataset):
+class LayerMeasurements(PointMeasurements):
     MODEL = LayerData
+    ALLOWED_QRY_KWRAGS = [
+        "site_name", "site_id", "date", "instrument", "observers", "type",
+        "utm_zone", "pit_id"
+    ]
     # TODO: layer analysis methods?
 
 
