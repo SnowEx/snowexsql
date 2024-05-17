@@ -66,6 +66,10 @@ class TestPointMeasurements(DBConnection):
         result = clz().all_types
         assert result == [('swe',), ('depth',), ('two_way_travel',)]
 
+    def test_all_site_names(self, clz):
+        result = clz().all_site_names
+        assert result == [(None,), ('Grand Mesa',)]
+
     def test_all_dates(self, clz):
         result = clz().all_dates
         assert len(result) == 256
@@ -164,6 +168,16 @@ class TestLayerMeasurements(DBConnection):
             ('manual_wetness',), ('equivalent_diameter',),
             ('specific_surface_area',), ('grain_type',), ('temperature',),
             ('hand_hardness',)
+        ]
+
+    def test_all_site_names(self, clz):
+        result = clz().all_site_names
+        assert result == [
+            ('Cameron Pass',), ('Fraser Experimental Forest',),
+            ('Sagehen Creek',), ('Mammoth Lakes',), ('Niwot Ridge',),
+            ('Boise River Basin',), ('Little Cottonwood Canyon',),
+            ('East River',), ('American River Basin',),
+            ('Senator Beck',), ('Jemez River',), ('Grand Mesa',)
         ]
 
     def test_all_dates(self, clz):

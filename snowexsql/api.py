@@ -110,6 +110,16 @@ class BaseDataset:
         return qry
 
     @property
+    def all_site_names(self):
+        """
+        Return all types of the data
+        """
+        with db_session(self.DB_NAME) as (session, engine):
+            qry = session.query(self.MODEL.site_name).distinct()
+            result = qry.all()
+        return result
+
+    @property
     def all_types(self):
         """
         Return all types of the data
