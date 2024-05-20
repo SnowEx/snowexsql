@@ -15,6 +15,11 @@ from snowexsql.conversions import query_to_geopandas, raster_to_rasterio
 LOG = logging.getLogger(__name__)
 DB_NAME = 'snow:hackweek@db.snowexdata.org/snowex'
 
+# TODO:
+#   * Possible enums
+#   * filtering based on dates
+#   * implement 'like' or 'contains' method
+
 
 class LargeQueryCheckException(RuntimeError):
     pass
@@ -42,7 +47,7 @@ class BaseDataset:
     # Use this database name
     DB_NAME = DB_NAME
 
-    ALLOWED_QRY_KWRAGS = [
+    ALLOWED_QRY_KWARGS = [
         "site_name", "site_id", "date", "instrument", "observers", "type",
         "utm_zone"
     ]
@@ -78,7 +83,7 @@ class BaseDataset:
         # use the default kwargs
         for k, v in kwargs.items():
             # Handle special operations
-            if k in cls.ALLOWED_QRY_KWRAGS:
+            if k in cls.ALLOWED_QRY_KWARGS:
                 # standard filtering using qry.filter
                 filter_col = getattr(cls.MODEL, k)
                 if isinstance(v, list):
@@ -161,13 +166,16 @@ class BaseDataset:
 
 
 class PointMeasurements(BaseDataset):
+    """
+    API class for access to PointData
+    """
     MODEL = PointData
 
     @classmethod
     def from_filter(cls, **kwargs):
         """
         Get data for the class by filtering by allowed arguments. The allowed
-        filters are cls.ALLOWED_QRY_KWRAGS.
+        filters are cls.ALLOWED_QRY_KWARGS.
         """
         with db_session(cls.DB_NAME) as (session, engine):
             try:
@@ -192,7 +200,7 @@ class PointMeasurements(BaseDataset):
                 to find search area
             buffer: in same units as point
             crs: integer crs to use
-            kwargs: for more filtering or limiting (cls.ALLOWED_QRY_KWRAGS)
+            kwargs: for more filtering or limiting (cls.ALLOWED_QRY_KWARGS)
         Returns: Geopandas dataframe of results
 
         """
@@ -235,8 +243,11 @@ class PointMeasurements(BaseDataset):
 
 
 class LayerMeasurements(PointMeasurements):
+    """
+    API class for access to LayerData
+    """
     MODEL = LayerData
-    ALLOWED_QRY_KWRAGS = [
+    ALLOWED_QRY_KWARGS = [
         "site_name", "site_id", "date", "instrument", "observers", "type",
         "utm_zone", "pit_id"
     ]
