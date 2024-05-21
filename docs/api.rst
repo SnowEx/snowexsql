@@ -77,12 +77,26 @@ the following properties.
  * all_observers
  * all_instruments
 
-So you can find all the instruments for filtering like :code:`LayerMeasurements.all_instruments`
-
-
+So you can find all the instruments for filtering like :code:`LayerMeasurements().all_instruments`.
+**Note** - these must be called from an instantiated class like shown earlier
+in this line.
 
 .from_area
 ----------
+
+The signature for :code:`.from_area` looks like this
+
+.. code-block:: python
+
+    def from_area(cls, shp=None, pt=None, buffer=None, crs=26912, **kwargs):
+
+It is a class method, so it *does not need an instantiated class*.
+The :code:`**kwargs` argument takes the same inputs as the :code:`from_filter`
+function.
+
+The big difference is that from area will filter to results either within
+:code:`shp` (a `shapely` ploygon) **or** within :code:`buffer` radius
+around :code:`pt` (a `shapely` point).
 
 
 Large Query Exception and Limit
@@ -94,4 +108,4 @@ of large queries. If you understand your query will be large and need
 more than 1000 records returned, add a :code:`limit` kwarg to your query
 with a value greater than the number you need returned.
 **This will override the default behavior** and return as many records as
-you requested. 
+you requested.
