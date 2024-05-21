@@ -95,7 +95,7 @@ The :code:`**kwargs` argument takes the same inputs as the :code:`from_filter`
 function.
 
 The big difference is that from area will filter to results either within
-:code:`shp` (a `shapely` ploygon) **or** within :code:`buffer` radius
+:code:`shp` (a `shapely` polygon) **or** within :code:`buffer` radius
 around :code:`pt` (a `shapely` point).
 
 
