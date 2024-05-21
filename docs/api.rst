@@ -25,8 +25,6 @@ There are two main API classes for data access.
 Both of the classes have the same methods, although they access different
 tables in the database.
 
-# The main functions we will use are `from_area` and `from_filter` like this
-
 The primary methods for accessing data are :code:`.from_area` and
 :code:`.from_filter`. Both of these methods return a GeoPandas dataframe.
 
@@ -68,8 +66,6 @@ and gets handled at the end of the query.
 To find what values are allowed for each, we can check the propeties of the
 class. Both :code:`LayerMeasurements` and :code:`PointMeasurements` have
 the following properties.
-
-..
 
  * all_site_names
  * all_types
