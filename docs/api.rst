@@ -57,11 +57,15 @@ To find what `kwargs` are allowed, we can check the class
     LayerMeasurements.ALLOWED_QRY_KWARGS
 
 For :code:`LayerMeasurements` this will return
-:code:`["site_name", "site_id", "date", "instrument", "observers", "type","utm_zone", "pit_id"]`
+:code:`["site_name", "site_id", "date", "instrument", "observers", "type", "utm_zone", "pit_id", "date_greater_equal", "date_less_equal"]`
+
 so we can filter by any of these as inputs to the function.
 
 **Notice `limit` is not specified here**. Limit is in the :code:`SPECIAL_KWARGS`
 and gets handled at the end of the query.
+
+**Notice `date_greater_equal` and `date_less_equal`** for filtering the `date`
+parameter using `>=` and `<=` logic.
 
 To find what values are allowed for each, we can check the propeties of the
 class. Both :code:`LayerMeasurements` and :code:`PointMeasurements` have
