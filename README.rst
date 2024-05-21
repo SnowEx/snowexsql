@@ -67,6 +67,25 @@ If you are using `conda` you may need to reinstall the following using conda:
   * Jupyter notebook
   * nbconvert
 
+
+I want data fast!
+-----------------
+A programmatic API has been created for fast and standard
+access to Point and Layer data. There are two examples_ covering the
+features and usage of the api. See the specific api_ documentation for
+detailed description.
+
+.. _api: https://snowexsql.readthedocs.io/en/latest/api.html
+
+.. code-block:: python
+
+    from snowexsql.api import PointMeasurements, LayerMeasurements
+    # The main functions we will use are `from_area` and `from_filter` like this
+    df = PointMeasurements.from_filter(
+        date=date(2020, 5, 28), instrument='camera'
+    )
+    print(df.head())
+
 Tests
 -----
 
