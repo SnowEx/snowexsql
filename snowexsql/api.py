@@ -49,9 +49,8 @@ class BaseDataset:
 
     ALLOWED_QRY_KWARGS = [
         "site_name", "site_id", "date", "instrument", "observers", "type",
-        "utm_zone"
+        "utm_zone", "date_greater_equal", "date_less_equal"
     ]
-    # TODO: special args could include date_greater_equal, date_less_equal
     SPECIAL_KWARGS = ["limit"]
     # Default max record count
     MAX_RECORD_COUNT = 1000
@@ -85,26 +84,44 @@ class BaseDataset:
             # Handle special operations
             if k in cls.ALLOWED_QRY_KWARGS:
                 # standard filtering using qry.filter
-                filter_col = getattr(cls.MODEL, k)
                 if isinstance(v, list):
+                    filter_col = getattr(cls.MODEL, k)
                     if k == "date":
                         raise ValueError(
                             "We cannot search for a list of dates"
                         )
+                    elif "_equal" in k:
+                        raise ValueError(
+                            "We cannot compare greater_equal or less_equal"
+                            " with a list"
+                        )
                     qry = qry.filter(filter_col.in_([v]))
                     LOG.debug(
-                        f"filtering {k} to value {v}"
+                        f"Filtering {k} to value {v}"
                     )
                 else:
-                    qry = qry.filter(filter_col == v)
+                    # Filter boundary
+                    if "_greater_equal" in k:
+                        key = k.split("_greater_equal")[0]
+                        filter_col = getattr(cls.MODEL, key)
+                        qry = qry.filter(filter_col >= v)
+                    elif "_less_equal" in k:
+                        key = k.split("_less_equal")[0]
+                        filter_col = getattr(cls.MODEL, key)
+                        qry = qry.filter(filter_col <= v)
+                    # Filter to exact value
+                    else:
+                        filter_col = getattr(cls.MODEL, k)
+                        qry = qry.filter(filter_col == v)
                     LOG.debug(
-                        f"filtering {k} to list {v}"
+                        f"Filtering {k} to list {v}"
                     )
-            # TODO: call special kwargs after other kwargs
+
             # to avoid limit before filter
             elif k in cls.SPECIAL_KWARGS:
                 if k == "limit":
                     qry = qry.limit(v)
+
             else:
                 # Error out for not-allowed kwargs
                 raise ValueError(f"{k} is not an allowed filter")
@@ -249,7 +266,7 @@ class LayerMeasurements(PointMeasurements):
     MODEL = LayerData
     ALLOWED_QRY_KWARGS = [
         "site_name", "site_id", "date", "instrument", "observers", "type",
-        "utm_zone", "pit_id"
+        "utm_zone", "pit_id", "date_greater_equal", "date_less_equal"
     ]
     # TODO: layer analysis methods?
 

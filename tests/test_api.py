@@ -109,7 +109,13 @@ class TestPointMeasurements(DBConnection):
             ({
                  "date": date(2020, 5, 28),
                  "instrument": 'pit ruler'
-             }, 0, np.nan)
+             }, 0, np.nan),
+            ({
+                 "date_less_equal": date(2019, 10, 1),
+             }, 177, -0.2412597),
+            ({
+                 "date_greater_equal": date(2020, 6, 7),
+             }, 69, 1.674252),
         ]
     )
     def test_from_filter(self, clz, kwargs, expected_length, mean_value):
@@ -213,7 +219,15 @@ class TestLayerMeasurements(DBConnection):
             ({
                  "date": date(2020, 5, 28),
                  "instrument": 'IRIS'
-             }, 0, np.nan)  # nothing returned
+             }, 0, np.nan),  # nothing returned
+            ({
+                "date_less_equal": date(2019, 12, 15),
+                "type": 'density'
+            }, 58, 206.137931),
+            ({
+                "date_greater_equal": date(2020, 5, 13),
+                "type": 'density'
+            }, 228, 395.0453216),
         ]
     )
     def test_from_filter(self, clz, kwargs, expected_length, mean_value):
