@@ -290,7 +290,11 @@ class RasterMeasurements(BaseDataset):
                         func.ST_Union(ImageData.raster, type_=Raster)
                     )
                 )
-                q = cls.extend_qry(q, **kwargs)
+                # Query upfront except for the limit
+                limit = kwargs.get("limit")
+                if limit:
+                    kwargs.pop("limit")
+                q = cls.extend_qry(q, check_size=False, **kwargs)
                 if shp:
                     q = q.filter(
                         gfunc.ST_Intersects(
@@ -309,6 +313,11 @@ class RasterMeasurements(BaseDataset):
                     # And grab rasters touching the circle
                     q = q.filter(gfunc.ST_Intersects(ImageData.raster, buffered_pt))
                     # Execute the query
+                # Check the query size or limit the query
+                if limit:
+                    q = cls.extend_qry(q, limit=limit)
+                else:
+                    cls._check_size(qry, kwargs)
                 rasters = q.all()
                 # Get the rasterio object of the raster
                 dataset = raster_to_rasterio(session, rasters)[0]
