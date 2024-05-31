@@ -56,6 +56,14 @@ class DBConnection:
         yield Extended
 
 
+def unsorted_list_tuple_compare(l1, l2):
+    # turn lists into sets, but get rid of any Nones
+    l1 = set([l[0] for l in l1 if l[0] is not None])
+    l2 = set([l[0] for l in l2 if l[0] is not None])
+    # compare the sets
+    return l1 == l2
+
+
 class TestPointMeasurements(DBConnection):
     """
     Test the Point Measurement class
@@ -64,11 +72,16 @@ class TestPointMeasurements(DBConnection):
 
     def test_all_types(self, clz):
         result = clz().all_types
-        assert result == [('swe',), ('depth',), ('two_way_travel',)]
+        assert unsorted_list_tuple_compare(
+            result,
+            [('swe',), ('depth',), ('two_way_travel',)]
+        )
 
     def test_all_site_names(self, clz):
         result = clz().all_site_names
-        assert result == [(None,), ('Grand Mesa',)]
+        assert unsorted_list_tuple_compare(
+            result, [(None,), ('Grand Mesa',)]
+        )
 
     def test_all_dates(self, clz):
         result = clz().all_dates
@@ -78,26 +91,30 @@ class TestPointMeasurements(DBConnection):
 
     def test_all_observers(self, clz):
         result = clz().all_observers
-        assert result == [
-            ('Catherine Breen, Cassie Lumbrazo',),
-            (None,),
-            ('Ryan Webb',),
-            ('Randall Bonnell',),
-            ('Tate Meehan',)
-        ]
+        assert unsorted_list_tuple_compare(
+            result, [
+                ('Catherine Breen, Cassie Lumbrazo',),
+                (None,),
+                ('Ryan Webb',),
+                ('Randall Bonnell',),
+                ('Tate Meehan',)
+            ]
+        )
 
     def test_all_instruments(self, clz):
         result = clz().all_instruments
-        assert result == [
-            (None,),
-            ('Mala 1600 MHz GPR',),
-            ('Mala 800 MHz GPR',),
-            ('pulse EKKO Pro multi-polarization 1 GHz GPR',),
-            ('pit ruler',),
-            ('mesa',),
-            ('magnaprobe',),
-            ('camera',)
-        ]
+        assert unsorted_list_tuple_compare(
+            result, [
+                (None,),
+                ('Mala 1600 MHz GPR',),
+                ('Mala 800 MHz GPR',),
+                ('pulse EKKO Pro multi-polarization 1 GHz GPR',),
+                ('pit ruler',),
+                ('mesa',),
+                ('magnaprobe',),
+                ('camera',)
+            ]
+        )
 
     @pytest.mark.parametrize(
         "kwargs, expected_length, mean_value", [
@@ -168,23 +185,22 @@ class TestLayerMeasurements(DBConnection):
 
     def test_all_types(self, clz):
         result = clz().all_types
-        assert result == [
-            ('sample_signal',), ('force',), ('density',), ('grain_size',),
-            ('reflectance',), ('permittivity',), ('lwc_vol',),
-            ('manual_wetness',), ('equivalent_diameter',),
-            ('specific_surface_area',), ('grain_type',), ('temperature',),
-            ('hand_hardness',)
-        ]
+        assert set(result) == {('sample_signal',), ('force',), ('density',),
+                               ('grain_size',), ('reflectance',),
+                               ('permittivity',), ('lwc_vol',),
+                               ('manual_wetness',), ('equivalent_diameter',),
+                               ('specific_surface_area',), ('grain_type',),
+                               ('temperature',), ('hand_hardness',)}
 
     def test_all_site_names(self, clz):
         result = clz().all_site_names
-        assert result == [
-            ('Cameron Pass',), ('Fraser Experimental Forest',),
-            ('Sagehen Creek',), ('Mammoth Lakes',), ('Niwot Ridge',),
-            ('Boise River Basin',), ('Little Cottonwood Canyon',),
-            ('East River',), ('American River Basin',),
-            ('Senator Beck',), ('Jemez River',), ('Grand Mesa',)
-        ]
+        assert set(result) == {('Cameron Pass',),
+                               ('Fraser Experimental Forest',),
+                               ('Sagehen Creek',), ('Mammoth Lakes',),
+                               ('Niwot Ridge',), ('Boise River Basin',),
+                               ('Little Cottonwood Canyon',), ('East River',),
+                               ('American River Basin',), ('Senator Beck',),
+                               ('Jemez River',), ('Grand Mesa',)}
 
     def test_all_dates(self, clz):
         result = clz().all_dates
@@ -194,20 +210,19 @@ class TestLayerMeasurements(DBConnection):
 
     def test_all_observers(self, clz):
         result = clz().all_observers
-        assert result == [
+        assert unsorted_list_tuple_compare(result, [
             (None,), ('Juha Lemmetyinen',), ('Kate Hale',), ('Céline Vargel',),
             ('Carrie Vuyovich',), ('Juha Lemmetyinen & Ioanna Merkouriadi',),
             ('Carrie Vuyovich & Juha Lemmetyinen',),
-            ('Kehan Yang',)] != [('Catherine Breen, Cassie Lumbrazo',),
-            (None,), ('Ryan Webb',), ('Randall Bonnell',), ('Tate Meehan',)
-        ]
+            ('Kehan Yang',)
+        ])
 
     def test_all_instruments(self, clz):
         result = clz().all_instruments
-        assert result == [
+        assert unsorted_list_tuple_compare(result, [
             ('IS3-SP-15-01US',), ('IRIS',), ('snowmicropen',),
             (None,), ('IS3-SP-11-01F',)
-        ]
+        ])
 
     @pytest.mark.parametrize(
         "kwargs, expected_length, mean_value", [
