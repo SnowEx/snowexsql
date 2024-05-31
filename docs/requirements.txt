@@ -7,3 +7,4 @@ sphinxcontrib-apidoc==0.3.0
 ipython==7.31.1
 MarkupSafe<2.1.0
 plotly==5.22.0
+jupyterlab==4.2.0
