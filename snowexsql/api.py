@@ -29,7 +29,7 @@ class LargeQueryCheckException(RuntimeError):
 def db_session(db_name):
     # use default_name
     db_name = db_name or DB_NAME
-    engine, session = get_db(DB_NAME)
+    engine, session = get_db(db_name)
     yield session, engine
     session.close()
 

@@ -50,8 +50,9 @@ class DBConnection:
         """
         Extend the class and overwrite the database name
         """
+        url = db.url
         class Extended(self.CLZ):
-            DB_NAME = db_url
+            DB_NAME = f"{url.username}:{url.password}@{url.host}/{url.database}"
 
         yield Extended
 

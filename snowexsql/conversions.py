@@ -44,8 +44,8 @@ def points_to_geopandas(results):
 
 def query_to_geopandas(query, engine, **kwargs):
     """
-    Convert a GeoAlchemy2 Query meant for postgis to a geopandas dataframe. Requires that a geometry column is
-    included
+    Convert a GeoAlchemy2 Query meant for postgis to a geopandas dataframe.
+    Requires that a geometry column is included
 
     Args:
         query: GeoAlchemy2.Query Object
