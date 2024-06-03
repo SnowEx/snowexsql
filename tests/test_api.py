@@ -54,7 +54,7 @@ class DBConnection:
         class Extended(self.CLZ):
             DB_NAME = f"{url.username}:{url.password}@{url.host}/{url.database}"
 
-        yield Extended
+        yield self.CLZ
 
 
 def unsorted_list_tuple_compare(l1, l2):
