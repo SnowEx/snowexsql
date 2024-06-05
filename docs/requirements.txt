@@ -1,7 +1,7 @@
 nbsphinx==0.9.4
 sphinx-gallery==0.9.0
 nbconvert>=6.4.3,<6.5.0
-sphinx~=7.3
+sphinx>=7.1,<7.4
 pandoc==1.0.2
 ipython>7.0,<9.0
 sphinxcontrib-apidoc==0.3.0
