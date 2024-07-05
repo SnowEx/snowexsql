@@ -24,12 +24,6 @@ simply a client for accessing the database using python
 
 WARNING - This is under active development in preparation for SnowEx Hackweek.  Use at your own risk.  Data will change as it is QA/QC'd and the end goal is for all data in this database to be pulled from NSIDC.  The goal is for this to become a community database open to all. 
 
-DOI
----
-* SnowEx Hackweek 2022
-
-.. image:: https://zenodo.org/badge/DOI/10.5281/zenodo.7618102.svg
-   :target: https://doi.org/10.5281/zenodo.7618102
 
 Features
 --------
@@ -55,6 +49,30 @@ Install using pip:
 
     pip install snowexsql
 
+I want data fast!
+-----------------
+A programmatic API has been created for fast and standard
+access to Point and Layer data. There are two examples_ covering the
+features and usage of the api. See the specific api_ documentation for
+detailed description.
+
+.. _api: https://snowexsql.readthedocs.io/en/latest/api.html
+
+.. code-block:: python
+
+    from snowexsql.api import PointMeasurements, LayerMeasurements
+    # The main functions we will use are `from_area` and `from_filter` like this
+    df = PointMeasurements.from_filter(
+        date=date(2020, 5, 28), instrument='camera'
+    )
+    print(df.head())
+
+I need help!
+------------
+Jump over to `our discussion forum <https://github.com/SnowEx/snowexsql/discussions>`_ 
+and get help from our community.
+
+
 I want to contribute!
 ---------------------
 Install the python package by:
@@ -73,25 +91,6 @@ If you are using `conda` you may need to reinstall the following using conda:
 
   * Jupyter notebook
   * nbconvert
-
-
-I want data fast!
------------------
-A programmatic API has been created for fast and standard
-access to Point and Layer data. There are two examples_ covering the
-features and usage of the api. See the specific api_ documentation for
-detailed description.
-
-.. _api: https://snowexsql.readthedocs.io/en/latest/api.html
-
-.. code-block:: python
-
-    from snowexsql.api import PointMeasurements, LayerMeasurements
-    # The main functions we will use are `from_area` and `from_filter` like this
-    df = PointMeasurements.from_filter(
-        date=date(2020, 5, 28), instrument='camera'
-    )
-    print(df.head())
 
 Tests
 -----
@@ -148,3 +147,10 @@ last image submitted to GitHub.
 .. code-block:: bash
 
   make docs
+
+DOI
+---
+.. |HW22| image:: https://zenodo.org/badge/DOI/10.5281/zenodo.7618102.svg 
+   :target: https://doi.org/10.5281/zenodo.7618102
+
+* SnowEx Hackweek 2022 - |HW22|
