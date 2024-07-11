@@ -73,8 +73,15 @@ Jump over to `our discussion forum <https://github.com/SnowEx/snowexsql/discussi
 and get help from our community.
 
 
-I want to contribute!
+I want to contribute
 ---------------------
+Our community follows the |Contributor Covenant|
+
+.. |Contributor Covenant| image:: https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg
+  :target: code_of_conduct.md
+
+Development Setup
+=================
 Install the python package by:
 
 .. code-block:: bash
@@ -93,9 +100,9 @@ If you are using `conda` you may need to reinstall the following using conda:
   * nbconvert
 
 Tests
------
+=====
 
-Before testing, in a seperate terminal, we need to run a local instance
+Before testing, in a separate terminal, we need to run a local instance
 of the database. This can be done with
 
 .. code-block:: bash
