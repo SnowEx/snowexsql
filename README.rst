@@ -17,6 +17,8 @@ Welcome to snowexsql
 .. image:: https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/micahjohnson150/2034019acc40a963bd02d2fcbb31c5a9/raw/snowexsql__heads_master.json
     :alt: Code Coverage
 
+About
+-----
 Database access and tools for using the `SnowEx database`_. This tool is
 simply a client for accessing the database using python
 
@@ -49,7 +51,7 @@ Install using pip:
 
     pip install snowexsql
 
-I want data fast!
+I want data fast
 -----------------
 A programmatic API has been created for fast and standard
 access to Point and Layer data. There are two examples_ covering the
@@ -67,7 +69,7 @@ detailed description.
     )
     print(df.head())
 
-I need help!
+I need help
 ------------
 Jump over to `our discussion forum <https://github.com/SnowEx/snowexsql/discussions>`_ 
 and get help from our community.
