@@ -3,7 +3,6 @@ Welcome to snowexsql's documentation!
 
 .. toctree::
    readme
-   installation
    usage
    database_structure
    data_notes
