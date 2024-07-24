@@ -11,7 +11,6 @@ Welcome to snowexsql's documentation!
    cheat_sheet
    qgis
    api
-   authors
    history
 
 Indices and tables

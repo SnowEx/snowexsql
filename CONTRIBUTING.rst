@@ -62,4 +62,6 @@ SnowExSQL is licensed under the `BSD-3 license <https://opensource.org/licenses/
 
 Attribution
 ===========
-**TODO**
+.. _list of current contributors: https://snowexsql.readthedocs.io/en/latest/community/authors.html
+
+See our `list of current contributors`_ that have helped shape this project.

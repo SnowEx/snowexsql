@@ -6,3 +6,4 @@ Community
 
    contributing
    how_to_contribute
+   authors
