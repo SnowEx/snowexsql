@@ -54,7 +54,10 @@ When requesting a feature, please:
 Contribute Code
 ---------------
 
-**TODO** link to our contributor guide when it is ready.
+.. _how to contribute: https://snowexsql.readthedocs.io/en/latest/community/how_to_contribute.html
+
+Please see our `how to contribute`_ guide on getting started to add your code
+and ideas.
 
 Licensing
 ^^^^^^^^^
