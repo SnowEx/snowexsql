@@ -9,3 +9,4 @@ coverage==5.5
 twine==1.14.0
 pytest==6.2.4
 pytest-cov==2.12.1
+sphinx-autobuild==2024.4
