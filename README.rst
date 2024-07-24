@@ -77,61 +77,15 @@ and get help from our community.
 
 I want to contribute
 ---------------------
+Thank you for the interest!
+
 Our community follows the |Contributor Covenant|
 
 .. |Contributor Covenant| image:: https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg
   :target: code_of_conduct.md
+.. _contribution guide: https://snowexsql.readthedocs.io/en/latest/contributing.html
 
-Development Setup
-=================
-Install the python package by:
-
-.. code-block:: bash
-
-  python3 setup.py install
-
-If you are planning on running the tests or building the docs below also run:
-
-.. code-block:: bash
-
-  pip install -r requirements_dev.txt
-
-If you are using `conda` you may need to reinstall the following using conda:
-
-  * Jupyter notebook
-  * nbconvert
-
-Tests
-=====
-
-Before testing, in a separate terminal, we need to run a local instance
-of the database. This can be done with
-
-.. code-block:: bash
-
-  docker-compose up -d
-
-When you are finished testing, make sure to turn the docker off
-
-.. code-block:: bash
-
-  docker-compose down
-
-
-Quickly test your installation by running:
-
-.. code-block:: bash
-
-  python3 -m pytest tests/
-
-The goal of this project is to have high fidelity in data
-interpretation/submission to the database. To see the current
-test coverage run:
-
-.. code-block:: bash
-
-  make coverage
-
+Have a look at our `contribution guide`_ and see the many ways to get involved!
 
 Documentation
 -------------
