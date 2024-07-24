@@ -4,8 +4,7 @@ Welcome to snowexsql's documentation!
 .. toctree::
    readme
    usage
-   community/contributing
-   community/how_to_contribute
+   community/index
    database_structure
    data_notes
    examples
