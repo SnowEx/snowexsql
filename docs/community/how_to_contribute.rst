@@ -71,6 +71,7 @@ Local Development Setup
 #. Commit your changes and push your branch to GitHub
 
    .. code-block:: bash
+
       $ git add .
       $ git commit -m "Your detailed description of your changes."
       $ git push origin name-of-your-bugfix-or-feature
