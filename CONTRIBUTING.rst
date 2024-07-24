@@ -2,13 +2,18 @@
 Contributing Guidelines
 ***********************
 
-Thank you for your interest in contributing to snowexsql! We welcome contributions of any size from anyone regardless of career stage and level of coding experience.
+.. |Contributor Covenant| image:: https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg
+  :target: https://github.com/SnowEx/snowexsql/blob/master/CODE_OF_CONDUCT.md
 
-Here we provide a set of guidelines and information for contributing to snowexsql. This project is released with a Contributor Code of Conduct. By participating in this project you agree to abide by its terms. 
+Thank you for your interest in contributing to snowexsql! We welcome
+contributions of any size from anyone regardless of career stage and level of
+coding experience.
 
-.. image:: https://img.shields.io/badge/Contributor%20Covenant-v2.0%20adopted-ff69b4.svg
-    :target: CODE_OF_CONDUCT.md
-    :alt: Contributor code of conduct
+Here we provide a set of guidelines and information for contributing to
+snowexsql. This project is released with a Contributor Code of Conduct. By
+participating in this project you agree to abide by its terms.
+
+|Contributor Covenant|
 
 Ways to Contribute
 ==================

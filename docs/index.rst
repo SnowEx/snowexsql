@@ -4,6 +4,7 @@ Welcome to snowexsql's documentation!
 .. toctree::
    readme
    usage
+   community/contributing
    community/how_to_contribute
    database_structure
    data_notes
@@ -11,7 +12,6 @@ Welcome to snowexsql's documentation!
    cheat_sheet
    qgis
    api
-   contributing
    authors
    history
 

@@ -83,7 +83,7 @@ Our community follows the |Contributor Covenant|
 
 .. |Contributor Covenant| image:: https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg
   :target: code_of_conduct.md
-.. _contribution guide: https://snowexsql.readthedocs.io/en/latest/contributing.html
+.. _contribution guide: https://snowexsql.readthedocs.io/en/latest/community/contributing.html
 
 Have a look at our `contribution guide`_ and see the many ways to get involved!
 
