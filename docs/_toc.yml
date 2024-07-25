@@ -1,0 +1,27 @@
+# Table of contents
+# Learn more at https://jupyterbook.org/customize/toc.html
+
+format: jb-book
+root: readme
+chapters:
+  - file: installation
+  - file: usage
+  - file: database_structure
+  - file: data_notes
+  - file: gallery/index
+    sections:
+      - file: gallery/api_intro_example
+      - file: gallery/api_plot_pit_density_example
+      - file: gallery/camera_derived_snow_depths_example
+      - file: gallery/compare_SSA_instruments_example
+      - file: gallery/compare_UAVSAR_to_depths_example
+      - file: gallery/get_spiral_example
+      - file: gallery/getting_started_example
+      - file: gallery/graupel_pits_example
+      - file: gallery/graupel_smp_example
+  - file: cheat_sheet
+  - file: qgis
+  - file: api
+  - file: contributing
+  - file: authors
+  - file: history
