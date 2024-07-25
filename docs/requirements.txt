@@ -7,3 +7,4 @@ plotly==5.22.0
 sphinx-gallery==0.9.0
 sphinx>=7.1,<7.4
 sphinxcontrib-apidoc==0.3.0
+jupyter-book>=1.0.2,<1.1
