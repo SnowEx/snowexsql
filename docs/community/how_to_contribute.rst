@@ -130,7 +130,7 @@ Before you submit a pull request, check that it meets these guidelines:
    your new functionality into a function with a docstring.
 3. The pull request should work for Python 3.5, 3.6, 3.7 and 3.8, and for PyPy.
    Check
-   ..    https://travis-ci.com/SnowEx/snowexsql/pull_requests
+   ..    https://github.com/SnowEx/snowexsql/pulls
    and make sure that the tests pass for all supported Python versions.
 
 
