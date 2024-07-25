@@ -145,4 +145,6 @@ $ bump2version patch # possible: major / minor / patch
 $ git push
 $ git push --tags
 
-Travis will then deploy to PyPI if tests pass.
+Once the tag is merged, a release can be published with 
+.. https://github.com/SnowEx/snowexsql/releases/new
+The release name should follow the convention `snowexsql-v0.4.1`
