@@ -60,7 +60,7 @@ def get_db(db_str, credentials=None, return_metadata=False):
             "options": "-c timezone=UTC"})
 
     Session = sessionmaker(bind=engine)
-    metadata = MetaData(bind=engine)
+    metadata = MetaData()
     session = Session(expire_on_commit=False)
 
     if return_metadata:

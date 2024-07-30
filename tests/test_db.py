@@ -37,6 +37,8 @@ class TestDB(DBSetup):
         """
         super().setup_class()
         site_fname = join(self.data_dir, 'site_details.csv')
+        # only reflect the tables we will use
+        self.metadata.reflect(self.engine, only=['points', 'layers'])
 
     def test_point_structure(self):
         """

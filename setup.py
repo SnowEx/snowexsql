@@ -13,23 +13,18 @@ with open('docs/history.rst') as history_file:
 with open('requirements.txt') as req:
     requirements = req.read().split('\n')
 
-with open('requirements_dev.txt') as req:
-    # Ignore the -r on the two lines
-    setup_requirements = req.read().split('\n')[2:]
-
-setup_requirements += requirements
 test_requirements = ['pytest>=3'] + requirements
 
 setup(
     author="Micah Johnson",
-    python_requires='>=3.6',
+    python_requires='>=3.8',
     classifiers=[
         'Development Status :: 2 - Pre-Alpha',
         'Intended Audience :: Developers',
         'Natural Language :: English',
-        'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
         'Programming Language :: Python :: 3.9',
+        'Programming Language :: Python :: 3.10'
     ],
     description="SQL Database software for SnowEx data",
     entry_points={
@@ -44,10 +39,9 @@ setup(
     keywords='snowexsql',
     name='snowexsql',
     packages=find_packages(include=['snowexsql', 'snowexsql.*']),
-    setup_requires=setup_requirements,
     test_suite='tests',
     tests_require=test_requirements,
     url='https://github.com/SnowEx/snowexsql',
-    version='0.3.1',
+    version='0.4.1',
     zip_safe=False,
 )
