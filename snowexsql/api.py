@@ -75,7 +75,7 @@ class BaseDataset:
 
     @classmethod
     def _check_size(cls, qry, kwargs):
-        # Safe guard against accidental giant requests
+        # Safeguard against accidental giant requests
         count = qry.count()
         if count > cls.MAX_RECORD_COUNT and "limit" not in kwargs:
             raise LargeQueryCheckException(
@@ -106,7 +106,7 @@ class BaseDataset:
                             "We cannot compare greater_equal or less_equal"
                             " with a list"
                         )
-                    qry = qry.filter(filter_col.in_([v]))
+                    qry = qry.filter(filter_col.in_(v))
                     LOG.debug(
                         f"Filtering {k} to value {v}"
                     )
