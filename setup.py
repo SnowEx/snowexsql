@@ -22,15 +22,11 @@ setup(
         'Development Status :: 2 - Pre-Alpha',
         'Intended Audience :: Developers',
         'Natural Language :: English',
-        'Programming Language :: Python :: 3.8',
         'Programming Language :: Python :: 3.9',
         'Programming Language :: Python :: 3.10'
     ],
     description="SQL Database software for SnowEx data",
-    entry_points={
-        'console_scripts': [
-            'clear_dataset=snowexsql.cli:clear_dataset',
-        ],
+    entry_points={[],
     },
     install_requires=requirements,
     long_description=readme + '\n\n' + history,
