@@ -47,9 +47,8 @@ class BaseDataset:
     # Use this database name
     DB_NAME = DB_NAME
 
-    ALLOWED_QRY_KWARGS = [
-        "site_name", "site_id", "date", "instrument", "observers", "type",
-        "utm_zone", "date_greater_equal", "date_less_equal"
+    ALLOWED_QRY_KWARGS = ["site_name", "site_id", "date", "instrument", "observers", "type",
+        "utm_zone", "date_greater_equal", "date_less_equal", "value_greater_equal", 'value_less_equal',
     ]
     SPECIAL_KWARGS = ["limit"]
     # Default max record count
