@@ -62,6 +62,17 @@ class BaseDataset:
             geometry=[box(xmin, ymin, xmax, ymax)]
         ).set_crs(crs)
 
+    @staticmethod
+    def retrieve_single_value_result(result):
+        """
+        When we only request a single thing we still get a list of lists
+        this function filters it out. This usually looks like a list of tuples.
+        """
+        final = []
+        if len(result) != 0:
+            final = [r[0] for r in result]
+        return final
+
     @classmethod
     def _check_size(cls, qry, kwargs):
         # Safe guard against accidental giant requests
@@ -139,7 +150,7 @@ class BaseDataset:
         with db_session(self.DB_NAME) as (session, engine):
             qry = session.query(self.MODEL.site_name).distinct()
             result = qry.all()
-        return result
+        return self.retrieve_single_value_result(result)
 
     @property
     def all_types(self):
@@ -149,7 +160,7 @@ class BaseDataset:
         with db_session(self.DB_NAME) as (session, engine):
             qry = session.query(self.MODEL.type).distinct()
             result = qry.all()
-        return result
+        return self.retrieve_single_value_result(result)
 
     @property
     def all_dates(self):
@@ -159,7 +170,7 @@ class BaseDataset:
         with db_session(self.DB_NAME) as (session, engine):
             qry = session.query(self.MODEL.date).distinct()
             result = qry.all()
-        return result
+        return self.retrieve_single_value_result(result)
 
     @property
     def all_observers(self):
@@ -169,7 +180,7 @@ class BaseDataset:
         with db_session(self.DB_NAME) as (session, engine):
             qry = session.query(self.MODEL.observers).distinct()
             result = qry.all()
-        return result
+        return self.retrieve_single_value_result(result)
 
     @property
     def all_instruments(self):
@@ -179,7 +190,7 @@ class BaseDataset:
         with db_session(self.DB_NAME) as (session, engine):
             qry = session.query(self.MODEL.instrument).distinct()
             result = qry.all()
-        return result
+        return self.retrieve_single_value_result(result)
 
 
 class PointMeasurements(BaseDataset):
@@ -270,6 +281,15 @@ class LayerMeasurements(PointMeasurements):
     ]
     # TODO: layer analysis methods?
 
+    @property
+    def all_site_ids(self):
+        """
+        Return all types of the data
+        """
+        with db_session(self.DB_NAME) as (session, engine):
+            qry = session.query(self.MODEL.site_id).distinct()
+            result = qry.all()
+        return self.retrieve_single_value_result(result)
 
 class RasterMeasurements(BaseDataset):
     MODEL = ImageData
