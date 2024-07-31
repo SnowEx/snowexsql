@@ -183,6 +183,16 @@ class BaseDataset:
         return self.retrieve_single_value_result(result)
 
     @property
+    def all_units(self):
+        """
+        Return all distinct units in the data
+        """
+        with db_session(self.DB_NAME) as (session, engine):
+            qry = session.query(self.MODEL.units).distinct()
+            result = qry.all()
+        return result
+
+    @property
     def all_instruments(self):
         """
         Return all distinct instruments in the data
