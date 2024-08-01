@@ -83,12 +83,11 @@ def query_to_pandas(query, engine, **kwargs):
     return df
 
 
-def raster_to_rasterio(session, rasters):
+def raster_to_rasterio(rasters):
     """
     Retrieve the numpy array of a raster by converting to a temporary file
 
     Args:
-        session: sqlalchemy session object
         raster: list of :py:class:`geoalchemy2.types.Raster`
 
     Returns:
@@ -97,9 +96,10 @@ def raster_to_rasterio(session, rasters):
     """
     datasets = []
     for r in rasters:
-        bdata = bytes(r[0])
+        if r[0] is not None:
+            bdata = bytes(r[0])
 
-        with MemoryFile() as tmpfile:
-            tmpfile.write(bdata)
-            datasets.append(tmpfile.open())
+            with MemoryFile() as tmpfile:
+                tmpfile.write(bdata)
+                datasets.append(tmpfile.open())
     return datasets
