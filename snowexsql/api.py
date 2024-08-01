@@ -427,19 +427,13 @@ class RasterMeasurements(BaseDataset):
                 # Find all the tiles that
                 q = q.filter(gfunc.ST_Intersects(ImageData.raster, db_shp))
 
-                # Query upfront except for the limit
+
                 limit = kwargs.get("limit")
                 if limit:
                     kwargs.pop("limit")
                 q = cls.extend_qry(q, check_size=False, **kwargs)
-
-                    # Execute the query
-                # Check the query size or limit the query
-                if limit:
-                    q = cls.extend_qry(q, limit=limit)
-                else:
-                    cls._check_size(qry, kwargs)
                 rasters = q.all()
+
                 # Get the rasterio object of the raster
                 datasets = raster_to_rasterio(rasters)
                 if len(datasets) > 0:
