@@ -16,6 +16,6 @@ Core Team
 * `Joachim Meyer`_
 * `Anthony Arendt`_
 
-Community
----------
+Community Contributors
+----------------------
 We are always looking for new members to actively contribute to this project!
