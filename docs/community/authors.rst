@@ -6,6 +6,7 @@ Current Contributors
 .. _Micah Sandusky: https://github.com/micah-prime
 .. _Joachim Meyer: https://github.com/jomey
 .. _Anthony Arendt: https://github.com/aaarendt
+.. _Don Setiawan: https://github.com/lsetiawan
 
 Core Team
 ---------
@@ -19,3 +20,5 @@ Core Team
 Community Contributors
 ----------------------
 We are always looking for new members to actively contribute to this project!
+
+* `Don Setiawan`_
