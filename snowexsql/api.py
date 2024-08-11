@@ -210,7 +210,7 @@ class BaseDataset:
         with db_session(self.DB_NAME) as (session, engine):
             qry = session.query(self.MODEL.units).distinct()
             result = qry.all()
-        return result
+        return self.retrieve_single_value_result(result)
 
     @property
     def all_instruments(self):
