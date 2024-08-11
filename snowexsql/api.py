@@ -443,5 +443,5 @@ class RasterMeasurements(BaseDataset):
                 return dataset
 
             except Exception as e:
-                session.close()
+                LOG.error("Failed query for Raster Data")
                 raise e
