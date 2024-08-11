@@ -26,8 +26,6 @@ setup(
         'Programming Language :: Python :: 3.10'
     ],
     description="SQL Database software for SnowEx data",
-    entry_points={[],
-    },
     install_requires=requirements,
     long_description=readme + '\n\n' + history,
     long_description_content_type='text/x-rst',

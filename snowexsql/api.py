@@ -364,10 +364,6 @@ class RasterMeasurements(BaseDataset):
         Get data for the class by filtering by allowed arguments. The allowed
         filters are cls.ALLOWED_QRY_KWARGS.
         """
-        # Grab resolution and remove it from the query kwargs
-        # resolution = kwargs.get("resolution")
-        # if resolution:
-        #     kwargs.pop("resolution")
 
         cls.check_for_single_dataset(**kwargs)
 
@@ -375,9 +371,6 @@ class RasterMeasurements(BaseDataset):
             try:
                 # Rebuild the query and form the raster
                 base_query = cls.MODEL.raster
-
-                # if resolution:
-                #     base_query = func.ST_Rescale(base_query, resolution, -1 * resolution, 'blinear')
 
                 qry = session.query(
                     func.ST_AsTiff(
@@ -391,7 +384,6 @@ class RasterMeasurements(BaseDataset):
                 datasets = raster_to_rasterio(rasters)
 
             except Exception as e:
-                session.close()
                 LOG.error("Failed query for Raster Data")
                 raise e
 
