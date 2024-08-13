@@ -3,12 +3,12 @@ from contextlib import contextmanager
 from sqlalchemy.sql import func
 import geopandas as gpd
 from shapely.geometry import box
-from geoalchemy2.shape import from_shape, to_shape
+from geoalchemy2.shape import from_shape
 import geoalchemy2.functions as gfunc
 from geoalchemy2.types import Raster
 
 from snowexsql.db import get_db
-from snowexsql.data import SiteData, PointData, LayerData, ImageData
+from snowexsql.data import PointData, LayerData, ImageData
 from snowexsql.conversions import query_to_geopandas, raster_to_rasterio
 
 
@@ -47,9 +47,8 @@ class BaseDataset:
     # Use this database name
     DB_NAME = DB_NAME
 
-    ALLOWED_QRY_KWARGS = [
-        "site_name", "site_id", "date", "instrument", "observers", "type",
-        "utm_zone", "date_greater_equal", "date_less_equal"
+    ALLOWED_QRY_KWARGS = ["site_name", "site_id", "date", "instrument", "observers", "type",
+        "utm_zone", "date_greater_equal", "date_less_equal", "value_greater_equal", 'value_less_equal',
     ]
     SPECIAL_KWARGS = ["limit"]
     # Default max record count
@@ -62,9 +61,20 @@ class BaseDataset:
             geometry=[box(xmin, ymin, xmax, ymax)]
         ).set_crs(crs)
 
+    @staticmethod
+    def retrieve_single_value_result(result):
+        """
+        When we only request a single thing we still get a list of lists
+        this function filters it out. This usually looks like a list of tuples.
+        """
+        final = []
+        if len(result) != 0:
+            final = [r[0] for r in result]
+        return final
+
     @classmethod
     def _check_size(cls, qry, kwargs):
-        # Safe guard against accidental giant requests
+        # Safeguard against accidental giant requests
         count = qry.count()
         if count > cls.MAX_RECORD_COUNT and "limit" not in kwargs:
             raise LargeQueryCheckException(
@@ -95,7 +105,7 @@ class BaseDataset:
                             "We cannot compare greater_equal or less_equal"
                             " with a list"
                         )
-                    qry = qry.filter(filter_col.in_([v]))
+                    qry = qry.filter(filter_col.in_(v))
                     LOG.debug(
                         f"Filtering {k} to value {v}"
                     )
@@ -121,7 +131,6 @@ class BaseDataset:
             elif k in cls.SPECIAL_KWARGS:
                 if k == "limit":
                     qry = qry.limit(v)
-
             else:
                 # Error out for not-allowed kwargs
                 raise ValueError(f"{k} is not an allowed filter")
@@ -131,6 +140,28 @@ class BaseDataset:
 
         return qry
 
+    @classmethod
+    def from_unique_entries(cls, columns_to_search, **kwargs):
+        """Returns unique values from a column to help with filtering"""
+        columns = [getattr(cls.MODEL, column) for column in columns_to_search]
+
+        with db_session(cls.DB_NAME) as (session, engine):
+            try:
+                qry = session.query(*columns)
+                # Hardcode the limit to
+                qry = cls.extend_qry(qry, check_size=False, **kwargs)
+                results = qry.distinct().all()
+
+            except Exception as e:
+                session.close()
+                LOG.error("Failed query finding options for filtering")
+                raise e
+
+        if len(columns_to_search) == 1:
+            results = cls.retrieve_single_value_result(results)
+
+        return results
+
     @property
     def all_site_names(self):
         """
@@ -139,7 +170,7 @@ class BaseDataset:
         with db_session(self.DB_NAME) as (session, engine):
             qry = session.query(self.MODEL.site_name).distinct()
             result = qry.all()
-        return result
+        return self.retrieve_single_value_result(result)
 
     @property
     def all_types(self):
@@ -149,7 +180,7 @@ class BaseDataset:
         with db_session(self.DB_NAME) as (session, engine):
             qry = session.query(self.MODEL.type).distinct()
             result = qry.all()
-        return result
+        return self.retrieve_single_value_result(result)
 
     @property
     def all_dates(self):
@@ -159,7 +190,7 @@ class BaseDataset:
         with db_session(self.DB_NAME) as (session, engine):
             qry = session.query(self.MODEL.date).distinct()
             result = qry.all()
-        return result
+        return self.retrieve_single_value_result(result)
 
     @property
     def all_observers(self):
@@ -169,7 +200,17 @@ class BaseDataset:
         with db_session(self.DB_NAME) as (session, engine):
             qry = session.query(self.MODEL.observers).distinct()
             result = qry.all()
-        return result
+        return self.retrieve_single_value_result(result)
+
+    @property
+    def all_units(self):
+        """
+        Return all distinct units in the data
+        """
+        with db_session(self.DB_NAME) as (session, engine):
+            qry = session.query(self.MODEL.units).distinct()
+            result = qry.all()
+        return self.retrieve_single_value_result(result)
 
     @property
     def all_instruments(self):
@@ -179,7 +220,7 @@ class BaseDataset:
         with db_session(self.DB_NAME) as (session, engine):
             qry = session.query(self.MODEL.instrument).distinct()
             result = qry.all()
-        return result
+        return self.retrieve_single_value_result(result)
 
 
 class PointMeasurements(BaseDataset):
@@ -258,6 +299,9 @@ class PointMeasurements(BaseDataset):
 
         return df
 
+class TooManyRastersException(Exception):
+    """ Exceptiont to report to users that their query will produce too many rasters"""
+    pass
 
 class LayerMeasurements(PointMeasurements):
     """
@@ -270,9 +314,80 @@ class LayerMeasurements(PointMeasurements):
     ]
     # TODO: layer analysis methods?
 
+    @property
+    def all_site_ids(self):
+        """
+        Return all types of the data
+        """
+        with db_session(self.DB_NAME) as (session, engine):
+            qry = session.query(self.MODEL.site_id).distinct()
+            result = qry.all()
+        return self.retrieve_single_value_result(result)
 
 class RasterMeasurements(BaseDataset):
     MODEL = ImageData
+    ALLOWED_QRY_KWARGS = BaseDataset.ALLOWED_QRY_KWARGS + ['description']
+
+    @property
+    def all_descriptions(self):
+        with db_session(self.DB_NAME) as (session, engine):
+            qry = session.query(self.MODEL.description).distinct()
+            result = qry.all()
+        return self.retrieve_single_value_result(result)
+
+    @classmethod
+    def check_for_single_dataset(cls, **kwargs):
+        """
+        At the moment there is not a clear path to how to deal with multiple rasters so
+        check that the user only requested one dataset
+        """
+        LOG.info("Checking raster query for single raster dataset...")
+        multi_raster_indicators = ['instrument', 'date', 'observers', 'doi', 'type', 'description']
+        with db_session(cls.DB_NAME) as (session, engine):
+            try:
+                # Form query and check if the query spans multipl rasters
+                for column in multi_raster_indicators:
+                    values = cls.from_unique_entries([column], **kwargs)
+                    if len(values) > 1:
+                        options = [f"'{v}'" for v in values]
+                        raise TooManyRastersException(f"More than one `{column}` suggests there are multiple raster datasets. "
+                                                      f"Try filter {column} to one of the following values {', '.join(options)}.")
+
+            except Exception as e:
+                session.close()
+                LOG.error("Failed query for Raster Data")
+                raise e
+
+    @classmethod
+    def from_filter(cls, **kwargs):
+        """
+        Get data for the class by filtering by allowed arguments. The allowed
+        filters are cls.ALLOWED_QRY_KWARGS.
+        """
+
+        cls.check_for_single_dataset(**kwargs)
+
+        with db_session(cls.DB_NAME) as (session, engine):
+            try:
+                # Rebuild the query and form the raster
+                base_query = cls.MODEL.raster
+
+                qry = session.query(
+                    func.ST_AsTiff(
+                        func.ST_Union(base_query, type_=Raster)
+                    )
+                )
+                qry = cls.extend_qry(qry, **kwargs)
+                rasters = qry.all()
+
+                # Get the rasterio object of the raster
+                datasets = raster_to_rasterio(rasters)
+
+            except Exception as e:
+                LOG.error("Failed query for Raster Data")
+                raise e
+
+        return datasets
 
     @classmethod
     def from_area(cls, shp=None, pt=None, buffer=None, crs=26912, **kwargs):
@@ -282,26 +397,13 @@ class RasterMeasurements(BaseDataset):
         if (pt is not None and buffer is None) or (
                 buffer is not None and pt is None):
             raise ValueError("pt and buffer must be given together")
+
         with db_session(cls.DB_NAME) as (session, engine):
+
             try:
-                # Grab the rasters, union them and convert them as tiff when done
-                q = session.query(
-                    func.ST_AsTiff(
-                        func.ST_Union(ImageData.raster, type_=Raster)
-                    )
-                )
-                # Query upfront except for the limit
-                limit = kwargs.get("limit")
-                if limit:
-                    kwargs.pop("limit")
-                q = cls.extend_qry(q, check_size=False, **kwargs)
+                # Get shape ready for cropping with rasters
                 if shp:
-                    q = q.filter(
-                        gfunc.ST_Intersects(
-                            ImageData.raster,
-                            from_shape(shp, srid=crs)
-                        )
-                    )
+                    db_shp = from_shape(shp, srid=crs)
                 else:
                     qry_pt = from_shape(pt)
                     qry = session.query(
@@ -309,20 +411,29 @@ class RasterMeasurements(BaseDataset):
                             func.ST_Buffer(qry_pt, buffer), crs
                         )
                     )
-                    buffered_pt = qry.all()[0][0]
-                    # And grab rasters touching the circle
-                    q = q.filter(gfunc.ST_Intersects(ImageData.raster, buffered_pt))
-                    # Execute the query
-                # Check the query size or limit the query
+                    db_shp = qry.all()[0][0]
+
+                # Grab the rasters, union and clip them
+                base_query = func.ST_AsTiff(func.ST_Clip(func.ST_Union(ImageData.raster, type_=Raster), db_shp, True))
+                q = session.query(base_query)
+                # Find all the tiles that
+                q = q.filter(gfunc.ST_Intersects(ImageData.raster, db_shp))
+
+
+                limit = kwargs.get("limit")
                 if limit:
-                    q = cls.extend_qry(q, limit=limit)
-                else:
-                    cls._check_size(qry, kwargs)
+                    kwargs.pop("limit")
+                q = cls.extend_qry(q, check_size=False, **kwargs)
                 rasters = q.all()
+
                 # Get the rasterio object of the raster
-                dataset = raster_to_rasterio(session, rasters)[0]
+                datasets = raster_to_rasterio(rasters)
+                if len(datasets) > 0:
+                    dataset = datasets[0]
+                else:
+                    dataset = datasets
                 return dataset
 
             except Exception as e:
-                session.close()
+                LOG.error("Failed query for Raster Data")
                 raise e
