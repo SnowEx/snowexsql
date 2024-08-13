@@ -1,5 +1,5 @@
 # Changelog
-## Version 0.5.0 (TBD)
+## Version 0.5.0
 * Brought in by PR [#98](https://github.com/SnowEx/snowexsql/pull/98)
 * Improvements made to retrieving single value queries. 
 * Added in `from_unique_entries` to find unique options given a query
