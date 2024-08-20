@@ -25,6 +25,12 @@ class LargeQueryCheckException(RuntimeError):
     pass
 
 
+class NoColumnException(RuntimeError):
+    """
+    The object does not have that column
+    """
+
+
 @contextmanager
 def db_session(db_name):
     # use default_name
@@ -35,7 +41,7 @@ def db_session(db_name):
 
 
 def get_points():
-    # Lets grab a single row from the points table
+    # Let's grab a single row from the points table
     with db_session(DB_NAME) as session:
         qry = session.query(PointData).limit(1)
         # Execute that query!
@@ -164,65 +170,57 @@ class BaseDataset:
 
         return results
 
+    def _all_from_attribute(self, attribute_name):
+        if not hasattr(self.MODEL, attribute_name):
+            raise NoColumnException(
+                f"{self.MODEL} does not have {attribute_name}"
+            )
+        with db_session(self.DB_NAME) as (session, engine):
+            qry = session.query(getattr(self.MODEL, attribute_name)).distinct()
+            result = qry.all()
+        return self.retrieve_single_value_result(result)
+
     @property
     def all_site_names(self):
         """
         Return all types of the data
         """
-        with db_session(self.DB_NAME) as (session, engine):
-            qry = session.query(self.MODEL.site_name).distinct()
-            result = qry.all()
-        return self.retrieve_single_value_result(result)
+        return self._all_from_attribute("site_name")
 
     @property
     def all_types(self):
         """
         Return all types of the data
         """
-        with db_session(self.DB_NAME) as (session, engine):
-            qry = session.query(self.MODEL.type).distinct()
-            result = qry.all()
-        return self.retrieve_single_value_result(result)
+        return self._all_from_attribute("type")
 
     @property
     def all_dates(self):
         """
         Return all distinct dates in the data
         """
-        with db_session(self.DB_NAME) as (session, engine):
-            qry = session.query(self.MODEL.date).distinct()
-            result = qry.all()
-        return self.retrieve_single_value_result(result)
+        return self._all_from_attribute("date")
 
     @property
     def all_observers(self):
         """
         Return all distinct observers in the data
         """
-        with db_session(self.DB_NAME) as (session, engine):
-            qry = session.query(self.MODEL.observers).distinct()
-            result = qry.all()
-        return self.retrieve_single_value_result(result)
+        return self._all_from_attribute("observers")
 
     @property
     def all_units(self):
         """
         Return all distinct units in the data
         """
-        with db_session(self.DB_NAME) as (session, engine):
-            qry = session.query(self.MODEL.units).distinct()
-            result = qry.all()
-        return self.retrieve_single_value_result(result)
+        return self._all_from_attribute("units")
 
     @property
     def all_instruments(self):
         """
         Return all distinct instruments in the data
         """
-        with db_session(self.DB_NAME) as (session, engine):
-            qry = session.query(self.MODEL.instrument).distinct()
-            result = qry.all()
-        return self.retrieve_single_value_result(result)
+        return self._all_from_attribute("instrument")
 
 
 class PointMeasurements(BaseDataset):
@@ -244,7 +242,7 @@ class PointMeasurements(BaseDataset):
                 df = query_to_geopandas(qry, engine)
             except Exception as e:
                 session.close()
-                LOG.error("Failed query for PointData")
+                LOG.error(f"Failed query for {cls.MODEL}")
                 raise e
 
         return df
@@ -306,7 +304,7 @@ class SiteMeasurements(PointMeasurements):
     ALLOWED_QRY_KWARGS = [
         "site_name", "site_id", "date", "pit_id", "utm_zone",
         "aspect", "sky_cover", "ground_roughness",
-        "ground_vegetation", "tree_canopy", "weather_description"
+        "ground_vegetation", "tree_canopy", "weather_description",
         "date_greater_equal", "date_less_equal",
     ]
     MODEL = SiteData
@@ -316,60 +314,42 @@ class SiteMeasurements(PointMeasurements):
         """
         Return all types of the data
         """
-        with db_session(self.DB_NAME) as (session, engine):
-            qry = session.query(self.MODEL.weather_description).distinct()
-            result = qry.all()
-        return self.retrieve_single_value_result(result)
+        return self._all_from_attribute("weather_description")
 
     @property
     def all_ground_vegetation(self):
         """
         Return all types of the data
         """
-        with db_session(self.DB_NAME) as (session, engine):
-            qry = session.query(self.MODEL.ground_vegetation).distinct()
-            result = qry.all()
-        return self.retrieve_single_value_result(result)
+        return self._all_from_attribute("ground_vegetation")
 
     @property
     def all_tree_canopy(self):
         """
         Return all types of the data
         """
-        with db_session(self.DB_NAME) as (session, engine):
-            qry = session.query(self.MODEL.tree_canopy).distinct()
-            result = qry.all()
-        return self.retrieve_single_value_result(result)
+        return self._all_from_attribute("tree_canopy")
 
     @property
     def all_ground_roughness(self):
         """
         Return all types of the data
         """
-        with db_session(self.DB_NAME) as (session, engine):
-            qry = session.query(self.MODEL.ground_roughness).distinct()
-            result = qry.all()
-        return self.retrieve_single_value_result(result)
+        return self._all_from_attribute("ground_roughness")
 
     @property
     def all_sky_cover(self):
         """
         Return all types of the data
         """
-        with db_session(self.DB_NAME) as (session, engine):
-            qry = session.query(self.MODEL.sky_cover).distinct()
-            result = qry.all()
-        return self.retrieve_single_value_result(result)
+        return self._all_from_attribute("sky_cover")
 
     @property
     def all_aspect(self):
         """
         Return all types of the data
         """
-        with db_session(self.DB_NAME) as (session, engine):
-            qry = session.query(self.MODEL.aspect).distinct()
-            result = qry.all()
-        return self.retrieve_single_value_result(result)
+        return self._all_from_attribute("aspect")
 
 
 class TooManyRastersException(Exception):
