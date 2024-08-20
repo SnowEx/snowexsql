@@ -8,7 +8,7 @@ import geoalchemy2.functions as gfunc
 from geoalchemy2.types import Raster
 
 from snowexsql.db import get_db
-from snowexsql.data import PointData, LayerData, ImageData
+from snowexsql.data import PointData, LayerData, ImageData, SiteData
 from snowexsql.conversions import query_to_geopandas, raster_to_rasterio
 
 
@@ -47,8 +47,10 @@ class BaseDataset:
     # Use this database name
     DB_NAME = DB_NAME
 
-    ALLOWED_QRY_KWARGS = ["site_name", "site_id", "date", "instrument", "observers", "type",
-        "utm_zone", "date_greater_equal", "date_less_equal", "value_greater_equal", 'value_less_equal',
+    ALLOWED_QRY_KWARGS = [
+        "site_name", "site_id", "date", "instrument", "observers", "type",
+        "utm_zone", "date_greater_equal", "date_less_equal",
+        "value_greater_equal", 'value_less_equal',
     ]
     SPECIAL_KWARGS = ["limit"]
     # Default max record count
@@ -299,9 +301,83 @@ class PointMeasurements(BaseDataset):
 
         return df
 
+
+class SiteMeasurements(PointMeasurements):
+    ALLOWED_QRY_KWARGS = [
+        "site_name", "site_id", "date", "pit_id", "utm_zone",
+        "aspect", "sky_cover", "ground_roughness",
+        "ground_vegetation", "tree_canopy", "weather_description"
+        "date_greater_equal", "date_less_equal",
+    ]
+    MODEL = SiteData
+
+    @property
+    def all_weather_description(self):
+        """
+        Return all types of the data
+        """
+        with db_session(self.DB_NAME) as (session, engine):
+            qry = session.query(self.MODEL.weather_description).distinct()
+            result = qry.all()
+        return self.retrieve_single_value_result(result)
+
+    @property
+    def all_ground_vegetation(self):
+        """
+        Return all types of the data
+        """
+        with db_session(self.DB_NAME) as (session, engine):
+            qry = session.query(self.MODEL.ground_vegetation).distinct()
+            result = qry.all()
+        return self.retrieve_single_value_result(result)
+
+    @property
+    def all_tree_canopy(self):
+        """
+        Return all types of the data
+        """
+        with db_session(self.DB_NAME) as (session, engine):
+            qry = session.query(self.MODEL.tree_canopy).distinct()
+            result = qry.all()
+        return self.retrieve_single_value_result(result)
+
+    @property
+    def all_ground_roughness(self):
+        """
+        Return all types of the data
+        """
+        with db_session(self.DB_NAME) as (session, engine):
+            qry = session.query(self.MODEL.ground_roughness).distinct()
+            result = qry.all()
+        return self.retrieve_single_value_result(result)
+
+    @property
+    def all_sky_cover(self):
+        """
+        Return all types of the data
+        """
+        with db_session(self.DB_NAME) as (session, engine):
+            qry = session.query(self.MODEL.sky_cover).distinct()
+            result = qry.all()
+        return self.retrieve_single_value_result(result)
+
+    @property
+    def all_aspect(self):
+        """
+        Return all types of the data
+        """
+        with db_session(self.DB_NAME) as (session, engine):
+            qry = session.query(self.MODEL.aspect).distinct()
+            result = qry.all()
+        return self.retrieve_single_value_result(result)
+
+
 class TooManyRastersException(Exception):
-    """ Exceptiont to report to users that their query will produce too many rasters"""
+    """
+    Exception to report to users that their query will produce too many raster
+    """
     pass
+
 
 class LayerMeasurements(PointMeasurements):
     """
