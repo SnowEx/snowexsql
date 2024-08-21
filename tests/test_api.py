@@ -273,8 +273,8 @@ class TestSiteMeasurements(DBConnection):
         result = clz().all_weather_description
         assert unsorted_list_tuple_compare(result, [])
 
-    def test_all_instruments(self, clz):
-        result = clz().all_instruments
+    def test_all_tree_canopy(self, clz):
+        result = clz().all_tree_canopy
         assert unsorted_list_tuple_compare(result, [])
 
     @pytest.mark.parametrize(
