@@ -1,2 +1,0 @@
-https://asopublic.s3-us-west-1.amazonaws.com/USCO/GM/2020/0201/ASO_GrandMesa_mosaic_2020Feb1-2_AllData_and_Reports.zip
-https://asopublic.s3-us-west-1.amazonaws.com/USCO/GM/2020/0213/ASO_GrandMesa_mosaic_2020Feb13_AllData_and_Reports.zip
