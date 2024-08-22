@@ -8,7 +8,7 @@ import json
 from sqlalchemy import MetaData, create_engine
 from sqlalchemy.orm import sessionmaker
 
-from snowexsql.tables import Base
+from snowexsql.tables.base import Base
 
 
 def initialize(engine):
