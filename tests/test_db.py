@@ -1,12 +1,10 @@
-from os import remove
-from os.path import dirname, join
+from os.path import join
 
 import pytest
-from sqlalchemy import MetaData, Table, inspect
+from sqlalchemy import Table
 
-from snowexsql.data import ImageData, LayerData, PointData, SiteData
 from snowexsql.db import *
-
+from snowexsql.tables import ImageData, LayerData, PointData, SiteData
 from .sql_test_base import DBSetup
 
 
