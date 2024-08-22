@@ -3,7 +3,7 @@ from os.path import join
 import pytest
 from sqlalchemy import Table
 
-from snowexsql.db import *
+from snowexsql.db import get_db, get_table_attributes
 from snowexsql.tables import ImageData, LayerData, PointData, SiteData
 from .sql_test_base import DBSetup
 

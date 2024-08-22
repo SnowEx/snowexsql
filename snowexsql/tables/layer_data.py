@@ -11,7 +11,6 @@ class LayerData(SingleLocationData, Measurement, Base):
     temperature etc...
     """
     __tablename__ = 'layers'
-    __table_args__ = {"schema": "public"}
 
     depth = Column(Float)
     site_id = Column(String(50))

@@ -10,7 +10,6 @@ class PointData(SingleLocationData, Measurement, Base):
     e.g. snow depths
     """
     __tablename__ = 'points'
-    __table_args__ = {"schema": "public"}
 
     version_number = Column(Integer)
     equipment = Column(String(50))

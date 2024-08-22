@@ -7,26 +7,31 @@ Mapping in the sqlalchemy or ORM.
 
 from geoalchemy2 import Geometry
 from sqlalchemy import Column, Date, DateTime, Float, Integer, String, Time
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy.sql import func
 
-Base = declarative_base()
 
-
-class SnowData(object):
+class Base(DeclarativeBase):
     """
     Base class for which all data will have these attributes
     """
-    site_name = Column(String(250))
-    date = Column(Date)
+    # SQL Alchemy
+    __table_args__ = {"schema": "public"}
+
+    # Primary Key
+    id = Column(Integer, primary_key=True)
+
+    # Standard table columns
     time_created = Column(DateTime(timezone=True), server_default=func.now())
     time_updated = Column(DateTime(timezone=True), onupdate=func.now())
-    id = Column(Integer, primary_key=True)
-    doi = Column(String(50))
+
     date_accessed = Column(Date)
+    site_name = Column(String(250))
+    date = Column(Date)
+    doi = Column(String(50))
 
 
-class SingleLocationData(SnowData):
+class SingleLocationData:
     """
     Base class for points and profiles
     """
