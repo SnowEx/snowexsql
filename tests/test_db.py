@@ -10,7 +10,7 @@ from .sql_test_base import DBSetup
 
 class TestDB(DBSetup):
     base_atts = ['site_name', 'date', 'site_id']
-    single_loc_atts = ['latitude', 'longitude', 'easting', 'elevation', 'utm_zone', 'geom', 'time']
+    single_loc_atts = ['elevation', 'geom', 'time']
 
     meas_atts = ['instrument', 'type', 'units', 'observers']
 
@@ -25,8 +25,8 @@ class TestDB(DBSetup):
                  ['version_number', 'equipment', 'value']
 
     layer_atts = single_loc_atts + meas_atts + \
-                 ['depth', 'value', 'bottom_depth', 'comments', 'sample_a', 'sample_b',
-                  'sample_c']
+                 ['depth', 'value', 'bottom_depth', 'comments', 'sample_a',
+                  'sample_b', 'sample_c']
     raster_atts = meas_atts + ['raster', 'description']
 
     def setup_class(self):

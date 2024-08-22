@@ -30,12 +30,7 @@ class SingleLocationData(SnowData):
     """
     Base class for points and profiles
     """
-    latitude = Column(Float)
-    longitude = Column(Float)
-    northing = Column(Float)
-    easting = Column(Float)
     elevation = Column(Float)
-    utm_zone = Column(Integer)
     geom = Column(Geometry("POINT"))
     time = Column(Time(timezone=True))
     site_id = Column(String(50))
