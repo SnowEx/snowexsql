@@ -22,3 +22,7 @@ htmlcov/*
 scripts/upload/test*.txt
 .idea/
 scripts/download/data/*
+*.egg-info
+
+# Version
+_version.py
