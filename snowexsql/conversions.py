@@ -3,17 +3,14 @@ Module contains all conversions used for manipulating data. This includes:
 filetypes, datatypes, etc. Many tools here will be useful for most end users
 of the database.
 """
-from os.path import basename, dirname, join
 
 import geopandas as gpd
 import pandas as pd
-import numpy as np
-import rasterio
 from geoalchemy2.shape import to_shape
 from rasterio import MemoryFile
 from sqlalchemy.dialects import postgresql
 
-from .data import PointData
+from snowexsql.tables import PointData
 
 
 def points_to_geopandas(results):

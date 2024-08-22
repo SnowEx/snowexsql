@@ -1,16 +1,16 @@
 import logging
 from contextlib import contextmanager
-from sqlalchemy.sql import func
-import geopandas as gpd
-from shapely.geometry import box
-from geoalchemy2.shape import from_shape
+
 import geoalchemy2.functions as gfunc
+import geopandas as gpd
+from geoalchemy2.shape import from_shape
 from geoalchemy2.types import Raster
+from shapely.geometry import box
+from sqlalchemy.sql import func
 
-from snowexsql.db import get_db
-from snowexsql.data import PointData, LayerData, ImageData
 from snowexsql.conversions import query_to_geopandas, raster_to_rasterio
-
+from snowexsql.db import get_db
+from snowexsql.tables import ImageData, LayerData, PointData
 
 LOG = logging.getLogger(__name__)
 DB_NAME = 'snow:hackweek@db.snowexdata.org/snowex'

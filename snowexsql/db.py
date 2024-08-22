@@ -4,10 +4,11 @@ getting a session, initializing the database, getting table attributes, etc.
 """
 
 import json
+
 from sqlalchemy import MetaData, create_engine
 from sqlalchemy.orm import sessionmaker
 
-from .data import Base
+from snowexsql.tables import Base
 
 
 def initialize(engine):
