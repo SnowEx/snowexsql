@@ -1,4 +1,6 @@
 """Top-level package for snowexsql."""
 
+from ._version import __version__ # noqa
+
 __author__ = """Micah Johnson"""
-__version__ = '0.5.0'
+__version__ = __version__
