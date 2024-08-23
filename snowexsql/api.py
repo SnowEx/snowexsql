@@ -212,7 +212,7 @@ class BaseDataset:
             ).distinct()
             result = qry.all()
         # Join the names
-        return [f"{r.first_name} {r.last_name}" for r in result]
+        return [r.name for r in result]
 
     @property
     def all_units(self):

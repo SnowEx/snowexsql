@@ -10,5 +10,4 @@ class Observer(Base):
     # id is mapped column for many-to-many
     id: Mapped[int] = mapped_column(primary_key=True)
     # Name of the observer
-    first_name = Column(String(255))
-    last_name = Column(String(255))
+    name = Column(String())

@@ -63,10 +63,10 @@ class DBConnection:
             observer_list = []
             for obs_name in observer_names:
                 observer = session.query(Observer).filter_by(
-                    last_name=obs_name).first()
+                    name=obs_name).first()
                 if not observer:
                     # If the instrument does not exist, create it
-                    observer = Observer(last_name=obs_name)
+                    observer = Observer(name=obs_name)
                     session.add(observer)
                     session.commit()  # Commit to ensure instrument is saved and has an ID
                 observer_list.append(observer)
@@ -141,7 +141,7 @@ class TestPointMeasurements(DBConnection):
     def test_all_observers(self, clz):
         result = clz().all_observers
         assert unsorted_list_compare(
-            result, ['None TEST']
+            result, ['TEST']
         )
 
     def test_all_instruments(self, clz):
@@ -156,7 +156,7 @@ class TestPointMeasurements(DBConnection):
                 "date": date(2020, 5, 28),
                 "instrument": 'camera'
             }, 0, np.nan),
-            ({"instrument": "magnaprobe", "limit": 10}, 0, np.nan),  # limit works
+            ({"instrument": "magnaprobe", "limit": 10}, 1, 94.0),  # limit works
             ({
                  "date": date(2020, 5, 28),
                  "instrument": 'pit ruler'
