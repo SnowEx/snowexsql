@@ -73,11 +73,10 @@ class DBConnection:
         # Fake data to implement
         row = {
             'date': date(2020, 1, 28),
-            'time': time(18, 48), 'longitude': -108.13515,
-            'latitude': 39.03045,
-            'easting': 747987.6190615438, 'northing': 4324061.7062127385,
+            'time': time(18, 48),
             'elevation': 3148.2,
-            'equipment': 'CRREL_B', 'version_number': 1, 'utm_zone': 12,
+            'equipment': 'CRREL_B',
+            'version_number': 1,
             'geom': WKTElement("POINT(747987.6190615438 4324061.7062127385)",
                                srid=26912),
             'site_name': 'Grand Mesa', 'date_accessed': date(2024, 7, 10),

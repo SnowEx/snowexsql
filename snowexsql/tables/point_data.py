@@ -17,14 +17,16 @@ class PointData(SingleLocationData, Measurement, Base):
     __tablename__ = 'points'
 
     version_number = Column(Integer)
-    equipment = Column(String(50))
+    equipment = Column(String())
     value = Column(Float)
 
     # bring these in instead of Measurement
-    type = Column(String(50))
-    units = Column(String(50))
+    type = Column(String())
+    units = Column(String())
 
     # Link the instrument id with a foreign key
-    instrument_id = Column(Integer, ForeignKey('public.instruments.id'))
+    instrument_id = Column(
+        Integer, ForeignKey('public.instruments.id'), index=True
+    )
     # Link the Instrument class
     instrument = relationship('Instrument')

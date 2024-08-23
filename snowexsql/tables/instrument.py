@@ -12,6 +12,6 @@ class Instrument(Base):
     # auto created id
     id = Column(Integer, primary_key=True)
     # Name of the instrument
-    name = Column(String(50))
-    model = Column(String(255))
-    specifications = Column(String(255))
+    name = Column(String(), index=True)
+    model = Column(String())
+    specifications = Column(String())
