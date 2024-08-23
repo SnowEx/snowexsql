@@ -54,6 +54,17 @@ jobs:
           repository-url: https://test.pypi.org/legacy/
           verbose: true
           skip-existing: true
+  
+  check-test-pypi:
+    needs: [test-built-dist]
+    name: Check Test Distribution Python ${{ matrix.python-version }} on ${{ matrix.runs-on }}
+    runs-on: ${{ matrix.runs-on }}
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.8", "3.9", "3.10"]
+        runs-on: [ubuntu-latest, macos-14]
+    steps:
       - name: Check pypi packages
         run: |
           sleep 3
