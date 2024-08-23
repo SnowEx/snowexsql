@@ -10,7 +10,9 @@ from sqlalchemy.sql import func
 
 from snowexsql.conversions import query_to_geopandas, raster_to_rasterio
 from snowexsql.db import get_db
-from snowexsql.tables import ImageData, LayerData, PointData, Instrument
+from snowexsql.tables import ImageData, LayerData, PointData, Instrument, \
+    Observer
+from snowexsql.tables.point_data import PointObservers
 
 LOG = logging.getLogger(__name__)
 DB_NAME = 'snow:hackweek@db.snowexdata.org/snowex'
@@ -198,6 +200,19 @@ class BaseDataset:
             qry = session.query(self.MODEL.date).distinct()
             result = qry.all()
         return self.retrieve_single_value_result(result)
+
+    @property
+    def all_observers(self):
+        """
+        Return all distinct observers in the data
+        """
+        with db_session(self.DB_NAME) as (session, engine):
+            qry = session.query(Observer).join(
+                PointObservers, Observer.id == PointObservers.observer_id
+            ).distinct()
+            result = qry.all()
+        # Join the names
+        return [f"{r.first_name} {r.last_name}" for r in result]
 
     @property
     def all_units(self):

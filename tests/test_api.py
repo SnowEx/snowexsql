@@ -8,7 +8,7 @@ from snowexsql.api import (
     PointMeasurements, LargeQueryCheckException, LayerMeasurements, db_session
 )
 from snowexsql.db import get_db, initialize
-from snowexsql.tables import Instrument, PointData
+from snowexsql.tables import Instrument, Observer, PointData
 
 
 @pytest.fixture(scope="session")
@@ -47,7 +47,7 @@ class DBConnection:
         session.close()
 
     @staticmethod
-    def _add_entry(url, instrument_name, **kwargs):
+    def _add_entry(url, instrument_name, observer_names, **kwargs):
         url_long = f"{url.username}:{url.password}@{url.host}/{url.database}"
         with db_session(url_long) as (session, engine):
             # Check if the instrument already exists
@@ -60,9 +60,20 @@ class DBConnection:
                 session.add(instrument)
                 session.commit()  # Commit to ensure instrument is saved and has an ID
 
+            observer_list = []
+            for obs_name in observer_names:
+                observer = session.query(Observer).filter_by(
+                    last_name=obs_name).first()
+                if not observer:
+                    # If the instrument does not exist, create it
+                    observer = Observer(last_name=obs_name)
+                    session.add(observer)
+                    session.commit()  # Commit to ensure instrument is saved and has an ID
+                observer_list.append(observer)
+
             # Now that the instrument exists, create the entry, notice we only need the instrument object
             new_entry = PointData(
-                instrument=instrument, **kwargs
+                instrument=instrument, observers=observer_list, **kwargs
             )
             session.add(new_entry)
             session.commit()
@@ -82,7 +93,7 @@ class DBConnection:
             'site_name': 'Grand Mesa', 'date_accessed': date(2024, 7, 10),
             'value': 94, 'type': 'depth', 'units': 'cm'
         }
-        self._add_entry(db.url, 'magnaprobe', **row)
+        self._add_entry(db.url, 'magnaprobe', ["TEST"], **row)
 
     @pytest.fixture(scope="class")
     def clz(self, db, db_url, populated_points):
@@ -127,6 +138,12 @@ class TestPointMeasurements(DBConnection):
         result = clz().all_dates
         assert len(result) == 1
 
+    def test_all_observers(self, clz):
+        result = clz().all_observers
+        assert unsorted_list_compare(
+            result, ['None TEST']
+        )
+
     def test_all_instruments(self, clz):
         result = clz().all_instruments
         assert unsorted_list_compare(
@@ -139,9 +156,7 @@ class TestPointMeasurements(DBConnection):
                 "date": date(2020, 5, 28),
                 "instrument": 'camera'
             }, 0, np.nan),
-            ({
-                 "instrument": "magnaprobe", "limit": 10
-             }, 1, 94.0),  # limit works
+            ({"instrument": "magnaprobe", "limit": 10}, 0, np.nan),  # limit works
             ({
                  "date": date(2020, 5, 28),
                  "instrument": 'pit ruler'

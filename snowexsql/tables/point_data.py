@@ -5,7 +5,20 @@ from typing import List
 from sqlalchemy.orm import relationship
 
 from .base import Base, Measurement, SingleLocationData
+from .observers import Observer
 from .instrument import Instrument
+
+
+class PointObservers(Base):
+    """
+    Link table
+    """
+    __tablename__ = 'point_observers'
+    __table_args__ = {'schema': 'public'}
+
+    id = Column(Integer, primary_key=True)
+    point_id = Column(Integer, ForeignKey('public.points.id'))
+    observer_id = Column(Integer, ForeignKey("public.observers.id"))
 
 
 class PointData(SingleLocationData, Measurement, Base):
@@ -30,3 +43,9 @@ class PointData(SingleLocationData, Measurement, Base):
     )
     # Link the Instrument class
     instrument = relationship('Instrument')
+
+    # id is a mapped column for many-to-many with observers
+    id: Mapped[int] = mapped_column(primary_key=True)
+    observers: Mapped[List[Observer]] = relationship(
+        secondary=PointObservers.__table__
+    )
