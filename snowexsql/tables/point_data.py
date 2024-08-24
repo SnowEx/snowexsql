@@ -7,6 +7,7 @@ from sqlalchemy.orm import relationship
 from .base import Base, Measurement, SingleLocationData
 from .observers import Observer
 from .instrument import Instrument
+from .campaign import Campaign
 
 
 class PointObservers(Base):
@@ -43,6 +44,13 @@ class PointData(SingleLocationData, Measurement, Base):
     )
     # Link the Instrument class
     instrument = relationship('Instrument')
+
+    # Link the campaign id with a foreign key
+    campaign_id = Column(
+        Integer, ForeignKey('public.campaigns.id'), index=True
+    )
+    # Link the Campaign class
+    campaign = relationship('Campaign')
 
     # id is a mapped column for many-to-many with observers
     id: Mapped[int] = mapped_column(primary_key=True)

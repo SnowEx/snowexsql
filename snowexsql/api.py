@@ -12,6 +12,7 @@ from snowexsql.conversions import query_to_geopandas, raster_to_rasterio
 from snowexsql.db import get_db
 from snowexsql.tables import ImageData, LayerData, PointData, Instrument, \
     Observer
+from snowexsql.tables.campaign import Campaign
 from snowexsql.tables.point_data import PointObservers
 
 LOG = logging.getLogger(__name__)
@@ -46,6 +47,7 @@ def get_points():
 
 class BaseDataset:
     MODEL = None
+    LINK_TABLE_MODEL = PointObservers
     # Use this database name
     DB_NAME = DB_NAME
 
@@ -177,7 +179,9 @@ class BaseDataset:
         Return all types of the data
         """
         with db_session(self.DB_NAME) as (session, engine):
-            qry = session.query(self.MODEL.site_name).distinct()
+            qry = session.query(Campaign.name).join(
+                self.MODEL, Campaign.id == self.MODEL.campaign_id
+            ).distinct()
             result = qry.all()
         return self.retrieve_single_value_result(result)
 
@@ -208,7 +212,8 @@ class BaseDataset:
         """
         with db_session(self.DB_NAME) as (session, engine):
             qry = session.query(Observer).join(
-                PointObservers, Observer.id == PointObservers.observer_id
+                self.LINK_TABLE_MODEL,
+                Observer.id == self.LINK_TABLE_MODEL.observer_id
             ).distinct()
             result = qry.all()
         # Join the names
@@ -231,7 +236,7 @@ class BaseDataset:
         """
         with db_session(self.DB_NAME) as (session, engine):
             qry = session.query(Instrument.name).join(
-                PointData, Instrument.id == PointData.instrument_id
+                self.MODEL, Instrument.id == self.MODEL.instrument_id
             ).distinct()
             result = qry.all()
         return self.retrieve_single_value_result(result)

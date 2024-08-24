@@ -9,6 +9,7 @@ from snowexsql.api import (
 )
 from snowexsql.db import get_db, initialize
 from snowexsql.tables import Instrument, Observer, PointData
+from snowexsql.tables.campaign import Campaign
 
 
 @pytest.fixture(scope="session")
@@ -36,7 +37,8 @@ class DBConnection:
     @pytest.fixture(scope="class")
     def db(self, creds, db_url):
         engine, session, metadata = get_db(
-            db_url, credentials=creds, return_metadata=True)
+            db_url, credentials=creds, return_metadata=True
+        )
 
         initialize(engine)
         yield engine
@@ -47,7 +49,9 @@ class DBConnection:
         session.close()
 
     @staticmethod
-    def _add_entry(url, instrument_name, observer_names, **kwargs):
+    def _add_entry(
+            url, instrument_name, observer_names, campaign_name, **kwargs
+    ):
         url_long = f"{url.username}:{url.password}@{url.host}/{url.database}"
         with db_session(url_long) as (session, engine):
             # Check if the instrument already exists
@@ -58,6 +62,15 @@ class DBConnection:
                 # If the instrument does not exist, create it
                 instrument = Instrument(name=instrument_name)
                 session.add(instrument)
+                session.commit()  # Commit to ensure instrument is saved and has an ID
+
+            campaign = session.query(Campaign).filter_by(
+                name=campaign_name).first()
+
+            if not campaign:
+                # If the campaign does not exist, create it
+                campaign = Campaign(name=campaign_name)
+                session.add(campaign)
                 session.commit()  # Commit to ensure instrument is saved and has an ID
 
             observer_list = []
@@ -73,7 +86,8 @@ class DBConnection:
 
             # Now that the instrument exists, create the entry, notice we only need the instrument object
             new_entry = PointData(
-                instrument=instrument, observers=observer_list, **kwargs
+                instrument=instrument, observers=observer_list,
+                campaign=campaign, **kwargs
             )
             session.add(new_entry)
             session.commit()
@@ -90,10 +104,13 @@ class DBConnection:
             'version_number': 1,
             'geom': WKTElement("POINT(747987.6190615438 4324061.7062127385)",
                                srid=26912),
-            'site_name': 'Grand Mesa', 'date_accessed': date(2024, 7, 10),
+            'date_accessed': date(2024, 7, 10),
             'value': 94, 'type': 'depth', 'units': 'cm'
         }
-        self._add_entry(db.url, 'magnaprobe', ["TEST"], **row)
+        self._add_entry(
+            db.url, 'magnaprobe', ["TEST"],
+            'Grand Mesa', **row
+        )
 
     @pytest.fixture(scope="class")
     def clz(self, db, db_url, populated_points):
