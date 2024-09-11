@@ -26,7 +26,6 @@ class Base(DeclarativeBase):
     time_updated = Column(DateTime(timezone=True), onupdate=func.now())
 
     date_accessed = Column(Date)
-    site_name = Column(String(250))
     date = Column(Date)
     doi = Column(String(50))
 

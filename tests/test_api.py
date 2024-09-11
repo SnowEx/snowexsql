@@ -8,7 +8,7 @@ from snowexsql.api import (
     PointMeasurements, LargeQueryCheckException, LayerMeasurements, db_session
 )
 from snowexsql.db import get_db, initialize
-from snowexsql.tables import Instrument, Observer, PointData
+from snowexsql.tables import Instrument, Observer, PointData, LayerData
 from snowexsql.tables.campaign import Campaign
 
 
@@ -50,7 +50,8 @@ class DBConnection:
 
     @staticmethod
     def _add_entry(
-            url, instrument_name, observer_names, campaign_name, **kwargs
+            url, data_cls, instrument_name, observer_names, campaign_name,
+            **kwargs
     ):
         url_long = f"{url.username}:{url.password}@{url.host}/{url.database}"
         with db_session(url_long) as (session, engine):
@@ -85,7 +86,7 @@ class DBConnection:
                 observer_list.append(observer)
 
             # Now that the instrument exists, create the entry, notice we only need the instrument object
-            new_entry = PointData(
+            new_entry = data_cls(
                 instrument=instrument, observers=observer_list,
                 campaign=campaign, **kwargs
             )
@@ -108,12 +109,32 @@ class DBConnection:
             'value': 94, 'type': 'depth', 'units': 'cm'
         }
         self._add_entry(
-            db.url, 'magnaprobe', ["TEST"],
+            db.url, PointData, 'magnaprobe', ["TEST"],
             'Grand Mesa', **row
         )
 
     @pytest.fixture(scope="class")
-    def clz(self, db, db_url, populated_points):
+    def populated_layer(self, db):
+
+        # Fake data to implement
+        row = {
+            'date': date(2020, 1, 28),
+            'time': time(18, 48),
+            'elevation': 3148.2,
+            'geom': WKTElement("POINT(747987.6190615438 4324061.7062127385)",
+                               srid=26912),
+            'date_accessed': date(2024, 7, 10),
+            'value': '42.5', 'type': 'Density', 'units': 'kgm3',
+            'pit_id': 'Fakepit1',
+            'sample_a': '42.5'
+        }
+        self._add_entry(
+            db.url, LayerData, 'magnaprobe', ["TEST"],
+            'Grand Mesa', **row
+        )
+
+    @pytest.fixture(scope="class")
+    def clz(self, db, db_url, populated_points, populated_layer):
         """
         Extend the class and overwrite the database name
         """
@@ -234,23 +255,23 @@ class TestLayerMeasurements(DBConnection):
 
     def test_all_types(self, clz):
         result = clz().all_types
-        assert result == []
+        assert result == ["Density"]
 
     def test_all_site_names(self, clz):
         result = clz().all_site_names
-        assert result == []
+        assert result == ['Grand Mesa']
 
     def test_all_dates(self, clz):
         result = clz().all_dates
-        assert len(result) == 0
+        assert result == [date(2020, 1, 28)]
 
     def test_all_observers(self, clz):
         result = clz().all_observers
-        assert unsorted_list_compare(result, [])
+        assert unsorted_list_compare(result, ['TEST'])
 
     def test_all_instruments(self, clz):
         result = clz().all_instruments
-        assert unsorted_list_compare(result, [])
+        assert unsorted_list_compare(result, ['magnaprobe'])
 
     @pytest.mark.parametrize(
         "kwargs, expected_length, mean_value", [

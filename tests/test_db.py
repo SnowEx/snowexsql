@@ -9,7 +9,7 @@ from .sql_test_base import DBSetup
 
 
 class TestDB(DBSetup):
-    base_atts = ['site_name', 'date', 'site_id']
+    base_atts = ['date', 'site_id']
     single_loc_atts = ['elevation', 'geom', 'time']
 
     meas_atts = ['type', 'units']

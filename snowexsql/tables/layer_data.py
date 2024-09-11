@@ -1,6 +1,25 @@
-from sqlalchemy import Column, Float, String
+from sqlalchemy import Column, Float, Integer, String, ForeignKey
+from sqlalchemy.orm import Mapped
+from sqlalchemy.orm import mapped_column
+from typing import List
+from sqlalchemy.orm import relationship
 
 from .base import Base, Measurement, SingleLocationData
+from .observers import Observer
+from .instrument import Instrument
+from .campaign import Campaign
+
+
+class LayerObservers(Base):
+    """
+    Link table
+    """
+    __tablename__ = 'layer_observers'
+    __table_args__ = {'schema': 'public'}
+
+    id = Column(Integer, primary_key=True)
+    layer_id = Column(Integer, ForeignKey('public.layers.id'))
+    observer_id = Column(Integer, ForeignKey("public.observers.id"))
 
 
 class LayerData(SingleLocationData, Measurement, Base):
@@ -22,3 +41,23 @@ class LayerData(SingleLocationData, Measurement, Base):
     sample_c = Column(String(20))
     value = Column(String(50))
     flags = Column(String(20))
+
+    # Link the instrument id with a foreign key
+    instrument_id = Column(
+        Integer, ForeignKey('public.instruments.id'), index=True
+    )
+    # Link the Instrument class
+    instrument = relationship('Instrument')
+
+    # Link the campaign id with a foreign key
+    campaign_id = Column(
+        Integer, ForeignKey('public.campaigns.id'), index=True
+    )
+    # Link the Campaign class
+    campaign = relationship('Campaign')
+
+    # id is a mapped column for many-to-many with observers
+    id: Mapped[int] = mapped_column(primary_key=True)
+    observers: Mapped[List[Observer]] = relationship(
+        secondary=LayerObservers.__table__
+    )
