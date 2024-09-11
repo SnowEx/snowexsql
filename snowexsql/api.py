@@ -13,6 +13,7 @@ from snowexsql.db import get_db
 from snowexsql.tables import ImageData, LayerData, PointData, Instrument, \
     Observer
 from snowexsql.tables.campaign import Campaign
+from snowexsql.tables.layer_data import LayerObservers
 from snowexsql.tables.point_data import PointObservers
 
 LOG = logging.getLogger(__name__)
@@ -331,6 +332,7 @@ class LayerMeasurements(PointMeasurements):
         "site_name", "site_id", "date", "instrument", "observers", "type",
         "utm_zone", "pit_id", "date_greater_equal", "date_less_equal"
     ]
+    LINK_TABLE_MODEL = LayerObservers
     # TODO: layer analysis methods?
 
     @property
