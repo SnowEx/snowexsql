@@ -53,7 +53,7 @@ class BaseDataset:
     DB_NAME = DB_NAME
 
     ALLOWED_QRY_KWARGS = [
-        "site_name", "site_id", "date", "instrument", "type",
+        "campaign", "site_id", "date", "instrument", "type",
         "utm_zone", "date_greater_equal", "date_less_equal",
         "value_greater_equal", 'value_less_equal',
     ]
@@ -131,6 +131,14 @@ class BaseDataset:
                         qry = qry.filter(
                             cls.MODEL.instrument.has(name=v)
                         )
+                    elif k == "campaign":
+                        qry = qry.filter(
+                            cls.MODEL.campaign.has(name=v)
+                        )
+                    elif k == "observer":
+                        qry = qry.join(
+                            LayerData.observers
+                        ).filter(Observer.name == v)
                     # Filter to exact value
                     else:
                         filter_col = getattr(cls.MODEL, k)
@@ -319,9 +327,11 @@ class PointMeasurements(BaseDataset):
 
         return df
 
+
 class TooManyRastersException(Exception):
     """ Exceptiont to report to users that their query will produce too many rasters"""
     pass
+
 
 class LayerMeasurements(PointMeasurements):
     """
@@ -329,11 +339,10 @@ class LayerMeasurements(PointMeasurements):
     """
     MODEL = LayerData
     ALLOWED_QRY_KWARGS = [
-        "site_name", "site_id", "date", "instrument", "observers", "type",
+        "campaign", "site_id", "date", "instrument", "observer", "type",
         "utm_zone", "pit_id", "date_greater_equal", "date_less_equal"
     ]
     LINK_TABLE_MODEL = LayerObservers
-    # TODO: layer analysis methods?
 
     @property
     def all_site_ids(self):

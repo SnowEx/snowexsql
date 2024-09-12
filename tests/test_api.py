@@ -124,12 +124,12 @@ class DBConnection:
             'geom': WKTElement("POINT(747987.6190615438 4324061.7062127385)",
                                srid=26912),
             'date_accessed': date(2024, 7, 10),
-            'value': '42.5', 'type': 'Density', 'units': 'kgm3',
+            'value': '42.5', 'type': 'density', 'units': 'kgm3',
             'pit_id': 'Fakepit1',
             'sample_a': '42.5'
         }
         self._add_entry(
-            db.url, LayerData, 'magnaprobe', ["TEST"],
+            db.url, LayerData, 'fakeinstrument', ["TEST"],
             'Grand Mesa', **row
         )
 
@@ -255,7 +255,7 @@ class TestLayerMeasurements(DBConnection):
 
     def test_all_types(self, clz):
         result = clz().all_types
-        assert result == ["Density"]
+        assert result == ["density"]
 
     def test_all_site_names(self, clz):
         result = clz().all_site_names
@@ -271,7 +271,7 @@ class TestLayerMeasurements(DBConnection):
 
     def test_all_instruments(self, clz):
         result = clz().all_instruments
-        assert unsorted_list_compare(result, ['magnaprobe'])
+        assert unsorted_list_compare(result, ['fakeinstrument'])
 
     @pytest.mark.parametrize(
         "kwargs, expected_length, mean_value", [
@@ -292,6 +292,14 @@ class TestLayerMeasurements(DBConnection):
                 "date_greater_equal": date(2020, 5, 13),
                 "type": 'density'
             }, 0, np.nan),
+            ({
+                "type": 'density',
+                "campaign": 'Grand Mesa'
+             }, 1, 42.5),
+            ({
+                 "observer": 'TEST',
+                 "campaign": 'Grand Mesa'
+             }, 1, 42.5),
         ]
     )
     def test_from_filter(self, clz, kwargs, expected_length, mean_value):
