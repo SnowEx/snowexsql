@@ -9,7 +9,6 @@ class SiteData(SingleLocationData, Base):
     main data record but only support data for each site
     """
     __tablename__ = 'sites'
-    __table_args__ = {"schema": "public"}
 
     pit_id = Column(String(50))
     slope_angle = Column(Float)

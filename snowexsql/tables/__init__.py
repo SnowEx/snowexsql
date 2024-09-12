@@ -4,11 +4,13 @@ from .point_data import PointData
 from .site_data import SiteData
 from .observers import Observer
 from .instrument import Instrument
+from .campaign import Campaign
 
 __all__ = [
-    'ImageData',
-    'LayerData',
-    'PointData',
+    "Campaign",
+    "ImageData",
     "Instrument",
+    "LayerData",
     "Observer",
+    "PointData",  
 ]

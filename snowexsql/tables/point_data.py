@@ -15,7 +15,6 @@ class PointObservers(Base):
     Link table
     """
     __tablename__ = 'point_observers'
-    __table_args__ = {'schema': 'public'}
 
     id = Column(Integer, primary_key=True)
     point_id = Column(Integer, ForeignKey('public.points.id'))

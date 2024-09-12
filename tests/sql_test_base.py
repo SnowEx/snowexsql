@@ -1,7 +1,7 @@
 from os.path import dirname, join
 
 from numpy.testing import assert_almost_equal
-from sqlalchemy import asc, text
+from sqlalchemy import asc
 
 from snowexsql.db import get_db, initialize
 

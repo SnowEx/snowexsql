@@ -95,8 +95,7 @@ class DBConnection:
 
     @pytest.fixture(scope="class")
     def populated_points(self, db):
-
-        # Fake data to implement
+        # Add made up data at the initialization of the class
         row = {
             'date': date(2020, 1, 28),
             'time': time(18, 48),
@@ -145,14 +144,6 @@ class DBConnection:
         yield Extended
 
 
-def unsorted_list_compare(l1, l2):
-    # turn lists into sets, but get rid of any Nones
-    l1 = set(l1)
-    l2 = set(l2)
-    # compare the sets
-    return l1 == l2
-
-
 class TestPointMeasurements(DBConnection):
     """
     Test the Point Measurement class
@@ -161,16 +152,11 @@ class TestPointMeasurements(DBConnection):
 
     def test_all_types(self, clz):
         result = clz().all_types
-        assert unsorted_list_compare(
-            result,
-            ['depth']
-        )
+        assert result == ['depth']
 
     def test_all_site_names(self, clz):
         result = clz().all_site_names
-        assert unsorted_list_compare(
-            result, ['Grand Mesa']
-        )
+        assert result ==['Grand Mesa']
 
     def test_all_dates(self, clz):
         result = clz().all_dates
@@ -178,15 +164,11 @@ class TestPointMeasurements(DBConnection):
 
     def test_all_observers(self, clz):
         result = clz().all_observers
-        assert unsorted_list_compare(
-            result, ['TEST']
-        )
+        assert result == ['TEST']
 
     def test_all_instruments(self, clz):
         result = clz().all_instruments
-        assert unsorted_list_compare(
-            result, ["magnaprobe"]
-        )
+        assert result == ["magnaprobe"]
 
     @pytest.mark.parametrize(
         "kwargs, expected_length, mean_value", [
@@ -267,11 +249,11 @@ class TestLayerMeasurements(DBConnection):
 
     def test_all_observers(self, clz):
         result = clz().all_observers
-        assert unsorted_list_compare(result, ['TEST'])
+        assert result == ['TEST']
 
     def test_all_instruments(self, clz):
         result = clz().all_instruments
-        assert unsorted_list_compare(result, ['fakeinstrument'])
+        assert result == ['fakeinstrument']
 
     @pytest.mark.parametrize(
         "kwargs, expected_length, mean_value", [
