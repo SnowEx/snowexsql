@@ -8,7 +8,7 @@ from snowexsql.api import (
     PointMeasurements, LargeQueryCheckException, LayerMeasurements, db_session
 )
 from snowexsql.db import get_db, initialize
-from snowexsql.tables import Instrument, Observer, PointData, LayerData
+from snowexsql.tables import Instrument, Observer, PointData, LayerData, Site
 from snowexsql.tables.campaign import Campaign
 
 
@@ -50,7 +50,8 @@ class DBConnection:
 
     @staticmethod
     def _add_entry(
-            url, data_cls, instrument_name, observer_names, campaign_name,
+            url, data_cls, instrument_name,
+            observer_names, campaign_name, site_name,
             **kwargs
     ):
         url_long = f"{url.username}:{url.password}@{url.host}/{url.database}"
@@ -74,6 +75,14 @@ class DBConnection:
                 session.add(campaign)
                 session.commit()  # Commit to ensure instrument is saved and has an ID
 
+            site = session.query(Site).filter_by(
+                name=site_name).first()
+            if not site:
+                # Add the site with specific campaign
+                site = Site(name=site_name, campaign=campaign)
+                session.add(site)
+                session.commit()
+
             observer_list = []
             for obs_name in observer_names:
                 observer = session.query(Observer).filter_by(
@@ -88,7 +97,7 @@ class DBConnection:
             # Now that the instrument exists, create the entry, notice we only need the instrument object
             new_entry = data_cls(
                 instrument=instrument, observers=observer_list,
-                campaign=campaign, **kwargs
+                site=site, **kwargs
             )
             session.add(new_entry)
             session.commit()
@@ -109,12 +118,11 @@ class DBConnection:
         }
         self._add_entry(
             db.url, PointData, 'magnaprobe', ["TEST"],
-            'Grand Mesa', **row
+            'Grand Mesa', 'the_middle', **row
         )
 
     @pytest.fixture(scope="class")
     def populated_layer(self, db):
-
         # Fake data to implement
         row = {
             'date': date(2020, 1, 28),
@@ -129,7 +137,7 @@ class DBConnection:
         }
         self._add_entry(
             db.url, LayerData, 'fakeinstrument', ["TEST"],
-            'Grand Mesa', **row
+            'Grand Mesa', 'the_side', **row
         )
 
     @pytest.fixture(scope="class")
@@ -242,6 +250,10 @@ class TestLayerMeasurements(DBConnection):
     def test_all_site_names(self, clz):
         result = clz().all_site_names
         assert result == ['Grand Mesa']
+
+    def test_all_site_ids(self, clz):
+        result = clz().all_site_ids
+        assert result == ['the_side']
 
     def test_all_dates(self, clz):
         result = clz().all_dates

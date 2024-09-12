@@ -5,6 +5,7 @@ from .site_data import SiteData
 from .observers import Observer
 from .instrument import Instrument
 from .campaign import Campaign
+from .site import Site
 
 __all__ = [
     "Campaign",
@@ -12,5 +13,6 @@ __all__ = [
     "Instrument",
     "LayerData",
     "Observer",
-    "PointData",  
+    "PointData",
+    "Site",
 ]

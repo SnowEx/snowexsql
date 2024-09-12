@@ -37,7 +37,6 @@ class SingleLocationData:
     elevation = Column(Float)
     geom = Column(Geometry("POINT"))
     time = Column(Time(timezone=True))
-    site_id = Column(String(50))
 
 
 class Measurement(object):

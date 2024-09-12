@@ -7,7 +7,7 @@ from sqlalchemy.orm import relationship
 from .base import Base, Measurement, SingleLocationData
 from .observers import Observer
 from .instrument import Instrument
-from .campaign import Campaign
+from .site import Site
 
 
 class LayerObservers(Base):
@@ -32,7 +32,6 @@ class LayerData(SingleLocationData, Measurement, Base):
     __tablename__ = 'layers'
 
     depth = Column(Float)
-    site_id = Column(String(50))
     pit_id = Column(String(50))
     bottom_depth = Column(Float)
     comments = Column(String(1000))
@@ -49,12 +48,12 @@ class LayerData(SingleLocationData, Measurement, Base):
     # Link the Instrument class
     instrument = relationship('Instrument')
 
-    # Link the campaign id with a foreign key
-    campaign_id = Column(
-        Integer, ForeignKey('public.campaigns.id'), index=True
+    # Link the site id with a foreign key
+    site_id = Column(
+        Integer, ForeignKey('public.campaign_sites.id'), index=True
     )
-    # Link the Campaign class
-    campaign = relationship('Campaign')
+    # Link the Site class
+    site = relationship('Site')
 
     # id is a mapped column for many-to-many with observers
     id: Mapped[int] = mapped_column(primary_key=True)

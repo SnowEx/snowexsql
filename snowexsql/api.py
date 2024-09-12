@@ -11,7 +11,7 @@ from sqlalchemy.sql import func
 from snowexsql.conversions import query_to_geopandas, raster_to_rasterio
 from snowexsql.db import get_db
 from snowexsql.tables import ImageData, LayerData, PointData, Instrument, \
-    Observer
+    Observer, Site
 from snowexsql.tables.campaign import Campaign
 from snowexsql.tables.layer_data import LayerObservers
 from snowexsql.tables.point_data import PointObservers
@@ -132,8 +132,14 @@ class BaseDataset:
                             cls.MODEL.instrument.has(name=v)
                         )
                     elif k == "campaign":
+                        qry = qry.join(
+                            cls.MODEL.site
+                        ).filter(
+                            Site.campaign.has(Campaign.name == v)
+                        )
+                    elif k == "site_id":
                         qry = qry.filter(
-                            cls.MODEL.campaign.has(name=v)
+                            cls.MODEL.site.has(name=v)
                         )
                     elif k == "observer":
                         qry = qry.join(
@@ -185,12 +191,17 @@ class BaseDataset:
     @property
     def all_site_names(self):
         """
-        Return all types of the data
+        Return all campaign names
         """
         with db_session(self.DB_NAME) as (session, engine):
-            qry = session.query(Campaign.name).join(
-                self.MODEL, Campaign.id == self.MODEL.campaign_id
-            ).distinct()
+            qry = (
+                session.query(Campaign.name)  # Selecting Campaign names
+                .join(Site,
+                      Site.campaign_id == Campaign.id)  # Join Site to Campaign
+                .join(self.MODEL,
+                      self.MODEL.site_id == Site.id)
+                .distinct()  # To get distinct Campaign names
+            )
             result = qry.all()
         return self.retrieve_single_value_result(result)
 
@@ -350,9 +361,12 @@ class LayerMeasurements(PointMeasurements):
         Return all types of the data
         """
         with db_session(self.DB_NAME) as (session, engine):
-            qry = session.query(self.MODEL.site_id).distinct()
+            qry = session.query(Site.name).join(
+                self.MODEL, Site.id == self.MODEL.site_id
+            ).distinct()
             result = qry.all()
         return self.retrieve_single_value_result(result)
+
 
 class RasterMeasurements(BaseDataset):
     MODEL = ImageData
