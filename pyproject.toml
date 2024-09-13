@@ -28,10 +28,8 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
-    "pip==23.3",
-    "coverage==5.5",
-    "pytest==6.2.4",
-    "pytest-cov==2.12.1",
+    "pytest",
+    "pytest-cov",
     "sphinx-autobuild<=2024.5",
 ]
 docs = [
