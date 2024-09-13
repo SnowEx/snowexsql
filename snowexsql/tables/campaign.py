@@ -17,6 +17,8 @@ class Campaign(Base):
     """
     __tablename__ = 'campaigns'
 
+    # TODO: could we add a campaign shapefile?
+
     id = Column(Integer, primary_key=True)
     name = Column(String())
     description = Column(String())

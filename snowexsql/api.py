@@ -11,8 +11,7 @@ from sqlalchemy.sql import func
 from snowexsql.conversions import query_to_geopandas, raster_to_rasterio
 from snowexsql.db import get_db
 from snowexsql.tables import ImageData, LayerData, PointData, Instrument, \
-    Observer, Site
-from snowexsql.tables.campaign import Campaign
+    Observer, Site, Campaign
 from snowexsql.tables.layer_data import LayerObservers
 from snowexsql.tables.point_data import PointObservers
 
@@ -21,7 +20,6 @@ DB_NAME = 'snow:hackweek@db.snowexdata.org/snowex'
 
 # TODO:
 #   * Possible enums
-#   * filtering based on dates
 #   * implement 'like' or 'contains' method
 
 
@@ -194,14 +192,17 @@ class BaseDataset:
         Return all campaign names
         """
         with db_session(self.DB_NAME) as (session, engine):
-            qry = (
-                session.query(Campaign.name)  # Selecting Campaign names
-                .join(Site,
-                      Site.campaign_id == Campaign.id)  # Join Site to Campaign
-                .join(self.MODEL,
-                      self.MODEL.site_id == Site.id)
-                .distinct()  # To get distinct Campaign names
-            )
+            qry = session.query(Campaign.name).distinct()
+            result = qry.all()
+        return self.retrieve_single_value_result(result)
+
+    @property
+    def all_site_ids(self):
+        """
+        Return all specific site names
+        """
+        with db_session(self.DB_NAME) as (session, engine):
+            qry = session.query(Site.name).distinct()
             result = qry.all()
         return self.retrieve_single_value_result(result)
 
@@ -231,13 +232,9 @@ class BaseDataset:
         Return all distinct observers in the data
         """
         with db_session(self.DB_NAME) as (session, engine):
-            qry = session.query(Observer).join(
-                self.LINK_TABLE_MODEL,
-                Observer.id == self.LINK_TABLE_MODEL.observer_id
-            ).distinct()
+            qry = session.query(Observer.name).distinct()
             result = qry.all()
-        # Join the names
-        return [r.name for r in result]
+        return self.retrieve_single_value_result(result)
 
     @property
     def all_units(self):
@@ -354,18 +351,6 @@ class LayerMeasurements(PointMeasurements):
         "utm_zone", "pit_id", "date_greater_equal", "date_less_equal"
     ]
     LINK_TABLE_MODEL = LayerObservers
-
-    @property
-    def all_site_ids(self):
-        """
-        Return all types of the data
-        """
-        with db_session(self.DB_NAME) as (session, engine):
-            qry = session.query(Site.name).join(
-                self.MODEL, Site.id == self.MODEL.site_id
-            ).distinct()
-            result = qry.all()
-        return self.retrieve_single_value_result(result)
 
 
 class RasterMeasurements(BaseDataset):

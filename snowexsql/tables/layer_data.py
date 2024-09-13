@@ -50,7 +50,7 @@ class LayerData(SingleLocationData, Measurement, Base):
 
     # Link the site id with a foreign key
     site_id = Column(
-        Integer, ForeignKey('public.campaign_sites.id'), index=True
+        Integer, ForeignKey('public.sites.id'), index=True
     )
     # Link the Site class
     site = relationship('Site')

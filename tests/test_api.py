@@ -253,7 +253,7 @@ class TestLayerMeasurements(DBConnection):
 
     def test_all_site_ids(self, clz):
         result = clz().all_site_ids
-        assert result == ['the_side']
+        assert result == ['the_middle', 'the_side']
 
     def test_all_dates(self, clz):
         result = clz().all_dates

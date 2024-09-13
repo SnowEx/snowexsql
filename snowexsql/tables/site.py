@@ -5,7 +5,7 @@ Created on Thu Aug 22 11:56:34 2024
 @author: jtmaz
 """
 
-from sqlalchemy import Column, String, Integer, ForeignKey
+from sqlalchemy import Column, String, Integer, ForeignKey, Float
 from sqlalchemy.orm import relationship
 
 from .base import Base
@@ -17,7 +17,8 @@ class Site(Base):
     Table stores Site data. Does not store data values,
     it only stores the site metadata.
     """
-    __tablename__ = 'campaign_sites'
+    # TODO: add geometry here and remove from site_condtions
+    __tablename__ = 'sites'
 
     id = Column(Integer, primary_key=True)
     name = Column(String())

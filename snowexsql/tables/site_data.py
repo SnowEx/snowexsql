@@ -3,12 +3,13 @@ from sqlalchemy import Column, Float, String
 from .base import Base, SingleLocationData
 
 
-class SiteData(SingleLocationData, Base):
+class SiteCondition(SingleLocationData, Base):
     """
     Table for storing pit site meta data, This table doesn't represent any
     main data record but only support data for each site
     """
-    __tablename__ = 'sites'
+    # TODO: leaving this for later - we should link this to Sites table
+    __tablename__ = 'site_condition'
 
     pit_id = Column(String(50))
     slope_angle = Column(Float)
