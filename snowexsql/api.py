@@ -10,14 +10,15 @@ from sqlalchemy.sql import func
 
 from snowexsql.conversions import query_to_geopandas, raster_to_rasterio
 from snowexsql.db import get_db
-from snowexsql.tables import ImageData, LayerData, PointData
+from snowexsql.tables import ImageData, LayerData, PointData, Instrument, \
+    Observer, Site, Campaign
+
 
 LOG = logging.getLogger(__name__)
 DB_NAME = 'snow:hackweek@db.snowexdata.org/snowex'
 
 # TODO:
 #   * Possible enums
-#   * filtering based on dates
 #   * implement 'like' or 'contains' method
 
 
@@ -47,8 +48,10 @@ class BaseDataset:
     # Use this database name
     DB_NAME = DB_NAME
 
-    ALLOWED_QRY_KWARGS = ["site_name", "site_id", "date", "instrument", "observers", "type",
-        "utm_zone", "date_greater_equal", "date_less_equal", "value_greater_equal", 'value_less_equal',
+    ALLOWED_QRY_KWARGS = [
+        "campaign", "site_id", "date", "instrument", "type",
+        "utm_zone", "date_greater_equal", "date_less_equal",
+        "value_greater_equal", 'value_less_equal',
     ]
     SPECIAL_KWARGS = ["limit"]
     # Default max record count
@@ -119,6 +122,25 @@ class BaseDataset:
                         key = k.split("_less_equal")[0]
                         filter_col = getattr(cls.MODEL, key)
                         qry = qry.filter(filter_col <= v)
+                    # Filter linked columns
+                    elif k == "instrument":
+                        qry = qry.filter(
+                            cls.MODEL.instrument.has(name=v)
+                        )
+                    elif k == "campaign":
+                        qry = qry.join(
+                            cls.MODEL.site
+                        ).filter(
+                            Site.campaign.has(Campaign.name == v)
+                        )
+                    elif k == "site_id":
+                        qry = qry.filter(
+                            cls.MODEL.site.has(name=v)
+                        )
+                    elif k == "observer":
+                        qry = qry.join(
+                            LayerData.observers
+                        ).filter(Observer.name == v)
                     # Filter to exact value
                     else:
                         filter_col = getattr(cls.MODEL, k)
@@ -165,10 +187,20 @@ class BaseDataset:
     @property
     def all_site_names(self):
         """
-        Return all types of the data
+        Return all campaign names
         """
         with db_session(self.DB_NAME) as (session, engine):
-            qry = session.query(self.MODEL.site_name).distinct()
+            qry = session.query(Campaign.name).distinct()
+            result = qry.all()
+        return self.retrieve_single_value_result(result)
+
+    @property
+    def all_site_ids(self):
+        """
+        Return all specific site names
+        """
+        with db_session(self.DB_NAME) as (session, engine):
+            qry = session.query(Site.name).distinct()
             result = qry.all()
         return self.retrieve_single_value_result(result)
 
@@ -198,7 +230,7 @@ class BaseDataset:
         Return all distinct observers in the data
         """
         with db_session(self.DB_NAME) as (session, engine):
-            qry = session.query(self.MODEL.observers).distinct()
+            qry = session.query(Observer.name).distinct()
             result = qry.all()
         return self.retrieve_single_value_result(result)
 
@@ -218,7 +250,9 @@ class BaseDataset:
         Return all distinct instruments in the data
         """
         with db_session(self.DB_NAME) as (session, engine):
-            qry = session.query(self.MODEL.instrument).distinct()
+            qry = session.query(Instrument.name).join(
+                self.MODEL, Instrument.id == self.MODEL.instrument_id
+            ).distinct()
             result = qry.all()
         return self.retrieve_single_value_result(result)
 
@@ -299,9 +333,11 @@ class PointMeasurements(BaseDataset):
 
         return df
 
+
 class TooManyRastersException(Exception):
     """ Exceptiont to report to users that their query will produce too many rasters"""
     pass
+
 
 class LayerMeasurements(PointMeasurements):
     """
@@ -309,20 +345,10 @@ class LayerMeasurements(PointMeasurements):
     """
     MODEL = LayerData
     ALLOWED_QRY_KWARGS = [
-        "site_name", "site_id", "date", "instrument", "observers", "type",
+        "campaign", "site_id", "date", "instrument", "observer", "type",
         "utm_zone", "pit_id", "date_greater_equal", "date_less_equal"
     ]
-    # TODO: layer analysis methods?
 
-    @property
-    def all_site_ids(self):
-        """
-        Return all types of the data
-        """
-        with db_session(self.DB_NAME) as (session, engine):
-            qry = session.query(self.MODEL.site_id).distinct()
-            result = qry.all()
-        return self.retrieve_single_value_result(result)
 
 class RasterMeasurements(BaseDataset):
     MODEL = ImageData

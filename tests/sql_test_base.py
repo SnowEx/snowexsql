@@ -42,9 +42,8 @@ class DBSetup:
     @classmethod
     def teardown_class(self):
         """
-        Remove the databse
+        Close the session
         """
-        self.metadata.drop_all(bind=self.engine)
         self.session.close()  # optional, depends on use case
 
     def teardown(self):

@@ -26,7 +26,6 @@ class Base(DeclarativeBase):
     time_updated = Column(DateTime(timezone=True), onupdate=func.now())
 
     date_accessed = Column(Date)
-    site_name = Column(String(250))
     date = Column(Date)
     doi = Column(String(50))
 
@@ -38,14 +37,11 @@ class SingleLocationData:
     elevation = Column(Float)
     geom = Column(Geometry("POINT"))
     time = Column(Time(timezone=True))
-    site_id = Column(String(50))
 
 
 class Measurement(object):
     """
     Base Class providing attributes required for a measurement of any kind
     """
-    instrument = Column(String(50))
     type = Column(String(50))
     units = Column(String(50))
-    observers = Column(String(100))

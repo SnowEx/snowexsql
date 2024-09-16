@@ -4,17 +4,17 @@ import pytest
 from sqlalchemy import Table
 
 from snowexsql.db import get_db, get_table_attributes
-from snowexsql.tables import ImageData, LayerData, PointData, SiteData
+from snowexsql.tables import ImageData, LayerData, PointData, SiteCondition
 from .sql_test_base import DBSetup
 
 
 class TestDB(DBSetup):
-    base_atts = ['site_name', 'date', 'site_id']
+    base_atts = ['date', 'site_id']
     single_loc_atts = ['elevation', 'geom', 'time']
 
-    meas_atts = ['instrument', 'type', 'units', 'observers']
+    meas_atts = ['type', 'units']
 
-    site_atts = base_atts + single_loc_atts + \
+    site_atts = single_loc_atts + \
                 ['slope_angle', 'aspect', 'air_temp', 'total_depth',
                  'weather_description', 'precip', 'sky_cover', 'wind',
                  'ground_condition', 'ground_roughness',
@@ -22,7 +22,7 @@ class TestDB(DBSetup):
                  'tree_canopy', 'site_notes']
 
     point_atts = single_loc_atts + meas_atts + \
-                 ['version_number', 'equipment', 'value']
+                 ['version_number', 'equipment', 'value', 'instrument_id']
 
     layer_atts = single_loc_atts + meas_atts + \
                  ['depth', 'value', 'bottom_depth', 'comments', 'sample_a',
@@ -59,7 +59,7 @@ class TestDB(DBSetup):
             assert c in columns
 
     @pytest.mark.parametrize("DataCls,attributes", [
-        (SiteData, site_atts),
+        (SiteCondition, site_atts),
         (PointData, point_atts),
         (LayerData, layer_atts),
         (ImageData, raster_atts)])
