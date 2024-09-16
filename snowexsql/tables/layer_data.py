@@ -17,7 +17,6 @@ class LayerObservers(Base):
     __tablename__ = 'layer_observers'
     __table_args__ = {'schema': 'public'}
 
-    id = Column(Integer, primary_key=True)
     layer_id = Column(Integer, ForeignKey('public.layers.id'))
     observer_id = Column(Integer, ForeignKey("public.observers.id"))
 

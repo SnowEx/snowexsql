@@ -16,7 +16,6 @@ class PointObservers(Base):
     """
     __tablename__ = 'point_observers'
 
-    id = Column(Integer, primary_key=True)
     point_id = Column(Integer, ForeignKey('public.points.id'))
     observer_id = Column(Integer, ForeignKey("public.observers.id"))
 

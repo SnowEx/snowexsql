@@ -12,8 +12,7 @@ from snowexsql.conversions import query_to_geopandas, raster_to_rasterio
 from snowexsql.db import get_db
 from snowexsql.tables import ImageData, LayerData, PointData, Instrument, \
     Observer, Site, Campaign
-from snowexsql.tables.layer_data import LayerObservers
-from snowexsql.tables.point_data import PointObservers
+
 
 LOG = logging.getLogger(__name__)
 DB_NAME = 'snow:hackweek@db.snowexdata.org/snowex'
@@ -46,7 +45,6 @@ def get_points():
 
 class BaseDataset:
     MODEL = None
-    LINK_TABLE_MODEL = PointObservers
     # Use this database name
     DB_NAME = DB_NAME
 
@@ -350,7 +348,6 @@ class LayerMeasurements(PointMeasurements):
         "campaign", "site_id", "date", "instrument", "observer", "type",
         "utm_zone", "pit_id", "date_greater_equal", "date_less_equal"
     ]
-    LINK_TABLE_MODEL = LayerObservers
 
 
 class RasterMeasurements(BaseDataset):
