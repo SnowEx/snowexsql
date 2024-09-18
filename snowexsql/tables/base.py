@@ -6,7 +6,7 @@ Mapping in the sqlalchemy or ORM.
 """
 
 from geoalchemy2 import Geometry
-from sqlalchemy import Column, Date, Float, Integer, Time
+from sqlalchemy import Column, Float, Integer, Time
 from sqlalchemy.orm import DeclarativeBase
 
 
