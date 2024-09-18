@@ -8,7 +8,8 @@ from snowexsql.api import (
     PointMeasurements, LargeQueryCheckException, LayerMeasurements, db_session
 )
 from snowexsql.db import get_db, initialize
-from snowexsql.tables import Instrument, Observer, PointData, LayerData, Site
+from snowexsql.tables import Instrument, Observer, PointData, LayerData, Site, \
+    DOI, MeasurementType
 from snowexsql.tables.campaign import Campaign
 
 
@@ -52,6 +53,7 @@ class DBConnection:
     def _add_entry(
             url, data_cls, instrument_name,
             observer_names, campaign_name, site_name,
+            doi_value, measurement_type,
             **kwargs
     ):
         url_long = f"{url.username}:{url.password}@{url.host}/{url.database}"
@@ -83,6 +85,22 @@ class DBConnection:
                 session.add(site)
                 session.commit()
 
+            doi = session.query(DOI).filter_by(
+                doi=doi_value).first()
+            if not doi:
+                # Add the site with specific campaign
+                doi = DOI(doi=doi_value)
+                session.add(doi)
+                session.commit()
+
+            measurement_obj = session.query(MeasurementType).filter_by(
+                name=measurement_type).first()
+            if not measurement_obj:
+                # Add the site with specific campaign
+                measurement_obj = MeasurementType(name=measurement_type)
+                session.add(measurement_obj)
+                session.commit()
+
             observer_list = []
             for obs_name in observer_names:
                 observer = session.query(Observer).filter_by(
@@ -97,7 +115,7 @@ class DBConnection:
             # Now that the instrument exists, create the entry, notice we only need the instrument object
             new_entry = data_cls(
                 instrument=instrument, observers=observer_list,
-                site=site, **kwargs
+                site=site, doi=doi, measurement=measurement_obj, **kwargs
             )
             session.add(new_entry)
             session.commit()
@@ -114,11 +132,13 @@ class DBConnection:
             'geom': WKTElement("POINT(747987.6190615438 4324061.7062127385)",
                                srid=26912),
             'date_accessed': date(2024, 7, 10),
-            'value': 94, 'type': 'depth', 'units': 'cm'
+            'value': 94, 'units': 'cm'
         }
         self._add_entry(
             db.url, PointData, 'magnaprobe', ["TEST"],
-            'Grand Mesa', 'the_middle', **row
+            'Grand Mesa', 'the_middle',
+            "fake_doi", "depth",
+            **row
         )
 
     @pytest.fixture(scope="class")
@@ -131,13 +151,14 @@ class DBConnection:
             'geom': WKTElement("POINT(747987.6190615438 4324061.7062127385)",
                                srid=26912),
             'date_accessed': date(2024, 7, 10),
-            'value': '42.5', 'type': 'density', 'units': 'kgm3',
+            'value': '42.5', 'units': 'kgm3',
             'pit_id': 'Fakepit1',
             'sample_a': '42.5'
         }
         self._add_entry(
             db.url, LayerData, 'fakeinstrument', ["TEST"],
-            'Grand Mesa', 'the_side', **row
+            'Grand Mesa', 'the_side', 'fake_doi2', 'density',
+            **row
         )
 
     @pytest.fixture(scope="class")
@@ -160,7 +181,7 @@ class TestPointMeasurements(DBConnection):
 
     def test_all_types(self, clz):
         result = clz().all_types
-        assert result == ['depth']
+        assert result == ['depth', 'density']
 
     def test_all_site_names(self, clz):
         result = clz().all_site_names
@@ -177,6 +198,10 @@ class TestPointMeasurements(DBConnection):
     def test_all_instruments(self, clz):
         result = clz().all_instruments
         assert result == ["magnaprobe"]
+
+    def test_all_dois(self, clz):
+        result = clz().all_dois
+        assert result == ['fake_doi', 'fake_doi2']
 
     @pytest.mark.parametrize(
         "kwargs, expected_length, mean_value", [
@@ -195,6 +220,12 @@ class TestPointMeasurements(DBConnection):
             ({
                  "date_greater_equal": date(2020, 6, 7),
              }, 0, np.nan),
+            ({
+                 "doi": "fake_doi",
+             }, 1, 94.0),
+            ({
+                 "type": 'depth',
+             }, 1, 94.0),
         ]
     )
     def test_from_filter(self, clz, kwargs, expected_length, mean_value):
@@ -245,7 +276,7 @@ class TestLayerMeasurements(DBConnection):
 
     def test_all_types(self, clz):
         result = clz().all_types
-        assert result == ["density"]
+        assert result == ["depth", "density"]
 
     def test_all_site_names(self, clz):
         result = clz().all_site_names

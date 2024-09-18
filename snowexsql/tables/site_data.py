@@ -1,11 +1,12 @@
 from sqlalchemy import Column, Float, String
 
 from .base import Base, SingleLocationData
+from .doi import DOIBase
 
 
-class SiteCondition(SingleLocationData, Base):
+class SiteCondition(SingleLocationData, Base, DOIBase):
     """
-    Table for storing pit site meta data, This table doesn't represent any
+    Table for storing pit site metadata, This table doesn't represent any
     main data record but only support data for each site
     """
     # TODO: leaving this for later - we should link this to Sites table

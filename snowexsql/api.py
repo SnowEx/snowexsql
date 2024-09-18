@@ -11,7 +11,7 @@ from sqlalchemy.sql import func
 from snowexsql.conversions import query_to_geopandas, raster_to_rasterio
 from snowexsql.db import get_db
 from snowexsql.tables import ImageData, LayerData, PointData, Instrument, \
-    Observer, Site, Campaign
+    Observer, Site, Campaign, MeasurementType, DOI
 
 
 LOG = logging.getLogger(__name__)
@@ -51,7 +51,7 @@ class BaseDataset:
     ALLOWED_QRY_KWARGS = [
         "campaign", "site_id", "date", "instrument", "type",
         "utm_zone", "date_greater_equal", "date_less_equal",
-        "value_greater_equal", 'value_less_equal',
+        "value_greater_equal", 'value_less_equal', "doi"
     ]
     SPECIAL_KWARGS = ["limit"]
     # Default max record count
@@ -139,8 +139,16 @@ class BaseDataset:
                         )
                     elif k == "observer":
                         qry = qry.join(
-                            LayerData.observers
+                            cls.MODEL.observers
                         ).filter(Observer.name == v)
+                    elif k == "doi":
+                        qry = qry.join(
+                            cls.MODEL.doi
+                        ).filter(DOI.doi == v)
+                    elif k == "type":
+                        qry = qry.join(
+                            cls.MODEL.measurement
+                        ).filter(MeasurementType.name == v)
                     # Filter to exact value
                     else:
                         filter_col = getattr(cls.MODEL, k)
@@ -210,7 +218,7 @@ class BaseDataset:
         Return all types of the data
         """
         with db_session(self.DB_NAME) as (session, engine):
-            qry = session.query(self.MODEL.type).distinct()
+            qry = session.query(MeasurementType.name).distinct()
             result = qry.all()
         return self.retrieve_single_value_result(result)
 
@@ -231,6 +239,16 @@ class BaseDataset:
         """
         with db_session(self.DB_NAME) as (session, engine):
             qry = session.query(Observer.name).distinct()
+            result = qry.all()
+        return self.retrieve_single_value_result(result)
+
+    @property
+    def all_dois(self):
+        """
+        Return all distinct DOIs in the data
+        """
+        with db_session(self.DB_NAME) as (session, engine):
+            qry = session.query(DOI.doi).distinct()
             result = qry.all()
         return self.retrieve_single_value_result(result)
 
@@ -346,7 +364,8 @@ class LayerMeasurements(PointMeasurements):
     MODEL = LayerData
     ALLOWED_QRY_KWARGS = [
         "campaign", "site_id", "date", "instrument", "observer", "type",
-        "utm_zone", "pit_id", "date_greater_equal", "date_less_equal"
+        "utm_zone", "pit_id", "date_greater_equal", "date_less_equal",
+        "doi"
     ]
 
 

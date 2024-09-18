@@ -1,10 +1,11 @@
 from sqlalchemy import Column, Float, Integer, String, ForeignKey
-from sqlalchemy.orm import Mapped
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.orm import mapped_column
 from typing import List
-from sqlalchemy.orm import relationship
 
-from .base import Base, Measurement, SingleLocationData
+from .base import Base, SingleLocationData
+from .doi import DOIBase
+from .measurement_type import Measurement
 from .observers import Observer
 from .instrument import Instrument
 from .site import Site
@@ -20,7 +21,7 @@ class PointObservers(Base):
     observer_id = Column(Integer, ForeignKey("public.observers.id"))
 
 
-class PointData(SingleLocationData, Measurement, Base):
+class PointData(SingleLocationData, Measurement, Base, DOIBase):
     """
     Class representing the points table. This table holds all point data.
     Here a single data entry is a single coordinate pair with a single value
@@ -33,7 +34,6 @@ class PointData(SingleLocationData, Measurement, Base):
     value = Column(Float)
 
     # bring these in instead of Measurement
-    type = Column(String())
     units = Column(String())
 
     # Link the instrument id with a foreign key

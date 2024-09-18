@@ -4,7 +4,9 @@ from sqlalchemy.orm import mapped_column
 from typing import List
 from sqlalchemy.orm import relationship
 
-from .base import Base, Measurement, SingleLocationData
+from .base import Base, SingleLocationData
+from .doi import DOIBase
+from .measurement_type import Measurement
 from .observers import Observer
 from .instrument import Instrument
 from .site import Site
@@ -21,7 +23,7 @@ class LayerObservers(Base):
     observer_id = Column(Integer, ForeignKey("public.observers.id"))
 
 
-class LayerData(SingleLocationData, Measurement, Base):
+class LayerData(SingleLocationData, Measurement, Base, DOIBase):
     """
     Class representing the layers table. This table holds all layers or
     profile data. Here a single data entry is a single value at depth in the

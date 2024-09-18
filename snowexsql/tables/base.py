@@ -6,9 +6,8 @@ Mapping in the sqlalchemy or ORM.
 """
 
 from geoalchemy2 import Geometry
-from sqlalchemy import Column, Date, DateTime, Float, Integer, String, Time
+from sqlalchemy import Column, Date, Float, Integer, Time
 from sqlalchemy.orm import DeclarativeBase
-from sqlalchemy.sql import func
 
 
 class Base(DeclarativeBase):
@@ -17,17 +16,8 @@ class Base(DeclarativeBase):
     """
     # SQL Alchemy
     __table_args__ = {"schema": "public"}
-
     # Primary Key
     id = Column(Integer, primary_key=True)
-
-    # Standard table columns
-    time_created = Column(DateTime(timezone=True), server_default=func.now())
-    time_updated = Column(DateTime(timezone=True), onupdate=func.now())
-
-    date_accessed = Column(Date)
-    date = Column(Date)
-    doi = Column(String(50))
 
 
 class SingleLocationData:
@@ -39,9 +29,4 @@ class SingleLocationData:
     time = Column(Time(timezone=True))
 
 
-class Measurement(object):
-    """
-    Base Class providing attributes required for a measurement of any kind
-    """
-    type = Column(String(50))
-    units = Column(String(50))
+
