@@ -14,8 +14,8 @@ Welcome to snowexsql
     :target: https://pypi.org/project/snowexsql/
     :alt: Code Coverage
 
-.. image:: https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/micahjohnson150/2034019acc40a963bd02d2fcbb31c5a9/raw/snowexsql__heads_master.json
-    :alt: Code Coverage
+.. image:: https://codecov.io/gh/SnowEx/snowexsql/graph/badge.svg?token=B27OKGBOTR
+    :target: https://codecov.io/gh/SnowEx/snowexsql
 
 About
 -----
