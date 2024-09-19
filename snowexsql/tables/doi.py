@@ -10,11 +10,10 @@ class DOI(Base):
     """
     __tablename__ = 'dois'
 
-    id = Column(Integer, primary_key=True)
     doi = Column(String())
 
 
-class DOIBase:
+class HasOneDOI:
     """
     Class to extend when including a DOI
     """

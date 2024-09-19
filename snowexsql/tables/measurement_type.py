@@ -10,11 +10,10 @@ class MeasurementType(Base):
     """
     __tablename__ = 'measurements'
 
-    id = Column(Integer, primary_key=True)
     name = Column(String())
 
 
-class Measurement(object):
+class HasMeasurement:
     """
     Base Class providing attributes required for a measurement of any kind
     """
@@ -29,5 +28,3 @@ class Measurement(object):
         return relationship('MeasurementType')
 
     units = Column(String(50))
-    # Date of the measurement
-    date = Column(Date)

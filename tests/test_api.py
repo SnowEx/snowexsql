@@ -77,13 +77,19 @@ class DBConnection:
                 session.add(campaign)
                 session.commit()  # Commit to ensure instrument is saved and has an ID
 
-            site = session.query(Site).filter_by(
-                name=site_name).first()
-            if not site:
-                # Add the site with specific campaign
-                site = Site(name=site_name, campaign=campaign)
-                session.add(site)
-                session.commit()
+            if site_name is not None:
+                site = session.query(Site).filter_by(
+                    name=site_name).first()
+                if not site:
+                    # Add the site with specific campaign
+                    site = Site(
+                        name=site_name, campaign=campaign,
+                        date=kwargs.pop("date")
+                    )
+                    session.add(site)
+                    session.commit()
+            else:
+                site = None
 
             doi = session.query(DOI).filter_by(
                 doi=doi_value).first()
@@ -112,11 +118,17 @@ class DBConnection:
                     session.commit()  # Commit to ensure instrument is saved and has an ID
                 observer_list.append(observer)
 
-            # Now that the instrument exists, create the entry, notice we only need the instrument object
-            new_entry = data_cls(
+            object_kwargs = dict(
                 instrument=instrument, observers=observer_list,
-                site=site, doi=doi, measurement=measurement_obj, **kwargs
+                doi=doi, measurement=measurement_obj, **kwargs
             )
+            if site_name is None:
+                object_kwargs["campaign"] = campaign
+            else:
+                object_kwargs["site"] = site
+
+            # Now that the instrument exists, create the entry, notice we only need the instrument object
+            new_entry = data_cls(**object_kwargs)
             session.add(new_entry)
             session.commit()
 
@@ -136,7 +148,7 @@ class DBConnection:
         }
         self._add_entry(
             db.url, PointData, 'magnaprobe', ["TEST"],
-            'Grand Mesa', 'the_middle',
+            'Grand Mesa', None,
             "fake_doi", "depth",
             **row
         )
@@ -152,12 +164,11 @@ class DBConnection:
                                srid=26912),
             'date_accessed': date(2024, 7, 10),
             'value': '42.5', 'units': 'kgm3',
-            'pit_id': 'Fakepit1',
             'sample_a': '42.5'
         }
         self._add_entry(
             db.url, LayerData, 'fakeinstrument', ["TEST"],
-            'Grand Mesa', 'the_side', 'fake_doi2', 'density',
+            'Grand Mesa', 'Fakepit1', 'fake_doi2', 'density',
             **row
         )
 
@@ -284,7 +295,7 @@ class TestLayerMeasurements(DBConnection):
 
     def test_all_site_ids(self, clz):
         result = clz().all_site_ids
-        assert result == ['the_middle', 'the_side']
+        assert result == ['Fakepit1']
 
     def test_all_dates(self, clz):
         result = clz().all_dates

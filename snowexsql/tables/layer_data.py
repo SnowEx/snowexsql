@@ -1,14 +1,13 @@
-from sqlalchemy import Column, Float, Integer, String, ForeignKey
-from sqlalchemy.orm import Mapped
-from sqlalchemy.orm import mapped_column
+from sqlalchemy import Column, Float, Integer, String, ForeignKey, select
+from sqlalchemy.orm import Mapped, mapped_column, relationship, \
+    column_property
 from typing import List
-from sqlalchemy.orm import relationship
 
 from .base import Base, SingleLocationData
-from .doi import DOIBase
-from .measurement_type import Measurement
+from .doi import HasOneDOI
+from .measurement_type import HasMeasurement
 from .observers import Observer
-from .instrument import Instrument
+from .instrument import HasInstrument
 from .site import Site
 
 
@@ -17,13 +16,14 @@ class LayerObservers(Base):
     Link table
     """
     __tablename__ = 'layer_observers'
-    __table_args__ = {'schema': 'public'}
 
     layer_id = Column(Integer, ForeignKey('public.layers.id'))
     observer_id = Column(Integer, ForeignKey("public.observers.id"))
 
 
-class LayerData(SingleLocationData, Measurement, Base, DOIBase):
+class LayerData(
+    SingleLocationData, HasMeasurement, HasInstrument, Base, HasOneDOI
+):
     """
     Class representing the layers table. This table holds all layers or
     profile data. Here a single data entry is a single value at depth in the
@@ -42,22 +42,25 @@ class LayerData(SingleLocationData, Measurement, Base, DOIBase):
     value = Column(String(50))
     flags = Column(String(20))
 
-    # Link the instrument id with a foreign key
-    instrument_id = Column(
-        Integer, ForeignKey('public.instruments.id'), index=True
-    )
-    # Link the Instrument class
-    instrument = relationship('Instrument')
-
     # Link the site id with a foreign key
     site_id = Column(
         Integer, ForeignKey('public.sites.id'), index=True
     )
     # Link the Site class
-    site = relationship('Site')
+    site = relationship('Site', lazy='joined')
 
     # id is a mapped column for many-to-many with observers
     id: Mapped[int] = mapped_column(primary_key=True)
     observers: Mapped[List[Observer]] = relationship(
         secondary=LayerObservers.__table__
     )
+
+    # # Rendered columns
+    # # Use column_property to reference Site's date column
+    # # This makes querying easier
+    # # date = column_property(
+    # #     select(Site.date).where(Site.id == site_id).scalar_subquery()
+    # # )
+    # date = column_property(
+    #     select(Site.date).where(Site.id == site_id).correlate(Site).scalar_subquery()
+    # )
