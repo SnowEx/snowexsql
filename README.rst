@@ -115,5 +115,8 @@ DOI
 ---
 .. |HW22| image:: https://zenodo.org/badge/DOI/10.5281/zenodo.7618102.svg 
    :target: https://doi.org/10.5281/zenodo.7618102
+.. |HW24| image:: https://zenodo.org/badge/DOI/10.5281/zenodo.13312706.svg
+  :target: https://doi.org/10.5281/zenodo.13312706
 
-* SnowEx Hackweek 2022 - |HW22|
+* `SnowEx Hackweek 2022 <https://snowex-2022.hackweek.io/intro.html>`_ - |HW22|  
+* `SnowEx Hackweek 2024 <https://snowex-2024.hackweek.io/intro.html>`_ - |HW24|
