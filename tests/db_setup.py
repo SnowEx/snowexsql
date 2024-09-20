@@ -21,7 +21,6 @@ class DBSetup:
         """
         Setup the database one time for testing
         """
-        cls.data_dir = join(dirname(__file__), 'data')
         cls.engine, cls.session, cls.metadata = get_db(
             cls.database_name(),
             credentials=cls.CREDENTIAL_FILE,

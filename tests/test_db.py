@@ -1,5 +1,3 @@
-from os.path import join
-
 import pytest
 from sqlalchemy import Table
 
@@ -34,7 +32,6 @@ class TestDB(DBSetup):
         Setup the database one time for testing
         """
         super().setup_class()
-        site_fname = join(self.data_dir, 'site_details.csv')
         # only reflect the tables we will use
         self.metadata.reflect(self.engine, only=['points', 'layers'])
 
