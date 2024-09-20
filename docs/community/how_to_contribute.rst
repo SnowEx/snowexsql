@@ -86,25 +86,51 @@ Local Development Setup
 Tests
 =====
 
-Before testing, in a separate terminal, we need to run a local instance
-of the database. This can be done with
+Running the test suite requires a locally running database and providing
+the credentials to connect to it. Setting up an instance can be done via
+the supplied Docker compose file (see steps below).
 
+Setting up DB credentials
+----
+Copy the supplied sample file locally in a terminal
+
+.. code-block:: bash
+
+  mv tests/credentials.json.sample tests/credentials.json
+
+The file contains the username and password for connecting to the DB within
+the Docker container.
+
+Docker commands
+----
+
+After `installing Docker <https://docs.docker.com/desktop/>`_,
+you can start up a ready to go database instance.
+
+Start a database
+****
 .. code-block:: bash
 
   $ docker-compose up -d
 
+Stop a database
+****
 When you are finished testing, make sure to turn the docker off
 
 .. code-block:: bash
 
   $ docker-compose down
 
+Running the test suite
+----
 Quickly test your installation by running:
 
 .. code-block:: bash
 
   $ python3 -m pytest tests/
 
+Testing the code coverage
+----
 The goal of this project is to have high fidelity in data
 interpretation/submission to the database. To see the current
 test coverage run:
