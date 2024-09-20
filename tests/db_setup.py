@@ -32,10 +32,11 @@ class DBSetup:
     @classmethod
     def teardown_class(cls):
         """
-        Close the session
-        """
-        cls.session.close()  # optional, depends on use case
+        Clean up after class completed.
 
-    def teardown(self):
-        self.session.flush()
-        self.session.rollback()
+        NOTE: Not dropping the DB since this is done at every test class
+              initialization
+        """
+        cls.session.flush()
+        cls.session.rollback()
+        cls.session.close()

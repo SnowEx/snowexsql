@@ -21,14 +21,7 @@ class DBConnection(DBSetup):
 
     @pytest.fixture(scope="class")
     def db(self):
-
         yield self.engine
-
-        # cleanup
-        self.session.flush()
-        self.session.rollback()
-        self.metadata.drop_all(bind=self.engine)
-        self.session.close()
 
     @staticmethod
     def _add_entry(
