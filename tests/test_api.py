@@ -1,187 +1,11 @@
-from os.path import join, dirname
+from datetime import date
+
 import geopandas as gpd
 import numpy as np
 import pytest
-from datetime import date, time
-from geoalchemy2.elements import WKTElement
-from snowexsql.api import (
-    PointMeasurements, LargeQueryCheckException, LayerMeasurements, db_session
-)
-from snowexsql.db import get_db, initialize
-from snowexsql.tables import Instrument, Observer, PointData, LayerData, Site, \
-    DOI, MeasurementType
-from snowexsql.tables.campaign import Campaign
 
-
-@pytest.fixture(scope="session")
-def data_dir():
-    return join(dirname(__file__), 'data')
-
-
-@pytest.fixture(scope="session")
-def creds(data_dir):
-    return join(dirname(__file__), 'credentials.json')
-
-
-@pytest.fixture(scope="session")
-def db_url():
-    return 'localhost/test'
-
-
-class DBConnection:
-    """
-    Base class for connecting to the test database and overwiting the URL
-    so that we stay connected to our local testing DB
-    """
-    CLZ = PointMeasurements
-
-    @pytest.fixture(scope="class")
-    def db(self, creds, db_url):
-        engine, session, metadata = get_db(
-            db_url, credentials=creds, return_metadata=True
-        )
-
-        initialize(engine)
-        yield engine
-        # cleanup
-        session.flush()
-        session.rollback()
-        metadata.drop_all(bind=engine)
-        session.close()
-
-    @staticmethod
-    def _add_entry(
-            url, data_cls, instrument_name,
-            observer_names, campaign_name, site_name,
-            doi_value, measurement_type,
-            **kwargs
-    ):
-        url_long = f"{url.username}:{url.password}@{url.host}/{url.database}"
-        with db_session(url_long) as (session, engine):
-            # Check if the instrument already exists
-            instrument = session.query(Instrument).filter_by(
-                name=instrument_name).first()
-
-            if not instrument:
-                # If the instrument does not exist, create it
-                instrument = Instrument(name=instrument_name)
-                session.add(instrument)
-                session.commit()  # Commit to ensure instrument is saved and has an ID
-
-            campaign = session.query(Campaign).filter_by(
-                name=campaign_name).first()
-
-            if not campaign:
-                # If the campaign does not exist, create it
-                campaign = Campaign(name=campaign_name)
-                session.add(campaign)
-                session.commit()  # Commit to ensure instrument is saved and has an ID
-
-            if site_name is not None:
-                site = session.query(Site).filter_by(
-                    name=site_name).first()
-                if not site:
-                    # Add the site with specific campaign
-                    site = Site(
-                        name=site_name, campaign=campaign,
-                        date=kwargs.pop("date")
-                    )
-                    session.add(site)
-                    session.commit()
-            else:
-                site = None
-
-            doi = session.query(DOI).filter_by(
-                doi=doi_value).first()
-            if not doi:
-                # Add the site with specific campaign
-                doi = DOI(doi=doi_value)
-                session.add(doi)
-                session.commit()
-
-            measurement_obj = session.query(MeasurementType).filter_by(
-                name=measurement_type).first()
-            if not measurement_obj:
-                # Add the site with specific campaign
-                measurement_obj = MeasurementType(name=measurement_type)
-                session.add(measurement_obj)
-                session.commit()
-
-            observer_list = []
-            for obs_name in observer_names:
-                observer = session.query(Observer).filter_by(
-                    name=obs_name).first()
-                if not observer:
-                    # If the instrument does not exist, create it
-                    observer = Observer(name=obs_name)
-                    session.add(observer)
-                    session.commit()  # Commit to ensure instrument is saved and has an ID
-                observer_list.append(observer)
-
-            object_kwargs = dict(
-                instrument=instrument, observers=observer_list,
-                doi=doi, measurement=measurement_obj, **kwargs
-            )
-            if site_name is None:
-                object_kwargs["campaign"] = campaign
-            else:
-                object_kwargs["site"] = site
-
-            # Now that the instrument exists, create the entry, notice we only need the instrument object
-            new_entry = data_cls(**object_kwargs)
-            session.add(new_entry)
-            session.commit()
-
-    @pytest.fixture(scope="class")
-    def populated_points(self, db):
-        # Add made up data at the initialization of the class
-        row = {
-            'date': date(2020, 1, 28),
-            'time': time(18, 48),
-            'elevation': 3148.2,
-            'equipment': 'CRREL_B',
-            'version_number': 1,
-            'geom': WKTElement("POINT(747987.6190615438 4324061.7062127385)",
-                               srid=26912),
-            'date_accessed': date(2024, 7, 10),
-            'value': 94, 'units': 'cm'
-        }
-        self._add_entry(
-            db.url, PointData, 'magnaprobe', ["TEST"],
-            'Grand Mesa', None,
-            "fake_doi", "depth",
-            **row
-        )
-
-    @pytest.fixture(scope="class")
-    def populated_layer(self, db):
-        # Fake data to implement
-        row = {
-            'date': date(2020, 1, 28),
-            'time': time(18, 48),
-            'elevation': 3148.2,
-            'geom': WKTElement("POINT(747987.6190615438 4324061.7062127385)",
-                               srid=26912),
-            'date_accessed': date(2024, 7, 10),
-            'value': '42.5', 'units': 'kgm3',
-            'sample_a': '42.5'
-        }
-        self._add_entry(
-            db.url, LayerData, 'fakeinstrument', ["TEST"],
-            'Grand Mesa', 'Fakepit1', 'fake_doi2', 'density',
-            **row
-        )
-
-    @pytest.fixture(scope="class")
-    def clz(self, db, db_url, populated_points, populated_layer):
-        """
-        Extend the class and overwrite the database name
-        """
-        url = db.url
-        class Extended(self.CLZ):
-            DB_NAME = f"{url.username}:{url.password}@{url.host}/{url.database}"
-
-        yield Extended
+from snowexsql.api import (LayerMeasurements, PointMeasurements)
+from .db_connection import DBConnection
 
 
 class TestPointMeasurements(DBConnection):
@@ -196,7 +20,7 @@ class TestPointMeasurements(DBConnection):
 
     def test_all_site_names(self, clz):
         result = clz().all_site_names
-        assert result ==['Grand Mesa']
+        assert result == ['Grand Mesa']
 
     def test_all_dates(self, clz):
         result = clz().all_dates
@@ -217,10 +41,11 @@ class TestPointMeasurements(DBConnection):
     @pytest.mark.parametrize(
         "kwargs, expected_length, mean_value", [
             ({
-                "date": date(2020, 5, 28),
-                "instrument": 'camera'
-            }, 0, np.nan),
-            ({"instrument": "magnaprobe", "limit": 10}, 1, 94.0),  # limit works
+                 "date": date(2020, 5, 28),
+                 "instrument": 'camera'
+             }, 0, np.nan),
+            ({"instrument": "magnaprobe", "limit": 10}, 1, 94.0),
+            # limit works
             ({
                  "date": date(2020, 5, 28),
                  "instrument": 'pit ruler'
@@ -312,25 +137,25 @@ class TestLayerMeasurements(DBConnection):
     @pytest.mark.parametrize(
         "kwargs, expected_length, mean_value", [
             ({
-                "date": date(2020, 3, 12), "type": "density",
-                "pit_id": "COERIB_20200312_0938"
-            }, 0, np.nan),  # filter to 1 pit
+                 "date": date(2020, 3, 12), "type": "density",
+                 "pit_id": "COERIB_20200312_0938"
+             }, 0, np.nan),  # filter to 1 pit
             ({"instrument": "IRIS", "limit": 10}, 0, np.nan),  # limit works
             ({
                  "date": date(2020, 5, 28),
                  "instrument": 'IRIS'
              }, 0, np.nan),  # nothing returned
             ({
-                "date_less_equal": date(2019, 12, 15),
-                "type": 'density'
-            }, 0, np.nan),
+                 "date_less_equal": date(2019, 12, 15),
+                 "type": 'density'
+             }, 0, np.nan),
             ({
-                "date_greater_equal": date(2020, 5, 13),
-                "type": 'density'
-            }, 0, np.nan),
+                 "date_greater_equal": date(2020, 5, 13),
+                 "type": 'density'
+             }, 0, np.nan),
             ({
-                "type": 'density',
-                "campaign": 'Grand Mesa'
+                 "type": 'density',
+                 "campaign": 'Grand Mesa'
              }, 1, 42.5),
             ({
                  "observer": 'TEST',
