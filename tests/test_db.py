@@ -5,7 +5,7 @@ from sqlalchemy import Table
 
 from snowexsql.db import get_db, get_table_attributes
 from snowexsql.tables import ImageData, LayerData, PointData, SiteCondition
-from .sql_test_base import DBSetup
+from .db_setup import DBSetup
 
 
 class TestDB(DBSetup):
