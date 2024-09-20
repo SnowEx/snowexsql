@@ -16,10 +16,12 @@ docs/_build/*
 
 **/.ipynb_checkpoints/*
 
+# Test infor
 .coverage
 coverage.xml
 htmlcov/*
-scripts/upload/test*.txt
+tests/credentials.json
+
 .idea/
 scripts/download/data/*
 *.egg-info
