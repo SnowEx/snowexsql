@@ -1,10 +1,9 @@
 from sqlalchemy import Column, Float, String
 
 from .base import Base, SingleLocationData
-from .doi import HasOneDOI
 
 
-class SiteCondition(SingleLocationData, Base, HasOneDOI):
+class SiteCondition(SingleLocationData, Base):
     """
     Table for storing pit site metadata, This table doesn't represent any
     main data record but only support data for each site

@@ -5,8 +5,6 @@ from .base import Base
 
 class Instrument(Base):
     __tablename__ = 'instruments'
-    # auto created id
-    id = Column(Integer, primary_key=True)
     # Name of the instrument
     name = Column(String(), index=True)
     model = Column(String())
@@ -14,6 +12,9 @@ class Instrument(Base):
 
 
 class HasInstrument:
+    """
+    Class to extend when including an Instrument
+    """
 
     @declared_attr
     def instrument_id(cls):

@@ -15,7 +15,7 @@ class MeasurementType(Base):
 
 class HasMeasurement:
     """
-    Base Class providing attributes required for a measurement of any kind
+    Class to extend when including a measurement type
     """
 
     @declared_attr
@@ -26,5 +26,3 @@ class HasMeasurement:
     @declared_attr
     def measurement(cls):
         return relationship('MeasurementType')
-
-    units = Column(String(50))

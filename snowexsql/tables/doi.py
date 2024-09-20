@@ -13,7 +13,7 @@ class DOI(Base):
     doi = Column(String())
 
 
-class HasOneDOI:
+class HasDOI:
     """
     Class to extend when including a DOI
     """

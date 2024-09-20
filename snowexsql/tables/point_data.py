@@ -4,7 +4,7 @@ from typing import List
 
 from .base import Base, SingleLocationData
 from .campaign import InCampaign
-from .doi import HasOneDOI
+from .doi import HasDOI
 from .measurement_type import HasMeasurement
 from .observers import Observer
 from .instrument import HasInstrument
@@ -21,7 +21,7 @@ class PointObservers(Base):
 
 
 class PointData(
-    SingleLocationData, HasMeasurement, HasInstrument, Base, HasOneDOI,
+    SingleLocationData, HasMeasurement, HasInstrument, Base, HasDOI,
     InCampaign
 ):
     """

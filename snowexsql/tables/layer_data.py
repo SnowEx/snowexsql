@@ -4,7 +4,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship, \
 from typing import List
 
 from .base import Base, SingleLocationData
-from .doi import HasOneDOI
+from .doi import HasDOI
 from .measurement_type import HasMeasurement
 from .observers import Observer
 from .instrument import HasInstrument
@@ -22,7 +22,7 @@ class LayerObservers(Base):
 
 
 class LayerData(
-    SingleLocationData, HasMeasurement, HasInstrument, Base, HasOneDOI
+    SingleLocationData, HasMeasurement, HasInstrument, Base, HasDOI
 ):
     """
     Class representing the layers table. This table holds all layers or
@@ -41,6 +41,7 @@ class LayerData(
     sample_c = Column(String(20))
     value = Column(String(50))
     flags = Column(String(20))
+    units = Column(String(50))
 
     # Link the site id with a foreign key
     site_id = Column(
@@ -54,13 +55,3 @@ class LayerData(
     observers: Mapped[List[Observer]] = relationship(
         secondary=LayerObservers.__table__
     )
-
-    # # Rendered columns
-    # # Use column_property to reference Site's date column
-    # # This makes querying easier
-    # # date = column_property(
-    # #     select(Site.date).where(Site.id == site_id).scalar_subquery()
-    # # )
-    # date = column_property(
-    #     select(Site.date).where(Site.id == site_id).correlate(Site).scalar_subquery()
-    # )

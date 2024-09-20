@@ -5,10 +5,10 @@ from .base import Base
 from .campaign import InCampaign
 from .instrument import HasInstrument
 from .measurement_type import HasMeasurement
-from .doi import HasOneDOI
+from .doi import HasDOI
 
 
-class ImageData(Base, HasMeasurement, HasInstrument, HasOneDOI, InCampaign):
+class ImageData(Base, HasMeasurement, HasInstrument, HasDOI, InCampaign):
     """
     Class representing the images table. This table holds all images/rasters
     """
@@ -17,3 +17,4 @@ class ImageData(Base, HasMeasurement, HasInstrument, HasOneDOI, InCampaign):
     date = Column(Date)
     raster = Column(Raster)
     description = Column(String())
+    units = Column(String(50))

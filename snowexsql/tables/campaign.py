@@ -26,6 +26,9 @@ class Campaign(Base):
 
 
 class InCampaign:
+    """
+    Class to extend when including a Campaign
+    """
 
     @declared_attr
     def campaign_id(cls):

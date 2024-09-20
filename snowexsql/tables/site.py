@@ -5,14 +5,14 @@ Created on Thu Aug 22 11:56:34 2024
 @author: jtmaz
 """
 
-from sqlalchemy import Column, String, Integer, ForeignKey, Date
-from sqlalchemy.orm import relationship
+from sqlalchemy import Column, String, Date
 
 from .base import Base
-from .campaign import Campaign, InCampaign
+from .campaign import InCampaign
+from .doi import HasDOI
 
 
-class Site(Base, InCampaign):
+class Site(Base, InCampaign, HasDOI):
     """
     Table stores Site data. Does not store data values,
     it only stores the site metadata.
