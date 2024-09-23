@@ -11,7 +11,7 @@ from sqlalchemy.sql import func
 from snowexsql.conversions import query_to_geopandas, raster_to_rasterio
 from snowexsql.db import get_db
 from snowexsql.tables import ImageData, LayerData, PointData, Instrument, \
-    Observer, Site, Campaign
+    Observer, Site, Campaign, MeasurementType, DOI
 
 
 LOG = logging.getLogger(__name__)
@@ -49,9 +49,9 @@ class BaseDataset:
     DB_NAME = DB_NAME
 
     ALLOWED_QRY_KWARGS = [
-        "campaign", "site_id", "date", "instrument", "type",
+        "campaign", "date", "instrument", "type",
         "utm_zone", "date_greater_equal", "date_less_equal",
-        "value_greater_equal", 'value_less_equal',
+        "value_greater_equal", 'value_less_equal', "doi"
     ]
     SPECIAL_KWARGS = ["limit"]
     # Default max record count
@@ -88,6 +88,13 @@ class BaseDataset:
             )
 
     @classmethod
+    def _filter_campaign(cls, qry, v):
+        qry = qry.filter(
+            Site.campaign.has(Campaign.name == v)
+        )
+        return qry
+
+    @classmethod
     def extend_qry(cls, qry, check_size=True, **kwargs):
         if cls.MODEL is None:
             raise ValueError("You must use a class with a MODEL.")
@@ -96,9 +103,15 @@ class BaseDataset:
         for k, v in kwargs.items():
             # Handle special operations
             if k in cls.ALLOWED_QRY_KWARGS:
+                # Logic for filtering on date with LayerData
+                if "date" in k and cls.MODEL == LayerData:
+                    qry = qry.join(LayerData.site)
+                    qry_model = Site
+                else:
+                    qry_model = cls.MODEL
                 # standard filtering using qry.filter
                 if isinstance(v, list):
-                    filter_col = getattr(cls.MODEL, k)
+                    filter_col = getattr(qry_model, k)
                     if k == "date":
                         raise ValueError(
                             "We cannot search for a list of dates"
@@ -116,34 +129,38 @@ class BaseDataset:
                     # Filter boundary
                     if "_greater_equal" in k:
                         key = k.split("_greater_equal")[0]
-                        filter_col = getattr(cls.MODEL, key)
+                        filter_col = getattr(qry_model, key)
                         qry = qry.filter(filter_col >= v)
                     elif "_less_equal" in k:
                         key = k.split("_less_equal")[0]
-                        filter_col = getattr(cls.MODEL, key)
+                        filter_col = getattr(qry_model, key)
                         qry = qry.filter(filter_col <= v)
                     # Filter linked columns
                     elif k == "instrument":
                         qry = qry.filter(
-                            cls.MODEL.instrument.has(name=v)
+                            qry_model.instrument.has(name=v)
                         )
                     elif k == "campaign":
-                        qry = qry.join(
-                            cls.MODEL.site
-                        ).filter(
-                            Site.campaign.has(Campaign.name == v)
-                        )
+                        qry = cls._filter_campaign(qry, v)
                     elif k == "site_id":
                         qry = qry.filter(
-                            cls.MODEL.site.has(name=v)
+                            qry_model.site.has(name=v)
                         )
                     elif k == "observer":
                         qry = qry.join(
-                            LayerData.observers
+                            qry_model.observers
                         ).filter(Observer.name == v)
+                    elif k == "doi":
+                        qry = qry.join(
+                            qry_model.doi
+                        ).filter(DOI.doi == v)
+                    elif k == "type":
+                        qry = qry.join(
+                            qry_model.measurement
+                        ).filter(MeasurementType.name == v)
                     # Filter to exact value
                     else:
-                        filter_col = getattr(cls.MODEL, k)
+                        filter_col = getattr(qry_model, k)
                         qry = qry.filter(filter_col == v)
                     LOG.debug(
                         f"Filtering {k} to list {v}"
@@ -195,22 +212,12 @@ class BaseDataset:
         return self.retrieve_single_value_result(result)
 
     @property
-    def all_site_ids(self):
-        """
-        Return all specific site names
-        """
-        with db_session(self.DB_NAME) as (session, engine):
-            qry = session.query(Site.name).distinct()
-            result = qry.all()
-        return self.retrieve_single_value_result(result)
-
-    @property
     def all_types(self):
         """
         Return all types of the data
         """
         with db_session(self.DB_NAME) as (session, engine):
-            qry = session.query(self.MODEL.type).distinct()
+            qry = session.query(MeasurementType.name).distinct()
             result = qry.all()
         return self.retrieve_single_value_result(result)
 
@@ -231,6 +238,16 @@ class BaseDataset:
         """
         with db_session(self.DB_NAME) as (session, engine):
             qry = session.query(Observer.name).distinct()
+            result = qry.all()
+        return self.retrieve_single_value_result(result)
+
+    @property
+    def all_dois(self):
+        """
+        Return all distinct DOIs in the data
+        """
+        with db_session(self.DB_NAME) as (session, engine):
+            qry = session.query(DOI.doi).distinct()
             result = qry.all()
         return self.retrieve_single_value_result(result)
 
@@ -346,8 +363,36 @@ class LayerMeasurements(PointMeasurements):
     MODEL = LayerData
     ALLOWED_QRY_KWARGS = [
         "campaign", "site_id", "date", "instrument", "observer", "type",
-        "utm_zone", "pit_id", "date_greater_equal", "date_less_equal"
+        "utm_zone", "pit_id", "date_greater_equal", "date_less_equal",
+        "doi", "value_greater_equal", 'value_less_equal'
     ]
+
+    @classmethod
+    def _filter_campaign(cls, qry, v):
+
+        qry = qry.join(cls.MODEL.site).join(
+            Site.campaign).filter(Campaign.name == v)
+        return qry
+
+    @property
+    def all_site_ids(self):
+        """
+        Return all specific site names
+        """
+        with db_session(self.DB_NAME) as (session, engine):
+            qry = session.query(Site.name).distinct()
+            result = qry.all()
+        return self.retrieve_single_value_result(result)
+
+    @property
+    def all_dates(self):
+        """
+        Return all distinct dates in the data
+        """
+        with db_session(self.DB_NAME) as (session, engine):
+            qry = session.query(Site.date).distinct()
+            result = qry.all()
+        return self.retrieve_single_value_result(result)
 
 
 class RasterMeasurements(BaseDataset):

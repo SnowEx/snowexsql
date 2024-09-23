@@ -5,7 +5,7 @@ from .base import Base, SingleLocationData
 
 class SiteCondition(SingleLocationData, Base):
     """
-    Table for storing pit site meta data, This table doesn't represent any
+    Table for storing pit site metadata, This table doesn't represent any
     main data record but only support data for each site
     """
     # TODO: leaving this for later - we should link this to Sites table
