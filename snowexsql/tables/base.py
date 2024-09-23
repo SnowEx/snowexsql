@@ -6,7 +6,7 @@ Mapping in the sqlalchemy or ORM.
 """
 
 from geoalchemy2 import Geometry
-from sqlalchemy import Column, Float, Integer, Time
+from sqlalchemy import Column, Float, Integer, Time, Date
 from sqlalchemy.orm import DeclarativeBase
 
 
@@ -18,6 +18,7 @@ class Base(DeclarativeBase):
     __table_args__ = {"schema": "public"}
     # Primary Key
     id = Column(Integer, primary_key=True)
+    date_accessed = Column(Date)
 
 
 class SingleLocationData:

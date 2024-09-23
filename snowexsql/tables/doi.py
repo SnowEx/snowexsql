@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Integer, ForeignKey, Date
+from sqlalchemy import Column, String, Integer, ForeignKey
 from sqlalchemy.orm import relationship, declared_attr
 
 from .base import Base
@@ -24,5 +24,3 @@ class HasDOI:
     @declared_attr
     def doi(cls):
         return relationship('DOI')
-
-    date_accessed = Column(Date)
