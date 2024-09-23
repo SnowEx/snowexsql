@@ -14,7 +14,7 @@ class DBSetup:
 
     @classmethod
     def database_name(cls):
-        return f"{cls.DB_INFO["address"]}/{cls.DB_INFO["db_name"]}"
+        return cls.DB_INFO["address"] + "/" + cls.DB_INFO["db_name"]
 
     @classmethod
     def setup_class(cls):

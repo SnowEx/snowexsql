@@ -155,9 +155,10 @@ class DBConnection(DBSetup):
         Extend the class and overwrite the database name
         """
         class Extended(self.CLZ):
-            DB_NAME = (f"{self.DB_INFO["username"]}:"
-                       f"{self.DB_INFO["password"]}@"
-                       f"{self.DB_INFO["address"]}/"
-                       f"{self.DB_INFO["db_name"]}")
+            DB_NAME = (
+                self.DB_INFO["username"] + ":" +
+                self.DB_INFO["password"] + "@" +
+                self.database_name()
+            )
 
         yield Extended
