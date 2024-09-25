@@ -6,7 +6,7 @@ import pytest
 from sqlalchemy import func
 
 from snowexsql.conversions import *
-from .sql_test_base import DBSetup
+from .db_setup import DBSetup
 
 
 @pytest.mark.skip('Need to determine how to setup db for testing post splitting')

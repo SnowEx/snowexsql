@@ -1,11 +1,9 @@
-from os.path import join
-
 import pytest
 from sqlalchemy import Table
 
 from snowexsql.db import get_db, get_table_attributes
 from snowexsql.tables import ImageData, LayerData, PointData, SiteCondition
-from .sql_test_base import DBSetup
+from .db_setup import DBSetup
 
 
 class TestDB(DBSetup):
@@ -34,7 +32,6 @@ class TestDB(DBSetup):
         Setup the database one time for testing
         """
         super().setup_class()
-        site_fname = join(self.data_dir, 'site_details.csv')
         # only reflect the tables we will use
         self.metadata.reflect(self.engine, only=['points', 'layers'])
 
@@ -82,5 +79,11 @@ def test_getting_db(return_metadata, expected_objs):
     Test we can receive a connection and opt out of getting the metadata
     """
 
-    result = get_db('builder:db_builder@localhost/test', return_metadata=return_metadata)
+    db_name = (
+            DBSetup.DB_INFO["username"] + ":" +
+            DBSetup.DB_INFO["password"] + "@" +
+            DBSetup.database_name()
+    )
+
+    result = get_db(db_name, return_metadata=return_metadata)
     assert len(result) == expected_objs

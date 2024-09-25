@@ -5,7 +5,7 @@ from geoalchemy2.shape import to_shape
 from shapely.geometry import Point
 
 from snowexsql.functions import *
-from .sql_test_base import DBSetup
+from .db_setup import DBSetup
 import pytest 
 
 @pytest.mark.skip('Need to figure out how to upload a raster for testing')
