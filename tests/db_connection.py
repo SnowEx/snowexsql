@@ -24,85 +24,86 @@ class DBConnection(DBSetup):
         yield self.engine
 
     @staticmethod
+    def _check_or_add_object(session, clz, check_kwargs, object_kwargs=None):
+        """
+        Check for existing object, add to the database if not found
+
+        Args:
+            session: database session
+            clz: class to add to database
+            check_kwargs: kwargs for checking if the class exists
+            object_kwargs: kwargs for instantiating the object
+        """
+        # Check if the object exists
+        obj = session.query(clz).filter_by(**check_kwargs).first()
+        if not obj:
+            # Use check kwargs if not object_kwargs given
+            object_kwargs = object_kwargs or check_kwargs
+            # If the object does not exist, create it
+            obj = clz(**object_kwargs)
+            session.add(obj)
+            session.commit()
+        return obj
+
+    @classmethod
     def _add_entry(
-        url, data_cls, instrument_name,
+        cls, url, data_cls, instrument_name,
         observer_names, campaign_name, site_name,
         doi_value, measurement_type,
         **kwargs
     ):
         url_long = f"{url.username}:{url.password}@{url.host}/{url.database}"
         with db_session(url_long) as (session, engine):
-            # Check if the instrument already exists
-            instrument = session.query(Instrument).filter_by(
-                name=instrument_name).first()
+            # Add instrument
+            instrument = cls._check_or_add_object(
+                session, Instrument, dict(name=instrument_name)
+            )
+            # Add campaign
+            campaign = cls._check_or_add_object(
+                session, Campaign, dict(name=campaign_name)
+            )
 
-            if not instrument:
-                # If the instrument does not exist, create it
-                instrument = Instrument(name=instrument_name)
-                session.add(instrument)
-                session.commit()  # Commit to create ID
-
-            campaign = session.query(Campaign).filter_by(
-                name=campaign_name).first()
-
-            if not campaign:
-                # If the campaign does not exist, create it
-                campaign = Campaign(name=campaign_name)
-                session.add(campaign)
-                session.commit()  # Commit to create ID
-
+            # Add site
             if site_name is not None:
-                site = session.query(Site).filter_by(
-                    name=site_name).first()
-                if not site:
-                    # Add the site with specific campaign
-                    site = Site(
+                site = cls._check_or_add_object(
+                    session, Site, dict(name=site_name),
+                    object_kwargs=dict(
                         name=site_name, campaign=campaign,
                         date=kwargs.pop("date")
                     )
-                    session.add(site)
-                    session.commit()
+                )
             else:
                 site = None
 
-            doi = session.query(DOI).filter_by(
-                doi=doi_value).first()
-            if not doi:
-                # Add the site with specific campaign
-                doi = DOI(doi=doi_value)
-                session.add(doi)
-                session.commit()
+            # Add doi
+            doi = cls._check_or_add_object(
+                session, DOI, dict(doi=doi_value)
+            )
 
-            measurement_obj = session.query(MeasurementType).filter_by(
-                name=measurement_type).first()
-            if not measurement_obj:
-                # Add the site with specific campaign
-                measurement_obj = MeasurementType(name=measurement_type)
-                session.add(measurement_obj)
-                session.commit()
+            # Add measurement type
+            measurement_obj = cls._check_or_add_object(
+                session, MeasurementType, dict(name=measurement_type)
+            )
 
+            # add list of observers
             observer_list = []
             for obs_name in observer_names:
-                observer = session.query(Observer).filter_by(
-                    name=obs_name).first()
-                if not observer:
-                    # If the instrument does not exist, create it
-                    observer = Observer(name=obs_name)
-                    session.add(observer)
-                    session.commit()  # Commit to create ID
+                observer = cls._check_or_add_object(
+                    session, Observer, dict(name=obs_name)
+                )
                 observer_list.append(observer)
 
             object_kwargs = dict(
                 instrument=instrument, observers=observer_list,
                 doi=doi, measurement=measurement_obj, **kwargs
             )
+            # Add site if given
             if site_name is None:
                 object_kwargs["campaign"] = campaign
             else:
                 object_kwargs["site"] = site
 
-            # Now that the instrument exists, create the entry,
-            # notice we only need the instrument object
+            # Now that the instrument exists, create the entry, notice we only need the instrument object
             new_entry = data_cls(**object_kwargs)
             session.add(new_entry)
             session.commit()
