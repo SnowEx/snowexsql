@@ -51,7 +51,8 @@ class BaseDataset:
     ALLOWED_QRY_KWARGS = [
         "campaign", "date", "instrument", "type",
         "utm_zone", "date_greater_equal", "date_less_equal",
-        "value_greater_equal", 'value_less_equal', "doi"
+        "value_greater_equal", 'value_less_equal', "doi",
+        "observer"
     ]
     SPECIAL_KWARGS = ["limit"]
     # Default max record count
@@ -92,6 +93,13 @@ class BaseDataset:
         qry = qry.filter(
             Site.campaign.has(Campaign.name == v)
         )
+        return qry
+
+    @classmethod
+    def _filter_observers(cls, qry, v):
+        qry = qry.join(
+            cls.MODEL.observers
+        ).filter(Observer.name == v)
         return qry
 
     @classmethod
@@ -147,9 +155,7 @@ class BaseDataset:
                             qry_model.site.has(name=v)
                         )
                     elif k == "observer":
-                        qry = qry.join(
-                            qry_model.observers
-                        ).filter(Observer.name == v)
+                        qry = cls._filter_observers(qry, v)
                     elif k == "doi":
                         qry = qry.join(
                             qry_model.doi
@@ -324,11 +330,19 @@ class PointMeasurements(BaseDataset):
             try:
                 if shp is not None:
                     qry = session.query(cls.MODEL)
-                    qry = qry.filter(
-                        func.ST_Within(
-                            cls.MODEL.geom, from_shape(shp, srid=crs)
+                    # Filter geometry based on Site for LayerData
+                    if cls.MODEL == LayerData:
+                        qry = qry.join(cls.MODEL.site).filter(
+                            func.ST_Within(
+                                Site.geom, from_shape(shp, srid=crs)
+                            )
                         )
-                    )
+                    else:
+                        qry = qry.filter(
+                            func.ST_Within(
+                                cls.MODEL.geom, from_shape(shp, srid=crs)
+                            )
+                        )
                     qry = cls.extend_qry(qry, check_size=True, **kwargs)
                     df = query_to_geopandas(qry, engine)
                 else:
@@ -341,7 +355,15 @@ class PointMeasurements(BaseDataset):
 
                     buffered_pt = qry.all()[0][0]
                     qry = session.query(cls.MODEL)
-                    qry = qry.filter(func.ST_Within(cls.MODEL.geom, buffered_pt))
+                    # Filter geometry based on Site for LayerData
+                    if cls.MODEL == LayerData:
+                        qry = qry.join(cls.MODEL.site).filter(
+                            func.ST_Within(Site.geom, buffered_pt)
+                        )
+                    else:
+                        qry = qry.filter(
+                            func.ST_Within(cls.MODEL.geom, buffered_pt)
+                        )
                     qry = cls.extend_qry(qry, check_size=True, **kwargs)
                     df = query_to_geopandas(qry, engine)
             except Exception as e:
@@ -372,6 +394,12 @@ class LayerMeasurements(PointMeasurements):
 
         qry = qry.join(cls.MODEL.site).join(
             Site.campaign).filter(Campaign.name == v)
+        return qry
+
+    @classmethod
+    def _filter_observers(cls, qry, v):
+        qry = qry.join(cls.MODEL.site).join(
+            Site.observers).filter(Observer.name == v)
         return qry
 
     @property

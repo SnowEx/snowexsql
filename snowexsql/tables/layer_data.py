@@ -1,28 +1,14 @@
-from sqlalchemy import Column, Float, Integer, String, ForeignKey, select
-from sqlalchemy.orm import Mapped, mapped_column, relationship, \
-    column_property
-from typing import List
+from sqlalchemy import Column, Float, Integer, String, ForeignKey
+from sqlalchemy.orm import relationship
 
-from .base import Base, SingleLocationData
+from .base import Base
 from .doi import HasDOI
 from .measurement_type import HasMeasurement
-from .observers import Observer
 from .instrument import HasInstrument
-from .site import Site
-
-
-class LayerObservers(Base):
-    """
-    Link table
-    """
-    __tablename__ = 'layer_observers'
-
-    layer_id = Column(Integer, ForeignKey('public.layers.id'))
-    observer_id = Column(Integer, ForeignKey("public.observers.id"))
 
 
 class LayerData(
-    SingleLocationData, HasMeasurement, HasInstrument, Base, HasDOI
+    HasMeasurement, HasInstrument, Base, HasDOI
 ):
     """
     Class representing the layers table. This table holds all layers or
@@ -49,9 +35,3 @@ class LayerData(
     )
     # Link the Site class
     site = relationship('Site', lazy='joined')
-
-    # id is a mapped column for many-to-many with observers
-    id: Mapped[int] = mapped_column(primary_key=True)
-    observers: Mapped[List[Observer]] = relationship(
-        secondary=LayerObservers.__table__
-    )

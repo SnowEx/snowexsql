@@ -63,13 +63,25 @@ class DBConnection(DBSetup):
                 session, Campaign, dict(name=campaign_name)
             )
 
+            # add list of observers
+            observer_list = []
+            for obs_name in observer_names:
+                observer = cls._check_or_add_object(
+                    session, Observer, dict(name=obs_name)
+                )
+                observer_list.append(observer)
+
             # Add site
             if site_name is not None:
                 site = cls._check_or_add_object(
                     session, Site, dict(name=site_name),
                     object_kwargs=dict(
                         name=site_name, campaign=campaign,
-                        date=kwargs.pop("date")
+                        date=kwargs.pop("date"),
+                        geom=kwargs.pop("geom"),
+                        time=kwargs.pop("time"),
+                        elevation=kwargs.pop("elevation"),
+                        observers=observer_list,
                     )
                 )
             else:
@@ -85,21 +97,14 @@ class DBConnection(DBSetup):
                 session, MeasurementType, dict(name=measurement_type)
             )
 
-            # add list of observers
-            observer_list = []
-            for obs_name in observer_names:
-                observer = cls._check_or_add_object(
-                    session, Observer, dict(name=obs_name)
-                )
-                observer_list.append(observer)
-
             object_kwargs = dict(
-                instrument=instrument, observers=observer_list,
-                doi=doi, measurement=measurement_obj, **kwargs
+                instrument=instrument, doi=doi, measurement=measurement_obj,
+                **kwargs
             )
             # Add site if given
             if site_name is None:
                 object_kwargs["campaign"] = campaign
+                object_kwargs["observers"] = observer_list
             else:
                 object_kwargs["site"] = site
 
