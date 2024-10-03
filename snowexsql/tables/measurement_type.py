@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Integer, ForeignKey, Date
+from sqlalchemy import Column, Text, String, Integer, ForeignKey, Date
 from sqlalchemy.orm import relationship, declared_attr
 
 from .base import Base
@@ -11,6 +11,7 @@ class MeasurementType(Base):
     __tablename__ = 'measurements'
 
     name = Column(String())
+    units = Column(Text)
 
 
 class HasMeasurement:
