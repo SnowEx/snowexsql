@@ -5,8 +5,7 @@ from Base is a real table in the database. This is called Object Relational
 Mapping in the sqlalchemy or ORM.
 """
 
-from geoalchemy2 import Geometry
-from sqlalchemy import Column, Float, Integer, Time, Date
+from sqlalchemy import Column, Date, Integer
 from sqlalchemy.orm import DeclarativeBase
 
 
@@ -18,15 +17,3 @@ class Base(DeclarativeBase):
     __table_args__ = {"schema": "public"}
     # Primary Key
     id = Column(Integer, primary_key=True)
-
-
-class SingleLocationData:
-    """
-    Base class for points and profiles
-    """
-    elevation = Column(Float)
-    geom = Column(Geometry("POINT"))
-    time = Column(Time(timezone=True))
-
-
-

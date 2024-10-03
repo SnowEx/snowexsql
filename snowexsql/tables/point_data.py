@@ -2,12 +2,13 @@ from sqlalchemy import Column, Float, Integer, String, ForeignKey, Date
 from sqlalchemy.orm import Mapped, relationship, mapped_column
 from typing import List
 
-from .base import Base, SingleLocationData
+from .base import Base
 from .campaign import InCampaign
 from .doi import HasDOI
+from .instrument import HasInstrument
 from .measurement_type import HasMeasurementType
 from .observers import Observer
-from .instrument import HasInstrument
+from .single_location import SingleLocationData
 
 
 class PointObservers(Base):
