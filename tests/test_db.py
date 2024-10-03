@@ -3,7 +3,7 @@ from sqlalchemy import Table
 
 from snowexsql.db import get_db, get_table_attributes
 from snowexsql.tables import ImageData, LayerData, PointData, Site, \
-    MeasurementType
+    MeasurementType, DOI
 from .db_setup import DBSetup
 
 
@@ -28,6 +28,7 @@ class TestDB(DBSetup):
                   'sample_b', 'sample_c']
     raster_atts = meas_atts + ['raster', 'description']
     measurement_types_attributes = ['name', 'units']
+    DOI_attributes = ['doi', 'date_accessed']
 
     def setup_class(self):
         """
@@ -64,7 +65,8 @@ class TestDB(DBSetup):
             (PointData, point_atts),
             (LayerData, layer_atts),
             (ImageData, raster_atts),
-            (MeasurementType, measurement_types_attributes)
+            (MeasurementType, measurement_types_attributes),
+            (DOI, DOI_attributes)
         ]
     )
     def test_get_table_attributes(self, DataCls, attributes):

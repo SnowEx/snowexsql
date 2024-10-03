@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Integer, ForeignKey
+from sqlalchemy import Column, String, Date, Integer, ForeignKey
 from sqlalchemy.orm import relationship, declared_attr
 
 from .base import Base
@@ -11,6 +11,7 @@ class DOI(Base):
     __tablename__ = 'dois'
 
     doi = Column(String())
+    date_accessed = Column(Date)
 
 
 class HasDOI:
