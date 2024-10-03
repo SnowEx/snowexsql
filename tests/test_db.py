@@ -2,7 +2,7 @@ import pytest
 from sqlalchemy import Table
 
 from snowexsql.db import get_db, get_table_attributes
-from snowexsql.tables import ImageData, LayerData, PointData, SiteCondition
+from snowexsql.tables import ImageData, LayerData, PointData, Site
 from .db_setup import DBSetup
 
 
@@ -22,7 +22,7 @@ class TestDB(DBSetup):
     point_atts = single_loc_atts + meas_atts + \
                  ['version_number', 'equipment', 'value', 'instrument_id']
 
-    layer_atts = single_loc_atts + meas_atts + \
+    layer_atts = meas_atts + \
                  ['depth', 'value', 'bottom_depth', 'comments', 'sample_a',
                   'sample_b', 'sample_c']
     raster_atts = meas_atts + ['raster', 'description']
@@ -56,7 +56,7 @@ class TestDB(DBSetup):
             assert c in columns
 
     @pytest.mark.parametrize("DataCls,attributes", [
-        (SiteCondition, site_atts),
+        (Site, site_atts),
         (PointData, point_atts),
         (LayerData, layer_atts),
         (ImageData, raster_atts)])
