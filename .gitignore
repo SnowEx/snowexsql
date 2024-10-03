@@ -23,8 +23,10 @@ htmlcov/*
 tests/credentials.json
 
 .idea/
+.vscode/
 scripts/download/data/*
 *.egg-info
 
 # Version
 _version.py
+
