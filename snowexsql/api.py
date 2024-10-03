@@ -51,7 +51,8 @@ class BaseDataset:
     ALLOWED_QRY_KWARGS = [
         "campaign", "date", "instrument", "type",
         "utm_zone", "date_greater_equal", "date_less_equal",
-        "value_greater_equal", 'value_less_equal', "doi"
+        "value_greater_equal", 'value_less_equal', "doi",
+        "observer"
     ]
     SPECIAL_KWARGS = ["limit"]
     # Default max record count

@@ -62,6 +62,10 @@ class TestPointMeasurements(DBConnection):
             ({
                  "type": 'depth',
              }, 1, 94.0),
+            ({
+                 "observer": 'TEST',
+                 "campaign": 'Grand Mesa'
+             }, 1, 94.0),
         ]
     )
     def test_from_filter(self, clz, kwargs, expected_length, mean_value):
