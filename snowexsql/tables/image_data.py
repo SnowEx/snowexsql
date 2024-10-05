@@ -1,14 +1,11 @@
 from geoalchemy2 import Raster
-from sqlalchemy import Column, String, Date
+from sqlalchemy import Column, Date, String
 
 from .base import Base
-from .campaign import InCampaign
-from .instrument import HasInstrument
-from .measurement_type import HasMeasurementType
-from .doi import HasDOI
+from .campaign_observation import HasObservation
 
 
-class ImageData(Base, HasMeasurementType, HasInstrument, HasDOI, InCampaign):
+class ImageData(Base, HasObservation):
     """
     Class representing the images table. This table holds all images/rasters
     """
@@ -16,5 +13,4 @@ class ImageData(Base, HasMeasurementType, HasInstrument, HasDOI, InCampaign):
     # Date of the measurement
     date = Column(Date)
     raster = Column(Raster)
-    description = Column(String())
     units = Column(String(50))
