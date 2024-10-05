@@ -1,5 +1,5 @@
-from sqlalchemy.orm import mapped_column, Mapped
-from sqlalchemy import Column, String
+from sqlalchemy import Column, ForeignKey, String
+from sqlalchemy.orm import Mapped, declared_attr, mapped_column, relationship
 
 from .base import Base
 
@@ -10,3 +10,17 @@ class Observer(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     # Name of the observer
     name = Column(String())
+
+
+class HasObserver:
+    """
+    Class to inherit when adding a observer relationship to a table
+    """
+
+    observers_id: Mapped[int] = mapped_column(
+        ForeignKey("public.observers.id"), index=True
+    )
+
+    @declared_attr
+    def observer(self):
+        return relationship('Observer')
