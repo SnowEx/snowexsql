@@ -1,5 +1,5 @@
 from sqlalchemy import Column, ForeignKey, String, Text
-from sqlalchemy.orm import Mapped, declared_attr, mapped_column, relationship
+from sqlalchemy.orm import Mapped, mapped_column
 
 from .base import Base
 from .campaign import InCampaign
@@ -27,13 +27,9 @@ class CampaignObservation(
 
 class HasObservation:
     """
-    Class to inherit when adding a observer relationship to a table
+    Class to inherit when adding a observation relationship to a table
     """
 
     observation_id: Mapped[int] = mapped_column(
         ForeignKey("public.campaign_observations.id"), index=True
     )
-
-    @declared_attr
-    def observation(self):
-        return relationship('CampaignObservation')

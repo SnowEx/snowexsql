@@ -2,10 +2,10 @@ from geoalchemy2 import Raster
 from sqlalchemy import Column, Date, String
 
 from .base import Base
-from .campaign_observation import HasObservation
+from .image_observation import HasImageObservation
 
 
-class ImageData(Base, HasObservation):
+class ImageData(Base, HasImageObservation):
     """
     Class representing the images table. This table holds all images/rasters
     """

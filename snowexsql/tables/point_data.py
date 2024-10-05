@@ -1,11 +1,11 @@
 from sqlalchemy import Column, Date, Float, Integer, String
 
 from .base import Base
-from .campaign_observation import HasObservation
+from .point_observation import HasPointObservation
 from .single_location import SingleLocationData
 
 
-class PointData(Base, SingleLocationData, HasObservation):
+class PointData(Base, SingleLocationData, HasPointObservation):
     """
     Class representing the points table. This table holds all point data.
     Here a single data entry is a single coordinate pair with a single value

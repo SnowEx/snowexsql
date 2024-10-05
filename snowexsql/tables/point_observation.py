@@ -1,4 +1,6 @@
-from .campaign_observation import CampaignObservation
+from sqlalchemy.orm import declared_attr, relationship
+
+from .campaign_observation import CampaignObservation, HasObservation
 
 
 class PointObservation(CampaignObservation):
@@ -8,6 +10,15 @@ class PointObservation(CampaignObservation):
     """
     # Single Table Inheritance identifier
     __mapper_args__ = {
-        'polymorphic_on': type,
+        'polymorphic_on': "type",
         'polymorphic_identity': 'PointObservation'
     }
+
+
+class HasPointObservation(HasObservation):
+    """
+    Class to inherit when adding a observation relationship to a table
+    """
+    @declared_attr
+    def observation(self):
+        return relationship("PointObservation")
