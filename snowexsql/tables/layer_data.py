@@ -27,7 +27,6 @@ class LayerData(
     sample_c = Column(String(20))
     value = Column(String(50))
     flags = Column(String(20))
-    units = Column(String(50))
 
     # Link the site id with a foreign key
     site_id = Column(

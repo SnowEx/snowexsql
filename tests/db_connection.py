@@ -125,8 +125,7 @@ class DBConnection(DBSetup):
             'geom': WKTElement(
                 "POINT(747987.6190615438 4324061.7062127385)", srid=26912
             ),
-            'date_accessed': date(2024, 7, 10),
-            'value': 94, 'units': 'cm'
+            'value': 94
         }
         self._add_entry(
             db.url, PointData, 'magnaprobe', ["TEST"],
@@ -145,8 +144,7 @@ class DBConnection(DBSetup):
             'geom': WKTElement(
                 "POINT(747987.6190615438 4324061.7062127385)", srid=26912
             ),
-            'date_accessed': date(2024, 7, 10),
-            'value': '42.5', 'units': 'kgm3',
+            'value': '42.5',
             'sample_a': '42.5'
         }
         self._add_entry(

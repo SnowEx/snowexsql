@@ -2,7 +2,8 @@ import pytest
 from sqlalchemy import Table
 
 from snowexsql.db import get_db, get_table_attributes
-from snowexsql.tables import ImageData, LayerData, PointData, Site
+from snowexsql.tables import ImageData, LayerData, PointData, Site, \
+    MeasurementType, DOI
 from .db_setup import DBSetup
 
 
@@ -10,7 +11,7 @@ class TestDB(DBSetup):
     base_atts = ['date', 'site_id']
     single_loc_atts = ['elevation', 'geom', 'time']
 
-    meas_atts = ['measurement_id', 'units']
+    meas_atts = ['measurement_id']
 
     site_atts = single_loc_atts + \
                 ['slope_angle', 'aspect', 'air_temp', 'total_depth',
@@ -26,6 +27,8 @@ class TestDB(DBSetup):
                  ['depth', 'value', 'bottom_depth', 'comments', 'sample_a',
                   'sample_b', 'sample_c']
     raster_atts = meas_atts + ['raster', 'description']
+    measurement_types_attributes = ['name', 'units']
+    DOI_attributes = ['doi', 'date_accessed']
 
     def setup_class(self):
         """
@@ -55,11 +58,17 @@ class TestDB(DBSetup):
         for c in self.layer_atts:
             assert c in columns
 
-    @pytest.mark.parametrize("DataCls,attributes", [
-        (Site, site_atts),
-        (PointData, point_atts),
-        (LayerData, layer_atts),
-        (ImageData, raster_atts)])
+    @pytest.mark.parametrize(
+        "DataCls,attributes", 
+        [
+            (Site, site_atts),
+            (PointData, point_atts),
+            (LayerData, layer_atts),
+            (ImageData, raster_atts),
+            (MeasurementType, measurement_types_attributes),
+            (DOI, DOI_attributes)
+        ]
+    )
     def test_get_table_attributes(self, DataCls, attributes):
         """
         Test we return a correct list of table columns from db.py
