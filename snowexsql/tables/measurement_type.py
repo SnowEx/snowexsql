@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Text, String, Integer, ForeignKey, Date
+from sqlalchemy import Boolean, Column, Text, Integer, ForeignKey
 from sqlalchemy.orm import relationship, declared_attr
 
 from .base import Base
@@ -8,10 +8,12 @@ class MeasurementType(Base):
     """
     Table to store the measurement types
     """
-    __tablename__ = 'measurements'
+    __tablename__ = 'measurement_type'
 
-    name = Column(String())
+    name = Column(Text)
     units = Column(Text)
+    derived = Column(Boolean, default=False)
+
 
 
 class HasMeasurement:
@@ -21,7 +23,7 @@ class HasMeasurement:
 
     @declared_attr
     def measurement_id(cls):
-        return Column(Integer, ForeignKey('public.measurements.id'),
+        return Column(Integer, ForeignKey('public.measurement_type.id'),
                       index=True)
 
     @declared_attr
