@@ -6,13 +6,11 @@ from snowexsql.db import (
     DB_CONNECTION_PROTOCOL, db_connection_string, get_db, get_table_attributes,
     load_credentials
 )
-from snowexsql.tables import ImageData, LayerData, PointData, Site, \
-    MeasurementType, DOI
+from snowexsql.tables import LayerData, Site
 from .db_setup import DBSetup
 
 
 class TestDB(DBSetup):
-    base_atts = ['date', 'site_id']
     single_loc_atts = ['elevation', 'geom', 'time']
 
     meas_atts = ['measurement_type_id']
@@ -24,15 +22,10 @@ class TestDB(DBSetup):
                  'ground_vegetation', 'vegetation_height',
                  'tree_canopy', 'site_notes']
 
-    point_atts = single_loc_atts + meas_atts + \
-                 ['version_number', 'equipment', 'value', 'instrument_id']
-
     layer_atts = meas_atts + \
                  ['depth', 'value', 'bottom_depth', 'comments', 'sample_a',
                   'sample_b', 'sample_c']
     raster_atts = meas_atts + ['raster', 'description']
-    measurement_types_attributes = ['name', 'units','derived']
-    DOI_attributes = ['doi', 'date_accessed']
 
     def setup_class(self):
         """
@@ -40,17 +33,7 @@ class TestDB(DBSetup):
         """
         super().setup_class()
         # only reflect the tables we will use
-        self.metadata.reflect(self.engine, only=['points', 'layers'])
-
-    def test_point_structure(self):
-        """
-        Tests our tables are in the database
-        """
-        t = Table("points", self.metadata, autoload=True)
-        columns = [m.key for m in t.columns]
-
-        for c in self.point_atts:
-            assert c in columns
+        self.metadata.reflect(self.engine, only=['layers'])
 
     def test_layer_structure(self):
         """
@@ -66,11 +49,7 @@ class TestDB(DBSetup):
         "DataCls,attributes",
         [
             (Site, site_atts),
-            (PointData, point_atts),
             (LayerData, layer_atts),
-            (ImageData, raster_atts),
-            (MeasurementType, measurement_types_attributes),
-            (DOI, DOI_attributes)
         ]
     )
     def test_get_table_attributes(self, DataCls, attributes):
