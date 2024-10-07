@@ -10,6 +10,11 @@ from sqlalchemy.orm import sessionmaker
 
 from snowexsql.tables.base import Base
 
+# This library requires a postgres dialect and the psycopg2 driver
+DB_CONNECTION_PROTOCOL = 'postgresql+psycopg2://'
+# Always create a Session in UTC time
+DB_CONNECTION_OPTIONS = {"options": "-c timezone=UTC"}
+
 
 def initialize(engine):
     """
@@ -22,55 +27,73 @@ def initialize(engine):
     meta.create_all(bind=engine)
 
 
-def get_db(db_str, credentials=None, return_metadata=False):
+def load_credentials(credentials_path):
+    """
+    Load username and password from a user supplied credential file
+
+    Args:
+        credentials_path (string): Full path to credentials file
+    """
+    with open(credentials_path) as fp:
+        creds = json.load(fp)
+        return creds['username'], creds['password']
+
+
+def db_connection_string(db_name, credentials_path=None):
+    """
+    Construct a connection info string for SQLAlchemy database
+
+    Args:
+        db_name:    The name of the database to connect to
+        credentials_path: Path to a json file containing username and password
+                          for the database
+
+    Returns:
+        String - DB connection
+    """
+    db = DB_CONNECTION_PROTOCOL
+
+    if credentials_path is not None:
+        username, password = load_credentials(credentials_path)
+        db += f"{username}:{password}@{db_name}"
+    else:
+        db += f"{db_name}"
+
+    return db
+
+
+def get_db(db_name, credentials=None, return_metadata=False):
     """
     Returns the DB engine, MetaData, and session object
 
     Args:
-        db_str: Just the name of the database
-        credentials: Path to a json file containing username and password for the database
+        db_name:    The name of the database to connect to
+        credentials: Path to a json file containing username and password for
+                     the database
         return_metadata: Boolean indicating whether the metadata object is
                          being returned, useful only for developers
 
     Returns:
         tuple: **engine** - sqlalchemy Engine object for directly sending
-                            querys to the DB
+                            queries to the DB
                **session** - sqlalchemy Session Object for using object
                              relational mapping (ORM)
                **metadata** (optional) - sqlalchemy MetaData object for
                             modifying the database
     """
+    db_connection = db_connection_string(db_name, credentials)
 
-    # This library requires a postgres dialect and the psycopg2 driver
-    prefix = f'postgresql+psycopg2://'
-
-    if credentials is not None:
-        # Read in the credentials
-        with open(credentials) as fp:
-            creds = json.load(fp)
-            username = creds['username']
-            password = creds['password']
-
-        db = f"{prefix}{username}:{password}@{db_str}"
-    else:
-        db = f"{prefix}{db_str}"
-
-    # Always create a Session in UTC time
     engine = create_engine(
-        db, echo=False, connect_args={
-            "options": "-c timezone=UTC"})
+        db_connection, echo=False, connect_args=DB_CONNECTION_OPTIONS
+    )
 
-    Session = sessionmaker(bind=engine)
-    metadata = MetaData()
-    session = Session(expire_on_commit=False)
+    session = sessionmaker(bind=engine)
+    session = session(expire_on_commit=False)
 
     if return_metadata:
-        result = (engine, session, metadata)
-
+        return engine, session, MetaData()
     else:
-        result = (engine, session)
-
-    return result
+        return engine, session
 
 
 def get_table_attributes(DataCls):
