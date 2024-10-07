@@ -1,7 +1,14 @@
 import json
 from os.path import dirname, join
 
+from sqlalchemy import orm
+
 from snowexsql.db import get_db, initialize
+
+# DB Configuration and Session
+CREDENTIAL_FILE = join(dirname(__file__), 'credentials.json')
+DB_INFO = json.load(open(CREDENTIAL_FILE))
+SESSION = orm.scoped_session(orm.sessionmaker())
 
 
 class DBSetup:
@@ -9,8 +16,8 @@ class DBSetup:
     Base class for all our tests. Ensures that we clean up after every class
     that's run
     """
-    CREDENTIAL_FILE = join(dirname(__file__), 'credentials.json')
-    DB_INFO = json.load(open(CREDENTIAL_FILE))
+    CREDENTIAL_FILE = CREDENTIAL_FILE
+    DB_INFO = DB_INFO
 
     @classmethod
     def database_name(cls):
