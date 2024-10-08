@@ -3,12 +3,12 @@ from sqlalchemy.orm import relationship
 
 from .base import Base
 from .doi import HasDOI
-from .measurement_type import HasMeasurement
+from .measurement_type import HasMeasurementType
 from .instrument import HasInstrument
 
 
 class LayerData(
-    HasMeasurement, HasInstrument, Base, HasDOI
+    HasMeasurementType, HasInstrument, Base, HasDOI
 ):
     """
     Class representing the layers table. This table holds all layers or
