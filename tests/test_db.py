@@ -11,7 +11,7 @@ class TestDB(DBSetup):
     base_atts = ['date', 'site_id']
     single_loc_atts = ['elevation', 'geom', 'time']
 
-    meas_atts = ['measurement_id']
+    meas_atts = ['measurement_type_id']
 
     site_atts = single_loc_atts + \
                 ['slope_angle', 'aspect', 'air_temp', 'total_depth',

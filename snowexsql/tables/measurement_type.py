@@ -16,13 +16,13 @@ class MeasurementType(Base):
 
 
 
-class HasMeasurement:
+class HasMeasurementType:
     """
     Class to extend when including a measurement type
     """
 
     @declared_attr
-    def measurement_id(cls):
+    def measurement_type_id(cls):
         return Column(Integer, ForeignKey('public.measurement_type.id'),
                       index=True)
 
