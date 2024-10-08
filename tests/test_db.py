@@ -11,7 +11,7 @@ class TestDB(DBSetup):
     base_atts = ['date', 'site_id']
     single_loc_atts = ['elevation', 'geom', 'time']
 
-    meas_atts = ['measurement_id']
+    meas_atts = ['measurement_type_id']
 
     site_atts = single_loc_atts + \
                 ['slope_angle', 'aspect', 'air_temp', 'total_depth',
@@ -27,7 +27,7 @@ class TestDB(DBSetup):
                  ['depth', 'value', 'bottom_depth', 'comments', 'sample_a',
                   'sample_b', 'sample_c']
     raster_atts = meas_atts + ['raster', 'description']
-    measurement_types_attributes = ['name', 'units']
+    measurement_types_attributes = ['name', 'units','derived']
     DOI_attributes = ['doi', 'date_accessed']
 
     def setup_class(self):
