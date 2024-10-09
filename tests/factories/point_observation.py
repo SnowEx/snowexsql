@@ -19,5 +19,5 @@ class PointObservationFactory(BaseFactory):
     campaign = factory.SubFactory(CampaignFactory)
     doi = factory.SubFactory(DOIFactory)
     instrument = factory.SubFactory(InstrumentFactory)
-    measurement = factory.SubFactory(MeasurementTypeFactory)
+    measurement_type = factory.SubFactory(MeasurementTypeFactory)
     observer = factory.SubFactory(ObserverFactory)

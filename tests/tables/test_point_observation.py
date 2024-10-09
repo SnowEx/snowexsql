@@ -33,8 +33,8 @@ class TestPointObservation:
         assert isinstance(self.subject.doi, DOI)
 
     def test_has_measurement_type(self):
-        assert self.subject.measurement is not None
-        assert isinstance(self.subject.measurement, MeasurementType)
+        assert self.subject.measurement_type is not None
+        assert isinstance(self.subject.measurement_type, MeasurementType)
 
     def test_has_instrument(self):
         assert self.subject.instrument is not None

@@ -10,9 +10,8 @@ from sqlalchemy.sql import func
 
 from snowexsql.conversions import query_to_geopandas, raster_to_rasterio
 from snowexsql.db import get_db
-from snowexsql.tables import ImageData, LayerData, PointData, Instrument, \
-    Observer, Site, Campaign, MeasurementType, DOI
-
+from snowexsql.tables import Campaign, DOI, ImageData, Instrument, LayerData, \
+    MeasurementType, Observer, PointData, Site
 
 LOG = logging.getLogger(__name__)
 DB_NAME = 'snow:hackweek@db.snowexdata.org/snowex'
@@ -162,7 +161,7 @@ class BaseDataset:
                         ).filter(DOI.doi == v)
                     elif k == "type":
                         qry = qry.join(
-                            qry_model.measurement
+                            qry_model.measurement_type
                         ).filter(MeasurementType.name == v)
                     # Filter to exact value
                     else:

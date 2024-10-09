@@ -5,12 +5,12 @@ from .base import Base
 from .campaign import InCampaign
 from .doi import HasDOI
 from .instrument import HasInstrument
-from .measurement_type import HasMeasurement
+from .measurement_type import HasMeasurementType
 from .observers import HasObserver
 
 
 class CampaignObservation(
-    Base, HasDOI, HasInstrument, HasMeasurement, HasObserver, InCampaign
+    Base, HasDOI, HasInstrument, HasMeasurementType, HasObserver, InCampaign
 ):
     """
     A campaign observation holds additional information for a point or image.

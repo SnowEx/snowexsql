@@ -1,5 +1,5 @@
-from sqlalchemy import Boolean, Column, Text, Integer, ForeignKey
-from sqlalchemy.orm import relationship, declared_attr
+from sqlalchemy import Boolean, Column, ForeignKey, Integer, Text
+from sqlalchemy.orm import declared_attr, relationship
 
 from .base import Base
 
@@ -15,17 +15,17 @@ class MeasurementType(Base):
     derived = Column(Boolean, default=False)
 
 
-
 class HasMeasurementType:
     """
     Class to extend when including a measurement type
     """
 
     @declared_attr
-    def measurement_type_id(cls):
-        return Column(Integer, ForeignKey('public.measurement_type.id'),
-                      index=True)
+    def measurement_type_id(self):
+        return Column(
+            Integer, ForeignKey('public.measurement_type.id'), index=True
+        )
 
     @declared_attr
-    def measurement(cls):
+    def measurement_type(self):
         return relationship('MeasurementType')

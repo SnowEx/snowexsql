@@ -98,7 +98,9 @@ class DBConnection(DBSetup):
             )
 
             object_kwargs = dict(
-                instrument=instrument, doi=doi, measurement=measurement_obj,
+                instrument=instrument,
+                doi=doi,
+                measurement_type=measurement_obj,
                 **kwargs
             )
             # Add site if given
