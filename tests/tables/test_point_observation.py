@@ -16,10 +16,10 @@ class TestPointObservation:
     def setup_method(self, point_observation_record):
         self.subject = point_observation_record
 
-    def test_point_observation_name(self, point_observation_factory):
+    def test_name_attribute(self, point_observation_factory):
         assert self.subject.name == point_observation_factory.name
 
-    def test_point_observation_description(self, point_observation_factory):
+    def test_description_attribute(self, point_observation_factory):
         assert (
             self.subject.description == point_observation_factory.description
         )
