@@ -1,4 +1,4 @@
-from sqlalchemy.orm import declared_attr, relationship
+from sqlalchemy.orm import Mapped, declared_attr, relationship
 
 from .campaign_observation import CampaignObservation, HasObservation
 
@@ -20,5 +20,5 @@ class HasImageObservation(HasObservation):
     Class to inherit when adding a observation relationship to a table
     """
     @declared_attr
-    def observation(self):
+    def observation(self) -> Mapped[ImageObservation]:
         return relationship("ImageObservation")
