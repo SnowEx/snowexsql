@@ -1,4 +1,4 @@
-from sqlalchemy import Column, ForeignKey, String, Text
+from sqlalchemy import Column, Date, ForeignKey, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from .base import Base
@@ -20,6 +20,7 @@ class CampaignObservation(
     # Data columns
     name = Column(Text)
     description = Column(Text)
+    date = Column(Date, nullable=False)
 
     # Single Table Inheritance column
     type = Column(String, nullable=False)

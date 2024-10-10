@@ -1,3 +1,5 @@
+import datetime
+
 import factory
 
 from snowexsql.tables.point_observation import PointObservation
@@ -15,6 +17,7 @@ class PointObservationFactory(BaseFactory):
 
     name = 'Point Observation'
     description = 'Point Description'
+    date = factory.LazyFunction(datetime.date.today)
 
     campaign = factory.SubFactory(CampaignFactory)
     doi = factory.SubFactory(DOIFactory)

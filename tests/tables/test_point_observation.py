@@ -1,3 +1,5 @@
+import datetime
+
 import pytest
 
 from snowexsql.tables import (
@@ -23,6 +25,9 @@ class TestPointObservation:
         assert (
             self.subject.description == point_observation_factory.description
         )
+
+    def test_date_attribute(self):
+        assert type(self.subject.date) is datetime.date
 
     def test_in_campaign(self):
         assert self.subject.campaign is not None
