@@ -1,4 +1,5 @@
 import logging
+import os
 from contextlib import contextmanager
 
 import geoalchemy2.functions as gfunc
@@ -11,7 +12,7 @@ from sqlalchemy.sql import func
 from snowexsql.conversions import query_to_geopandas, raster_to_rasterio
 from snowexsql.db import get_db
 from snowexsql.tables import Campaign, DOI, ImageData, Instrument, LayerData, \
-    MeasurementType, Observer, PointData, Site
+    MeasurementType, Observer, PointData, PointObservation, Site
 
 LOG = logging.getLogger(__name__)
 DB_NAME = 'snow:hackweek@db.snowexdata.org/snowex'
@@ -102,6 +103,29 @@ class BaseDataset:
         return qry
 
     @classmethod
+    def _filter_instrument(cls, qry, value):
+        return qry.filter(
+            cls.MODEL.instrument.has(name=value)
+        )
+
+    @classmethod
+    def _filter_measurement_type(cls, qry, value):
+        return qry.join(
+            cls.MODEL.measurement_type
+        ).filter(MeasurementType.name == value)
+
+    @classmethod
+    def _filter_doi(cls, qry, value):
+        return qry.join(cls.MODEL.doi).filter(DOI.doi == value)
+
+    @classmethod
+    def _filter_column(cls, query_model, key):
+        if key == 'date' and query_model == PointData:
+            return PointData.date_only
+        else:
+            return getattr(query_model, key)
+
+    @classmethod
     def extend_qry(cls, qry, check_size=True, **kwargs):
         if cls.MODEL is None:
             raise ValueError("You must use a class with a MODEL.")
@@ -110,12 +134,15 @@ class BaseDataset:
         for k, v in kwargs.items():
             # Handle special operations
             if k in cls.ALLOWED_QRY_KWARGS:
+
+                qry_model = cls.MODEL
                 # Logic for filtering on date with LayerData
                 if "date" in k and cls.MODEL == LayerData:
                     qry = qry.join(LayerData.site)
                     qry_model = Site
-                else:
-                    qry_model = cls.MODEL
+                elif cls.MODEL == PointData:
+                    qry = qry.join(PointData.observation)
+
                 # standard filtering using qry.filter
                 if isinstance(v, list):
                     filter_col = getattr(qry_model, k)
@@ -136,17 +163,17 @@ class BaseDataset:
                     # Filter boundary
                     if "_greater_equal" in k:
                         key = k.split("_greater_equal")[0]
-                        filter_col = getattr(qry_model, key)
-                        qry = qry.filter(filter_col >= v)
+                        qry = qry.filter(
+                            cls._filter_column(qry_model, key) >= v
+                        )
                     elif "_less_equal" in k:
                         key = k.split("_less_equal")[0]
-                        filter_col = getattr(qry_model, key)
-                        qry = qry.filter(filter_col <= v)
+                        qry = qry.filter(
+                            cls._filter_column(qry_model, key) <= v
+                        )
                     # Filter linked columns
                     elif k == "instrument":
-                        qry = qry.filter(
-                            qry_model.instrument.has(name=v)
-                        )
+                        qry = cls._filter_instrument(qry, v)
                     elif k == "campaign":
                         qry = cls._filter_campaign(qry, v)
                     elif k == "site_id":
@@ -156,17 +183,14 @@ class BaseDataset:
                     elif k == "observer":
                         qry = cls._filter_observers(qry, v)
                     elif k == "doi":
-                        qry = qry.join(
-                            qry_model.doi
-                        ).filter(DOI.doi == v)
+                        qry = cls._filter_doi(qry, v)
                     elif k == "type":
-                        qry = qry.join(
-                            qry_model.measurement_type
-                        ).filter(MeasurementType.name == v)
+                        qry = cls._filter_measurement_type(qry, v)
                     # Filter to exact value
                     else:
-                        filter_col = getattr(qry_model, k)
-                        qry = qry.filter(filter_col == v)
+                        qry = qry.filter(
+                            cls._filter_column(qry_model, k) == v
+                        )
                     LOG.debug(
                         f"Filtering {k} to list {v}"
                     )
@@ -205,6 +229,103 @@ class BaseDataset:
             results = cls.retrieve_single_value_result(results)
 
         return results
+
+    @classmethod
+    def from_filter(cls, **kwargs):
+        """
+        Get data for the class by filtering by allowed arguments. The allowed
+        filters are cls.ALLOWED_QRY_KWARGS.
+        """
+        with db_session(cls.DB_NAME) as (session, engine):
+            try:
+                qry = session.query(cls.MODEL)
+                qry = cls.extend_qry(qry, **kwargs)
+
+                # For debugging in the test suite and not recommended
+                # in production
+                # https://docs.sqlalchemy.org/en/20/faq/sqlexpressions.html#rendering-postcompile-parameters-as-bound-parameters  ## noqa
+                if 'DEBUG_QUERY' in os.environ:
+                    full_sql_query = qry.statement.compile(
+                        compile_kwargs={"literal_binds": True}
+                    )
+                    print("\n ** SQL query **")
+                    print(full_sql_query)
+
+                df = query_to_geopandas(qry, engine)
+            except Exception as e:
+                session.close()
+                LOG.error("Failed query for PointData")
+                raise e
+
+        return df
+
+    @classmethod
+    def from_area(cls, shp=None, pt=None, buffer=None, crs=26912, **kwargs):
+        """
+        Get data for the class within a specific shapefile or
+        within a point and a known buffer
+        Args:
+            shp: shapely geometry in which to filter
+            pt: shapely point that will have a buffer applied in order
+                to find search area
+            buffer: in same units as point
+            crs: integer crs to use
+            kwargs: for more filtering or limiting (cls.ALLOWED_QRY_KWARGS)
+        Returns: Geopandas dataframe of results
+
+        """
+        if shp is None and pt is None:
+            raise ValueError(
+                "Inputs must be a shape description or a point and buffer"
+            )
+        if (pt is not None and buffer is None) or \
+                (buffer is not None and pt is None):
+            raise ValueError("pt and buffer must be given together")
+        with db_session(cls.DB_NAME) as (session, engine):
+            try:
+                if shp is not None:
+                    qry = session.query(cls.MODEL)
+                    # Filter geometry based on Site for LayerData
+                    if cls.MODEL == LayerData:
+                        qry = qry.join(cls.MODEL.site).filter(
+                            func.ST_Within(
+                                Site.geom, from_shape(shp, srid=crs)
+                            )
+                        )
+                    else:
+                        qry = qry.filter(
+                            func.ST_Within(
+                                cls.MODEL.geom, from_shape(shp, srid=crs)
+                            )
+                        )
+                    qry = cls.extend_qry(qry, check_size=True, **kwargs)
+                    df = query_to_geopandas(qry, engine)
+                else:
+                    qry_pt = from_shape(pt)
+                    qry = session.query(
+                        gfunc.ST_SetSRID(
+                            func.ST_Buffer(qry_pt, buffer), crs
+                        )
+                    )
+
+                    buffered_pt = qry.all()[0][0]
+                    qry = session.query(cls.MODEL)
+                    # Filter geometry based on Site for LayerData
+                    if cls.MODEL == LayerData:
+                        qry = qry.join(cls.MODEL.site).filter(
+                            func.ST_Within(Site.geom, buffered_pt)
+                        )
+                    else:
+                        qry = qry.filter(
+                            func.ST_Within(cls.MODEL.geom, buffered_pt)
+                        )
+                    qry = cls.extend_qry(qry, check_size=True, **kwargs)
+                    df = query_to_geopandas(qry, engine)
+            except Exception as e:
+                session.close()
+                raise e
+
+        return df
 
     @property
     def all_site_names(self):
@@ -286,98 +407,78 @@ class PointMeasurements(BaseDataset):
     MODEL = PointData
 
     @classmethod
-    def from_filter(cls, **kwargs):
-        """
-        Get data for the class by filtering by allowed arguments. The allowed
-        filters are cls.ALLOWED_QRY_KWARGS.
-        """
-        with db_session(cls.DB_NAME) as (session, engine):
-            try:
-                qry = session.query(cls.MODEL)
-                qry = cls.extend_qry(qry, **kwargs)
-                df = query_to_geopandas(qry, engine)
-            except Exception as e:
-                session.close()
-                LOG.error("Failed query for PointData")
-                raise e
-
-        return df
+    def _filter_campaign(cls, qry, value):
+        return qry.join(
+            cls.MODEL.observation
+        ).join(
+            PointObservation.campaign
+        ).filter(
+            Campaign.name == value
+        )
 
     @classmethod
-    def from_area(cls, shp=None, pt=None, buffer=None, crs=26912, **kwargs):
+    def _filter_measurement_type(cls, qry, value):
+        return qry.join(
+            cls.MODEL.observation
+        ).join(
+            PointObservation.measurement_type
+        ).filter(
+            MeasurementType.name == value
+        )
+
+    @classmethod
+    def _filter_instrument(cls, qry, value):
+        return qry.join(
+            cls.MODEL.observation
+        ).join(
+            PointObservation.instrument
+        ).filter(
+            Instrument.name == value
+        )
+
+    @classmethod
+    def _filter_doi(cls, qry, value):
+        return qry.join(
+            cls.MODEL.observation
+        ).join(
+            PointObservation.doi
+        ).filter(
+            DOI.doi == value
+        )
+
+    @classmethod
+    def _filter_observers(cls, qry, value):
+        return qry.join(
+            cls.MODEL.observation
+        ).join(
+            PointObservation.observer
+        ).filter(
+            Observer.name == value
+        )
+
+    @property
+    def all_instruments(self):
         """
-        Get data for the class within a specific shapefile or
-        within a point and a known buffer
-        Args:
-            shp: shapely geometry in which to filter
-            pt: shapely point that will have a buffer applied in order
-                to find search area
-            buffer: in same units as point
-            crs: integer crs to use
-            kwargs: for more filtering or limiting (cls.ALLOWED_QRY_KWARGS)
-        Returns: Geopandas dataframe of results
-
+        Return all distinct instruments in the data
         """
-        if shp is None and pt is None:
-            raise ValueError(
-                "Inputs must be a shape description or a point and buffer"
-            )
-        if (pt is not None and buffer is None) or \
-                (buffer is not None and pt is None):
-            raise ValueError("pt and buffer must be given together")
-        with db_session(cls.DB_NAME) as (session, engine):
-            try:
-                if shp is not None:
-                    qry = session.query(cls.MODEL)
-                    # Filter geometry based on Site for LayerData
-                    if cls.MODEL == LayerData:
-                        qry = qry.join(cls.MODEL.site).filter(
-                            func.ST_Within(
-                                Site.geom, from_shape(shp, srid=crs)
-                            )
-                        )
-                    else:
-                        qry = qry.filter(
-                            func.ST_Within(
-                                cls.MODEL.geom, from_shape(shp, srid=crs)
-                            )
-                        )
-                    qry = cls.extend_qry(qry, check_size=True, **kwargs)
-                    df = query_to_geopandas(qry, engine)
-                else:
-                    qry_pt = from_shape(pt)
-                    qry = session.query(
-                        gfunc.ST_SetSRID(
-                            func.ST_Buffer(qry_pt, buffer), crs
-                        )
-                    )
-
-                    buffered_pt = qry.all()[0][0]
-                    qry = session.query(cls.MODEL)
-                    # Filter geometry based on Site for LayerData
-                    if cls.MODEL == LayerData:
-                        qry = qry.join(cls.MODEL.site).filter(
-                            func.ST_Within(Site.geom, buffered_pt)
-                        )
-                    else:
-                        qry = qry.filter(
-                            func.ST_Within(cls.MODEL.geom, buffered_pt)
-                        )
-                    qry = cls.extend_qry(qry, check_size=True, **kwargs)
-                    df = query_to_geopandas(qry, engine)
-            except Exception as e:
-                session.close()
-                raise e
-
-        return df
+        with (db_session(self.DB_NAME) as (session, engine)):
+            result = session.query(Instrument.name).filter(
+                Instrument.id.in_(
+                    session.query(PointObservation.instrument_id).distinct()
+                )
+            ).all()
+        return self.retrieve_single_value_result(result)
 
 
 class TooManyRastersException(Exception):
-    """ Exceptiont to report to users that their query will produce too many rasters"""
+    """
+    Exception to report to users that their query will produce too many
+    rasters
+    """
     pass
 
 
-class LayerMeasurements(PointMeasurements):
+class LayerMeasurements(BaseDataset):
     """
     API class for access to LayerData
     """
