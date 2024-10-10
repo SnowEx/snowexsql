@@ -117,8 +117,40 @@ class BaseDataset:
                     qry_model = Site
                 else:
                     qry_model = cls.MODEL
+
+                # Filter boundary
+                if "_greater_equal" in k:
+                    key = k.split("_greater_equal")[0]
+                    filter_col = getattr(qry_model, key)
+                    qry = qry.filter(filter_col >= v)
+                elif "_less_equal" in k:
+                    key = k.split("_less_equal")[0]
+                    filter_col = getattr(qry_model, key)
+                    qry = qry.filter(filter_col <= v)
+                # Filter linked columns
+                elif k == "instrument":
+                    qry = qry.filter(
+                        qry_model.instrument.has(name=v)
+                    )
+                elif k == "campaign":
+                    qry = cls._filter_campaign(qry, v)
+                elif k == "site":
+                    qry = qry.filter(
+                        qry_model.site.has(name=v)
+                    )
+                elif k == "observer":
+                    qry = cls._filter_observers(qry, v)
+                elif k == "doi":
+                    qry = qry.join(
+                        qry_model.doi
+                    ).filter(DOI.doi == v)
+                elif k == "type":
+                    qry = qry.join(
+                        qry_model.measurement
+                    ).filter(MeasurementType.name == v)
                 # standard filtering using qry.filter
-                if isinstance(v, list):
+
+                elif isinstance(v, list):
                     filter_col = getattr(qry_model, k)
                     if k == "date":
                         raise ValueError(
@@ -131,45 +163,14 @@ class BaseDataset:
                         )
                     qry = qry.filter(filter_col.in_(v))
                     LOG.debug(
-                        f"Filtering {k} to value {v}"
+                        f"Filtering {k} to list {v}"
                     )
                 else:
-                    # Filter boundary
-                    if "_greater_equal" in k:
-                        key = k.split("_greater_equal")[0]
-                        filter_col = getattr(qry_model, key)
-                        qry = qry.filter(filter_col >= v)
-                    elif "_less_equal" in k:
-                        key = k.split("_less_equal")[0]
-                        filter_col = getattr(qry_model, key)
-                        qry = qry.filter(filter_col <= v)
-                    # Filter linked columns
-                    elif k == "instrument":
-                        qry = qry.filter(
-                            qry_model.instrument.has(name=v)
-                        )
-                    elif k == "campaign":
-                        qry = cls._filter_campaign(qry, v)
-                    elif k == "site_id":
-                        qry = qry.filter(
-                            qry_model.site.has(name=v)
-                        )
-                    elif k == "observer":
-                        qry = cls._filter_observers(qry, v)
-                    elif k == "doi":
-                        qry = qry.join(
-                            qry_model.doi
-                        ).filter(DOI.doi == v)
-                    elif k == "type":
-                        qry = qry.join(
-                            qry_model.measurement
-                        ).filter(MeasurementType.name == v)
                     # Filter to exact value
-                    else:
-                        filter_col = getattr(qry_model, k)
-                        qry = qry.filter(filter_col == v)
+                    filter_col = getattr(qry_model, k)
+                    qry = qry.filter(filter_col == v)
                     LOG.debug(
-                        f"Filtering {k} to list {v}"
+                        f"Filtering {k} to value {v}"
                     )
 
             # to avoid limit before filter
@@ -208,7 +209,7 @@ class BaseDataset:
         return results
 
     @property
-    def all_site_names(self):
+    def all_campaigns(self):
         """
         Return all campaign names
         """
@@ -374,7 +375,10 @@ class PointMeasurements(BaseDataset):
 
 
 class TooManyRastersException(Exception):
-    """ Exceptiont to report to users that their query will produce too many rasters"""
+    """
+    Exception to report to users that their query will produce too many
+    rasters
+    """
     pass
 
 
@@ -384,14 +388,13 @@ class LayerMeasurements(PointMeasurements):
     """
     MODEL = LayerData
     ALLOWED_QRY_KWARGS = [
-        "campaign", "site_id", "date", "instrument", "observer", "type",
-        "utm_zone", "pit_id", "date_greater_equal", "date_less_equal",
+        "campaign", "site", "date", "instrument", "observer", "type",
+        "utm_zone", "date_greater_equal", "date_less_equal",
         "doi", "value_greater_equal", 'value_less_equal'
     ]
 
     @classmethod
     def _filter_campaign(cls, qry, v):
-
         qry = qry.join(cls.MODEL.site).join(
             Site.campaign).filter(Campaign.name == v)
         return qry
@@ -403,9 +406,10 @@ class LayerMeasurements(PointMeasurements):
         return qry
 
     @property
-    def all_site_ids(self):
+    def all_sites(self):
         """
-        Return all specific site names
+        Return all specific site names.
+        A site is equivalent to a pit - so this is equivalent to a pit id
         """
         with db_session(self.DB_NAME) as (session, engine):
             qry = session.query(Site.name).distinct()

@@ -18,8 +18,8 @@ class TestPointMeasurements(DBConnection):
         result = clz().all_types
         assert result == ['depth', 'density']
 
-    def test_all_site_names(self, clz):
-        result = clz().all_site_names
+    def test_all_campaigns(self, clz):
+        result = clz().all_campaigns
         assert result == ['Grand Mesa']
 
     def test_all_dates(self, clz):

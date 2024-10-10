@@ -18,12 +18,12 @@ class TestLayerMeasurements(DBConnection):
         result = clz().all_types
         assert result == ["depth", "density"]
 
-    def test_all_site_names(self, clz):
-        result = clz().all_site_names
+    def test_all_campaigns(self, clz):
+        result = clz().all_campaigns
         assert result == ['Grand Mesa']
 
-    def test_all_site_ids(self, clz):
-        result = clz().all_site_ids
+    def test_all_sites(self, clz):
+        result = clz().all_sites
         assert result == ['Fakepit1']
 
     def test_all_dates(self, clz):
@@ -42,7 +42,7 @@ class TestLayerMeasurements(DBConnection):
         "kwargs, expected_length, mean_value", [
             ({
                  "date": date(2020, 3, 12), "type": "density",
-                 "pit_id": "COERIB_20200312_0938"
+                 "site": "COERIB_20200312_0938"
              }, 0, np.nan),  # filter to 1 pit
             ({"instrument": "IRIS", "limit": 10}, 0, np.nan),  # limit works
             ({
