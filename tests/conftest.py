@@ -1,7 +1,11 @@
+import os
+from contextlib import contextmanager
+
 import pytest
 from pytest_factoryboy import register
 from sqlalchemy import create_engine
 
+import snowexsql
 from snowexsql.db import db_connection_string, initialize
 from tests.factories import (
     CampaignFactory, DOIFactory, InstrumentFactory, MeasurementTypeFactory,
@@ -21,6 +25,12 @@ register(PointObservationFactory)
 
 @pytest.fixture(scope="session")
 def connection():
+# Add this factory to a test if you would like to debug the SQL statement
+# It will print the query from the BaseDataset.from_filter() method
+@pytest.fixture(scope='session')
+def _debug_sql_query():
+    os.environ['DEBUG_QUERY'] = '1'
+
     database_name = DB_INFO["address"] + "/" + DB_INFO["db_name"]
     db_string = db_connection_string(database_name, CREDENTIAL_FILE)
 

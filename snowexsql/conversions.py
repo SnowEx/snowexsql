@@ -3,7 +3,6 @@ Module contains all conversions used for manipulating data. This includes:
 filetypes, datatypes, etc. Many tools here will be useful for most end users
 of the database.
 """
-
 import geopandas as gpd
 import pandas as pd
 from geoalchemy2.shape import to_shape
@@ -54,8 +53,10 @@ def query_to_geopandas(query, engine, **kwargs):
     # Fill out the variables in the query
     sql = query.statement.compile(dialect=postgresql.dialect())
 
-    # Get dataframe from geopandas using the query and engine
-    df = gpd.GeoDataFrame.from_postgis(sql, engine, **kwargs)
+    # Get dataframe from geopandas using the query and the DB connection.
+    # By passing in the actual connection, we maintain ownership of it and
+    # keep it alive until we close it.
+    df = gpd.read_postgis(sql, engine.connect(), **kwargs)
 
     return df
 
