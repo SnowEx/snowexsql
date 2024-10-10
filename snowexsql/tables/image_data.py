@@ -1,5 +1,5 @@
 from geoalchemy2 import Raster
-from sqlalchemy import Column, String
+from sqlalchemy import Column
 
 from .base import Base
 from .image_observation import HasImageObservation
@@ -11,4 +11,3 @@ class ImageData(Base, HasImageObservation):
     """
     __tablename__ = 'images'
     raster = Column(Raster)
-    units = Column(String(50))
