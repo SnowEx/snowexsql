@@ -10,8 +10,8 @@ class ImageObservation(CampaignObservation):
     """
     # Single Table Inheritance identifier
     __mapper_args__ = {
-        'polymorphic_on': "type",
-        'polymorphic_identity': 'ImageObservation'
+        'polymorphic_identity': 'ImageObservation',
+        'polymorphic_load': 'inline',
     }
 
 

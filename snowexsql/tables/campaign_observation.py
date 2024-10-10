@@ -24,6 +24,10 @@ class CampaignObservation(
     # Single Table Inheritance column
     type = Column(String, nullable=False)
 
+    __mapper_args__ = {
+        'polymorphic_on': type,
+    }
+
 
 class HasObservation:
     """

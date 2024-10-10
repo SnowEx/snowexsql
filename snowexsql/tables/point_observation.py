@@ -10,8 +10,8 @@ class PointObservation(CampaignObservation):
     """
     # Single Table Inheritance identifier
     __mapper_args__ = {
-        'polymorphic_on': "type",
-        'polymorphic_identity': 'PointObservation'
+        'polymorphic_identity': 'PointObservation',
+        'polymorphic_load': 'inline',
     }
 
 
