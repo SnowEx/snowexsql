@@ -1,6 +1,7 @@
-from datetime import date
+from datetime import date, datetime
 
 import pytest
+from geoalchemy2 import WKBElement
 
 from snowexsql.tables import PointData
 
@@ -24,3 +25,9 @@ class TestPointData:
 
     def test_date_attribute(self):
         assert type(self.subject.date) is date
+
+    def test_elevation_attribute(self, point_data_factory):
+        assert self.subject.elevation == point_data_factory.elevation
+
+    def test_geom_attribute(self):
+        assert isinstance(self.subject.geom, WKBElement)
