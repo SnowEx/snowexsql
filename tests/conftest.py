@@ -23,31 +23,63 @@ register(PointDataFactory)
 register(PointObservationFactory)
 
 
-@pytest.fixture(scope="session")
-def connection():
 # Add this factory to a test if you would like to debug the SQL statement
 # It will print the query from the BaseDataset.from_filter() method
 @pytest.fixture(scope='session')
 def _debug_sql_query():
     os.environ['DEBUG_QUERY'] = '1'
 
+
+@pytest.fixture(scope='function')
+def db_test_session(monkeypatch, sqlalchemy_engine):
+    """
+    Ensure that we are using the same connection across the test suite and in
+    the API when initiating a session.
+    """
+    @contextmanager
+    def db_session(*args, **kwargs):
+        yield SESSION(), sqlalchemy_engine
+
+    monkeypatch.setattr(snowexsql.api, "db_session", db_session)
+
+
+@pytest.fixture(scope='function')
+def db_test_connection(monkeypatch, sqlalchemy_engine, connection):
+    def test_connection():
+        return connection
+
+    monkeypatch.setattr(sqlalchemy_engine, 'connect', test_connection)
+
+
+@pytest.fixture(scope='session')
+def test_db_info():
     database_name = DB_INFO["address"] + "/" + DB_INFO["db_name"]
-    db_string = db_connection_string(database_name, CREDENTIAL_FILE)
+    return db_connection_string(database_name, CREDENTIAL_FILE)
 
-    engine = create_engine(db_string)
+
+@pytest.fixture(scope='session')
+def sqlalchemy_engine(test_db_info):
+    engine = create_engine(
+        test_db_info,
+        pool_pre_ping=True
+    )
     initialize(engine)
-    connection = engine.connect()
 
-    yield connection
+    yield engine
 
-    connection.close()
     engine.dispose()
+
+
+@pytest.fixture(scope="session")
+def connection(sqlalchemy_engine):
+    with sqlalchemy_engine.connect() as connection:
+        yield connection
 
 
 @pytest.fixture(scope="function", autouse=True)
 def db_session(connection):
     # Based on:
-    # https://docs.sqlalchemy.org/en/20/orm/session_transaction.html#joining-a-session-into-an-external-transaction-such-as-for-test-suites
+    # https://docs.sqlalchemy.org/en/20/orm/session_transaction.html#joining-a-session-into-an-external-transaction-such-as-for-test-suites  ## noqa
 
     transaction = connection.begin()
 
