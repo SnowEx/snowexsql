@@ -2,12 +2,25 @@ import pytest
 from sqlalchemy import Engine, MetaData, Table
 from sqlalchemy.orm import Session
 
+import snowexsql
 from snowexsql.db import (
     DB_CONNECTION_PROTOCOL, db_connection_string, get_db, get_table_attributes,
     load_credentials
 )
 from snowexsql.tables import LayerData, Site
 from .db_setup import DBSetup
+
+
+@pytest.fixture(scope='function')
+def db_connection_string_patch(monkeypatch, test_db_info):
+    def db_string(_name, _credentials):
+        return test_db_info
+
+    monkeypatch.setattr(
+        snowexsql.db,
+        'db_connection_string',
+        db_string
+    )
 
 
 class TestDB(DBSetup):
@@ -90,12 +103,15 @@ class TestDBConnectionInfo:
         assert user not in db_string
         assert password not in db_string
 
-    def test_returns_engine(self):
+    @pytest.mark.usefixtures('db_connection_string_patch')
+    def test_returns_engine(self, monkeypatch, test_db_info):
         assert isinstance(get_db(DBSetup.database_name())[0], Engine)
 
+    @pytest.mark.usefixtures('db_connection_string_patch')
     def test_returns_session(self):
         assert isinstance(get_db(DBSetup.database_name())[1], Session)
 
+    @pytest.mark.usefixtures('db_connection_string_patch')
     def test_returns_metadata(self):
         assert isinstance(
             get_db(DBSetup.database_name(), return_metadata=True)[2],
