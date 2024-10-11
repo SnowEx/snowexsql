@@ -73,6 +73,11 @@ def sqlalchemy_engine(test_db_info):
 @pytest.fixture(scope="session")
 def connection(sqlalchemy_engine):
     with sqlalchemy_engine.connect() as connection:
+        # Configure session
+        SESSION.configure(
+            bind=connection, join_transaction_mode="create_savepoint"
+        )
+
         yield connection
 
 
@@ -82,11 +87,6 @@ def db_session(connection):
     # https://docs.sqlalchemy.org/en/20/orm/session_transaction.html#joining-a-session-into-an-external-transaction-such-as-for-test-suites  ## noqa
 
     transaction = connection.begin()
-
-    # Configure session
-    SESSION.configure(
-        bind=connection, join_transaction_mode="create_savepoint"
-    )
 
     # Create a new session
     session = SESSION()
