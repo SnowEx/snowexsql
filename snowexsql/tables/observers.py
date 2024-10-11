@@ -22,5 +22,5 @@ class HasObserver:
     )
 
     @declared_attr
-    def observer(self):
+    def observer(self) -> Mapped[Observer]:
         return relationship('Observer')
