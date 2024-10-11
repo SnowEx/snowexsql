@@ -118,6 +118,7 @@ class TestDBConnectionInfo:
             MetaData
         )
 
+    @pytest.mark.usefixtures('db_connection_string_patch')
     @pytest.mark.parametrize("return_metadata, expected_objs", [
         (False, 2),
         (True, 3)])
