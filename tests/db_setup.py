@@ -4,6 +4,9 @@ from os.path import dirname, join
 from sqlalchemy import orm
 
 from snowexsql.db import get_db, initialize
+from snowexsql.tables import (Campaign, DOI, Instrument, LayerData,
+                              MeasurementType, Observer, Site)
+from snowexsql.tables.site import SiteObservers
 
 # DB Configuration and Session
 CREDENTIAL_FILE = join(dirname(__file__), 'credentials.json')
@@ -44,6 +47,18 @@ class DBSetup:
         NOTE: Not dropping the DB since this is done at every test class
               initialization
         """
+        # TODO - Hack to make different data loading methods co-exist
+        #        Remove this once we switch all to using factory boy
+        cls.session.query(LayerData).delete()
+        cls.session.query(SiteObservers).delete()
+        cls.session.query(Observer).delete()
+        cls.session.query(Site).delete()
+        cls.session.query(Instrument).delete()
+        cls.session.query(Campaign).delete()
+        cls.session.query(DOI).delete()
+        cls.session.query(MeasurementType).delete()
+        cls.session.commit()
+
         cls.session.flush()
         cls.session.rollback()
         cls.session.close()
