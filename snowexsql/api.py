@@ -461,7 +461,7 @@ class PointMeasurements(BaseDataset):
         """
         Return all distinct instruments in the data
         """
-        with (db_session(self.DB_NAME) as (session, engine)):
+        with db_session(self.DB_NAME) as (session, engine):
             result = session.query(Instrument.name).filter(
                 Instrument.id.in_(
                     session.query(PointObservation.instrument_id).distinct()
