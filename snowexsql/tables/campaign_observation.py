@@ -14,6 +14,8 @@ class CampaignObservation(
 ):
     """
     A campaign observation holds additional information for a point or image.
+    This is a parent table that has a 'type' column to use for single table
+    inheritance. The PointObservation and ImageObservation tables use this.
     """
     __tablename__ = 'campaign_observations'
 
