@@ -61,7 +61,8 @@ def test_db_info():
 def sqlalchemy_engine(test_db_info):
     engine = create_engine(
         test_db_info,
-        pool_pre_ping=True
+        pool_pre_ping=True,
+        connect_args={'connect_timeout': 10}
     )
     initialize(engine)
 
