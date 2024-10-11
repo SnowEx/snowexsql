@@ -8,7 +8,7 @@ from snowexsql.db import (
     load_credentials
 )
 from snowexsql.tables import LayerData, Site
-from .db_setup import DBSetup
+from .db_setup import DBSetup, DB_INFO
 
 
 @pytest.fixture(scope='function')
@@ -95,6 +95,14 @@ class TestDBConnectionInfo:
 
         assert user in db_string
         assert password in db_string
+
+    def test_db_connection_string_has_db_and_host(self):
+        db_string = db_connection_string(
+            DBSetup.database_name(), DBSetup.CREDENTIAL_FILE
+        )
+
+        assert DB_INFO['address'] in db_string
+        assert DB_INFO['db_name'] in db_string
 
     def test_db_connection_string_no_credentials(self):
         db_string = db_connection_string(DBSetup.database_name())
