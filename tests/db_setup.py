@@ -59,6 +59,4 @@ class DBSetup:
         cls.session.query(MeasurementType).delete()
         cls.session.commit()
 
-        cls.session.flush()
-        cls.session.rollback()
         cls.session.close()
