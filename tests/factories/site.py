@@ -40,3 +40,12 @@ class SiteFactory(BaseFactory):
 
     campaign = factory.SubFactory(CampaignFactory, name="Snow Campaign 2")
     doi = factory.SubFactory(DOIFactory, doi='222-333')
+
+    @factory.post_generation
+    def observers(self, create, extracted, **kwargs):
+        if not create or not extracted:
+            # Simple build, or nothing to add, do nothing.
+            return
+
+        # Add the iterable of groups using bulk addition
+        self.observers.append(extracted)

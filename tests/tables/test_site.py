@@ -3,7 +3,7 @@ import datetime
 import pytest
 from geoalchemy2 import WKBElement
 
-from snowexsql.tables import Campaign, DOI, Site
+from snowexsql.tables import Campaign, DOI, Observer, Site
 
 
 @pytest.fixture
@@ -12,8 +12,8 @@ def site_attributes(site_factory):
 
 
 @pytest.fixture
-def site_record(site_factory, db_session):
-    site_factory.create()
+def site_record(site_factory, observer_factory, db_session):
+    site_factory.create(observers=(observer_factory.create()))
     return db_session.query(Site).first()
 
 
@@ -107,3 +107,7 @@ class TestSite:
         assert isinstance(self.subject.doi, DOI)
         assert self.subject.doi.doi == self.attributes.doi.doi
 
+    def test_has_observers(self):
+        assert self.subject.observers is not None
+        assert isinstance(self.subject.observers, list)
+        assert type(self.subject.observers[0]) == Observer
