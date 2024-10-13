@@ -1,6 +1,7 @@
 from .campaign import CampaignFactory
 from .doi import DOIFactory
 from .instrument import InstrumentFactory
+from .layer_data import LayerDataFactory
 from .measurement_type import MeasurementTypeFactory
 from .observer import ObserverFactory
 from .point_data import PointDataFactory
@@ -11,6 +12,7 @@ __all__ = [
     "CampaignFactory",
     "DOIFactory",
     "InstrumentFactory",
+    "LayerDataFactory",
     "MeasurementTypeFactory",
     "ObserverFactory",
     "PointDataFactory",

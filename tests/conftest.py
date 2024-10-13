@@ -7,17 +7,17 @@ from sqlalchemy import create_engine
 
 import snowexsql
 from snowexsql.db import db_connection_string, initialize
-from tests.factories import (
-    CampaignFactory, DOIFactory, InstrumentFactory,
-    MeasurementTypeFactory, ObserverFactory, PointDataFactory,
-    PointObservationFactory, SiteFactory
-)
+from tests.factories import (CampaignFactory, DOIFactory, InstrumentFactory,
+                             LayerDataFactory, MeasurementTypeFactory,
+                             ObserverFactory, PointDataFactory,
+                             PointObservationFactory, SiteFactory)
 from .db_setup import CREDENTIAL_FILE, DB_INFO, SESSION
 
 # Make factories available to tests
 register(CampaignFactory)
 register(DOIFactory)
 register(InstrumentFactory)
+register(LayerDataFactory)
 register(MeasurementTypeFactory)
 register(ObserverFactory)
 register(PointDataFactory)
