@@ -1,18 +1,12 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Thu Aug 22 11:56:34 2024
-
-@author: jtmaz
-"""
-
 from sqlalchemy import Column, String, Date, Float, Integer, ForeignKey
 from sqlalchemy.orm import Mapped, relationship, mapped_column
 from typing import List
 
-from .observers import Observer
-from .base import Base, SingleLocationData
+from .base import Base
 from .campaign import InCampaign
 from .doi import HasDOI
+from .observers import Observer
+from .single_location import SingleLocationData
 
 
 class SiteObservers(Base):

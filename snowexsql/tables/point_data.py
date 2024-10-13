@@ -1,29 +1,12 @@
-from sqlalchemy import Column, Float, Integer, String, ForeignKey, Date
-from sqlalchemy.orm import Mapped, relationship, mapped_column
-from typing import List
+from sqlalchemy import Column, Date, DateTime, Float, Integer, String
+from sqlalchemy.ext.hybrid import hybrid_property
 
-from .base import Base, SingleLocationData
-from .campaign import InCampaign
-from .doi import HasDOI
-from .measurement_type import HasMeasurementType
-from .observers import Observer
-from .instrument import HasInstrument
+from .base import Base
+from .point_observation import HasPointObservation
+from .single_location import SingleLocationData
 
 
-class PointObservers(Base):
-    """
-    Link table
-    """
-    __tablename__ = 'point_observers'
-
-    point_id = Column(Integer, ForeignKey('public.points.id'))
-    observer_id = Column(Integer, ForeignKey("public.observers.id"))
-
-
-class PointData(
-    SingleLocationData, HasMeasurementType, HasInstrument, Base, HasDOI,
-    InCampaign
-):
+class PointData(Base, SingleLocationData, HasPointObservation):
     """
     Class representing the points table. This table holds all point data.
     Here a single data entry is a single coordinate pair with a single value
@@ -31,8 +14,8 @@ class PointData(
     """
     __tablename__ = 'points'
 
-    # Date of the measurement
-    date = Column(Date)
+    # Date of the measurement with time
+    date = Column(DateTime)
 
     version_number = Column(Integer)
     equipment = Column(String())
@@ -41,8 +24,16 @@ class PointData(
     # bring these in instead of Measurement
     units = Column(String())
 
-    # id is a mapped column for many-to-many with observers
-    id: Mapped[int] = mapped_column(primary_key=True)
-    observers: Mapped[List[Observer]] = relationship(
-        secondary=PointObservers.__table__
-    )
+    @hybrid_property
+    def date_only(self):
+        """
+        Helper attribute to only query for dates of measurements
+        """
+        return self.date.date()
+
+    @date_only.expression
+    def date_only(cls):
+        """
+        Helper attribute to only query for dates of measurements
+        """
+        return cls.date.cast(Date)
