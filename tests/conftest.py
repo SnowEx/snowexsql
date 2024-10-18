@@ -6,7 +6,9 @@ from pytest_factoryboy import register
 from sqlalchemy import create_engine
 
 import snowexsql
-from snowexsql.db import db_connection_string, initialize
+from snowexsql.db import (
+    DB_CONNECTION_OPTIONS, db_connection_string, initialize
+)
 from tests.factories import (CampaignFactory, DOIFactory, InstrumentFactory,
                              LayerDataFactory, MeasurementTypeFactory,
                              ObserverFactory, PointDataFactory,
@@ -64,7 +66,10 @@ def sqlalchemy_engine(test_db_info):
     engine = create_engine(
         test_db_info,
         pool_pre_ping=True,
-        connect_args={'connect_timeout': 10}
+        connect_args={
+            'connect_timeout': 10,
+            **DB_CONNECTION_OPTIONS
+        }
     )
     initialize(engine)
 
