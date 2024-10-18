@@ -24,8 +24,8 @@ def db_connection_string_patch(monkeypatch, test_db_info):
 class TestDBConnectionInfo:
     def test_load_credentials(self):
         user, password = load_credentials(DBSetup.CREDENTIAL_FILE)
-        assert user == 'builder'
-        assert password == 'db_builder'
+        assert user == DB_INFO['username']
+        assert password == DB_INFO['password']
 
     def test_db_connection_string(self):
         db_string = db_connection_string(
