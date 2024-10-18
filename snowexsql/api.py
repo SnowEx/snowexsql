@@ -119,13 +119,6 @@ class BaseDataset:
         return qry.join(cls.MODEL.doi).filter(DOI.doi == value)
 
     @classmethod
-    def _filter_column(cls, query_model, key):
-        if key == 'date' and query_model == PointData:
-            return PointData.date_only
-        else:
-            return getattr(query_model, key)
-
-    @classmethod
     def extend_qry(cls, qry, check_size=True, **kwargs):
         if cls.MODEL is None:
             raise ValueError("You must use a class with a MODEL.")
@@ -164,12 +157,12 @@ class BaseDataset:
                     if "_greater_equal" in k:
                         key = k.split("_greater_equal")[0]
                         qry = qry.filter(
-                            cls._filter_column(qry_model, key) >= v
+                            getattr(qry_model, key) >= v
                         )
                     elif "_less_equal" in k:
                         key = k.split("_less_equal")[0]
                         qry = qry.filter(
-                            cls._filter_column(qry_model, key) <= v
+                            getattr(qry_model, key) <= v
                         )
                     # Filter linked columns
                     elif k == "instrument":
@@ -189,7 +182,7 @@ class BaseDataset:
                     # Filter to exact value
                     else:
                         qry = qry.filter(
-                            cls._filter_column(qry_model, k) == v
+                            getattr(qry_model, k) == v
                         )
                     LOG.debug(
                         f"Filtering {k} to list {v}"

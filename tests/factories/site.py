@@ -1,4 +1,4 @@
-import datetime
+from datetime import datetime, timezone
 
 import factory
 from geoalchemy2 import WKTElement
@@ -15,7 +15,7 @@ class SiteFactory(BaseFactory):
 
     name = 'Site Name'
     description = 'Site Description'
-    date = factory.LazyFunction(datetime.date.today)
+    datetime = factory.LazyFunction(lambda: datetime.now(timezone.utc))
 
     slope_angle = 0.0
     aspect = 0.0

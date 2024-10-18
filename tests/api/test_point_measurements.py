@@ -91,7 +91,7 @@ class TestPointMeasurementFilter:
 
     def test_date_and_instrument(self):
         result = self.subject.from_filter(
-            date=self.db_data.date.date(),
+            date=self.db_data.datetime.date(),
             instrument=self.db_data.observation.instrument.name,
         )
         assert len(result) == 1
@@ -110,7 +110,7 @@ class TestPointMeasurementFilter:
 
     def test_no_instrument_on_date(self):
         result = self.subject.from_filter(
-            date=self.db_data.date.date() + timedelta(days=1),
+            date=self.db_data.datetime.date() + timedelta(days=1),
             instrument=self.db_data.observation.instrument.name,
         )
         assert len(result) == 0
@@ -123,7 +123,7 @@ class TestPointMeasurementFilter:
 
     def test_date_and_measurement_type(self):
         result = self.subject.from_filter(
-            date=self.db_data.date.date(),
+            date=self.db_data.datetime.date(),
             type=self.db_data.observation.measurement_type.name,
         )
         assert len(result) == 1
@@ -145,21 +145,21 @@ class TestPointMeasurementFilter:
         assert result.loc[0].value == self.db_data.value
 
     def test_date_less_equal(self, point_data_factory):
-        greater_date = self.db_data.date.date() + timedelta(days=1)
-        point_data_factory.create(date=greater_date)
+        greater_date = self.db_data.datetime.date() + timedelta(days=1)
+        point_data_factory.create(datetime=greater_date)
 
         result = self.subject.from_filter(
-            date_less_equal=self.db_data.date.date(),
+            date_less_equal=self.db_data.datetime.date(),
         )
         assert len(result) == 1
         assert result.loc[0].value == self.db_data.value
 
     def test_date_greater_equal(self, point_data_factory):
-        greater_date = self.db_data.date.date() - timedelta(days=1)
-        point_data_factory.create(date=greater_date)
+        greater_date = self.db_data.datetime.date() - timedelta(days=1)
+        point_data_factory.create(datetime=greater_date)
 
         result = self.subject.from_filter(
-            date_greater_equal=self.db_data.date.date(),
+            date_greater_equal=self.db_data.datetime.date(),
         )
         assert len(result) == 1
         assert result.loc[0].value == self.db_data.value

@@ -1,4 +1,4 @@
-from datetime import date, time
+from datetime import datetime
 
 import pytest
 from geoalchemy2.elements import WKTElement
@@ -77,9 +77,8 @@ class DBConnection(DBSetup):
                     session, Site, dict(name=site_name),
                     object_kwargs=dict(
                         name=site_name, campaign=campaign,
-                        date=kwargs.pop("date"),
+                        datetime=kwargs.pop("datetime"),
                         geom=kwargs.pop("geom"),
-                        time=kwargs.pop("time"),
                         elevation=kwargs.pop("elevation"),
                         observers=observer_list,
                     )
@@ -119,8 +118,7 @@ class DBConnection(DBSetup):
     def populated_layer(self, db):
         # Fake data to implement
         row = {
-            'date': date(2020, 1, 28),
-            'time': time(18, 48),
+            'datetime': datetime(2020, 1, 28, 18, 48),
             'elevation': 3148.2,
             'geom': WKTElement(
                 "POINT(747987.6190615438 4324061.7062127385)", srid=26912

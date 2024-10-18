@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Date, DateTime, Float, Integer, String
+from sqlalchemy import Column, Date, Float, Integer, String
 from sqlalchemy.ext.hybrid import hybrid_property
 
 from .base import Base
@@ -14,9 +14,6 @@ class PointData(Base, SingleLocationData, HasPointObservation):
     """
     __tablename__ = 'points'
 
-    # Date of the measurement with time
-    date = Column(DateTime)
-
     version_number = Column(Integer)
     equipment = Column(String())
     value = Column(Float)
@@ -25,15 +22,15 @@ class PointData(Base, SingleLocationData, HasPointObservation):
     units = Column(String())
 
     @hybrid_property
-    def date_only(self):
+    def date(self):
         """
         Helper attribute to only query for dates of measurements
         """
-        return self.date.date()
+        return self.datetime.date()
 
-    @date_only.expression
-    def date_only(cls):
+    @date.expression
+    def date(cls):
         """
         Helper attribute to only query for dates of measurements
         """
-        return cls.date.cast(Date)
+        return cls.datetime.cast(Date)
