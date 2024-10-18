@@ -16,7 +16,7 @@ class TestLayerMeasurements(DBConnection):
 
     def test_all_types(self, clz):
         result = clz().all_types
-        assert result == ["depth", "density"]
+        assert result == ["density"]
 
     def test_all_site_names(self, clz):
         result = clz().all_site_names

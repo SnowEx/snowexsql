@@ -28,6 +28,8 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
+    "factory_boy<4",
+    "pytest-factoryboy<3",
     "pytest",
     "pytest-cov",
     "sphinx-autobuild<=2024.5",

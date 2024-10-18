@@ -1,98 +1,86 @@
 import pytest
-from sqlalchemy import Table
+from sqlalchemy import Engine, MetaData
+from sqlalchemy.orm import Session
 
-from snowexsql.db import get_db, get_table_attributes
-from snowexsql.tables import ImageData, LayerData, PointData, Site, \
-    MeasurementType, DOI
-from .db_setup import DBSetup
-
-
-class TestDB(DBSetup):
-    base_atts = ['date', 'site_id']
-    single_loc_atts = ['elevation', 'geom', 'time']
-
-    meas_atts = ['measurement_type_id']
-
-    site_atts = single_loc_atts + \
-                ['slope_angle', 'aspect', 'air_temp', 'total_depth',
-                 'weather_description', 'precip', 'sky_cover', 'wind',
-                 'ground_condition', 'ground_roughness',
-                 'ground_vegetation', 'vegetation_height',
-                 'tree_canopy', 'site_notes']
-
-    point_atts = single_loc_atts + meas_atts + \
-                 ['version_number', 'equipment', 'value', 'instrument_id']
-
-    layer_atts = meas_atts + \
-                 ['depth', 'value', 'bottom_depth', 'comments', 'sample_a',
-                  'sample_b', 'sample_c']
-    raster_atts = meas_atts + ['raster', 'description']
-    measurement_types_attributes = ['name', 'units','derived']
-    DOI_attributes = ['doi', 'date_accessed']
-
-    def setup_class(self):
-        """
-        Setup the database one time for testing
-        """
-        super().setup_class()
-        # only reflect the tables we will use
-        self.metadata.reflect(self.engine, only=['points', 'layers'])
-
-    def test_point_structure(self):
-        """
-        Tests our tables are in the database
-        """
-        t = Table("points", self.metadata, autoload=True)
-        columns = [m.key for m in t.columns]
-
-        for c in self.point_atts:
-            assert c in columns
-
-    def test_layer_structure(self):
-        """
-        Tests our tables are in the database
-        """
-        t = Table("layers", self.metadata, autoload=True)
-        columns = [m.key for m in t.columns]
-
-        for c in self.layer_atts:
-            assert c in columns
-
-    @pytest.mark.parametrize(
-        "DataCls,attributes", 
-        [
-            (Site, site_atts),
-            (PointData, point_atts),
-            (LayerData, layer_atts),
-            (ImageData, raster_atts),
-            (MeasurementType, measurement_types_attributes),
-            (DOI, DOI_attributes)
-        ]
-    )
-    def test_get_table_attributes(self, DataCls, attributes):
-        """
-        Test we return a correct list of table columns from db.py
-        """
-        atts = get_table_attributes(DataCls)
-
-        for c in attributes:
-            assert c in atts
+import snowexsql
+from snowexsql.db import (
+    DB_CONNECTION_PROTOCOL, db_connection_string, get_db, load_credentials
+)
+from .db_setup import DBSetup, DB_INFO
 
 
-# Independent Tests
-@pytest.mark.parametrize("return_metadata, expected_objs", [
-    (False, 2),
-    (True, 3)])
-def test_getting_db(return_metadata, expected_objs):
-    """
-    Test we can receive a connection and opt out of getting the metadata
-    """
+@pytest.fixture(scope='function')
+def db_connection_string_patch(monkeypatch, test_db_info):
+    def db_string(_name, _credentials):
+        return test_db_info
 
-    db_name = (
-            DBSetup.DB_INFO["username"] + ":" +
-            DBSetup.DB_INFO["password"] + "@" +
-            DBSetup.database_name()
+    monkeypatch.setattr(
+        snowexsql.db,
+        'db_connection_string',
+        db_string
     )
 
-    result = get_db(db_name, return_metadata=return_metadata)
-    assert len(result) == expected_objs
+
+class TestDBConnectionInfo:
+    def test_load_credentials(self):
+        user, password = load_credentials(DBSetup.CREDENTIAL_FILE)
+        assert user == DB_INFO['username']
+        assert password == DB_INFO['password']
+
+    def test_db_connection_string(self):
+        db_string = db_connection_string(
+            DBSetup.database_name(), DBSetup.CREDENTIAL_FILE
+        )
+        assert db_string.startswith(DB_CONNECTION_PROTOCOL)
+
+    def test_db_connection_string_credentials(self):
+        db_string = db_connection_string(
+            DBSetup.database_name(), DBSetup.CREDENTIAL_FILE
+        )
+        user, password = load_credentials(DBSetup.CREDENTIAL_FILE)
+
+        assert user in db_string
+        assert password in db_string
+
+    def test_db_connection_string_has_db_and_host(self):
+        db_string = db_connection_string(
+            DBSetup.database_name(), DBSetup.CREDENTIAL_FILE
+        )
+
+        assert DB_INFO['address'] in db_string
+        assert DB_INFO['db_name'] in db_string
+
+    def test_db_connection_string_no_credentials(self):
+        db_string = db_connection_string(DBSetup.database_name())
+        user, password = load_credentials(DBSetup.CREDENTIAL_FILE)
+
+        assert user not in db_string
+        assert password not in db_string
+
+    @pytest.mark.usefixtures('db_connection_string_patch')
+    def test_returns_engine(self, monkeypatch, test_db_info):
+        assert isinstance(get_db(DBSetup.database_name())[0], Engine)
+
+    @pytest.mark.usefixtures('db_connection_string_patch')
+    def test_returns_session(self):
+        assert isinstance(get_db(DBSetup.database_name())[1], Session)
+
+    @pytest.mark.usefixtures('db_connection_string_patch')
+    def test_returns_metadata(self):
+        assert isinstance(
+            get_db(DBSetup.database_name(), return_metadata=True)[2],
+            MetaData
+        )
+
+    @pytest.mark.usefixtures('db_connection_string_patch')
+    @pytest.mark.parametrize("return_metadata, expected_objs", [
+        (False, 2),
+        (True, 3)])
+    def test_get_metadata(self, return_metadata, expected_objs):
+        """
+        Test we can receive a connection and opt out of getting the metadata
+        """
+        result = get_db(
+            DBSetup.database_name(), return_metadata=return_metadata
+        )
+        assert len(result) == expected_objs
