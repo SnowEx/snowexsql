@@ -1,6 +1,6 @@
 from typing import List
 
-from sqlalchemy import Column, Date, Float, ForeignKey, Integer, String
+from sqlalchemy import Column, Date, Float, ForeignKey, Integer, String, Time
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -53,6 +53,8 @@ class Site(SingleLocationData, Base, InCampaign, HasDOI):
     vegetation_height = Column(String())
     tree_canopy = Column(String())
     site_notes = Column(String())
+    start_time = Column(Time(timezone=True))
+    end_time = Column(Time(timezone=True))
 
     @hybrid_property
     def date(self):

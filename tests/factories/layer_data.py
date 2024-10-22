@@ -1,3 +1,5 @@
+import datetime
+
 import factory
 
 from snowexsql.tables import LayerData
@@ -13,7 +15,6 @@ class LayerDataFactory(BaseFactory):
         model = LayerData
 
     depth = 100.0
-    pit_id = 'Pit 123'
     bottom_depth = 90.0
     comments = 'Layer comment'
     value = '40'
@@ -25,4 +26,8 @@ class LayerDataFactory(BaseFactory):
     )
     instrument = factory.SubFactory(InstrumentFactory, name='Density Cutter')
     doi = factory.SubFactory(DOIFactory)
-    site = factory.SubFactory(SiteFactory)
+    site = factory.SubFactory(
+        SiteFactory,
+        start_time=datetime.time(10, 32, tzinfo=datetime.timezone.utc),
+        end_time=datetime.time(10, 39, tzinfo=datetime.timezone.utc)
+    )
