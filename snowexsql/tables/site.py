@@ -1,18 +1,14 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Thu Aug 22 11:56:34 2024
-
-@author: jtmaz
-"""
-
-from sqlalchemy import Column, String, Date, Float, Integer, ForeignKey
-from sqlalchemy.orm import Mapped, relationship, mapped_column
 from typing import List
 
-from .observers import Observer
-from .base import Base, SingleLocationData
+from sqlalchemy import Column, Date, Float, ForeignKey, Integer, String
+from sqlalchemy.ext.hybrid import hybrid_property
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+
+from .base import Base
 from .campaign import InCampaign
 from .doi import HasDOI
+from .observers import Observer
+from .single_location import SingleLocationData
 
 
 class SiteObservers(Base):
@@ -34,8 +30,6 @@ class Site(SingleLocationData, Base, InCampaign, HasDOI):
 
     name = Column(String())  # This can be pit_id
     description = Column(String())
-    # Date of the measurement
-    date = Column(Date)
 
     # Link the observer
     # id is a mapped column for many-to-many with observers
@@ -59,3 +53,17 @@ class Site(SingleLocationData, Base, InCampaign, HasDOI):
     vegetation_height = Column(String())
     tree_canopy = Column(String())
     site_notes = Column(String())
+
+    @hybrid_property
+    def date(self):
+        """
+        Helper attribute to only query for dates of measurements
+        """
+        return self.datetime.date()
+
+    @date.expression
+    def date(cls):
+        """
+        Helper attribute to only query for dates of measurements
+        """
+        return cls.datetime.cast(Date)
