@@ -18,8 +18,6 @@ class LayerDataFactory(BaseFactory):
     bottom_depth = 90.0
     comments = 'Layer comment'
     value = '40'
-    flags = 'Sample'
-    sample_a = '42'
 
     measurement_type = factory.SubFactory(
         MeasurementTypeFactory, name='Density', units='kg/m3'
