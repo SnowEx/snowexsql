@@ -26,6 +26,5 @@ class LayerDataFactory(BaseFactory):
     doi = factory.SubFactory(DOIFactory)
     site = factory.SubFactory(
         SiteFactory,
-        start_time=datetime.time(10, 32, tzinfo=datetime.timezone.utc),
         end_time=datetime.time(10, 39, tzinfo=datetime.timezone.utc)
     )

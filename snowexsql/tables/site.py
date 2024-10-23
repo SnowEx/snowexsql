@@ -53,7 +53,6 @@ class Site(SingleLocationData, Base, InCampaign, HasDOI):
     vegetation_height = Column(String())
     tree_canopy = Column(String())
     site_notes = Column(String())
-    start_time = Column(Time(timezone=True))
     end_time = Column(Time(timezone=True))
 
     @hybrid_property
