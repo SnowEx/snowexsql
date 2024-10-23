@@ -121,8 +121,3 @@ class TestSite:
         assert self.subject.observers is not None
         assert isinstance(self.subject.observers, list)
         assert type(self.subject.observers[0]) == Observer
-
-    def test_end_time(self):
-        assert self.subject.end_time is not None
-        assert isinstance(self.subject.end_time, datetime.time)
-        assert self.subject.end_time == self.attributes.end_time

@@ -81,7 +81,6 @@ class DBConnection(DBSetup):
                         geom=kwargs.pop("geom"),
                         elevation=kwargs.pop("elevation"),
                         observers=observer_list,
-                        end_time=kwargs.pop("end_time"),
                     )
                 )
             else:
@@ -126,7 +125,6 @@ class DBConnection(DBSetup):
             ),
             'depth': 100,
             'value': '42.5',
-            "end_time": "10:39:00"
         }
         self._add_entry(
             db.url, LayerData, 'fakeinstrument', ["TEST"],

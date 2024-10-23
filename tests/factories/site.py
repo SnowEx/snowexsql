@@ -31,7 +31,6 @@ class SiteFactory(BaseFactory):
     vegetation_height = "None"
     tree_canopy = "Open"
     site_notes = "Site Notes"
-    end_time = time(10, 39, tzinfo=timezone.utc)
 
     # Single Location data
     geom = WKTElement(

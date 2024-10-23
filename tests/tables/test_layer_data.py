@@ -53,8 +53,3 @@ class TestLayerData:
     def test_has_doi(self):
         assert isinstance(self.subject.doi, DOI)
         assert self.subject.doi.doi == self.attributes.doi.doi
-
-    def test_end_time(self):
-        assert self.subject.site.end_time is not None
-        assert isinstance(self.subject.site.end_time, datetime.time)
-        assert self.subject.site.end_time == self.attributes.site.end_time
