@@ -125,9 +125,10 @@ class DBConnection(DBSetup):
             'geom': WKTElement(
                 "POINT(747987.6190615438 4324061.7062127385)", srid=26912
             ),
+            'depth': 100,
             'value': '42.5',
-            'sample_a': '42.5',
-            "start_time": "10:32:00", "end_time": "10:39:00"
+            "start_time": "10:32:00",
+            "end_time": "10:39:00"
         }
         self._add_entry(
             db.url, LayerData, 'fakeinstrument', ["TEST"],

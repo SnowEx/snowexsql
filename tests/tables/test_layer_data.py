@@ -35,12 +35,6 @@ class TestLayerData:
     def test_value_attribute(self):
         assert self.subject.value == self.attributes.value
 
-    def test_sample_a_attribute(self):
-        assert self.subject.sample_a == self.attributes.sample_a
-
-    def test_flags_attribute(self):
-        assert self.subject.flags == self.attributes.flags
-
     def test_has_site(self):
         assert isinstance(self.subject.site, Site)
         assert self.subject.site.name == self.attributes.site.name
