@@ -11,6 +11,13 @@ build:
   tools:
     python: "3.11"
   jobs:
+    post_checkout:
+      # https://docs.readthedocs.io/en/stable/build-customization.html#cancel-build-based-on-a-condition
+      - |
+        if [ "$READTHEDOCS_VERSION_TYPE" = "external" ] && git diff --quiet origin/main -- docs/ .readthedocs.yaml;
+        then
+          exit 183;
+        fi
     pre_build:
       # Generate the Sphinx configuration for this Jupyter Book so it builds.
       - "jupyter-book config sphinx docs"
