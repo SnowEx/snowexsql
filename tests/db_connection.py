@@ -81,6 +81,8 @@ class DBConnection(DBSetup):
                         geom=kwargs.pop("geom"),
                         elevation=kwargs.pop("elevation"),
                         observers=observer_list,
+                        start_time=kwargs.pop("start_time"),
+                        end_time=kwargs.pop("end_time"),
                     )
                 )
             else:
@@ -124,7 +126,8 @@ class DBConnection(DBSetup):
                 "POINT(747987.6190615438 4324061.7062127385)", srid=26912
             ),
             'value': '42.5',
-            'sample_a': '42.5'
+            'sample_a': '42.5',
+            "start_time": "10:32:00", "end_time": "10:39:00"
         }
         self._add_entry(
             db.url, LayerData, 'fakeinstrument', ["TEST"],

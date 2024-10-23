@@ -19,7 +19,6 @@ class LayerData(
     __tablename__ = 'layers'
 
     depth = Column(Float)
-    pit_id = Column(String(50))
     bottom_depth = Column(Float)
     comments = Column(String(1000))
     sample_a = Column(String(20))

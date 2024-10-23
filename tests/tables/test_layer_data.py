@@ -1,4 +1,5 @@
 import pytest
+import datetime
 
 from snowexsql.tables import DOI, Instrument, LayerData, MeasurementType, Site
 
@@ -19,9 +20,6 @@ class TestLayerData:
     def setup_method(self, layer_data_record, layer_data_attributes):
         self.subject = layer_data_record
         self.attributes = layer_data_attributes
-
-    def test_pit_id(self):
-        assert self.subject.pit_id == self.attributes.pit_id
 
     def test_depth_attribute(self):
         assert type(self.subject.depth) is float
@@ -61,3 +59,13 @@ class TestLayerData:
     def test_has_doi(self):
         assert isinstance(self.subject.doi, DOI)
         assert self.subject.doi.doi == self.attributes.doi.doi
+
+    def test_start_time(self):
+        assert self.subject.site.start_time is not None
+        assert isinstance(self.subject.site.start_time, datetime.time)
+        assert self.subject.site.start_time == self.attributes.site.start_time
+
+    def test_end_time(self):
+        assert self.subject.site.end_time is not None
+        assert isinstance(self.subject.site.end_time, datetime.time)
+        assert self.subject.site.end_time == self.attributes.site.end_time
