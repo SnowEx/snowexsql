@@ -169,7 +169,7 @@ class BaseDataset:
                         qry = cls._filter_instrument(qry, v)
                     elif k == "campaign":
                         qry = cls._filter_campaign(qry, v)
-                    elif k == "site_id":
+                    elif k == "site":
                         qry = qry.filter(
                             qry_model.site.has(name=v)
                         )
@@ -321,7 +321,7 @@ class BaseDataset:
         return df
 
     @property
-    def all_site_names(self):
+    def all_campaigns(self):
         """
         Return all campaign names
         """
@@ -477,8 +477,8 @@ class LayerMeasurements(BaseDataset):
     """
     MODEL = LayerData
     ALLOWED_QRY_KWARGS = [
-        "campaign", "site_id", "date", "instrument", "observer", "type",
-        "utm_zone", "pit_id", "date_greater_equal", "date_less_equal",
+        "campaign", "site", "date", "instrument", "observer", "type",
+        "utm_zone", "date_greater_equal", "date_less_equal",
         "doi", "value_greater_equal", 'value_less_equal'
     ]
 
@@ -496,7 +496,7 @@ class LayerMeasurements(BaseDataset):
         return qry
 
     @property
-    def all_site_ids(self):
+    def all_sites(self):
         """
         Return all specific site names
         """

@@ -43,8 +43,8 @@ class TestPointMeasurements:
             for record in self.db_data
         ]
 
-    def test_all_site_names(self):
-        result = self.subject.all_site_names
+    def test_all_campaigns(self):
+        result = self.subject.all_campaigns
         assert result == [
             record.observation.campaign.name
             for record in self.db_data
