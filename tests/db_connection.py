@@ -81,7 +81,6 @@ class DBConnection(DBSetup):
                         geom=kwargs.pop("geom"),
                         elevation=kwargs.pop("elevation"),
                         observers=observer_list,
-                        start_time=kwargs.pop("start_time"),
                         end_time=kwargs.pop("end_time"),
                     )
                 )
@@ -127,7 +126,6 @@ class DBConnection(DBSetup):
             ),
             'depth': 100,
             'value': '42.5',
-            "start_time": "10:32:00",
             "end_time": "10:39:00"
         }
         self._add_entry(
