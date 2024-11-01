@@ -484,25 +484,33 @@ class LayerMeasurements(BaseDataset):
 
     @classmethod
     def _filter_campaign(cls, qry, v):
-
-        qry = qry.join(cls.MODEL.site).join(
-            Site.campaign).filter(Campaign.name == v)
-        return qry
-
+        return qry.join(
+            cls.MODEL.site
+        ).join(
+            Site.campaign
+        ).filter(
+            Campaign.name == v
+        )
+        
     @classmethod
     def _filter_observers(cls, qry, v):
-        qry = qry.join(cls.MODEL.site).join(
-            Site.observers).filter(Observer.name == v)
-        return qry
-
+        return qry.join(
+            cls.MODEL.site
+        ).join(
+            Site.observers
+        ).filter(
+            Observer.name == v
+        )
+    
     @property
     def all_sites(self):
         """
         Return all specific site names
         """
         with db_session(self.DB_NAME) as (session, engine):
-            qry = session.query(Site.name).distinct()
-            result = qry.all()
+            result = session.query(
+                Site.name
+            ).distinct().all()
         return self.retrieve_single_value_result(result)
 
     @property
@@ -511,8 +519,9 @@ class LayerMeasurements(BaseDataset):
         Return all distinct dates in the data
         """
         with db_session(self.DB_NAME) as (session, engine):
-            qry = session.query(Site.date).distinct()
-            result = qry.all()
+            result = session.query(
+                Site.date
+            ).distinct().all()
         return self.retrieve_single_value_result(result)
 
 
