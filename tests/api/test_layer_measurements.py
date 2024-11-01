@@ -1,111 +1,105 @@
-from datetime import date
-
-import geopandas as gpd
-import numpy as np
+"""
+Test the Layer Measurement class
+"""
 import pytest
+import datetime
+
+from geoalchemy2.shape import to_shape
+from geoalchemy2.elements import WKTElement
 
 from snowexsql.api import LayerMeasurements
-from tests import DBConnection
+from snowexsql.tables import LayerData
 
 
-class TestLayerMeasurements(DBConnection):
-    """
-    Test the Layer Measurement class
-    """
-    CLZ = LayerMeasurements
+@pytest.fixture
+def layer_data(layer_data_factory, db_session):
+    layer_data_factory.create()
+    return db_session.query(LayerData).all()
 
-    def test_all_types(self, clz):
-        result = clz().all_types
-        assert result == ["density"]
+@pytest.mark.usefixtures("db_test_session")
+@pytest.mark.usefixtures("db_test_connection")
+@pytest.mark.usefixtures("layer_data")
+class TestLayerMeasurements:
+    @pytest.fixture(autouse=True)
+    def setup_method(self, layer_data):
+        self.subject = LayerMeasurements()
+        self.db_data = layer_data
 
-    def test_all_campaigns(self, clz):
-        result = clz().all_campaigns
-        assert result == ['Grand Mesa']
-
-    def test_all_sites(self, clz):
-        result = clz().all_sites
-        assert result == ['Fakepit1']
-
-    def test_all_dates(self, clz):
-        result = clz().all_dates
-        assert result == [date(2020, 1, 28)]
-
-    def test_all_observers(self, clz):
-        result = clz().all_observers
-        assert result == ['TEST']
-
-    def test_all_instruments(self, clz):
-        result = clz().all_instruments
-        assert result == ['fakeinstrument']
-
-    @pytest.mark.parametrize(
-        "kwargs, expected_length, mean_value", [
-            ({
-                 "date": date(2020, 3, 12), "type": "density",
-                 "site": "COERIB_20200312_0938"
-             }, 0, np.nan),  # filter to 1 pit
-            ({"instrument": "IRIS", "limit": 10}, 0, np.nan),  # limit works
-            ({
-                 "date": date(2020, 5, 28),
-                 "instrument": 'IRIS'
-             }, 0, np.nan),  # nothing returned
-            ({
-                 "date_less_equal": date(2019, 12, 15),
-                 "type": 'density'
-             }, 0, np.nan),
-            ({
-                 "date_greater_equal": date(2020, 5, 13),
-                 "type": 'density'
-             }, 0, np.nan),
-            ({
-                 "type": 'density',
-                 "campaign": 'Grand Mesa'
-             }, 1, 42.5),
-            ({
-                 "observer": 'TEST',
-                 "campaign": 'Grand Mesa'
-             }, 1, 42.5),
+    def test_all_campaigns(self):
+        result = self.subject.all_campaigns
+        assert result == [
+            record.site.campaign.name
+            for record in self.db_data
         ]
-    )
-    def test_from_filter(self, clz, kwargs, expected_length, mean_value):
-        result = clz.from_filter(**kwargs)
-        assert len(result) == expected_length
-        if expected_length > 0:
-            assert pytest.approx(
-                result["value"].astype("float").mean()
-            ) == mean_value
+    
+    def test_all_observers(self):
+       result = self.subject.all_observers
+       assert result == [
+           observer.name
+           for record in self.db_data
+           for observer in record.site.observers
+       ]
 
-    @pytest.mark.parametrize(
-        "kwargs, expected_error", [
-            ({"notakey": "value"}, ValueError),
-            # ({"date": date(2020, 3, 12)}, LargeQueryCheckException),
-            ({"date": [date(2020, 5, 28), date(2019, 10, 3)]}, ValueError),
+    def test_all_sites(self):
+        result = self.subject.all_sites
+        assert result == [
+            record.site.name
+            for record in self.db_data
         ]
-    )
-    def test_from_filter_fails(self, clz, kwargs, expected_error):
-        """
-        Test failure on not-allowed key and too many returns
-        """
-        with pytest.raises(expected_error):
-            clz.from_filter(**kwargs)
 
-    def test_from_area(self, clz):
-        df = gpd.GeoDataFrame(
-            geometry=gpd.points_from_xy(
-                [743766.4794971556], [4321444.154620216], crs="epsg:26912"
-            ).buffer(1000.0)
-        ).set_crs("epsg:26912")
-        result = clz.from_area(
-            type="density",
-            shp=df.iloc[0].geometry,
-        )
-        assert len(result) == 0
+    def test_all_dates(self):
+        result = self.subject.all_dates
+        assert result == [
+            record.site.date
+            for record in self.db_data
+        ]
 
-    def test_from_area_point(self, clz):
-        pts = gpd.points_from_xy([743766.4794971556], [4321444.154620216])
-        crs = "26912"
-        result = clz.from_area(
-            pt=pts[0], buffer=1000, crs=crs,
-            type="density",
+@pytest.fixture
+def layer_data(layer_density_factory, db_session):
+    layer_density_factory.create()
+    return db_session.query(LayerData).all()
+
+@pytest.mark.usefixtures("db_test_session")
+@pytest.mark.usefixtures("db_test_connection")
+@pytest.mark.usefixtures("layer_data")
+class TestDensityLayerMeasurement:
+    @pytest.fixture(autouse=True)
+    def setup_method(self, layer_data):
+        self.subject = LayerMeasurements()
+                # Pick the first record for this test case
+        self.db_data = layer_data[0]
+
+    def test_date_and_instrument(self):
+            result = self.subject.from_filter(
+                date=self.db_data.site.datetime.date(),
+                instrument=self.db_data.instrument.name,
+            )
+            assert len(result) == 1
+            assert result.loc[0].value == self.db_data.value
+
+    def test_instrument_and_limit(self, layer_density_factory):
+        # Create 10 more records, but only fetch five
+        layer_density_factory.create_batch(10)
+
+        result = self.subject.from_filter(
+            instrument=self.db_data.instrument.name,
+            limit=5
         )
-        assert len(result) == 0
+        assert len(result) == 5
+        assert pytest.approx(result["value"].astype("float").mean()) == \
+        float(self.db_data.value)
+
+    def test_date_and_measurement_type(self):
+        result = self.subject.from_filter(
+            date=self.db_data.site.datetime.date(),
+            type=self.db_data.measurement_type.name,
+        )
+        assert len(result) == 1
+        assert result.loc[0].value == self.db_data.value
+
+    def test_doi(self):
+        result = self.subject.from_filter(
+            doi=self.db_data.doi.doi,
+        )
+        assert len(result) == 1
+        assert result.loc[0].value == self.db_data.value
