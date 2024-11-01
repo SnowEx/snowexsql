@@ -10,7 +10,8 @@ from snowexsql.db import (
     DB_CONNECTION_OPTIONS, db_connection_string, initialize
 )
 from tests.factories import (CampaignFactory, DOIFactory, InstrumentFactory,
-                             LayerDataFactory, MeasurementTypeFactory,
+                             LayerDataFactory, LayerDensityFactory,
+                             MeasurementTypeFactory,
                              ObserverFactory, PointDataFactory,
                              PointObservationFactory, SiteFactory)
 from .db_setup import CREDENTIAL_FILE, DB_INFO, SESSION
@@ -20,12 +21,12 @@ register(CampaignFactory)
 register(DOIFactory)
 register(InstrumentFactory)
 register(LayerDataFactory)
+register(LayerDensityFactory)
 register(MeasurementTypeFactory)
 register(ObserverFactory)
 register(PointDataFactory)
 register(PointObservationFactory)
 register(SiteFactory)
-
 
 # Add this factory to a test if you would like to debug the SQL statement
 # It will print the query from the BaseDataset.from_filter() method
