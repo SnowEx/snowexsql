@@ -35,7 +35,7 @@ Features
 * Useful conversions to pandas and geopandas
 * Lots of examples_
 
-.. _examples: https://snowexsql.readthedocs.io/en/latest/examples.html
+.. _examples: https://snowexsql.readthedocs.io/en/latest/gallery/index.html
 
 
 Installing
