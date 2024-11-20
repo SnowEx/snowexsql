@@ -524,7 +524,17 @@ class LayerMeasurements(BaseDataset):
             ).distinct().all()
         return self.retrieve_single_value_result(result)
 
-
+    @property
+    def all_units(self):
+        """
+        Return all distinct units in the data
+        """
+        with db_session(self.DB_NAME) as (session, engine):
+            result = session.query(
+                MeasurementType.units
+            ).distinct().all()
+        return self.retrieve_single_value_result(result)
+    
 class RasterMeasurements(BaseDataset):
     MODEL = ImageData
     ALLOWED_QRY_KWARGS = BaseDataset.ALLOWED_QRY_KWARGS + ['description']

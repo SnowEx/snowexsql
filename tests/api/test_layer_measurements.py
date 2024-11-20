@@ -61,6 +61,13 @@ class TestLayerMeasurements:
             for record in self.db_data
         ]
 
+    def test_all_units(self):
+        result = self.subject.all_units
+        assert result == [
+            record.measurement_type.units
+            for record in self.db_data
+        ]
+
 @pytest.mark.usefixtures("db_test_session")
 @pytest.mark.usefixtures("db_test_connection")
 @pytest.mark.usefixtures("layer_data")
