@@ -39,6 +39,13 @@ class TestLayerMeasurements:
             for record in self.db_data
         ]
     
+    def test_all_types(self):
+        result = self.subject.all_types
+        assert result == [
+            record.measurement_type.name
+            for record in self.db_data
+        ]
+
     def test_all_observers(self):
        result = self.subject.all_observers
        assert result == [
@@ -65,6 +72,13 @@ class TestLayerMeasurements:
         result = self.subject.all_units
         assert result == [
             record.measurement_type.units
+            for record in self.db_data
+        ]
+
+    def test_all_dois(self):
+        result = self.subject.all_dois
+        assert result == [
+            record.site.doi.doi
             for record in self.db_data
         ]
 
@@ -121,7 +135,7 @@ class TestLayerMeasurementFilter:
 
     def test_doi(self):
         result = self.subject.from_filter(
-            doi=self.db_data.doi.doi,
+            doi=self.db_data.site.doi.doi,
         )
         assert len(result) == 1
         assert result.loc[0].value == self.db_data.value
