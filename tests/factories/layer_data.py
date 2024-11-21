@@ -23,7 +23,6 @@ class LayerDataFactory(BaseFactory):
         MeasurementTypeFactory, name='Density', units='kg/m3'
     )
     instrument = factory.SubFactory(InstrumentFactory, name='Density Cutter')
-    doi = factory.SubFactory(DOIFactory)
     site = factory.SubFactory(SiteFactory)
 
 
