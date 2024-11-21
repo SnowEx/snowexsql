@@ -502,6 +502,16 @@ class LayerMeasurements(BaseDataset):
             Observer.name == v
         )
     
+    @classmethod
+    def _filter_doi(cls, qry, value):
+        return qry.join(
+            cls.MODEL.site
+        ).join(
+            Site.doi
+        ).filter(
+            DOI.doi == value
+        )
+    
     @property
     def all_sites(self):
         """
