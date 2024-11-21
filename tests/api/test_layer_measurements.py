@@ -82,6 +82,13 @@ class TestLayerMeasurements:
             for record in self.db_data
         ]
 
+    def test_all_instruments(self):
+        result = self.subject.all_instruments
+        assert result == [
+            record.instrument.name
+            for record in self.db_data
+        ]
+
 @pytest.mark.usefixtures("db_test_session")
 @pytest.mark.usefixtures("db_test_connection")
 @pytest.mark.usefixtures("layer_data")
