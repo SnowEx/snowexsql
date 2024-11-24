@@ -11,6 +11,7 @@ from datetime import datetime
 from .campaign import CampaignFactory
 
 class LayerDataFactory(BaseFactory):
+    """Test factory for LayerData model using synthetic data"""
     class Meta:
         model = LayerData
 
@@ -27,7 +28,14 @@ class LayerDataFactory(BaseFactory):
 
 
 class LayerDensityFactory(LayerDataFactory):
+    """Test factory using real data from tests/data/layer_data.csv 
 
+       Inherits: 
+           LayerData model from LayerDataFactory
+        
+        Overrides:
+            value
+    """
     depth = 15.0
     bottom_depth = 5.0
     value = '236.0'
@@ -40,3 +48,24 @@ class LayerDensityFactory(LayerDataFactory):
         geom = WKTElement("POINT(743281 4324005)", srid=32612),
         campaign = factory.SubFactory(CampaignFactory, name='Grand Mesa')
     )
+
+class LayerTemperatureFactory(LayerDensityFactory):
+    """Test factory using real data from tests/data/temperature.csv 
+
+       Inherits: 
+           site information from LayerDensityFactory
+           LayerData model rom LayerDataFactory
+        
+        Overrides:
+            value, measurement_type, instrument
+    """
+    depth = 25.0 # guessing for height = 20 cm
+    bottom_depth = 15.0
+    value = '-9.3'
+    
+    measurement_type = factory.SubFactory(
+    MeasurementTypeFactory, name='Temperature', units='deg C'
+    )
+    instrument = factory.SubFactory(InstrumentFactory, name='thermometer')
+
+    
