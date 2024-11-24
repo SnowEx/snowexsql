@@ -178,3 +178,32 @@ class TestLayerMeasurementFilter:
         crs = point_data_srid
         result = self.subject.from_area(pt=pts[0], buffer=10, crs=crs)
         assert len(result) == 1
+
+# Testing with real density data
+
+@pytest.fixture
+def layer_data_with_density(layer_density_factory, db_session):
+    layer_density_factory.create()
+    return db_session.query(LayerData).all()
+
+@pytest.mark.usefixtures("db_test_session")
+@pytest.mark.usefixtures("db_test_connection")
+@pytest.mark.usefixtures("layer_data_with_density")
+class TestDensityMeasurementFilter:
+    @pytest.fixture(autouse=True)
+    def setup_method(self, layer_data_with_density):
+        self.subject = LayerMeasurements()
+                # Pick the first record for this test case
+        self.db_data = layer_data_with_density[0]
+
+    @pytest.mark.parametrize(
+        "kwargs", [
+            {"value_greater_equal": 230.0},
+            {"value_less_equal": 240.0},
+        ]
+    )
+    def test_depth_range(self, kwargs):
+        result = self.subject.from_filter(**kwargs)
+        assert len(result) == 1
+
+
