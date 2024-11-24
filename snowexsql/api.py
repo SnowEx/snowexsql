@@ -8,6 +8,7 @@ from geoalchemy2.shape import from_shape
 from geoalchemy2.types import Raster
 from shapely.geometry import box
 from sqlalchemy.sql import func
+from sqlalchemy import cast, Numeric
 
 from snowexsql.conversions import query_to_geopandas, raster_to_rasterio
 from snowexsql.db import get_db
@@ -157,12 +158,12 @@ class BaseDataset:
                     if "_greater_equal" in k:
                         key = k.split("_greater_equal")[0]
                         qry = qry.filter(
-                            getattr(qry_model, key) >= v
+                            cast(getattr(qry_model, key), Numeric) >= v
                         )
                     elif "_less_equal" in k:
                         key = k.split("_less_equal")[0]
                         qry = qry.filter(
-                            getattr(qry_model, key) <= v
+                           cast(getattr(qry_model, key), Numeric) <= v
                         )
                     # Filter linked columns
                     elif k == "instrument":
