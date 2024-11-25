@@ -157,14 +157,24 @@ class BaseDataset:
                     # Filter boundary
                     if "_greater_equal" in k:
                         key = k.split("_greater_equal")[0]
-                        qry = qry.filter(
-                            cast(getattr(qry_model, key), Numeric) >= v
-                        )
+                        if key == "value":
+                            qry = qry.filter(
+                                cast(getattr(qry_model, key), Numeric) >= v
+                            )
+                        else:
+                            qry = qry.filter(
+                                getattr(qry_model, key) >= v
+                            )
                     elif "_less_equal" in k:
                         key = k.split("_less_equal")[0]
-                        qry = qry.filter(
-                           cast(getattr(qry_model, key), Numeric) <= v
-                        )
+                        if key == "value":
+                            qry = qry.filter(
+                                cast(getattr(qry_model, key), Numeric) <= v
+                            )
+                        else:
+                            qry = qry.filter(
+                                getattr(qry_model, key) <= v
+                            )
                     # Filter linked columns
                     elif k == "instrument":
                         qry = cls._filter_instrument(qry, v)
