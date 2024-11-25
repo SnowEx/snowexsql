@@ -59,8 +59,7 @@ class LayerTemperatureFactory(LayerDensityFactory):
         Overrides:
             value, measurement_type, instrument
     """
-    depth = 25.0 # guessing for height = 20 cm
-    bottom_depth = 15.0
+    depth = 20.0 
     value = '-9.3'
     
     measurement_type = factory.SubFactory(
