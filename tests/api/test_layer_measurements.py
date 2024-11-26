@@ -202,7 +202,10 @@ class TestDensityMeasurementFilter:
             {"value_less_equal": 240.0},
         ]
     )
-    def test_depth_range(self, kwargs):
+    def test_density_range(self, kwargs):
+        """
+        Tests queries for densities within a specific range
+        """
         result = self.subject.from_filter(**kwargs)
         assert len(result) == 1
 
