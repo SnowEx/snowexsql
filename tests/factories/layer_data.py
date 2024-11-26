@@ -63,7 +63,7 @@ class LayerTemperatureFactory(LayerDensityFactory):
     value = '-9.3'
     
     measurement_type = factory.SubFactory(
-    MeasurementTypeFactory, name='Temperature', units='deg C'
+        MeasurementTypeFactory, name='Temperature', units='deg C'
     )
     instrument = factory.SubFactory(InstrumentFactory, name='thermometer')
 

@@ -11,7 +11,7 @@ from snowexsql.db import (
 )
 from tests.factories import (CampaignFactory, DOIFactory, InstrumentFactory,
                              LayerDataFactory, LayerDensityFactory,
-                             MeasurementTypeFactory,
+                             LayerTemperatureFactory, MeasurementTypeFactory,
                              ObserverFactory, PointDataFactory,
                              PointObservationFactory, SiteFactory)
 from .db_setup import CREDENTIAL_FILE, DB_INFO, SESSION
@@ -22,6 +22,7 @@ register(DOIFactory)
 register(InstrumentFactory)
 register(LayerDataFactory)
 register(LayerDensityFactory)
+register(LayerTemperatureFactory)
 register(MeasurementTypeFactory)
 register(ObserverFactory)
 register(PointDataFactory)
