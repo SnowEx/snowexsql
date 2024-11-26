@@ -59,11 +59,11 @@ class TestDBConnectionInfo:
 
     @pytest.mark.usefixtures('db_connection_string_patch')
     def test_returns_engine(self, monkeypatch, test_db_info):
-        assert isinstance(get_db(DB_NAME[0], Engine)
+        assert isinstance(get_db(DB_NAME)[0], Engine)
 
     @pytest.mark.usefixtures('db_connection_string_patch')
     def test_returns_session(self):
-        assert isinstance(get_db(DB_NAME[1], Session)
+        assert isinstance(get_db(DB_NAME)[1], Session)
 
     @pytest.mark.usefixtures('db_connection_string_patch')
     def test_returns_metadata(self):
