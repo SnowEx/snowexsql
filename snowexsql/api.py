@@ -8,6 +8,7 @@ from geoalchemy2.shape import from_shape
 from geoalchemy2.types import Raster
 from shapely.geometry import box
 from sqlalchemy.sql import func
+from sqlalchemy import cast, Numeric
 
 from snowexsql.conversions import query_to_geopandas, raster_to_rasterio
 from snowexsql.db import get_db
@@ -156,14 +157,24 @@ class BaseDataset:
                     # Filter boundary
                     if "_greater_equal" in k:
                         key = k.split("_greater_equal")[0]
-                        qry = qry.filter(
-                            getattr(qry_model, key) >= v
-                        )
+                        if key == "value":
+                            qry = qry.filter(
+                                cast(getattr(qry_model, key), Numeric) >= v
+                            )
+                        else:
+                            qry = qry.filter(
+                                getattr(qry_model, key) >= v
+                            )
                     elif "_less_equal" in k:
                         key = k.split("_less_equal")[0]
-                        qry = qry.filter(
-                            getattr(qry_model, key) <= v
-                        )
+                        if key == "value":
+                            qry = qry.filter(
+                                cast(getattr(qry_model, key), Numeric) <= v
+                            )
+                        else:
+                            qry = qry.filter(
+                                getattr(qry_model, key) <= v
+                            )
                     # Filter linked columns
                     elif k == "instrument":
                         qry = cls._filter_instrument(qry, v)
@@ -484,25 +495,43 @@ class LayerMeasurements(BaseDataset):
 
     @classmethod
     def _filter_campaign(cls, qry, v):
-
-        qry = qry.join(cls.MODEL.site).join(
-            Site.campaign).filter(Campaign.name == v)
-        return qry
-
+        return qry.join(
+            cls.MODEL.site
+        ).join(
+            Site.campaign
+        ).filter(
+            Campaign.name == v
+        )
+        
     @classmethod
     def _filter_observers(cls, qry, v):
-        qry = qry.join(cls.MODEL.site).join(
-            Site.observers).filter(Observer.name == v)
-        return qry
-
+        return qry.join(
+            cls.MODEL.site
+        ).join(
+            Site.observers
+        ).filter(
+            Observer.name == v
+        )
+    
+    @classmethod
+    def _filter_doi(cls, qry, value):
+        return qry.join(
+            cls.MODEL.site
+        ).join(
+            Site.doi
+        ).filter(
+            DOI.doi == value
+        )
+    
     @property
     def all_sites(self):
         """
         Return all specific site names
         """
         with db_session(self.DB_NAME) as (session, engine):
-            qry = session.query(Site.name).distinct()
-            result = qry.all()
+            result = session.query(
+                Site.name
+            ).distinct().all()
         return self.retrieve_single_value_result(result)
 
     @property
@@ -511,11 +540,22 @@ class LayerMeasurements(BaseDataset):
         Return all distinct dates in the data
         """
         with db_session(self.DB_NAME) as (session, engine):
-            qry = session.query(Site.date).distinct()
-            result = qry.all()
+            result = session.query(
+                Site.date
+            ).distinct().all()
         return self.retrieve_single_value_result(result)
 
-
+    @property
+    def all_units(self):
+        """
+        Return all distinct units in the data
+        """
+        with db_session(self.DB_NAME) as (session, engine):
+            result = session.query(
+                MeasurementType.units
+            ).distinct().all()
+        return self.retrieve_single_value_result(result)
+    
 class RasterMeasurements(BaseDataset):
     MODEL = ImageData
     ALLOWED_QRY_KWARGS = BaseDataset.ALLOWED_QRY_KWARGS + ['description']

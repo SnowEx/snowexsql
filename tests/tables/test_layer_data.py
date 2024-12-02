@@ -51,5 +51,5 @@ class TestLayerData:
         assert self.subject.instrument.name == self.attributes.instrument.name
 
     def test_has_doi(self):
-        assert isinstance(self.subject.doi, DOI)
-        assert self.subject.doi.doi == self.attributes.doi.doi
+        assert isinstance(self.subject.site.doi, DOI)
+        assert self.subject.site.doi.doi == self.attributes.site.doi.doi
