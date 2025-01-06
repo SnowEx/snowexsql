@@ -63,7 +63,7 @@ jobs:
           ls -ltrh
           ls -ltrh dist
       - name: Publish to Test PyPI
-        uses: pypa/gh-action-pypi-publish@v1.10.3
+        uses: pypa/gh-action-pypi-publish@v1.12.3
         with:
           repository-url: https://test.pypi.org/legacy/
           verbose: true
@@ -112,5 +112,5 @@ jobs:
           name: artifact
           path: dist
 
-      - uses: pypa/gh-action-pypi-publish@v1.10.3
+      - uses: pypa/gh-action-pypi-publish@v1.12.3
         if: startsWith(github.ref, 'refs/tags')
