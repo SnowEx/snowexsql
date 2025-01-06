@@ -5,6 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "snowexsql"
 dynamic = ["version"]
+license = {text = "GNU"}
 description = "SQL Database software for SnowEx data"
 keywords = ["snowex", "sql", "database", "snow"]
 readme = "README.rst"
