@@ -49,9 +49,6 @@ docs = [
 ]
 all = ["snowexsql[dev,docs]"]
 
-[project.license]
-file = "LICENSE"
-
 [project.urls]
 Homepage = "https://github.com/SnowEx/snowexsql"
 Documentation = "https://snowexsql.readthedocs.io"
