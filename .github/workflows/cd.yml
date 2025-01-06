@@ -41,6 +41,12 @@ jobs:
 
       - uses: hynek/build-and-inspect-python-package@v2
 
+      - name: Upload built package artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: Packages-${{ github.run_id }}
+          path: dist
+
   test-built-dist:
     needs: [dist]
     name: Test built distribution
@@ -54,7 +60,7 @@ jobs:
           python-version: "3.10"
       - uses: actions/download-artifact@v4
         with:
-          name: Packages
+          name: Packages-${{ github.run_id }}
           path: dist
       - name: List contents of built dist
         run: |

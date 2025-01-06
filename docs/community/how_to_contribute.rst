@@ -165,7 +165,12 @@ Deploying
 
 A reminder for the maintainers on how to deploy.
 Make sure all your changes are committed.
-Then run::
+Then, in Github,
+ 1. Draft a new release https://github.com/SnowEx/snowexsql/releases/new
+ 2. Create a new tag in the style of `v0.x.x`_
+ 3. Set release title to `snowexsql v<version>`_
+ 4. Enter release notes
+ 5. Check that the action has released succesfully
 
 $ bump2version patch # possible: major / minor / patch
 $ git push
