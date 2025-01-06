@@ -40,8 +40,6 @@ jobs:
           rm -rf dist build *.egg-info
 
       - uses: hynek/build-and-inspect-python-package@v2
-        with:
-          upload-name-suffix: ${{ github.run_id }}
 
   test-built-dist:
     needs: [dist]
@@ -56,7 +54,7 @@ jobs:
           python-version: "3.10"
       - uses: actions/download-artifact@v4
         with:
-          name: Packages${{ github.run_id }}
+          name: Packages
           path: dist
       - name: List contents of built dist
         run: |
