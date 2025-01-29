@@ -1,6 +1,6 @@
 import factory.alchemy as factory_alchemy
 
-from tests.db_setup import SESSION
+from tests import SESSION
 
 
 class BaseFactory(factory_alchemy.SQLAlchemyModelFactory):

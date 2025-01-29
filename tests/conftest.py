@@ -2,19 +2,21 @@ import os
 from contextlib import contextmanager
 
 import pytest
-from pytest_factoryboy import register
-from sqlalchemy import create_engine
-
 import snowexsql
+from pytest_factoryboy import register
 from snowexsql.db import (
     DB_CONNECTION_OPTIONS, db_connection_string, initialize
 )
+from sqlalchemy import create_engine
+from tests import SESSION
 from tests.factories import (CampaignFactory, DOIFactory, InstrumentFactory,
                              LayerDataFactory, LayerDensityFactory,
                              LayerTemperatureFactory, MeasurementTypeFactory,
                              ObserverFactory, PointDataFactory,
                              PointObservationFactory, SiteFactory)
-from .db_setup import CREDENTIAL_FILE, DB_INFO, SESSION
+
+# Environment variable to load the correct credentials
+os.environ['SNOWEXSQL_TESTS'] = 'True'
 
 # Make factories available to tests
 register(CampaignFactory)
@@ -28,6 +30,10 @@ register(ObserverFactory)
 register(PointDataFactory)
 register(PointObservationFactory)
 register(SiteFactory)
+
+@pytest.fixture(scope='session')
+def session_maker():
+   return
 
 # Add this factory to a test if you would like to debug the SQL statement
 # It will print the query from the BaseDataset.from_filter() method
@@ -59,8 +65,7 @@ def db_test_connection(monkeypatch, sqlalchemy_engine, connection):
 
 @pytest.fixture(scope='session')
 def test_db_info():
-    database_name = DB_INFO["address"] + "/" + DB_INFO["db_name"]
-    return db_connection_string(database_name, CREDENTIAL_FILE)
+    return db_connection_string()
 
 
 @pytest.fixture(scope='session')

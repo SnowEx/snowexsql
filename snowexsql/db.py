@@ -4,12 +4,16 @@ getting a session, initializing the database, getting table attributes, etc.
 """
 
 import json
+import os
+from contextlib import contextmanager
+from pathlib import Path
 
+from snowexsql.tables.base import Base
 from sqlalchemy import MetaData, create_engine
 from sqlalchemy.orm import sessionmaker
 
-from snowexsql.tables.base import Base
-
+# The default credentials file name
+CREDENTIAL_FILE="credentials.json"
 # This library requires a postgres dialect and the psycopg2 driver
 DB_CONNECTION_PROTOCOL = 'postgresql+psycopg2://'
 # Always create a Session in UTC time
@@ -27,49 +31,57 @@ def initialize(engine):
     meta.create_all(bind=engine)
 
 
-def load_credentials(credentials_path):
+def load_credentials(credentials_path=None):
     """
-    Load username and password from a user supplied credential file
+    Load db connection information from a user supplied credential file or
+    use the default location under the source root.
+
+    This file contains the information to address, database name, username,
+    and password.
 
     Args:
-        credentials_path (string): Full path to credentials file
+        credentials_path (string): Full path to credentials file (Optional)
+
+    Returns:
+        Dictionary - Credential information
     """
-    with open(credentials_path) as fp:
-        creds = json.load(fp)
-        return creds['username'], creds['password']
+    if credentials_path is None:
+        credentials_path = Path(__file__).parent.parent / CREDENTIAL_FILE
+
+    with open(credentials_path) as file:
+        credentials = json.load(file)
+
+        if os.environ['SNOWEXSQL_TESTS']:
+            return credentials['tests']
+        else:
+            return credentials['production']
 
 
-def db_connection_string(db_name, credentials_path=None):
+def db_connection_string(credentials_path=None):
     """
     Construct a connection info string for SQLAlchemy database
 
     Args:
-        db_name:    The name of the database to connect to
-        credentials_path: Path to a json file containing username and password
-                          for the database
+        credentials_path (string): Full path to credentials file (Optional)
 
     Returns:
         String - DB connection
     """
-    db = DB_CONNECTION_PROTOCOL
+    credentials = load_credentials(credentials_path)
 
-    if credentials_path is not None:
-        username, password = load_credentials(credentials_path)
-        db += f"{username}:{password}@{db_name}"
-    else:
-        db += f"{db_name}"
+    db = DB_CONNECTION_PROTOCOL
+    db += f"{credentials['username']}:{credentials['password']}"\
+          f"@{credentials['address']}/{credentials['db_name']}"
 
     return db
 
 
-def get_db(db_name, credentials=None, return_metadata=False):
+def get_db(credentials_path=None, return_metadata=False):
     """
     Returns the DB engine, MetaData, and session object
 
     Args:
-        db_name:    The name of the database to connect to
-        credentials: Path to a json file containing username and password for
-                     the database
+        credentials_path (string): Full path to credentials file (Optional)
         return_metadata: Boolean indicating whether the metadata object is
                          being returned, useful only for developers
 
@@ -81,7 +93,7 @@ def get_db(db_name, credentials=None, return_metadata=False):
                **metadata** (optional) - sqlalchemy MetaData object for
                             modifying the database
     """
-    db_connection = db_connection_string(db_name, credentials)
+    db_connection = db_connection_string(credentials_path)
 
     engine = create_engine(
         db_connection, echo=False, connect_args=DB_CONNECTION_OPTIONS
