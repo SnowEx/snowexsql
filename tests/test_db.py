@@ -1,3 +1,5 @@
+import os
+
 import pytest
 import snowexsql
 from snowexsql.db import (DB_CONNECTION_PROTOCOL, db_connection_string,
@@ -36,6 +38,20 @@ class TestDBConnectionInfo:
         assert db_string.startswith(DB_CONNECTION_PROTOCOL)
         assert f"{credentials['username']}:{credentials['password']}" in db_string
         assert f"{credentials['address']}/{credentials['db_name']}" in db_string
+
+    def test_load_credentials_production(self):
+        # Test that a missing environ key will not cause the lookup to fail
+        del os.environ['SNOWEXSQL_TESTS']
+
+        credentials = load_credentials()
+        assert len(credentials.keys()) == 4
+        assert 'address' in credentials
+        assert 'db_name' in credentials
+        assert 'username' in credentials
+        assert 'password' in credentials
+
+        # Set again for subsequent tests
+        os.environ['SNOWEXSQL_TESTS'] = 'True'
 
     @pytest.mark.usefixtures('db_connection_string_patch')
     def test_returns_engine(self, monkeypatch, test_db_info):
