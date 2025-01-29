@@ -16,11 +16,13 @@ docs/_build/*
 
 **/.ipynb_checkpoints/*
 
-# Test infor
+# Database credential information
+credentials.json
+
+# Test related files
 .coverage
 coverage.xml
 htmlcov/*
-tests/credentials.json
 
 .idea/
 .vscode/
