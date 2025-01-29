@@ -34,8 +34,8 @@ class TestDBConnectionInfo:
         credentials = load_credentials()
 
         assert db_string.startswith(DB_CONNECTION_PROTOCOL)
-        assert f'{credentials['username']}:{credentials['password']}' in db_string
-        assert f'{credentials['address']}/{credentials['db_name']}' in db_string
+        assert f"{credentials['username']}:{credentials['password']}" in db_string
+        assert f"{credentials['address']}/{credentials['db_name']}" in db_string
 
     @pytest.mark.usefixtures('db_connection_string_patch')
     def test_returns_engine(self, monkeypatch, test_db_info):
