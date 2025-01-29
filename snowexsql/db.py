@@ -108,6 +108,18 @@ def get_db(credentials_path=None, return_metadata=False):
         return engine, session
 
 
+@contextmanager
+def db_session_with_credentials(credentials_path=None):
+    """
+    Helper method to allow database session with a context block.
+
+    Args:
+        credentials_path (string): Full path to credentials file (Optional)
+
+    """
+    yield get_db(credentials_path)
+
+
 def get_table_attributes(DataCls):
     """
     Returns a list of all the table columns to be used for each entry

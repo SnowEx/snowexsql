@@ -1,8 +1,8 @@
 import pytest
 import snowexsql
-from snowexsql.db import (
-    DB_CONNECTION_PROTOCOL, db_connection_string, get_db, load_credentials
-)
+from snowexsql.db import (DB_CONNECTION_PROTOCOL, db_connection_string,
+                          db_session_with_credentials, get_db,
+                          load_credentials)
 from sqlalchemy import Engine, MetaData
 from sqlalchemy.orm import Session
 
@@ -51,6 +51,16 @@ class TestDBConnectionInfo:
             get_db(return_metadata=True)[2],
             MetaData
         )
+
+    @pytest.mark.usefixtures('db_connection_string_patch')
+    def test_db_session_with_credentials(self, monkeypatch, test_db_info):
+        engine, session = None, None
+        with db_session_with_credentials() as (test_engine, test_session):
+            engine = test_engine
+            session = test_session
+
+        assert isinstance(engine, Engine)
+        assert isinstance(session, Session)
 
     @pytest.mark.usefixtures('db_connection_string_patch')
     @pytest.mark.parametrize("return_metadata, expected_objs", [
