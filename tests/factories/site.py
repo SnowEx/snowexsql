@@ -1,4 +1,4 @@
-from datetime import datetime, timezone, time
+from datetime import datetime, timezone
 
 import factory
 from geoalchemy2 import WKTElement
