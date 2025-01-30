@@ -1,5 +1,5 @@
-from sqlalchemy import Column, String, Date, Integer, ForeignKey
-from sqlalchemy.orm import relationship, declared_attr
+from sqlalchemy import Column, Date, ForeignKey, Integer, String
+from sqlalchemy.orm import declared_attr, relationship
 
 from .base import Base
 
@@ -10,7 +10,7 @@ class DOI(Base):
     """
     __tablename__ = 'dois'
 
-    doi = Column(String())
+    doi = Column(String(), nullable=False)
     date_accessed = Column(Date)
 
 
@@ -20,7 +20,11 @@ class HasDOI:
     """
     @declared_attr
     def doi_id(cls):
-        return Column(Integer, ForeignKey('public.dois.id'), index=True)
+        return Column(
+            Integer,
+            ForeignKey('public.dois.id'),
+            index=True, nullable=False
+        )
 
     @declared_attr
     def doi(cls):

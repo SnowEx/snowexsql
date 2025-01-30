@@ -20,7 +20,7 @@ class CampaignObservation(
     __tablename__ = 'campaign_observations'
 
     # Data columns
-    name = Column(Text)
+    name = Column(Text, nullable=False)
     description = Column(Text)
     date = Column(Date, nullable=False)
 

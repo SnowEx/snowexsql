@@ -10,7 +10,7 @@ class MeasurementType(Base):
     """
     __tablename__ = 'measurement_type'
 
-    name = Column(Text)
+    name = Column(Text, nullable=False)
     units = Column(Text)
     derived = Column(Boolean, default=False)
 
@@ -23,7 +23,9 @@ class HasMeasurementType:
     @declared_attr
     def measurement_type_id(self):
         return Column(
-            Integer, ForeignKey('public.measurement_type.id'), index=True
+            Integer,
+            ForeignKey('public.measurement_type.id'),
+            index=True, nullable=False
         )
 
     @declared_attr

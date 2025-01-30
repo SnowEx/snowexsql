@@ -16,7 +16,7 @@ class PointData(Base, SingleLocationData, HasPointObservation):
 
     version_number = Column(Integer)
     equipment = Column(String())
-    value = Column(Float)
+    value = Column(Float, nullable=False)
 
     # bring these in instead of Measurement
     units = Column(String())

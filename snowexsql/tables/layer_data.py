@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Float, ForeignKey, Integer, String, Text
+from sqlalchemy import Column, Float, ForeignKey, Integer, Text
 from sqlalchemy.orm import relationship
 
 from .base import Base
@@ -25,7 +25,7 @@ class LayerData(
 
     # Link the site id with a foreign key
     site_id = Column(
-        Integer, ForeignKey('public.sites.id'), index=True
+        Integer, ForeignKey('public.sites.id'), index=True, nullable=False
     )
     # Link the Site class
     site = relationship('Site', lazy='joined')

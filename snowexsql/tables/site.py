@@ -1,6 +1,6 @@
 from typing import List
 
-from sqlalchemy import Column, Date, Float, ForeignKey, Integer, String, Time
+from sqlalchemy import Column, Date, Float, ForeignKey, Integer, String
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -17,8 +17,12 @@ class SiteObservers(Base):
     """
     __tablename__ = 'site_observers'
 
-    site_id = Column(Integer, ForeignKey('public.sites.id'))
-    observer_id = Column(Integer, ForeignKey("public.observers.id"))
+    site_id = Column(
+        Integer, ForeignKey('public.sites.id'), nullable=False
+    )
+    observer_id = Column(
+        Integer, ForeignKey("public.observers.id"), nullable=False
+    )
 
 
 class Site(SingleLocationData, Base, InCampaign, HasDOI):
@@ -28,7 +32,7 @@ class Site(SingleLocationData, Base, InCampaign, HasDOI):
     """
     __tablename__ = 'sites'
 
-    name = Column(String())  # This can be pit_id
+    name = Column(String(), nullable=False)  # This can be pit_id
     description = Column(String())
 
     # Link the observer
