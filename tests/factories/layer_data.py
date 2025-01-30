@@ -1,14 +1,15 @@
+from datetime import datetime
+
 import factory
+from geoalchemy2.elements import WKTElement
 
 from snowexsql.tables import LayerData
 from .base_factory import BaseFactory
-from .doi import DOIFactory
+from .campaign import CampaignFactory
 from .instrument import InstrumentFactory
 from .measurement_type import MeasurementTypeFactory
 from .site import SiteFactory
-from geoalchemy2.elements import WKTElement
-from datetime import datetime
-from .campaign import CampaignFactory
+
 
 class LayerDataFactory(BaseFactory):
     """Test factory for LayerData model using synthetic data"""

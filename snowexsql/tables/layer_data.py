@@ -2,14 +2,11 @@ from sqlalchemy import Column, Float, ForeignKey, Integer, Text
 from sqlalchemy.orm import relationship
 
 from .base import Base
-from .doi import HasDOI
 from .instrument import HasInstrument
 from .measurement_type import HasMeasurementType
 
 
-class LayerData(
-    HasMeasurementType, HasInstrument, Base, HasDOI
-):
+class LayerData(HasMeasurementType, HasInstrument, Base):
     """
     Class representing the layers table. This table holds all layers or
     profile data. Here a single data entry is a single value at depth in the
