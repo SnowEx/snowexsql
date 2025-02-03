@@ -38,5 +38,6 @@ class HasObservation:
     """
 
     observation_id: Mapped[int] = mapped_column(
-        ForeignKey("public.campaign_observations.id"), index=True
+        ForeignKey("public.campaign_observations.id"),
+        index=True, nullable=False
     )
