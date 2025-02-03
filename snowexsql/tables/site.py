@@ -18,10 +18,10 @@ class SiteObservers(Base):
     __tablename__ = 'site_observers'
 
     site_id = Column(
-        Integer, ForeignKey('public.sites.id'), nullable=False
+        Integer, ForeignKey('public.sites.id'), nullable=False, index=True
     )
     observer_id = Column(
-        Integer, ForeignKey("public.observers.id"), nullable=False
+        Integer, ForeignKey("public.observers.id"), nullable=False, index=True
     )
 
 

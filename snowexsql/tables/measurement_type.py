@@ -10,7 +10,7 @@ class MeasurementType(Base):
     """
     __tablename__ = 'measurement_type'
 
-    name = Column(Text, nullable=False)
+    name = Column(Text, nullable=False, index=True)
     units = Column(Text)
     derived = Column(Boolean, default=False)
 

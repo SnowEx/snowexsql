@@ -10,7 +10,7 @@ class DOI(Base):
     """
     __tablename__ = 'dois'
 
-    doi = Column(String(), nullable=False)
+    doi = Column(String(), nullable=False, index=True)
     date_accessed = Column(Date)
 
 

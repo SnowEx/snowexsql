@@ -21,7 +21,7 @@ class Campaign(Base):
     # TODO: could we add a campaign shapefile?
 
     id = Column(Integer, primary_key=True)
-    name = Column(String(), nullable=False)
+    name = Column(String(), nullable=False, index=True)
     description = Column(String())
 
 
