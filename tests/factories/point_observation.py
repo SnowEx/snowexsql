@@ -15,7 +15,7 @@ class PointObservationFactory(BaseFactory):
     class Meta:
         model = PointObservation
 
-    name = 'Point Observation'
+    name = factory.Sequence(lambda n: f'Point Observation {n}')
     description = 'Point Description'
     date = factory.LazyFunction(datetime.date.today)
 
