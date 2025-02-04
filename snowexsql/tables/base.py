@@ -1,12 +1,14 @@
-from sqlalchemy import Column, Date, Integer
+from sqlalchemy import Column, Integer, MetaData
 from sqlalchemy.orm import DeclarativeBase
+
+metadata = MetaData(schema='public')
 
 
 class Base(DeclarativeBase):
     """
     Base class for which all data will have these attributes
     """
-    # SQL Alchemy
-    __table_args__ = {"schema": "public"}
+    # Global table values
+    metadata = metadata
     # Primary Key
     id = Column(Integer, primary_key=True)
