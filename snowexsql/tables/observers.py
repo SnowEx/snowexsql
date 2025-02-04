@@ -9,7 +9,7 @@ class Observer(Base):
     # id is mapped column for many-to-many
     id: Mapped[int] = mapped_column(primary_key=True)
     # Name of the observer
-    name = Column(String())
+    name = Column(String(), nullable=False)
 
 
 class HasObserver:
@@ -18,7 +18,7 @@ class HasObserver:
     """
 
     observers_id: Mapped[int] = mapped_column(
-        ForeignKey("public.observers.id"), index=True
+        ForeignKey("public.observers.id"), index=True, nullable=False
     )
 
     @declared_attr

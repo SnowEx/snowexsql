@@ -5,10 +5,10 @@ Created on Thu Aug 22 11:56:34 2024
 @author: jtmaz
 """
 
-from sqlalchemy import Column, String, Integer, ForeignKey
+from sqlalchemy import Column, ForeignKey, Integer, String
 from sqlalchemy.orm import declared_attr, relationship
 
-from .base import Base 
+from .base import Base
 
 
 class Campaign(Base):
@@ -21,7 +21,7 @@ class Campaign(Base):
     # TODO: could we add a campaign shapefile?
 
     id = Column(Integer, primary_key=True)
-    name = Column(String())
+    name = Column(String(), nullable=False, index=True)
     description = Column(String())
 
 
@@ -32,8 +32,11 @@ class InCampaign:
 
     @declared_attr
     def campaign_id(cls):
-        return Column(Integer, ForeignKey('public.campaigns.id'),
-                      index=True)
+        return Column(
+            Integer,
+            ForeignKey('public.campaigns.id'),
+            index=True, nullable=False
+        )
 
     @declared_attr
     def campaign(cls):

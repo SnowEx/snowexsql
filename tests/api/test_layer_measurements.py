@@ -1,27 +1,31 @@
 """
 Test the Layer Measurement class
 """
-import pytest
 from datetime import date, timedelta
-import geopandas as gpd
 
+import geopandas as gpd
+import pytest
 from geoalchemy2.shape import to_shape
 
 from snowexsql.api import LayerMeasurements
 from snowexsql.tables import LayerData
 
+
 @pytest.fixture
 def point_data_x_y(layer_data_factory):
     return to_shape(layer_data_factory.build().site.geom)
+
 
 @pytest.fixture
 def point_data_srid(layer_data_factory):
     return layer_data_factory.build().site.geom.srid
 
+
 @pytest.fixture
 def layer_data(layer_data_factory, db_session):
     layer_data_factory.create()
     return db_session.query(LayerData).all()
+
 
 @pytest.mark.usefixtures("db_test_session")
 @pytest.mark.usefixtures("db_test_connection")
@@ -38,7 +42,7 @@ class TestLayerMeasurements:
             record.site.campaign.name
             for record in self.db_data
         ]
-    
+
     def test_all_types(self):
         result = self.subject.all_types
         assert result == [
@@ -47,12 +51,12 @@ class TestLayerMeasurements:
         ]
 
     def test_all_observers(self):
-       result = self.subject.all_observers
-       assert result == [
-           observer.name
-           for record in self.db_data
-           for observer in record.site.observers
-       ]
+        result = self.subject.all_observers
+        assert result == [
+            observer.name
+            for record in self.db_data
+            for observer in record.site.observers
+        ]
 
     def test_all_sites(self):
         result = self.subject.all_sites
@@ -89,6 +93,7 @@ class TestLayerMeasurements:
             for record in self.db_data
         ]
 
+
 @pytest.mark.usefixtures("db_test_session")
 @pytest.mark.usefixtures("db_test_connection")
 @pytest.mark.usefixtures("layer_data")
@@ -96,16 +101,16 @@ class TestLayerMeasurementFilter:
     @pytest.fixture(autouse=True)
     def setup_method(self, layer_data):
         self.subject = LayerMeasurements()
-                # Pick the first record for this test case
+        # Pick the first record for this test case
         self.db_data = layer_data[0]
 
     def test_date_and_instrument(self):
-            result = self.subject.from_filter(
-                date=self.db_data.site.datetime.date(),
-                instrument=self.db_data.instrument.name,
-            )
-            assert len(result) == 1
-            assert result.loc[0].value == self.db_data.value
+        result = self.subject.from_filter(
+            date=self.db_data.site.datetime.date(),
+            instrument=self.db_data.instrument.name,
+        )
+        assert len(result) == 1
+        assert result.loc[0].value == self.db_data.value
 
     def test_instrument_and_limit(self, layer_data_factory):
         # Create 10 more records, but only fetch five
@@ -117,7 +122,7 @@ class TestLayerMeasurementFilter:
         )
         assert len(result) == 5
         assert pytest.approx(result["value"].astype("float").mean()) == \
-        float(self.db_data.value)
+               float(self.db_data.value)
 
     def test_no_instrument_on_date(self):
         result = self.subject.from_filter(
@@ -147,7 +152,6 @@ class TestLayerMeasurementFilter:
         assert len(result) == 1
         assert result.loc[0].value == self.db_data.value
 
-
     @pytest.mark.parametrize(
         "kwargs, expected_error", [
             ({"notakey": "value"}, ValueError),
@@ -161,7 +165,7 @@ class TestLayerMeasurementFilter:
         with pytest.raises(expected_error):
             self.subject.from_filter(**kwargs)
 
-    def test_from_area(self,point_data_x_y, point_data_srid):
+    def test_from_area(self, point_data_x_y, point_data_srid):
         shp = gpd.points_from_xy(
             [point_data_x_y.x],
             [point_data_x_y.y],
@@ -179,12 +183,14 @@ class TestLayerMeasurementFilter:
         result = self.subject.from_area(pt=pts[0], buffer=10, crs=crs)
         assert len(result) == 1
 
+
 # Testing with real density data
 
 @pytest.fixture
 def layer_data_with_density(layer_density_factory, db_session):
     layer_density_factory.create()
     return db_session.query(LayerData).all()
+
 
 @pytest.mark.usefixtures("db_test_session")
 @pytest.mark.usefixtures("db_test_connection")
@@ -193,7 +199,7 @@ class TestDensityMeasurementFilter:
     @pytest.fixture(autouse=True)
     def setup_method(self, layer_data_with_density):
         self.subject = LayerMeasurements()
-                # Pick the first record for this test case
+        # Pick the first record for this test case
         self.db_data = layer_data_with_density[0]
 
     @pytest.mark.parametrize(
@@ -210,12 +216,14 @@ class TestDensityMeasurementFilter:
         result = self.subject.from_filter(**kwargs)
         assert len(result) == 1
 
+
 # Testing with real temperature data
 
 @pytest.fixture
 def layer_data_with_temperature(layer_temperature_factory, db_session):
     layer_temperature_factory.create()
     return db_session.query(LayerData).all()
+
 
 @pytest.mark.usefixtures("db_test_session")
 @pytest.mark.usefixtures("db_test_connection")
@@ -224,7 +232,7 @@ class TestTemperatureMeasurementFilter:
     @pytest.fixture(autouse=True)
     def setup_method(self, layer_data_with_temperature):
         self.subject = LayerMeasurements()
-                # Pick the first record for this test case
+        # Pick the first record for this test case
         self.db_data = layer_data_with_temperature[0]
 
     @pytest.mark.parametrize(
@@ -240,4 +248,3 @@ class TestTemperatureMeasurementFilter:
         """
         result = self.subject.from_filter(**kwargs)
         assert len(result) == 1
-

@@ -1,5 +1,4 @@
 import pytest
-import datetime
 
 from snowexsql.tables import DOI, Instrument, LayerData, MeasurementType, Site
 
