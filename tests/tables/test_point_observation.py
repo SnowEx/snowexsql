@@ -8,8 +8,12 @@ from snowexsql.tables import (
 
 
 @pytest.fixture
-def point_observation_record(point_observation_factory, db_session):
-    point_observation_factory.create()
+def point_observation(point_observation_factory):
+    return point_observation_factory.create()
+
+
+@pytest.fixture
+def point_observation_record(point_observation, db_session):
     return db_session.query(PointObservation).first()
 
 
@@ -18,12 +22,12 @@ class TestPointObservation:
     def setup_method(self, point_observation_record):
         self.subject = point_observation_record
 
-    def test_name_attribute(self, point_observation_factory):
-        assert self.subject.name == point_observation_factory.name
+    def test_name_attribute(self, point_observation):
+        assert self.subject.name == point_observation.name
 
-    def test_description_attribute(self, point_observation_factory):
+    def test_description_attribute(self, point_observation):
         assert (
-            self.subject.description == point_observation_factory.description
+            self.subject.description == point_observation.description
         )
 
     def test_date_attribute(self):
