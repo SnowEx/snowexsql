@@ -29,7 +29,7 @@ class CampaignObservation(
 
     # Index
     __table_args__ = (
-        Index('idx_name_date_unique', 'name', 'date', unique=True),
+        Index('idx_name_date_unique', 'name', 'date', unique=False),
     )
 
     __mapper_args__ = {
