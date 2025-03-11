@@ -51,7 +51,7 @@ def load_credentials(credentials_path=None):
     with open(credentials_path) as file:
         credentials = json.load(file)
 
-        if os.getenv('SNOWEXSQL_TESTS', True):
+        if os.getenv('SNOWEXSQL_TESTS', False):
             return credentials['tests']
         else:
             return credentials['production']
