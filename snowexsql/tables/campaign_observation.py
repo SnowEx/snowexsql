@@ -1,4 +1,5 @@
-from sqlalchemy import Column, Date, ForeignKey, String, Text, Index
+from sqlalchemy import Column, Date, ForeignKey, String, Text, Index, DateTime
+from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import Mapped, mapped_column
 
 from .base import Base
@@ -22,14 +23,29 @@ class CampaignObservation(
     # Data columns
     name = Column(Text, nullable=False)
     description = Column(Text)
-    date = Column(Date, nullable=False)
+    # Date of the measurement with time
+    datetime = Column(DateTime(timezone=True), nullable=False, index=True)
+
+    @hybrid_property
+    def date(self):
+        """
+        Helper attribute to only query for dates of measurements
+        """
+        return self.datetime.date()
+
+    @date.expression
+    def date(cls):
+        """
+        Helper attribute to only query for dates of measurements
+        """
+        return cls.datetime.cast(Date)
 
     # Single Table Inheritance column
     type = Column(String, nullable=False)
 
     # Index
     __table_args__ = (
-        Index('idx_name_date_unique', 'name', 'date', unique=False),
+        Index('idx_name_date_unique', 'name', 'datetime', unique=True),
     )
 
     __mapper_args__ = {

@@ -1,4 +1,4 @@
-import datetime
+from datetime import datetime, timezone
 
 import factory
 
@@ -17,7 +17,7 @@ class PointObservationFactory(BaseFactory):
 
     name = factory.Sequence(lambda n: f'Point Observation {n}')
     description = 'Point Description'
-    date = factory.LazyFunction(datetime.date.today)
+    datetime = factory.LazyFunction(lambda: datetime.now(timezone.utc))
 
     campaign = factory.SubFactory(CampaignFactory)
     doi = factory.SubFactory(DOIFactory)

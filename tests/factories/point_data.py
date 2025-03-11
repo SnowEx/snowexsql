@@ -13,8 +13,6 @@ class PointDataFactory(BaseFactory):
         model = PointData
 
     value = 10
-    datetime = factory.LazyFunction(lambda: datetime.now(timezone.utc))
-
     geom = WKTElement(
         "POINT(747987.6190615438 4324061.7062127385)", srid=26912
     )

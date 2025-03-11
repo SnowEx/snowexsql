@@ -134,6 +134,10 @@ class BaseDataset:
                 if "date" in k and cls.MODEL == LayerData:
                     qry = qry.join(LayerData.site)
                     qry_model = Site
+                # Special logic for filtering on date with PointData
+                elif "date" in k and cls.MODEL == PointData:
+                    qry = qry.join(PointData.observation)
+                    qry_model = PointObservation
                 elif cls.MODEL == PointData:
                     qry = qry.join(PointData.observation)
 
@@ -473,6 +477,16 @@ class PointMeasurements(BaseDataset):
             ).all()
         return self.retrieve_single_value_result(result)
 
+    @property
+    def all_dates(self):
+        """
+        Return all distinct dates in the data
+        """
+        with db_session(self.DB_NAME) as (session, engine):
+            qry = session.query(PointObservation.date).distinct()
+            result = qry.all()
+        return self.retrieve_single_value_result(result)
+
 
 class TooManyRastersException(Exception):
     """
@@ -555,7 +569,8 @@ class LayerMeasurements(BaseDataset):
                 MeasurementType.units
             ).distinct().all()
         return self.retrieve_single_value_result(result)
-    
+
+
 class RasterMeasurements(BaseDataset):
     MODEL = ImageData
     ALLOWED_QRY_KWARGS = BaseDataset.ALLOWED_QRY_KWARGS + ['description']

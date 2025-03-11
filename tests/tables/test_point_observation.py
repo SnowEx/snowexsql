@@ -30,6 +30,9 @@ class TestPointObservation:
             self.subject.description == point_observation.description
         )
 
+    def test_datetime_attribute(self):
+        assert type(self.subject.datetime) is datetime.datetime
+
     def test_date_attribute(self):
         assert type(self.subject.date) is datetime.date
 

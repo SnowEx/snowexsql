@@ -20,17 +20,3 @@ class PointData(Base, SingleLocationData, HasPointObservation):
 
     # bring these in instead of Measurement
     units = Column(String())
-
-    @hybrid_property
-    def date(self):
-        """
-        Helper attribute to only query for dates of measurements
-        """
-        return self.datetime.date()
-
-    @date.expression
-    def date(cls):
-        """
-        Helper attribute to only query for dates of measurements
-        """
-        return cls.datetime.cast(Date)

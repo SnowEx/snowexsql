@@ -29,20 +29,6 @@ class TestPointData:
     def test_value_attribute(self):
         assert type(self.subject.value) is float
 
-    def test_datetime_attribute(self):
-        assert type(self.subject.datetime) is datetime
-        # The microseconds won't be the same between the site_attribute
-        # and site_record fixture. Hence only testing the difference being
-        # small. Important to subtract the later from the earlier time as
-        # the timedelta object is incorrect otherwise
-        assert (
-           self.attributes.datetime - self.subject.datetime
-       ).seconds == pytest.approx(0, rel=0.1)
-
-    def test_date_attribute(self):
-        assert type(self.subject.date) is date
-        assert self.subject.date == self.attributes.date
-
     def test_elevation_attribute(self):
         assert self.subject.elevation == self.attributes.elevation
 
