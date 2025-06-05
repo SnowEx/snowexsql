@@ -7,6 +7,7 @@ from snowexsql.db import (DB_CONNECTION_PROTOCOL, db_connection_string,
                           load_credentials)
 from sqlalchemy import Engine, MetaData
 from sqlalchemy.orm import Session
+from sqlalchemy import text
 
 
 @pytest.fixture(scope='function')
@@ -75,8 +76,13 @@ class TestDBConnectionInfo:
             engine = test_engine
             session = test_session
 
-        assert isinstance(engine, Engine)
-        assert isinstance(session, Session)
+            assert isinstance(engine, Engine)
+            assert isinstance(session, Session)
+            # Query to create a transaction
+            session.query(text('1')).all()
+
+        # On session.close(), all transactions should be gone
+        assert session._transaction is None
 
     @pytest.mark.usefixtures('db_connection_string_patch')
     @pytest.mark.parametrize("return_metadata, expected_objs", [

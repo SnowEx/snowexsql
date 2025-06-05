@@ -22,9 +22,7 @@ DB_CONNECTION_OPTIONS = {"options": "-c timezone=UTC"}
 
 def initialize(engine):
     """
-    Creates the original database from scratch, currently only for
-    point data
-
+    Creates the original database from scratch.
     """
     meta = Base.metadata
     meta.drop_all(bind=engine)
@@ -117,7 +115,10 @@ def db_session_with_credentials(credentials_path=None):
         credentials_path (string): Full path to credentials file (Optional)
 
     """
-    yield get_db(credentials_path)
+    engine, session = get_db(credentials_path)
+    yield engine, session
+    session.close()
+    engine.dispose()
 
 
 def get_table_attributes(DataCls):
