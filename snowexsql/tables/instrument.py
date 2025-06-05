@@ -22,7 +22,7 @@ class HasInstrument:
         return Column(
             Integer,
             ForeignKey('public.instruments.id'),
-            index=True, nullable=False
+            index=True, nullable=True
         )
 
     @declared_attr
