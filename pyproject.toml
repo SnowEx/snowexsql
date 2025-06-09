@@ -31,7 +31,7 @@ dependencies = [
 dev = [
     "factory_boy<4",
     "pytest-factoryboy<3",
-    "pytest",
+    "pytest<8.4",
     "pytest-cov",
     "sphinx-autobuild<=2024.5",
 ]
