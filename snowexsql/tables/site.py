@@ -60,6 +60,9 @@ class Site(SingleLocationData, Base, InCampaign, HasDOI):
     tree_canopy = Column(String())
     site_notes = Column(String())
 
+    # Relationships
+    layer_data = relationship('LayerData', lazy='joined')
+
     # Index
     __table_args__ = (
         Index('idx_name_datetime_unique', 'name', 'datetime', unique=True),

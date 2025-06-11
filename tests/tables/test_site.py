@@ -3,7 +3,7 @@ import datetime
 import pytest
 from geoalchemy2 import WKBElement
 
-from snowexsql.tables import Campaign, DOI, Observer, Site
+from snowexsql.tables import Campaign, DOI, Observer, Site, LayerData
 
 
 @pytest.fixture
@@ -121,3 +121,10 @@ class TestSite:
         assert self.subject.observers is not None
         assert isinstance(self.subject.observers, list)
         assert type(self.subject.observers[0]) == Observer
+
+    def test_has_layers(self, layer_data_factory, db_session):
+        layer_data_factory.create(site=self.subject)
+
+        assert self.subject.layer_data is not None
+        assert isinstance(self.subject.layer_data, list)
+        assert type(self.subject.layer_data[0]) == LayerData
