@@ -1,7 +1,7 @@
 from typing import List
 
 from sqlalchemy import (
-    Column, Date, Float, ForeignKey, Integer, String, Index
+    Column, Date, Float, ForeignKey, Index, Integer, String, Text
 )
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -36,6 +36,9 @@ class Site(SingleLocationData, Base, InCampaign, HasDOI):
 
     name = Column(String(), nullable=False)  # This can be pit_id
     description = Column(String())
+
+    # Example: Top right comment section on a pit sheet
+    comments = Column(Text)
 
     # Link the observer
     # id is a mapped column for many-to-many with observers

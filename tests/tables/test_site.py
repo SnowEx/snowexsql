@@ -107,6 +107,11 @@ class TestSite:
     def test_geom_attribute(self):
         assert isinstance(self.subject.geom, WKBElement)
 
+    def test_comments_attribute(self):
+        assert self.subject.comments == self.attributes.comments
+
+    # Relationships
+    # -------------
     def test_in_campaign(self):
         assert self.subject.campaign is not None
         assert isinstance(self.subject.campaign, Campaign)
