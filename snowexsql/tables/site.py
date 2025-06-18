@@ -37,9 +37,6 @@ class Site(SingleLocationData, Base, InCampaign, HasDOI):
     name = Column(String(), nullable=False)  # This can be pit_id
     description = Column(String())
 
-    # Example: Top right comment section on a pit sheet
-    comments = Column(Text)
-
     # Link the observer
     # id is a mapped column for many-to-many with observers
     id: Mapped[int] = mapped_column(primary_key=True)
@@ -61,7 +58,9 @@ class Site(SingleLocationData, Base, InCampaign, HasDOI):
     ground_vegetation = Column(String())
     vegetation_height = Column(String())
     tree_canopy = Column(String())
-    site_notes = Column(String())
+    # Example: Top right comment section on a pit sheet
+    comments = Column(Text)
+
 
     # Relationships
     layer_data = relationship('LayerData', lazy='joined')

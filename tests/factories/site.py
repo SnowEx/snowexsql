@@ -17,8 +17,6 @@ class SiteFactory(BaseFactory):
     description = 'Site Description'
     datetime = factory.LazyFunction(lambda: datetime.now(timezone.utc))
 
-    comments = "Observer comment on site"
-
     slope_angle = 0.0
     aspect = 0.0
     air_temp = -5.0
@@ -32,7 +30,7 @@ class SiteFactory(BaseFactory):
     ground_vegetation = "Bare"
     vegetation_height = "None"
     tree_canopy = "Open"
-    site_notes = "Site Notes"
+    comments = "Observer comment on site"
 
     # Single Location data
     geom = WKTElement(
