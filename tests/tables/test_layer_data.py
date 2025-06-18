@@ -28,9 +28,6 @@ class TestLayerData:
         assert type(self.subject.bottom_depth) is float
         assert self.subject.bottom_depth == self.attributes.bottom_depth
 
-    def test_comments_attribute(self):
-        assert self.subject.comments == self.attributes.comments
-
     def test_value_attribute(self):
         assert self.subject.value == self.attributes.value
 

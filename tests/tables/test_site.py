@@ -98,15 +98,17 @@ class TestSite:
     def test_tree_canopy_attribute(self):
         assert self.subject.tree_canopy == self.attributes.tree_canopy
 
-    def test_site_notes_attribute(self):
-        assert self.subject.site_notes == self.attributes.site_notes
-
     def test_elevation_attribute(self, point_data_factory):
         assert self.subject.elevation == point_data_factory.elevation
 
     def test_geom_attribute(self):
         assert isinstance(self.subject.geom, WKBElement)
 
+    def test_comments_attribute(self):
+        assert self.subject.comments == self.attributes.comments
+
+    # Relationships
+    # -------------
     def test_in_campaign(self):
         assert self.subject.campaign is not None
         assert isinstance(self.subject.campaign, Campaign)

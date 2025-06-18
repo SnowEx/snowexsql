@@ -17,7 +17,6 @@ class LayerData(HasMeasurementType, HasInstrument, Base):
 
     depth = Column(Float, nullable=False, index=True)
     bottom_depth = Column(Float)
-    comments = Column(Text)
     value = Column(Text, nullable=False, index=True)
 
     # Link the site id with a foreign key

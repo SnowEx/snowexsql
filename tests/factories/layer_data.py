@@ -19,7 +19,6 @@ class LayerDataFactory(BaseFactory):
 
     depth = 100.0
     bottom_depth = 90.0
-    comments = 'Layer comment'
     value = '40'
 
     measurement_type = factory.SubFactory(
@@ -41,7 +40,6 @@ class LayerDensityFactory(LayerDataFactory):
     depth = 15.0
     bottom_depth = 5.0
     value = '236.0'
-    comments = 'Sample_A'
 
     site = factory.SubFactory(
         SiteFactory,

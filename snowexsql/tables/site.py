@@ -1,7 +1,7 @@
 from typing import List
 
 from sqlalchemy import (
-    Column, Date, Float, ForeignKey, Integer, String, Index
+    Column, Date, Float, ForeignKey, Index, Integer, String, Text
 )
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -58,7 +58,9 @@ class Site(SingleLocationData, Base, InCampaign, HasDOI):
     ground_vegetation = Column(String())
     vegetation_height = Column(String())
     tree_canopy = Column(String())
-    site_notes = Column(String())
+    # Example: Top right comment section on a pit sheet
+    comments = Column(Text)
+
 
     # Relationships
     layer_data = relationship('LayerData', lazy='joined')

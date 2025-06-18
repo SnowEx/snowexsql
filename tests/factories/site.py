@@ -30,7 +30,7 @@ class SiteFactory(BaseFactory):
     ground_vegetation = "Bare"
     vegetation_height = "None"
     tree_canopy = "Open"
-    site_notes = "Site Notes"
+    comments = "Observer comment on site"
 
     # Single Location data
     geom = WKTElement(
