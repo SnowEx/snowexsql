@@ -3,7 +3,7 @@ from datetime import date, datetime
 import pytest
 from geoalchemy2 import WKBElement
 
-from snowexsql.tables import PointData
+from snowexsql.tables import PointData, MeasurementType
 
 
 @pytest.fixture
@@ -48,3 +48,8 @@ class TestPointData:
 
     def test_geom_attribute(self):
         assert isinstance(self.subject.geom, WKBElement)
+
+    def test_has_measurement_type(self):
+        assert self.subject.measurement_type is not None
+        assert isinstance(self.subject.measurement_type, MeasurementType)
+

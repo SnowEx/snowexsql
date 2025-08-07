@@ -5,6 +5,7 @@ from geoalchemy2 import WKTElement
 
 from snowexsql.tables import PointData
 from .base_factory import BaseFactory
+from .measurement_type import MeasurementTypeFactory
 from .point_observation import PointObservationFactory
 
 
@@ -21,3 +22,4 @@ class PointDataFactory(BaseFactory):
     elevation = 3148.2
 
     observation = factory.SubFactory(PointObservationFactory)
+    measurement_type = factory.SubFactory(MeasurementTypeFactory)

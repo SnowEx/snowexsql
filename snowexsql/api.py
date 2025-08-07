@@ -421,16 +421,6 @@ class PointMeasurements(BaseDataset):
         )
 
     @classmethod
-    def _filter_measurement_type(cls, qry, value):
-        return qry.join(
-            cls.MODEL.observation
-        ).join(
-            PointObservation.measurement_type
-        ).filter(
-            MeasurementType.name == value
-        )
-
-    @classmethod
     def _filter_instrument(cls, qry, value):
         return qry.join(
             cls.MODEL.observation

@@ -39,7 +39,7 @@ class TestPointMeasurements:
     def test_all_types(self):
         result = self.subject.all_types
         assert result == [
-            record.observation.measurement_type.name
+            record.measurement_type.name
             for record in self.db_data
         ]
 
@@ -124,7 +124,7 @@ class TestPointMeasurementFilter:
     def test_date_and_measurement_type(self):
         result = self.subject.from_filter(
             date=self.db_data.datetime.date(),
-            type=self.db_data.observation.measurement_type.name,
+            type=self.db_data.measurement_type.name,
         )
         assert len(result) == 1
         assert result.loc[0].value == self.db_data.value
