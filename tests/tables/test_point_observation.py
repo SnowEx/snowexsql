@@ -3,7 +3,7 @@ import datetime
 import pytest
 
 from snowexsql.tables import (
-    Campaign, DOI, Instrument, MeasurementType, Observer, PointObservation
+    Campaign, DOI, Instrument, Observer, PointObservation
 )
 
 
@@ -40,10 +40,6 @@ class TestPointObservation:
     def test_has_doi(self):
         assert self.subject.doi is not None
         assert isinstance(self.subject.doi, DOI)
-
-    def test_has_measurement_type(self):
-        assert self.subject.measurement_type is not None
-        assert isinstance(self.subject.measurement_type, MeasurementType)
 
     def test_has_instrument(self):
         assert self.subject.instrument is not None
