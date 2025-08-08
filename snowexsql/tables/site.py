@@ -63,7 +63,9 @@ class Site(SingleLocationData, Base, InCampaign, HasDOI):
 
 
     # Relationships
-    layer_data = relationship('LayerData', lazy='joined')
+    layer_data = relationship(
+        'LayerData', back_populates='site', lazy='joined'
+    )
 
     # Index
     __table_args__ = (
