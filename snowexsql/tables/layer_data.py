@@ -24,4 +24,4 @@ class LayerData(HasMeasurementType, HasInstrument, Base):
         Integer, ForeignKey('public.sites.id'), index=True, nullable=False
     )
     # Link the Site class
-    site = relationship('Site', lazy='joined')
+    site = relationship('Site', back_populates='layer_data', lazy='joined')
