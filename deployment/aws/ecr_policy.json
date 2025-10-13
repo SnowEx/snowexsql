@@ -1,0 +1,33 @@
+{
+  "Version": "2008-10-17",
+  "Statement": [
+    {
+      "Sid": "LambdaECRImageRetrievalPolicy",
+      "Effect": "Allow",
+      "Principal": {
+        "Service": "lambda.amazonaws.com"
+      },
+      "Action": [
+        "ecr:BatchGetImage",
+        "ecr:GetDownloadUrlForLayer"
+      ],
+      "Condition": {
+        "StringLike": {
+          "aws:sourceArn": "arn:aws:lambda:us-west-2:390402539674:function:*"
+        }
+      }
+    },
+    {
+      "Sid": "LambdaECRImageCrossAccount",
+      "Effect": "Allow",
+      "Principal": {
+        "AWS": "arn:aws:iam::390402539674:root"
+      },
+      "Action": [
+        "ecr:BatchGetImage",
+        "ecr:GetDownloadUrlForLayer",
+        "ecr:GetAuthorizationToken"
+      ]
+    }
+  ]
+}
