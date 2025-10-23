@@ -86,25 +86,51 @@ Local Development Setup
 Tests
 =====
 
-Before testing, in a separate terminal, we need to run a local instance
-of the database. This can be done with
+Running the test suite requires a locally running database and providing
+the credentials to connect to it. Setting up an instance can be done via
+the supplied Docker compose file (see steps below).
 
+Setting up DB credentials
+----
+Copy the supplied sample file locally in a terminal
+
+.. code-block:: bash
+
+  mv tests/credentials.json.sample tests/credentials.json
+
+The file contains the username and password for connecting to the DB within
+the Docker container.
+
+Docker commands
+----
+
+After `installing Docker <https://docs.docker.com/desktop/>`_,
+you can start up a ready to go database instance.
+
+Start a database
+****
 .. code-block:: bash
 
   $ docker-compose up -d
 
+Stop a database
+****
 When you are finished testing, make sure to turn the docker off
 
 .. code-block:: bash
 
   $ docker-compose down
 
+Running the test suite
+----
 Quickly test your installation by running:
 
 .. code-block:: bash
 
   $ python3 -m pytest tests/
 
+Testing the code coverage
+----
 The goal of this project is to have high fidelity in data
 interpretation/submission to the database. To see the current
 test coverage run:
@@ -139,7 +165,12 @@ Deploying
 
 A reminder for the maintainers on how to deploy.
 Make sure all your changes are committed.
-Then run::
+Then, in Github,
+ 1. Draft a new release https://github.com/SnowEx/snowexsql/releases/new
+ 2. Create a new tag in the style of `v0.x.x`_
+ 3. Set release title to `snowexsql v<version>`_
+ 4. Enter release notes
+ 5. Check that the action has released succesfully
 
 $ bump2version patch # possible: major / minor / patch
 $ git push

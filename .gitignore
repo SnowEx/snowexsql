@@ -16,13 +16,19 @@ docs/_build/*
 
 **/.ipynb_checkpoints/*
 
+# Database credential information
+credentials.json
+
+# Test related files
 .coverage
 coverage.xml
 htmlcov/*
-scripts/upload/test*.txt
+
 .idea/
+.vscode/
 scripts/download/data/*
 *.egg-info
 
 # Version
 _version.py
+

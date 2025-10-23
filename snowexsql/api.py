@@ -1,4 +1,5 @@
 import logging
+import os
 from contextlib import contextmanager
 
 import geoalchemy2.functions as gfunc
@@ -7,17 +8,18 @@ from geoalchemy2.shape import from_shape
 from geoalchemy2.types import Raster
 from shapely.geometry import box
 from sqlalchemy.sql import func
+from sqlalchemy import cast, Numeric
 
 from snowexsql.conversions import query_to_geopandas, raster_to_rasterio
 from snowexsql.db import get_db
-from snowexsql.tables import ImageData, LayerData, PointData
+from snowexsql.tables import Campaign, DOI, ImageData, Instrument, LayerData, \
+    MeasurementType, Observer, PointData, PointObservation, Site
 
 LOG = logging.getLogger(__name__)
 DB_NAME = 'snow:hackweek@db.snowexdata.org/snowex'
 
 # TODO:
 #   * Possible enums
-#   * filtering based on dates
 #   * implement 'like' or 'contains' method
 
 
@@ -47,8 +49,11 @@ class BaseDataset:
     # Use this database name
     DB_NAME = DB_NAME
 
-    ALLOWED_QRY_KWARGS = ["site_name", "site_id", "date", "instrument", "observers", "type",
-        "utm_zone", "date_greater_equal", "date_less_equal", "value_greater_equal", 'value_less_equal',
+    ALLOWED_QRY_KWARGS = [
+        "campaign", "date", "instrument", "type",
+        "utm_zone", "date_greater_equal", "date_less_equal",
+        "value_greater_equal", 'value_less_equal', "doi",
+        "observer"
     ]
     SPECIAL_KWARGS = ["limit"]
     # Default max record count
@@ -85,6 +90,36 @@ class BaseDataset:
             )
 
     @classmethod
+    def _filter_campaign(cls, qry, v):
+        qry = qry.filter(
+            Site.campaign.has(Campaign.name == v)
+        )
+        return qry
+
+    @classmethod
+    def _filter_observers(cls, qry, v):
+        qry = qry.join(
+            cls.MODEL.observers
+        ).filter(Observer.name == v)
+        return qry
+
+    @classmethod
+    def _filter_instrument(cls, qry, value):
+        return qry.filter(
+            cls.MODEL.instrument.has(name=value)
+        )
+
+    @classmethod
+    def _filter_measurement_type(cls, qry, value):
+        return qry.join(
+            cls.MODEL.measurement_type
+        ).filter(MeasurementType.name == value)
+
+    @classmethod
+    def _filter_doi(cls, qry, value):
+        return qry.join(cls.MODEL.doi).filter(DOI.doi == value)
+
+    @classmethod
     def extend_qry(cls, qry, check_size=True, **kwargs):
         if cls.MODEL is None:
             raise ValueError("You must use a class with a MODEL.")
@@ -93,9 +128,18 @@ class BaseDataset:
         for k, v in kwargs.items():
             # Handle special operations
             if k in cls.ALLOWED_QRY_KWARGS:
+
+                qry_model = cls.MODEL
+                # Logic for filtering on date with LayerData
+                if "date" in k and cls.MODEL == LayerData:
+                    qry = qry.join(LayerData.site)
+                    qry_model = Site
+                elif cls.MODEL == PointData:
+                    qry = qry.join(PointData.observation)
+
                 # standard filtering using qry.filter
                 if isinstance(v, list):
-                    filter_col = getattr(cls.MODEL, k)
+                    filter_col = getattr(qry_model, k)
                     if k == "date":
                         raise ValueError(
                             "We cannot search for a list of dates"
@@ -113,16 +157,44 @@ class BaseDataset:
                     # Filter boundary
                     if "_greater_equal" in k:
                         key = k.split("_greater_equal")[0]
-                        filter_col = getattr(cls.MODEL, key)
-                        qry = qry.filter(filter_col >= v)
+                        if key == "value":
+                            qry = qry.filter(
+                                cast(getattr(qry_model, key), Numeric) >= v
+                            )
+                        else:
+                            qry = qry.filter(
+                                getattr(qry_model, key) >= v
+                            )
                     elif "_less_equal" in k:
                         key = k.split("_less_equal")[0]
-                        filter_col = getattr(cls.MODEL, key)
-                        qry = qry.filter(filter_col <= v)
+                        if key == "value":
+                            qry = qry.filter(
+                                cast(getattr(qry_model, key), Numeric) <= v
+                            )
+                        else:
+                            qry = qry.filter(
+                                getattr(qry_model, key) <= v
+                            )
+                    # Filter linked columns
+                    elif k == "instrument":
+                        qry = cls._filter_instrument(qry, v)
+                    elif k == "campaign":
+                        qry = cls._filter_campaign(qry, v)
+                    elif k == "site":
+                        qry = qry.filter(
+                            qry_model.site.has(name=v)
+                        )
+                    elif k == "observer":
+                        qry = cls._filter_observers(qry, v)
+                    elif k == "doi":
+                        qry = cls._filter_doi(qry, v)
+                    elif k == "type":
+                        qry = cls._filter_measurement_type(qry, v)
                     # Filter to exact value
                     else:
-                        filter_col = getattr(cls.MODEL, k)
-                        qry = qry.filter(filter_col == v)
+                        qry = qry.filter(
+                            getattr(qry_model, k) == v
+                        )
                     LOG.debug(
                         f"Filtering {k} to list {v}"
                     )
@@ -162,73 +234,6 @@ class BaseDataset:
 
         return results
 
-    @property
-    def all_site_names(self):
-        """
-        Return all types of the data
-        """
-        with db_session(self.DB_NAME) as (session, engine):
-            qry = session.query(self.MODEL.site_name).distinct()
-            result = qry.all()
-        return self.retrieve_single_value_result(result)
-
-    @property
-    def all_types(self):
-        """
-        Return all types of the data
-        """
-        with db_session(self.DB_NAME) as (session, engine):
-            qry = session.query(self.MODEL.type).distinct()
-            result = qry.all()
-        return self.retrieve_single_value_result(result)
-
-    @property
-    def all_dates(self):
-        """
-        Return all distinct dates in the data
-        """
-        with db_session(self.DB_NAME) as (session, engine):
-            qry = session.query(self.MODEL.date).distinct()
-            result = qry.all()
-        return self.retrieve_single_value_result(result)
-
-    @property
-    def all_observers(self):
-        """
-        Return all distinct observers in the data
-        """
-        with db_session(self.DB_NAME) as (session, engine):
-            qry = session.query(self.MODEL.observers).distinct()
-            result = qry.all()
-        return self.retrieve_single_value_result(result)
-
-    @property
-    def all_units(self):
-        """
-        Return all distinct units in the data
-        """
-        with db_session(self.DB_NAME) as (session, engine):
-            qry = session.query(self.MODEL.units).distinct()
-            result = qry.all()
-        return self.retrieve_single_value_result(result)
-
-    @property
-    def all_instruments(self):
-        """
-        Return all distinct instruments in the data
-        """
-        with db_session(self.DB_NAME) as (session, engine):
-            qry = session.query(self.MODEL.instrument).distinct()
-            result = qry.all()
-        return self.retrieve_single_value_result(result)
-
-
-class PointMeasurements(BaseDataset):
-    """
-    API class for access to PointData
-    """
-    MODEL = PointData
-
     @classmethod
     def from_filter(cls, **kwargs):
         """
@@ -239,6 +244,17 @@ class PointMeasurements(BaseDataset):
             try:
                 qry = session.query(cls.MODEL)
                 qry = cls.extend_qry(qry, **kwargs)
+
+                # For debugging in the test suite and not recommended
+                # in production
+                # https://docs.sqlalchemy.org/en/20/faq/sqlexpressions.html#rendering-postcompile-parameters-as-bound-parameters  ## noqa
+                if 'DEBUG_QUERY' in os.environ:
+                    full_sql_query = qry.statement.compile(
+                        compile_kwargs={"literal_binds": True}
+                    )
+                    print("\n ** SQL query **")
+                    print(full_sql_query)
+
                 df = query_to_geopandas(qry, engine)
             except Exception as e:
                 session.close()
@@ -273,11 +289,19 @@ class PointMeasurements(BaseDataset):
             try:
                 if shp is not None:
                     qry = session.query(cls.MODEL)
-                    qry = qry.filter(
-                        func.ST_Within(
-                            cls.MODEL.geom, from_shape(shp, srid=crs)
+                    # Filter geometry based on Site for LayerData
+                    if cls.MODEL == LayerData:
+                        qry = qry.join(cls.MODEL.site).filter(
+                            func.ST_Within(
+                                Site.geom, from_shape(shp, srid=crs)
+                            )
                         )
-                    )
+                    else:
+                        qry = qry.filter(
+                            func.ST_Within(
+                                cls.MODEL.geom, from_shape(shp, srid=crs)
+                            )
+                        )
                     qry = cls.extend_qry(qry, check_size=True, **kwargs)
                     df = query_to_geopandas(qry, engine)
                 else:
@@ -290,7 +314,15 @@ class PointMeasurements(BaseDataset):
 
                     buffered_pt = qry.all()[0][0]
                     qry = session.query(cls.MODEL)
-                    qry = qry.filter(func.ST_Within(cls.MODEL.geom, buffered_pt))
+                    # Filter geometry based on Site for LayerData
+                    if cls.MODEL == LayerData:
+                        qry = qry.join(cls.MODEL.site).filter(
+                            func.ST_Within(Site.geom, buffered_pt)
+                        )
+                    else:
+                        qry = qry.filter(
+                            func.ST_Within(cls.MODEL.geom, buffered_pt)
+                        )
                     qry = cls.extend_qry(qry, check_size=True, **kwargs)
                     df = query_to_geopandas(qry, engine)
             except Exception as e:
@@ -299,31 +331,221 @@ class PointMeasurements(BaseDataset):
 
         return df
 
+    @property
+    def all_campaigns(self):
+        """
+        Return all campaign names
+        """
+        with db_session(self.DB_NAME) as (session, engine):
+            qry = session.query(Campaign.name).distinct()
+            result = qry.all()
+        return self.retrieve_single_value_result(result)
+
+    @property
+    def all_types(self):
+        """
+        Return all types of the data
+        """
+        with db_session(self.DB_NAME) as (session, engine):
+            qry = session.query(MeasurementType.name).distinct()
+            result = qry.all()
+        return self.retrieve_single_value_result(result)
+
+    @property
+    def all_dates(self):
+        """
+        Return all distinct dates in the data
+        """
+        with db_session(self.DB_NAME) as (session, engine):
+            qry = session.query(self.MODEL.date).distinct()
+            result = qry.all()
+        return self.retrieve_single_value_result(result)
+
+    @property
+    def all_observers(self):
+        """
+        Return all distinct observers in the data
+        """
+        with db_session(self.DB_NAME) as (session, engine):
+            qry = session.query(Observer.name).distinct()
+            result = qry.all()
+        return self.retrieve_single_value_result(result)
+
+    @property
+    def all_dois(self):
+        """
+        Return all distinct DOIs in the data
+        """
+        with db_session(self.DB_NAME) as (session, engine):
+            qry = session.query(DOI.doi).distinct()
+            result = qry.all()
+        return self.retrieve_single_value_result(result)
+
+    @property
+    def all_units(self):
+        """
+        Return all distinct units in the data
+        """
+        with db_session(self.DB_NAME) as (session, engine):
+            qry = session.query(self.MODEL.units).distinct()
+            result = qry.all()
+        return self.retrieve_single_value_result(result)
+
+    @property
+    def all_instruments(self):
+        """
+        Return all distinct instruments in the data
+        """
+        with db_session(self.DB_NAME) as (session, engine):
+            qry = session.query(Instrument.name).join(
+                self.MODEL, Instrument.id == self.MODEL.instrument_id
+            ).distinct()
+            result = qry.all()
+        return self.retrieve_single_value_result(result)
+
+
+class PointMeasurements(BaseDataset):
+    """
+    API class for access to PointData
+    """
+    MODEL = PointData
+
+    @classmethod
+    def _filter_campaign(cls, qry, value):
+        return qry.join(
+            cls.MODEL.observation
+        ).join(
+            PointObservation.campaign
+        ).filter(
+            Campaign.name == value
+        )
+
+    @classmethod
+    def _filter_instrument(cls, qry, value):
+        return qry.join(
+            cls.MODEL.observation
+        ).join(
+            PointObservation.instrument
+        ).filter(
+            Instrument.name == value
+        )
+
+    @classmethod
+    def _filter_doi(cls, qry, value):
+        return qry.join(
+            cls.MODEL.observation
+        ).join(
+            PointObservation.doi
+        ).filter(
+            DOI.doi == value
+        )
+
+    @classmethod
+    def _filter_observers(cls, qry, value):
+        return qry.join(
+            cls.MODEL.observation
+        ).join(
+            PointObservation.observer
+        ).filter(
+            Observer.name == value
+        )
+
+    @property
+    def all_instruments(self):
+        """
+        Return all distinct instruments in the data
+        """
+        with db_session(self.DB_NAME) as (session, engine):
+            result = session.query(Instrument.name).filter(
+                Instrument.id.in_(
+                    session.query(PointObservation.instrument_id).distinct()
+                )
+            ).all()
+        return self.retrieve_single_value_result(result)
+
+
 class TooManyRastersException(Exception):
-    """ Exceptiont to report to users that their query will produce too many rasters"""
+    """
+    Exception to report to users that their query will produce too many
+    rasters
+    """
     pass
 
-class LayerMeasurements(PointMeasurements):
+
+class LayerMeasurements(BaseDataset):
     """
     API class for access to LayerData
     """
     MODEL = LayerData
     ALLOWED_QRY_KWARGS = [
-        "site_name", "site_id", "date", "instrument", "observers", "type",
-        "utm_zone", "pit_id", "date_greater_equal", "date_less_equal"
+        "campaign", "site", "date", "instrument", "observer", "type",
+        "utm_zone", "date_greater_equal", "date_less_equal",
+        "doi", "value_greater_equal", 'value_less_equal'
     ]
-    # TODO: layer analysis methods?
 
+    @classmethod
+    def _filter_campaign(cls, qry, v):
+        return qry.join(
+            cls.MODEL.site
+        ).join(
+            Site.campaign
+        ).filter(
+            Campaign.name == v
+        )
+        
+    @classmethod
+    def _filter_observers(cls, qry, v):
+        return qry.join(
+            cls.MODEL.site
+        ).join(
+            Site.observers
+        ).filter(
+            Observer.name == v
+        )
+    
+    @classmethod
+    def _filter_doi(cls, qry, value):
+        return qry.join(
+            cls.MODEL.site
+        ).join(
+            Site.doi
+        ).filter(
+            DOI.doi == value
+        )
+    
     @property
-    def all_site_ids(self):
+    def all_sites(self):
         """
-        Return all types of the data
+        Return all specific site names
         """
         with db_session(self.DB_NAME) as (session, engine):
-            qry = session.query(self.MODEL.site_id).distinct()
-            result = qry.all()
+            result = session.query(
+                Site.name
+            ).distinct().all()
         return self.retrieve_single_value_result(result)
 
+    @property
+    def all_dates(self):
+        """
+        Return all distinct dates in the data
+        """
+        with db_session(self.DB_NAME) as (session, engine):
+            result = session.query(
+                Site.date
+            ).distinct().all()
+        return self.retrieve_single_value_result(result)
+
+    @property
+    def all_units(self):
+        """
+        Return all distinct units in the data
+        """
+        with db_session(self.DB_NAME) as (session, engine):
+            result = session.query(
+                MeasurementType.units
+            ).distinct().all()
+        return self.retrieve_single_value_result(result)
+    
 class RasterMeasurements(BaseDataset):
     MODEL = ImageData
     ALLOWED_QRY_KWARGS = BaseDataset.ALLOWED_QRY_KWARGS + ['description']

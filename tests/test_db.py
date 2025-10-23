@@ -1,86 +1,96 @@
-from os.path import join
+import os
 
 import pytest
-from sqlalchemy import Table
+import snowexsql
+from snowexsql.db import (DB_CONNECTION_PROTOCOL, db_connection_string,
+                          db_session_with_credentials, get_db,
+                          load_credentials)
+from sqlalchemy import Engine, MetaData
+from sqlalchemy.orm import Session
+from sqlalchemy import text
 
-from snowexsql.db import get_db, get_table_attributes
-from snowexsql.tables import ImageData, LayerData, PointData, SiteData
-from .sql_test_base import DBSetup
+
+@pytest.fixture(scope='function')
+def db_connection_string_patch(monkeypatch, test_db_info):
+    def db_string(_credentials):
+        return test_db_info
+
+    monkeypatch.setattr(
+        snowexsql.db,
+        'db_connection_string',
+        db_string
+    )
 
 
-class TestDB(DBSetup):
-    base_atts = ['site_name', 'date', 'site_id']
-    single_loc_atts = ['elevation', 'geom', 'time']
+class TestDBConnectionInfo:
+    def test_load_credentials(self):
+        credentials = load_credentials()
 
-    meas_atts = ['instrument', 'type', 'units', 'observers']
+        assert len(credentials.keys()) == 4
+        assert 'address' in credentials
+        assert 'db_name' in credentials
+        assert 'username' in credentials
+        assert 'password' in credentials
 
-    site_atts = base_atts + single_loc_atts + \
-                ['slope_angle', 'aspect', 'air_temp', 'total_depth',
-                 'weather_description', 'precip', 'sky_cover', 'wind',
-                 'ground_condition', 'ground_roughness',
-                 'ground_vegetation', 'vegetation_height',
-                 'tree_canopy', 'site_notes']
+    def test_db_connection_string_info(self):
+        db_string = db_connection_string()
+        credentials = load_credentials()
 
-    point_atts = single_loc_atts + meas_atts + \
-                 ['version_number', 'equipment', 'value']
+        assert db_string.startswith(DB_CONNECTION_PROTOCOL)
+        assert f"{credentials['username']}:{credentials['password']}" in db_string
+        assert f"{credentials['address']}/{credentials['db_name']}" in db_string
 
-    layer_atts = single_loc_atts + meas_atts + \
-                 ['depth', 'value', 'bottom_depth', 'comments', 'sample_a',
-                  'sample_b', 'sample_c']
-    raster_atts = meas_atts + ['raster', 'description']
+    def test_load_credentials_production(self):
+        # Test that a missing environ key will not cause the lookup to fail
+        del os.environ['SNOWEXSQL_TESTS']
 
-    def setup_class(self):
+        credentials = load_credentials()
+        assert len(credentials.keys()) == 4
+        assert 'address' in credentials
+        assert 'db_name' in credentials
+        assert 'username' in credentials
+        assert 'password' in credentials
+
+        # Set again for subsequent tests
+        os.environ['SNOWEXSQL_TESTS'] = 'True'
+
+    @pytest.mark.usefixtures('db_connection_string_patch')
+    def test_returns_engine(self, monkeypatch, test_db_info):
+        assert isinstance(get_db()[0], Engine)
+
+    @pytest.mark.usefixtures('db_connection_string_patch')
+    def test_returns_session(self):
+        assert isinstance(get_db()[1], Session)
+
+    @pytest.mark.usefixtures('db_connection_string_patch')
+    def test_returns_metadata(self):
+        assert isinstance(
+            get_db(return_metadata=True)[2],
+            MetaData
+        )
+
+    @pytest.mark.usefixtures('db_connection_string_patch')
+    def test_db_session_with_credentials(self, monkeypatch, test_db_info):
+        engine, session = None, None
+        with db_session_with_credentials() as (test_engine, test_session):
+            engine = test_engine
+            session = test_session
+
+            assert isinstance(engine, Engine)
+            assert isinstance(session, Session)
+            # Query to create a transaction
+            session.query(text('1')).all()
+
+        # On session.close(), all transactions should be gone
+        assert session._transaction is None
+
+    @pytest.mark.usefixtures('db_connection_string_patch')
+    @pytest.mark.parametrize("return_metadata, expected_objs", [
+        (False, 2),
+        (True, 3)])
+    def test_get_metadata(self, return_metadata, expected_objs):
         """
-        Setup the database one time for testing
+        Test we can receive a connection and opt out of getting the metadata
         """
-        super().setup_class()
-        site_fname = join(self.data_dir, 'site_details.csv')
-        # only reflect the tables we will use
-        self.metadata.reflect(self.engine, only=['points', 'layers'])
-
-    def test_point_structure(self):
-        """
-        Tests our tables are in the database
-        """
-        t = Table("points", self.metadata, autoload=True)
-        columns = [m.key for m in t.columns]
-
-        for c in self.point_atts:
-            assert c in columns
-
-    def test_layer_structure(self):
-        """
-        Tests our tables are in the database
-        """
-        t = Table("layers", self.metadata, autoload=True)
-        columns = [m.key for m in t.columns]
-
-        for c in self.layer_atts:
-            assert c in columns
-
-    @pytest.mark.parametrize("DataCls,attributes", [
-        (SiteData, site_atts),
-        (PointData, point_atts),
-        (LayerData, layer_atts),
-        (ImageData, raster_atts)])
-    def test_get_table_attributes(self, DataCls, attributes):
-        """
-        Test we return a correct list of table columns from db.py
-        """
-        atts = get_table_attributes(DataCls)
-
-        for c in attributes:
-            assert c in atts
-
-
-# Independent Tests
-@pytest.mark.parametrize("return_metadata, expected_objs", [
-    (False, 2),
-    (True, 3)])
-def test_getting_db(return_metadata, expected_objs):
-    """
-    Test we can receive a connection and opt out of getting the metadata
-    """
-
-    result = get_db('builder:db_builder@localhost/test', return_metadata=return_metadata)
-    assert len(result) == expected_objs
+        result = get_db(return_metadata=return_metadata)
+        assert len(result) == expected_objs

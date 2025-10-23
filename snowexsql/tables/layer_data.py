@@ -1,9 +1,12 @@
-from sqlalchemy import Column, Float, String
+from sqlalchemy import Column, Float, ForeignKey, Integer, Text
+from sqlalchemy.orm import relationship
 
-from .base import Base, Measurement, SingleLocationData
+from .base import Base
+from .instrument import HasInstrument
+from .measurement_type import HasMeasurementType
 
 
-class LayerData(SingleLocationData, Measurement, Base):
+class LayerData(HasMeasurementType, HasInstrument, Base):
     """
     Class representing the layers table. This table holds all layers or
     profile data. Here a single data entry is a single value at depth in the
@@ -12,13 +15,13 @@ class LayerData(SingleLocationData, Measurement, Base):
     """
     __tablename__ = 'layers'
 
-    depth = Column(Float)
-    site_id = Column(String(50))
-    pit_id = Column(String(50))
+    depth = Column(Float, nullable=False, index=True)
     bottom_depth = Column(Float)
-    comments = Column(String(1000))
-    sample_a = Column(String(20))
-    sample_b = Column(String(20))
-    sample_c = Column(String(20))
-    value = Column(String(50))
-    flags = Column(String(20))
+    value = Column(Text, nullable=False, index=True)
+
+    # Link the site id with a foreign key
+    site_id = Column(
+        Integer, ForeignKey('public.sites.id'), index=True, nullable=False
+    )
+    # Link the Site class
+    site = relationship('Site', back_populates='layer_data', lazy='joined')

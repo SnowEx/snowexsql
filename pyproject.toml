@@ -5,6 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "snowexsql"
 dynamic = ["version"]
+license = {text = "GNU"}
 description = "SQL Database software for SnowEx data"
 keywords = ["snowex", "sql", "database", "snow"]
 readme = "README.rst"
@@ -28,7 +29,9 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
-    "pytest",
+    "factory_boy<4",
+    "pytest-factoryboy<3",
+    "pytest<8.4",
     "pytest-cov",
     "sphinx-autobuild<=2024.5",
 ]
@@ -45,9 +48,6 @@ docs = [
     "pyyaml<6.1"
 ]
 all = ["snowexsql[dev,docs]"]
-
-[project.license]
-file = "LICENSE"
 
 [project.urls]
 Homepage = "https://github.com/SnowEx/snowexsql"
