@@ -66,3 +66,10 @@ local_scheme = "no-local-version"
 
 [tool.hatch.build.targets.sdist]
 exclude = ["/tests"]
+
+[tool.pytest.ini_options]
+markers = [
+    "integration: marks tests as integration tests that require AWS credentials (deselect with '-m \"not integration\"')",
+    "handler: marks tests as Lambda handler tests that require local database credentials (deselect with '-m \"not handler\"')",
+    "lambda: marks tests as Lambda-specific tests",
+]
