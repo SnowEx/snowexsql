@@ -43,8 +43,7 @@ Local Development Setup
 
    .. code-block:: bash
 
-    $ pip install -r requirements_dev.txt
-    $ pip install -r docs/requirements.txt
+    $ pip install -e ".[docs]"
 
 #. Create a branch for local development
 
