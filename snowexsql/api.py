@@ -1,19 +1,87 @@
+"""
+SnowEx API for querying measurement data.
+
+LAMBDA INTEGRATION CONVENTIONS:
+===============================
+If you're adding a new measurement class that should be available
+via the Lambda API, follow these naming conventions:
+
+1. Class name MUST end with 'Measurements'
+   (e.g., WeatherMeasurements)
+2. Class MUST have a 'MODEL' attribute pointing to the SQLAlchemy
+   model
+3. Class MUST inherit from BaseDataset
+
+Example:
+    class WeatherMeasurements(BaseDataset):
+        MODEL = WeatherData  # Required for Lambda auto-discovery!
+        
+        # Your implementation here...
+
+The Lambda handler will automatically discover and expose your
+class as:
+    client.weather_measurements.from_filter()
+    client.weather_measurements.all_instruments
+    etc.
+
+See snowexsql.lambda_handler._get_measurement_classes() for
+implementation details.
+"""
 import logging
 import os
 from contextlib import contextmanager
 
-import geoalchemy2.functions as gfunc
-import geopandas as gpd
-from geoalchemy2.shape import from_shape
-from geoalchemy2.types import Raster
-from shapely.geometry import box
 from sqlalchemy.sql import func
 from sqlalchemy import cast, Numeric
 
-from snowexsql.conversions import query_to_geopandas, raster_to_rasterio
+# Try to import heavy dependencies, fall back gracefully for Lambda
+try:
+    import geoalchemy2.functions as gfunc
+    from geoalchemy2.shape import from_shape
+    from geoalchemy2.types import Raster
+    from shapely.geometry import box
+    # Import geopandas last since it's the heaviest dependency
+    import geopandas as gpd
+    HAS_GIS_DEPS = True
+except ImportError:
+    # Lambda environment - core geospatial libs not available
+    HAS_GIS_DEPS = False
+    gfunc = None
+    gpd = None
+    from_shape = None
+    Raster = None
+    box = None
+
+# Try to import conversions separately since it also needs geopandas
+try:
+    if HAS_GIS_DEPS:
+        from snowexsql.conversions import query_to_geopandas, raster_to_rasterio
+    else:
+        raise ImportError("Skipping conversions import - no geopandas")
+except ImportError:
+    
+    # Create fallback conversion functions
+    import pandas as pd
+    from sqlalchemy.dialects import postgresql
+    
+    def query_to_geopandas(query, engine, **kwargs):
+        """Fallback to pandas when geopandas not available"""
+        sql = query.statement.compile(
+            dialect=postgresql.dialect()
+        )
+        return pd.read_sql(sql, engine, **kwargs)
+    
+    def raster_to_rasterio(rasters):
+        """Fallback when rasterio not available"""
+        raise ImportError(
+            "Raster functionality not available in Lambda "
+            "environment"
+        )
 from snowexsql.db import get_db
-from snowexsql.tables import Campaign, DOI, ImageData, Instrument, LayerData, \
+from snowexsql.tables import (
+    Campaign, DOI, ImageData, Instrument, LayerData,
     MeasurementType, Observer, PointData, PointObservation, Site
+)
 
 LOG = logging.getLogger(__name__)
 DB_NAME = 'snow:hackweek@db.snowexdata.org/snowex'
@@ -62,6 +130,12 @@ class BaseDataset:
     @staticmethod
     def build_box(xmin, ymin, xmax, ymax, crs):
         # build a geopandas box
+        if gpd is None or box is None:
+            raise ImportError(
+                "geopandas and shapely are required for geometric "
+                "operations. Install with: "
+                "pip install geopandas shapely"
+            )
         return gpd.GeoDataFrame(
             geometry=[box(xmin, ymin, xmax, ymax)]
         ).set_crs(crs)
@@ -69,14 +143,15 @@ class BaseDataset:
     @staticmethod
     def retrieve_single_value_result(result):
         """
-        When we only request a single thing we still get a list of lists
-        this function filters it out. This usually looks like a list of tuples.
+        When we only request a single thing we still get a list of
+        lists this function filters it out. This usually looks like a
+        list of tuples.
         """
         final = []
         if len(result) != 0:
             final = [r[0] for r in result]
         return final
-
+    
     @classmethod
     def _check_size(cls, qry, kwargs):
         # Safeguard against accidental giant requests
@@ -146,8 +221,8 @@ class BaseDataset:
                         )
                     elif "_equal" in k:
                         raise ValueError(
-                            "We cannot compare greater_equal or less_equal"
-                            " with a list"
+                            "We cannot compare greater_equal or "
+                            "less_equal with a list"
                         )
                     qry = qry.filter(filter_col.in_(v))
                     LOG.debug(
@@ -214,8 +289,13 @@ class BaseDataset:
 
     @classmethod
     def from_unique_entries(cls, columns_to_search, **kwargs):
-        """Returns unique values from a column to help with filtering"""
-        columns = [getattr(cls.MODEL, column) for column in columns_to_search]
+        """
+        Returns unique values from a column to help with filtering
+        """
+        columns = [
+            getattr(cls.MODEL, column)
+            for column in columns_to_search
+        ]
 
         with db_session(cls.DB_NAME) as (session, engine):
             try:
@@ -226,7 +306,9 @@ class BaseDataset:
 
             except Exception as e:
                 session.close()
-                LOG.error("Failed query finding options for filtering")
+                LOG.error(
+                    "Failed query finding options for filtering"
+                )
                 raise e
 
         if len(columns_to_search) == 1:
@@ -245,9 +327,11 @@ class BaseDataset:
                 qry = session.query(cls.MODEL)
                 qry = cls.extend_qry(qry, **kwargs)
 
-                # For debugging in the test suite and not recommended
-                # in production
-                # https://docs.sqlalchemy.org/en/20/faq/sqlexpressions.html#rendering-postcompile-parameters-as-bound-parameters  ## noqa
+                # For debugging in the test suite and not
+                # recommended in production
+                # https://docs.sqlalchemy.org/en/20/faq/
+                # sqlexpressions.html#rendering-postcompile-
+                # parameters-as-bound-parameters
                 if 'DEBUG_QUERY' in os.environ:
                     full_sql_query = qry.statement.compile(
                         compile_kwargs={"literal_binds": True}
@@ -264,27 +348,43 @@ class BaseDataset:
         return df
 
     @classmethod
-    def from_area(cls, shp=None, pt=None, buffer=None, crs=26912, **kwargs):
+    def from_area(
+        cls, shp=None, pt=None, buffer=None, crs=26912, **kwargs
+    ):
         """
         Get data for the class within a specific shapefile or
         within a point and a known buffer
         Args:
             shp: shapely geometry in which to filter
-            pt: shapely point that will have a buffer applied in order
-                to find search area
+            pt: shapely point that will have a buffer applied in
+                order to find search area
             buffer: in same units as point
             crs: integer crs to use
-            kwargs: for more filtering or limiting (cls.ALLOWED_QRY_KWARGS)
+            kwargs: for more filtering or limiting
+                (cls.ALLOWED_QRY_KWARGS)
         Returns: Geopandas dataframe of results
 
         """
         if shp is None and pt is None:
             raise ValueError(
-                "Inputs must be a shape description or a point and buffer"
+                "Inputs must be a shape description or a point "
+                "and buffer"
             )
-        if (pt is not None and buffer is None) or \
-                (buffer is not None and pt is None):
-            raise ValueError("pt and buffer must be given together")
+        if ((pt is not None and buffer is None) or
+                (buffer is not None and pt is None)):
+            raise ValueError(
+                "pt and buffer must be given together"
+            )
+        
+        # Check if geometric operations are available
+        if ((shp is not None or pt is not None) and
+                from_shape is None):
+            raise ImportError(
+                "geoalchemy2 and shapely are required for "
+                "geometric filtering. Install with: "
+                "pip install geoalchemy2 shapely"
+            )
+        
         with db_session(cls.DB_NAME) as (session, engine):
             try:
                 if shp is not None:
@@ -293,16 +393,20 @@ class BaseDataset:
                     if cls.MODEL == LayerData:
                         qry = qry.join(cls.MODEL.site).filter(
                             func.ST_Within(
-                                Site.geom, from_shape(shp, srid=crs)
+                                Site.geom,
+                                from_shape(shp, srid=crs)
                             )
                         )
                     else:
                         qry = qry.filter(
                             func.ST_Within(
-                                cls.MODEL.geom, from_shape(shp, srid=crs)
+                                cls.MODEL.geom,
+                                from_shape(shp, srid=crs)
                             )
                         )
-                    qry = cls.extend_qry(qry, check_size=True, **kwargs)
+                    qry = cls.extend_qry(
+                        qry, check_size=True, **kwargs
+                    )
                     df = query_to_geopandas(qry, engine)
                 else:
                     qry_pt = from_shape(pt)
@@ -321,9 +425,13 @@ class BaseDataset:
                         )
                     else:
                         qry = qry.filter(
-                            func.ST_Within(cls.MODEL.geom, buffered_pt)
+                            func.ST_Within(
+                                cls.MODEL.geom, buffered_pt
+                            )
                         )
-                    qry = cls.extend_qry(qry, check_size=True, **kwargs)
+                    qry = cls.extend_qry(
+                        qry, check_size=True, **kwargs
+                    )
                     df = query_to_geopandas(qry, engine)
             except Exception as e:
                 session.close()
@@ -398,7 +506,8 @@ class BaseDataset:
         """
         with db_session(self.DB_NAME) as (session, engine):
             qry = session.query(Instrument.name).join(
-                self.MODEL, Instrument.id == self.MODEL.instrument_id
+                self.MODEL,
+                Instrument.id == self.MODEL.instrument_id
             ).distinct()
             result = qry.all()
         return self.retrieve_single_value_result(result)
@@ -458,7 +567,9 @@ class PointMeasurements(BaseDataset):
         with db_session(self.DB_NAME) as (session, engine):
             result = session.query(Instrument.name).filter(
                 Instrument.id.in_(
-                    session.query(PointObservation.instrument_id).distinct()
+                    session.query(
+                        PointObservation.instrument_id
+                    ).distinct()
                 )
             ).all()
         return self.retrieve_single_value_result(result)
@@ -466,8 +577,8 @@ class PointMeasurements(BaseDataset):
 
 class TooManyRastersException(Exception):
     """
-    Exception to report to users that their query will produce too many
-    rasters
+    Exception to report to users that their query will produce too
+    many rasters
     """
     pass
 
@@ -548,7 +659,9 @@ class LayerMeasurements(BaseDataset):
     
 class RasterMeasurements(BaseDataset):
     MODEL = ImageData
-    ALLOWED_QRY_KWARGS = BaseDataset.ALLOWED_QRY_KWARGS + ['description']
+    ALLOWED_QRY_KWARGS = (
+        BaseDataset.ALLOWED_QRY_KWARGS + ['description']
+    )
 
     @property
     def all_descriptions(self):
@@ -560,20 +673,33 @@ class RasterMeasurements(BaseDataset):
     @classmethod
     def check_for_single_dataset(cls, **kwargs):
         """
-        At the moment there is not a clear path to how to deal with multiple rasters so
-        check that the user only requested one dataset
+        At the moment there is not a clear path to how to deal with
+        multiple rasters so check that the user only requested one
+        dataset
         """
-        LOG.info("Checking raster query for single raster dataset...")
-        multi_raster_indicators = ['instrument', 'date', 'observers', 'doi', 'type', 'description']
+        LOG.info(
+            "Checking raster query for single raster dataset..."
+        )
+        multi_raster_indicators = [
+            'instrument', 'date', 'observers', 'doi', 'type',
+            'description'
+        ]
         with db_session(cls.DB_NAME) as (session, engine):
             try:
-                # Form query and check if the query spans multipl rasters
+                # Form query and check if the query spans
+                # multiple rasters
                 for column in multi_raster_indicators:
-                    values = cls.from_unique_entries([column], **kwargs)
+                    values = cls.from_unique_entries(
+                        [column], **kwargs
+                    )
                     if len(values) > 1:
                         options = [f"'{v}'" for v in values]
-                        raise TooManyRastersException(f"More than one `{column}` suggests there are multiple raster datasets. "
-                                                      f"Try filter {column} to one of the following values {', '.join(options)}.")
+                        raise TooManyRastersException(
+                            f"More than one `{column}` suggests "
+                            f"there are multiple raster datasets. "
+                            f"Try filter {column} to one of the "
+                            f"following values {', '.join(options)}."
+                        )
 
             except Exception as e:
                 session.close()
@@ -583,8 +709,8 @@ class RasterMeasurements(BaseDataset):
     @classmethod
     def from_filter(cls, **kwargs):
         """
-        Get data for the class by filtering by allowed arguments. The allowed
-        filters are cls.ALLOWED_QRY_KWARGS.
+        Get data for the class by filtering by allowed arguments.
+        The allowed filters are cls.ALLOWED_QRY_KWARGS.
         """
 
         cls.check_for_single_dataset(**kwargs)
@@ -612,13 +738,26 @@ class RasterMeasurements(BaseDataset):
         return datasets
 
     @classmethod
-    def from_area(cls, shp=None, pt=None, buffer=None, crs=26912, **kwargs):
+    def from_area(
+        cls, shp=None, pt=None, buffer=None, crs=26912, **kwargs
+    ):
         if shp is None and pt is None:
             raise ValueError(
-                "We need a shape description or a point and buffer")
-        if (pt is not None and buffer is None) or (
-                buffer is not None and pt is None):
-            raise ValueError("pt and buffer must be given together")
+                "We need a shape description or a point and buffer"
+            )
+        if ((pt is not None and buffer is None) or
+                (buffer is not None and pt is None)):
+            raise ValueError(
+                "pt and buffer must be given together"
+            )
+        
+        # Check if geometric operations are available
+        if from_shape is None:
+            raise ImportError(
+                "geoalchemy2 and shapely are required for "
+                "geometric filtering. Install with: "
+                "pip install geoalchemy2 shapely"
+            )
 
         with db_session(cls.DB_NAME) as (session, engine):
 
@@ -636,10 +775,18 @@ class RasterMeasurements(BaseDataset):
                     db_shp = qry.all()[0][0]
 
                 # Grab the rasters, union and clip them
-                base_query = func.ST_AsTiff(func.ST_Clip(func.ST_Union(ImageData.raster, type_=Raster), db_shp, True))
+                base_query = func.ST_AsTiff(
+                    func.ST_Clip(
+                        func.ST_Union(ImageData.raster, type_=Raster),
+                        db_shp,
+                        True
+                    )
+                )
                 q = session.query(base_query)
                 # Find all the tiles that
-                q = q.filter(gfunc.ST_Intersects(ImageData.raster, db_shp))
+                q = q.filter(
+                    gfunc.ST_Intersects(ImageData.raster, db_shp)
+                )
 
 
                 limit = kwargs.get("limit")
