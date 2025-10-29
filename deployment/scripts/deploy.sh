@@ -73,7 +73,8 @@ if [[ $REPLY =~ ^[Yy]$ ]]; then
     aws lambda invoke \
         --region ${AWS_REGION} \
         --function-name ${LAMBDA_FUNCTION_NAME} \
-        --payload '{"test": true}' \
+        --cli-binary-format raw-in-base64-out \
+        --payload '{"action":"test_connection"}' \
         response.json
     
     echo -e "${GREEN}Test response:${NC}"
