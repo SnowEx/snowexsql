@@ -21,34 +21,34 @@ classifiers = [
 ]
 
 dependencies = [
-    "utm >=0.8, <0.9",
-    "geoalchemy2 >=0.18, <1.0",
-    "geopandas >=1.1, <2.0",
-    "psycopg2-binary >=2.9, <3.0",
-    "rasterio >=1.4, <2.0",
-    "SQLAlchemy >=2.0, <3.0",
+    "utm <0.9",
+    "geoalchemy2 <1.0",
+    "geopandas <2.0",
+    "psycopg2-binary <3.0",
+    "rasterio <2.0",
+    "SQLAlchemy <3.0",
 ]
 
 
 [project.optional-dependencies]
 dev = [
-    "factory_boy >=3.3, <4.0",
-    "pytest-factoryboy >=2.8, <3.0",
-    "pytest >=8.4, <9.0",
-    "pytest-cov >=7.0, <8.0",
-    "sphinx-autobuild >=2024.10, <2025.0",
+    "factory_boy <4.0",
+    "pytest-factoryboy <3.0",
+    "pytest <9.0",
+    "pytest-cov <8.0",
+    "sphinx-autobuild <2025.0",
 ]
 docs = [
-    "ipython >=8.37, <9.0",
-    "nbconvert >=7.16, <8.0",
-    "nbsphinx >=0.9, <1.0",
-    "pandoc >=2.4, <3.0",
-    "plotly >=6.3, <7.0",
-    "sphinx-gallery >=0.19, <1.0",
-    "sphinx >=7.4, <8.0",
-    "sphinxcontrib-apidoc >=0.6, <1.0",
-    "jupyter-book >=1.0, <2.0",
-    "pyyaml >=6.0, <7.0"
+    "ipython <9.0",
+    "nbconvert <8.0",
+    "nbsphinx <1.0",
+    "pandoc <3.0",
+    "plotly <7.0",
+    "sphinx-gallery <1.0",
+    "sphinx <8.0",
+    "sphinxcontrib-apidoc <1.0",
+    "jupyter-book <2.0",
+    "pyyaml <7.0"
 ]
 all = ["snowexsql[dev,docs]"]
 
