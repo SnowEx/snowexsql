@@ -40,18 +40,14 @@ Features
 
 Installing
 ----------
-If you are just planning on using the database, then only install the
-python package instructions below.
-
-I just want to use it
----------------------
 Install using pip:
 
 .. code-block::
 
     pip install snowexsql
 
-I want data fast
+
+Accessing the SnowEx data
 -----------------
 A programmatic API has been created for fast and standard
 access to Point and Layer data. There are two examples_ covering the
@@ -69,23 +65,12 @@ detailed description.
     )
     print(df.head())
 
-I need help
+
+Getting help
 ------------
 Jump over to `our discussion forum <https://github.com/SnowEx/snowexsql/discussions>`_ 
 and get help from our community.
 
-
-I want to contribute
----------------------
-Thank you for the interest!
-
-Our community follows the |Contributor Covenant|
-
-.. |Contributor Covenant| image:: https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg
-  :target: code_of_conduct.md
-.. _contribution guide: https://snowexsql.readthedocs.io/en/latest/community/contributing.html
-
-Have a look at our `contribution guide`_ and see the many ways to get involved!
 
 Documentation
 -------------
@@ -110,6 +95,20 @@ last image submitted to GitHub.
 .. code-block:: bash
 
   make docs
+
+
+I want to contribute
+---------------------
+Thank you for the interest!
+
+Our community follows the |Contributor Covenant|
+
+.. |Contributor Covenant| image:: https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg
+  :target: code_of_conduct.md
+.. _contribution guide: https://snowexsql.readthedocs.io/en/latest/community/contributing.html
+
+Have a look at our `contribution guide`_ and see the many ways to get involved!
+
 
 DOI
 ---
