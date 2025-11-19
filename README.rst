@@ -109,6 +109,37 @@ Our community follows the |Contributor Covenant|
 
 Have a look at our `contribution guide`_ and see the many ways to get involved!
 
+Testing
+=======
+To run the test suite locally requires setting up the database connection credentials.
+There are two options to do this:
+
+* Set database connection URL via ``SNOWEX_DB_CONNECTION`` environment variable
+  Example:
+
+.. code-block:: bash
+
+    export SNOWEX_DB_CONNECTION="user:password@127.0.0.1/db_name"
+
+* Point to a credentials JSON file via ``SNOWEX_DB_CREDENTIALS`` environment variable
+  Example
+
+.. code-block:: bash
+
+    export SNOWEX_DB_CREDENTIALS="/path/to/credentials.json"
+
+
+`Sample JSON file <./credentials.json.sample>`_:
+
+.. code-block:: json
+
+  {
+    "address": "localhost",
+    "db_name": "test",
+    "username": "user",
+    "password": "password"
+  }
+
 
 DOI
 ---

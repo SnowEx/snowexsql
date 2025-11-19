@@ -54,5 +54,4 @@ jobs:
           python3 -m pip install -e ".[dev]"
       - name: Test with pytest
         run: |
-          mv credentials.json.sample credentials.json
           pytest -s
