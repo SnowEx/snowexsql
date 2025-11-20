@@ -1,21 +1,18 @@
 """
-This module contains tool used directly regarding the database. This includes
-getting a session, initializing the database, getting table attributes, etc.
+This module handles loading the database connection information and creating
+a session.
 """
 
 import json
 import os
 from contextlib import contextmanager
-from pathlib import Path
 
 from snowexsql.tables.base import Base
 from sqlalchemy import MetaData, create_engine
 from sqlalchemy.orm import sessionmaker
 
-# The default credentials file name
-CREDENTIAL_FILE="credentials.json"
 # This library requires a postgres dialect and the psycopg2 driver
-DB_CONNECTION_PROTOCOL = 'postgresql+psycopg2://'
+DB_CONNECTION_PROTOCOL = "postgresql+psycopg2://"
 # Always create a Session in UTC time
 DB_CONNECTION_OPTIONS = {"options": "-c timezone=UTC"}
 
@@ -43,19 +40,28 @@ def load_credentials(credentials_path=None):
     Returns:
         Dictionary - Credential information
     """
-    if credentials_path is None:
-        credentials_path = Path(__file__).parent.parent / CREDENTIAL_FILE
+    credentials = None
 
-    with open(credentials_path) as file:
-        credentials = json.load(file)
+    if credentials_path is not None:
+        with open(credentials_path) as file:
+            credentials = json.load(file)
+    elif os.getenv("SNOWEX_DB_CREDENTIALS"):
+        with open(os.getenv("SNOWEX_DB_CREDENTIALS")) as file:
+            credentials = json.load(file)
 
-        if os.getenv('SNOWEXSQL_TESTS', False):
-            return credentials['tests']
-        else:
-            return credentials['production']
+    if credentials is None:
+        raise FileNotFoundError(
+            "File to credentials was not provided. Please use the following options: "
+            "* Pass the file path to this method "
+            "* Set the SNOWEX_DB_CREDENTIALS environment variable to a JSON file"
+            "* Set the SNOWEX_DB_CONNECTION environment variable. "
+            "  Example: user:password@127.0.0.1/db_name"
+        )
+
+    return credentials
 
 
-def db_connection_string(credentials_path=None):
+def db_connection_string(credentials_path:str = None):
     """
     Construct a connection info string for SQLAlchemy database
 
@@ -65,16 +71,22 @@ def db_connection_string(credentials_path=None):
     Returns:
         String - DB connection
     """
-    credentials = load_credentials(credentials_path)
-
     db = DB_CONNECTION_PROTOCOL
-    db += f"{credentials['username']}:{credentials['password']}"\
-          f"@{credentials['address']}/{credentials['db_name']}"
+
+    if os.getenv("SNOWEX_DB_CONNECTION"):
+        credentials = os.getenv("SNOWEX_DB_CONNECTION")
+        db += credentials
+    else:
+        credentials = load_credentials(credentials_path)
+        db += (
+            f"{credentials['username']}:{credentials['password']}"
+            f"@{credentials['address']}/{credentials['db_name']}"
+        )
 
     return db
 
 
-def get_db(credentials_path=None, return_metadata=False):
+def get_db(credentials_path: str = None, return_metadata: bool = False):
     """
     Returns the DB engine, MetaData, and session object
 
@@ -126,8 +138,8 @@ def get_table_attributes(DataCls):
     Returns a list of all the table columns to be used for each entry
     """
 
-    valid_attributes = [att for att in dir(DataCls) if att[0] != '_']
+    valid_attributes = [att for att in dir(DataCls) if att[0] != "_"]
 
     # Drop ID as it is (should) never provided
-    valid_attributes = [v for v in valid_attributes if v != 'id']
+    valid_attributes = [v for v in valid_attributes if v != "id"]
     return valid_attributes

@@ -17,7 +17,7 @@ docs/_build/*
 **/.ipynb_checkpoints/*
 
 # Database credential information
-credentials.json
+./credentials.json
 
 # Test related files
 .coverage

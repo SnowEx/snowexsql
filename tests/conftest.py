@@ -1,22 +1,33 @@
 import os
 from contextlib import contextmanager
+from pathlib import Path
 
 import pytest
 import snowexsql
 from pytest_factoryboy import register
-from snowexsql.db import (
-    DB_CONNECTION_OPTIONS, db_connection_string, initialize
-)
+from snowexsql.db import DB_CONNECTION_OPTIONS, db_connection_string, initialize
 from sqlalchemy import create_engine
-from tests import SESSION
-from tests.factories import (CampaignFactory, DOIFactory, InstrumentFactory,
-                             LayerDataFactory, LayerDensityFactory,
-                             LayerTemperatureFactory, MeasurementTypeFactory,
-                             ObserverFactory, PointDataFactory,
-                             PointObservationFactory, SiteFactory)
+from tests.factories import (
+   CampaignFactory,
+   DOIFactory,
+   InstrumentFactory,
+   LayerDataFactory,
+   LayerDensityFactory,
+   LayerTemperatureFactory,
+   MeasurementTypeFactory,
+   ObserverFactory,
+   PointDataFactory,
+   PointObservationFactory,
+   SiteFactory,
+)
 
-# Environment variable to load the correct credentials
-os.environ['SNOWEXSQL_TESTS'] = 'True'
+from tests import SESSION
+
+# Environment variable to load the custom DB test credentials
+if os.getenv("SNOWEX_TEST_DB") is None:
+    os.environ["SNOWEX_DB_CONNECTION"] = "builder:db_builder@localhost/test"
+else:
+    os.environ["SNOWEX_DB_CONNECTION"] = "builder:db_builder@" + os.getenv("SNOWEX_TEST_DB")
 
 # Make factories available to tests
 register(CampaignFactory)
@@ -34,6 +45,12 @@ register(SiteFactory)
 @pytest.fixture(scope='session')
 def session_maker():
    return
+
+
+@pytest.fixture(scope="session")
+def data_dir():
+    return Path(__file__).parent.joinpath("data").absolute().resolve()
+
 
 # Add this factory to a test if you would like to debug the SQL statement
 # It will print the query from the BaseDataset.from_filter() method
