@@ -38,13 +38,47 @@ Features
 .. _examples: https://snowexsql.readthedocs.io/en/latest/gallery/index.html
 
 
+Setup
+-----
+
 Installing
-----------
+==========
 Install using pip:
 
 .. code-block::
 
     pip install snowexsql
+
+Configuring the database connection
+===================================
+Using this library requires setting up the database connection credentials.
+There are two options to do this:
+
+* Set database connection URL via ``SNOWEX_DB_CONNECTION`` environment variable
+  Example:
+
+.. code-block:: bash
+
+    export SNOWEX_DB_CONNECTION="user:password@127.0.0.1/db_name"
+
+* Point to a credentials JSON file via ``SNOWEX_DB_CREDENTIALS`` environment variable
+  Example
+
+.. code-block:: bash
+
+    export SNOWEX_DB_CREDENTIALS="/path/to/credentials.json"
+
+
+`Sample JSON file <./credentials.json.sample>`_:
+
+.. code-block:: json
+
+  {
+    "address": "localhost",
+    "db_name": "snowexdb",
+    "username": "user",
+    "password": "password"
+  }
 
 
 Accessing the SnowEx data
@@ -111,35 +145,26 @@ Have a look at our `contribution guide`_ and see the many ways to get involved!
 
 Testing
 =======
-To run the test suite locally requires setting up the database connection credentials.
-There are two options to do this:
+To run the test suite locally requires having a running instance of PostgreSQL.
+The test suite is configured to run against these credentials:
 
-* Set database connection URL via ``SNOWEX_DB_CONNECTION`` environment variable
-  Example:
+.. code-block::
+
+  builder:db_builder@localhost/test
+
+This requires a running database on ``localhost`` where the user ``builder`` has access
+to the ``test`` database with the password ``db_builder``.
+
+It is possible to set a custom host and database via the ``SNOWEX_TEST_DB`` environment
+variable. Example that would connect to a server on ``my.host`` and the database
+``snowex_test``:
 
 .. code-block:: bash
 
-    export SNOWEX_DB_CONNECTION="user:password@127.0.0.1/db_name"
+    export SNOWEX_TEST_DB="my_host/snowex_test"
 
-* Point to a credentials JSON file via ``SNOWEX_DB_CREDENTIALS`` environment variable
-  Example
-
-.. code-block:: bash
-
-    export SNOWEX_DB_CREDENTIALS="/path/to/credentials.json"
-
-
-`Sample JSON file <./credentials.json.sample>`_:
-
-.. code-block:: json
-
-  {
-    "address": "localhost",
-    "db_name": "test",
-    "username": "user",
-    "password": "password"
-  }
-
+More on connection strings to PostgreSQL can be found with the
+`official documentation <https://www.postgresql.org/docs/current/libpq-connect.html#LIBPQ-CONNSTRING>`_.
 
 DOI
 ---

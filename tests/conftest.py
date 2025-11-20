@@ -23,9 +23,11 @@ from tests.factories import (
 
 from tests import SESSION
 
-# Environment variable to load the DB credentials
-if os.getenv('SNOWEX_DB_CONNECTION') is None and os.getenv('SNOWEX_DB_CREDENTIALS') is None:
+# Environment variable to load the custom DB test credentials
+if os.getenv("SNOWEX_TEST_DB") is None:
     os.environ["SNOWEX_DB_CONNECTION"] = "builder:db_builder@localhost/test"
+else:
+    os.environ["SNOWEX_DB_CONNECTION"] = "builder:db_builder@" + os.getenv("SNOWEX_TEST_DB")
 
 # Make factories available to tests
 register(CampaignFactory)
