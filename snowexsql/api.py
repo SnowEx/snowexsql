@@ -82,9 +82,9 @@ from snowexsql.tables import (
     Campaign, DOI, ImageData, Instrument, LayerData,
     MeasurementType, Observer, PointData, PointObservation, Site
 )
+from snowexsql.db import db_session_with_credentials
 
 LOG = logging.getLogger(__name__)
-DB_NAME = 'snow:hackweek@db.snowexdata.org/snowex'
 
 # TODO:
 #   * Possible enums
@@ -94,19 +94,9 @@ DB_NAME = 'snow:hackweek@db.snowexdata.org/snowex'
 class LargeQueryCheckException(RuntimeError):
     pass
 
-
-@contextmanager
-def db_session(db_name):
-    # use default_name
-    db_name = db_name or DB_NAME
-    engine, session = get_db(db_name)
-    yield session, engine
-    session.close()
-
-
 def get_points():
     # Lets grab a single row from the points table
-    with db_session(DB_NAME) as session:
+    with db_session_with_credentials() as (_engine, session):
         qry = session.query(PointData).limit(1)
         # Execute that query!
         result = qry.all()
@@ -114,8 +104,6 @@ def get_points():
 
 class BaseDataset:
     MODEL = None
-    # Use this database name
-    DB_NAME = DB_NAME
 
     ALLOWED_QRY_KWARGS = [
         "campaign", "date", "instrument", "type",
@@ -297,7 +285,7 @@ class BaseDataset:
             for column in columns_to_search
         ]
 
-        with db_session(cls.DB_NAME) as (session, engine):
+        with db_session_with_credentials() as (_engine, session):
             try:
                 qry = session.query(*columns)
                 # Hardcode the limit to
@@ -322,7 +310,7 @@ class BaseDataset:
         Get data for the class by filtering by allowed arguments. The allowed
         filters are cls.ALLOWED_QRY_KWARGS.
         """
-        with db_session(cls.DB_NAME) as (session, engine):
+        with db_session_with_credentials() as (engine, session):
             try:
                 qry = session.query(cls.MODEL)
                 qry = cls.extend_qry(qry, **kwargs)
@@ -385,7 +373,7 @@ class BaseDataset:
                 "pip install geoalchemy2 shapely"
             )
         
-        with db_session(cls.DB_NAME) as (session, engine):
+        with db_session_with_credentials() as (engine, session):
             try:
                 if shp is not None:
                     qry = session.query(cls.MODEL)
@@ -444,7 +432,7 @@ class BaseDataset:
         """
         Return all campaign names
         """
-        with db_session(self.DB_NAME) as (session, engine):
+        with db_session_with_credentials() as (_engine, session):
             qry = session.query(Campaign.name).distinct()
             result = qry.all()
         return self.retrieve_single_value_result(result)
@@ -454,7 +442,7 @@ class BaseDataset:
         """
         Return all types of the data
         """
-        with db_session(self.DB_NAME) as (session, engine):
+        with db_session_with_credentials() as (_engine, session):
             qry = session.query(MeasurementType.name).distinct()
             result = qry.all()
         return self.retrieve_single_value_result(result)
@@ -464,7 +452,7 @@ class BaseDataset:
         """
         Return all distinct dates in the data
         """
-        with db_session(self.DB_NAME) as (session, engine):
+        with db_session_with_credentials() as (_engine, session):
             qry = session.query(self.MODEL.date).distinct()
             result = qry.all()
         return self.retrieve_single_value_result(result)
@@ -474,7 +462,7 @@ class BaseDataset:
         """
         Return all distinct observers in the data
         """
-        with db_session(self.DB_NAME) as (session, engine):
+        with db_session_with_credentials() as (_engine, session):
             qry = session.query(Observer.name).distinct()
             result = qry.all()
         return self.retrieve_single_value_result(result)
@@ -484,7 +472,7 @@ class BaseDataset:
         """
         Return all distinct DOIs in the data
         """
-        with db_session(self.DB_NAME) as (session, engine):
+        with db_session_with_credentials() as (_engine, session):
             qry = session.query(DOI.doi).distinct()
             result = qry.all()
         return self.retrieve_single_value_result(result)
@@ -494,7 +482,7 @@ class BaseDataset:
         """
         Return all distinct units in the data
         """
-        with db_session(self.DB_NAME) as (session, engine):
+        with db_session_with_credentials() as (_engine, session):
             qry = session.query(self.MODEL.units).distinct()
             result = qry.all()
         return self.retrieve_single_value_result(result)
@@ -504,7 +492,7 @@ class BaseDataset:
         """
         Return all distinct instruments in the data
         """
-        with db_session(self.DB_NAME) as (session, engine):
+        with db_session_with_credentials() as (_engine, session):
             qry = session.query(Instrument.name).join(
                 self.MODEL,
                 Instrument.id == self.MODEL.instrument_id
@@ -564,7 +552,7 @@ class PointMeasurements(BaseDataset):
         """
         Return all distinct instruments in the data
         """
-        with db_session(self.DB_NAME) as (session, engine):
+        with db_session_with_credentials() as (_engine, session):
             result = session.query(Instrument.name).filter(
                 Instrument.id.in_(
                     session.query(
@@ -629,7 +617,7 @@ class LayerMeasurements(BaseDataset):
         """
         Return all specific site names
         """
-        with db_session(self.DB_NAME) as (session, engine):
+        with db_session_with_credentials() as (_engine, session):
             result = session.query(
                 Site.name
             ).distinct().all()
@@ -640,7 +628,7 @@ class LayerMeasurements(BaseDataset):
         """
         Return all distinct dates in the data
         """
-        with db_session(self.DB_NAME) as (session, engine):
+        with db_session_with_credentials() as (_engine, session):
             result = session.query(
                 Site.date
             ).distinct().all()
@@ -651,7 +639,7 @@ class LayerMeasurements(BaseDataset):
         """
         Return all distinct units in the data
         """
-        with db_session(self.DB_NAME) as (session, engine):
+        with db_session_with_credentials() as (_engine, session):
             result = session.query(
                 MeasurementType.units
             ).distinct().all()
@@ -665,7 +653,7 @@ class RasterMeasurements(BaseDataset):
 
     @property
     def all_descriptions(self):
-        with db_session(self.DB_NAME) as (session, engine):
+        with db_session_with_credentials() as (_engine, session):
             qry = session.query(self.MODEL.description).distinct()
             result = qry.all()
         return self.retrieve_single_value_result(result)
@@ -684,7 +672,7 @@ class RasterMeasurements(BaseDataset):
             'instrument', 'date', 'observers', 'doi', 'type',
             'description'
         ]
-        with db_session(cls.DB_NAME) as (session, engine):
+        with db_session_with_credentials() as (_engine, session):
             try:
                 # Form query and check if the query spans
                 # multiple rasters
@@ -715,7 +703,7 @@ class RasterMeasurements(BaseDataset):
 
         cls.check_for_single_dataset(**kwargs)
 
-        with db_session(cls.DB_NAME) as (session, engine):
+        with db_session_with_credentials() as (_engine, session):
             try:
                 # Rebuild the query and form the raster
                 base_query = cls.MODEL.raster
@@ -759,7 +747,7 @@ class RasterMeasurements(BaseDataset):
                 "pip install geoalchemy2 shapely"
             )
 
-        with db_session(cls.DB_NAME) as (session, engine):
+        with db_session_with_credentials() as (_engine, session):
 
             try:
                 # Get shape ready for cropping with rasters
