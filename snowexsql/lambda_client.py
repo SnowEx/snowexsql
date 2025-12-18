@@ -10,6 +10,7 @@ import boto3
 import json
 import pandas as pd
 from typing import Dict, Any
+from datetime import datetime, date
 
 
 class SnowExLambdaClient:
@@ -133,6 +134,84 @@ class SnowExLambdaClient:
                 "Check that the snowexsql package is properly installed."
             )
     
+    def get_measurement_classes(self):
+        """
+        Get all measurement client objects as a dictionary for easy unpacking.
+        
+        This method dynamically discovers all available measurement classes
+        and returns them with their original CamelCase names, making it easy
+        to use as drop-in replacements for direct API imports.
+        
+        Returns:
+            Dict mapping class names (str) to client objects
+            
+        Example:
+            >>> from snowexsql.lambda_client import SnowExLambdaClient
+            >>> client = SnowExLambdaClient()
+            >>> 
+            >>> # Get all measurement classes
+            >>> classes = client.get_measurement_classes()
+            >>> PointMeasurements = classes['PointMeasurements']
+            >>> LayerMeasurements = classes['LayerMeasurements']
+            >>> 
+            >>> # Use exactly like the direct API
+            >>> df = PointMeasurements.from_filter(type='depth', limit=10)
+            >>> df.plot(column='value', cmap='jet')
+        """
+        try:
+            from snowexsql import api
+            
+            # Get all measurement classes
+            measurement_classes = [
+                name for name in dir(api) 
+                if name.endswith('Measurements') and hasattr(api, name)
+            ]
+            
+            # Build dictionary mapping class names to client objects
+            result = {}
+            for class_name in measurement_classes:
+                # Convert CamelCase to snake_case to get the attribute name
+                attr_name = ''.join([
+                    '_' + c.lower() if c.isupper() else c
+                    for c in class_name
+                ]).lstrip('_')
+                
+                # Get the client object and map it to the original class name
+                if hasattr(self, attr_name):
+                    result[class_name] = getattr(self, attr_name)
+            
+            return result
+            
+        except ImportError as e:
+            raise ImportError(
+                f"Could not discover measurement classes: {e}"
+            )
+    
+    def _serialize_payload(self, obj):
+        """
+        Recursively serialize payload objects to JSON-compatible format.
+        
+        Handles datetime objects and Shapely geometry objects by converting
+        them to JSON-serializable formats.
+        
+        Args:
+            obj: Object to serialize
+            
+        Returns:
+            JSON-serializable version of the object
+        """
+        if isinstance(obj, (datetime, date)):
+            return obj.isoformat()
+        elif hasattr(obj, '__geo_interface__'):
+            # Handle Shapely geometry objects (Point, Polygon, etc.)
+            return obj.__geo_interface__
+        elif isinstance(obj, dict):
+            return {key: self._serialize_payload(value) for key, value in obj.items()}
+        elif isinstance(obj, (list, tuple)):
+            return [self._serialize_payload(item) for item in obj]
+        else:
+            return obj
+    
     def _invoke_lambda(self, action: str, **kwargs) -> dict:
         """
         Internal method to invoke Lambda function
@@ -150,6 +229,9 @@ class SnowExLambdaClient:
             Exception: If Lambda invocation fails or returns an error
         """
         payload = {'action': action, **kwargs}
+        
+        # Serialize datetime objects and other non-JSON-serializable types
+        payload = self._serialize_payload(payload)
         
         try:
             response = self.lambda_client.invoke(
@@ -244,7 +326,7 @@ class _LambdaDatasetClient:
         Returns a callable that matches the signature of the original
         method
         """
-        def method_proxy(*args, **kwargs):
+        def method_proxy(*args, as_geodataframe=True, **kwargs):
             # Convert positional args to kwargs based on known method
             # signatures
             if args and method_name in self._KNOWN_METHODS:
@@ -298,6 +380,27 @@ class _LambdaDatasetClient:
                     shaped['filters'] = provided_filters
                 kwargs = shaped if shaped else kwargs
 
+            # from_area: expects pt, buffer, crs, shp as direct params
+            # with additional filters in the filters dict
+            elif method_name == 'from_area':
+                # Direct parameters for from_area
+                area_params = ['pt', 'shp', 'buffer', 'crs']
+                shaped = {}
+                provided_filters = {}
+                
+                # Separate area-specific params from filters
+                for k in list(kwargs.keys()):
+                    if k in area_params:
+                        shaped[k] = kwargs[k]
+                    else:
+                        provided_filters[k] = kwargs[k]
+                
+                # Add filters if any
+                if provided_filters:
+                    shaped['filters'] = provided_filters
+                
+                kwargs = shaped
+
             # Invoke Lambda with the method call
             action = f'{self._class_name}.{method_name}'
             result = self._client._invoke_lambda(action, **kwargs)
@@ -309,18 +412,119 @@ class _LambdaDatasetClient:
             
             # Smart return type handling based on method
             if method_name in self._DATAFRAME_METHODS:
-                return pd.DataFrame(result['data'])
+                df = pd.DataFrame(result['data'])
+                
+                # Convert to GeoDataFrame if requested and possible
+                if as_geodataframe and self._can_convert_to_geodataframe(df):
+                    return self._to_geodataframe(df)
+                
+                return df
             else:
                 return result['data']
         
         # Add helpful docstring to the proxy function
         method_proxy.__doc__ = (
             f"Proxy for {self._class_name}.{method_name}() - "
-            f"calls Lambda backend"
+            f"calls Lambda backend\n\n"
+            f"Args:\n"
+            f"    as_geodataframe (bool): If True (default), return GeoDataFrame "
+            f"when geometry data is available.\n"
+            f"                           If False, return regular DataFrame.\n"
+            f"                           Requires geopandas to be installed."
         )
         method_proxy.__name__ = method_name
         
         return method_proxy
+    
+    def _can_convert_to_geodataframe(self, df: pd.DataFrame) -> bool:
+        """
+        Check if DataFrame can be converted to GeoDataFrame
+        
+        Args:
+            df: DataFrame to check
+            
+        Returns:
+            bool: True if conversion is possible
+        """
+        # Check for PostGIS geometry columns
+        has_geometry = 'geometry' in df.columns
+        has_geom = 'geom' in df.columns  # PostGIS column name
+        
+        return has_geometry or has_geom
+    
+    def _to_geodataframe(self, df: pd.DataFrame):
+        """
+        Convert pandas DataFrame to GeoDataFrame
+        
+        Handles PostGIS geometry columns returned from Lambda:
+        - geom column from PostGIS databases (WKB hex, WKT, or GeoJSON dict)
+        - geometry column already present
+        
+        Args:
+            df: DataFrame to convert
+            
+        Returns:
+            GeoDataFrame if conversion successful, otherwise original DataFrame
+        """
+        try:
+            import geopandas as gpd
+            from shapely import wkb, wkt
+            from shapely.geometry import shape
+            
+            # Case 1: DataFrame has 'geom' column (PostGIS standard)
+            if 'geom' in df.columns:
+                if df['geom'].dtype == 'object':
+                    # Try to parse as WKB hex string (most common from PostGIS)
+                    try:
+                        df['geometry'] = df['geom'].apply(
+                            lambda x: wkb.loads(x, hex=True) if x else None
+                        )
+                        return gpd.GeoDataFrame(df, geometry='geometry', crs='EPSG:4326')
+                    except Exception:
+                        # Try as WKT string
+                        try:
+                            df['geometry'] = df['geom'].apply(lambda x: wkt.loads(x) if x else None)
+                            return gpd.GeoDataFrame(df, geometry='geometry', crs='EPSG:4326')
+                        except Exception:
+                            # Try as GeoJSON __geo_interface__ dict
+                            try:
+                                df['geometry'] = df['geom'].apply(lambda x: shape(x) if x else None)
+                                return gpd.GeoDataFrame(df, geometry='geometry', crs='EPSG:4326')
+                            except:
+                                pass  # Fall through to return original df
+            
+            # Case 2: DataFrame already has geometry column
+            elif 'geometry' in df.columns:
+                # Try to parse as WKT if it's a string
+                if df['geometry'].dtype == 'object':
+                    try:
+                        df['geometry'] = df['geometry'].apply(lambda x: wkt.loads(x) if x else None)
+                    except:
+                        pass  # Already valid geometry or will fail below
+                
+                return gpd.GeoDataFrame(df, geometry='geometry', crs='EPSG:4326')
+            
+            # Case 3: No spatial data available
+            return df
+            
+        except ImportError:
+            # If geopandas not available, return regular DataFrame
+            import warnings
+            warnings.warn(
+                "geopandas not installed. Returning pandas DataFrame. "
+                "Install geopandas for spatial plotting: pip install geopandas",
+                UserWarning
+            )
+            return df
+        except Exception as e:
+            # If conversion fails for any other reason
+            import warnings
+            warnings.warn(
+                f"Could not convert to GeoDataFrame: {e}. "
+                f"Returning pandas DataFrame.",
+                UserWarning
+            )
+            return df
     
     def _get_property(self, property_name: str):
         """Handle property access via Lambda"""
