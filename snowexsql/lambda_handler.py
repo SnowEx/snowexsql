@@ -27,6 +27,17 @@ LOG = logging.getLogger(__name__)
 
 LOG.info("Using standard API classes")
 
+def deserialize_geometry(geom_dict):
+    """Convert GeoJSON dict back to Shapely geometry"""
+    try:
+        from shapely.geometry import shape
+        return shape(geom_dict)
+    except ImportError:
+        raise ImportError(
+            "shapely is required for geometric operations. "
+            "Install with: pip install shapely"
+        )
+
 def serialize_for_json(obj):
     """Convert pandas DataFrame records to JSON-serializable format"""
     if isinstance(obj, list):
@@ -214,6 +225,37 @@ def _handle_class_action(
             records = _get_measurements_by_class(api_class, filters)
             action = f'{class_name}.{method_name}'
             return _create_response(action, records, filters=filters)
+            
+        elif method_name == 'from_area':
+            # from_area expects pt/shp, buffer, crs as direct params
+            # with additional filters
+            area_params = {}
+            for key in ['pt', 'shp', 'buffer', 'crs']:
+                if key in event:
+                    value = event[key]
+                    # Deserialize GeoJSON geometry to Shapely
+                    if key in ['pt', 'shp'] and isinstance(value, dict):
+                        value = deserialize_geometry(value)
+                    area_params[key] = value
+            
+            # Add any additional filters
+            if 'filters' in event:
+                area_params.update(event['filters'])
+            
+            # Validate required parameters
+            if 'pt' not in area_params and 'shp' not in area_params:
+                raise ValueError(
+                    'Either pt or shp parameter is required for from_area'
+                )
+            
+            df = api_class.from_area(**area_params)
+            records = df.to_dict('records') if hasattr(df, 'to_dict') else []
+            action = f'{class_name}.{method_name}'
+            return _create_response(
+                action, 
+                serialize_for_json(records), 
+                params={k: str(v) for k, v in area_params.items()}
+            )
             
         elif method_name == 'from_unique_entries':
             columns = event.get('columns', [])
