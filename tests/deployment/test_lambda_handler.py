@@ -26,54 +26,62 @@ from snowexsql.lambda_handler import handle_event_with_secret
 # ========================================================================
 
 @pytest.fixture(scope="module")
-def credentials_file():
-    """Check for credentials file and skip tests if not present"""
-    # Look in the repository root directory first
-    repo_root = Path(__file__).parent.parent.parent
-    creds_path = repo_root / 'credentials.json'
+def local_credentials():
+    """
+    Load credentials using snowexsql.db functions.
     
-    # Fall back to tests/deployment directory
-    if not creds_path.exists():
-        creds_path = Path(__file__).parent / 'credentials.json'
+    Uses the same credential loading logic as the main package:
+    - SNOWEX_DB_CONNECTION environment variable (user:pass@host/db)
+    - SNOWEX_DB_CREDENTIALS environment variable (path to JSON file)
+    - credentials.json in current directory
     
-    if not creds_path.exists():
-        root_path = repo_root / 'credentials.json'
-        deploy_path = Path(__file__).parent / 'credentials.json'
+    Set environment:
+        export SNOWEX_DB_CONNECTION=user:pass@host/dbname
+    Or:
+        export SNOWEX_DB_CREDENTIALS=/path/to/credentials.json
+    """
+    from snowexsql.db import load_credentials
+    
+    # Check if using connection string format
+    if os.getenv("SNOWEX_DB_CONNECTION"):
+        # Parse connection string: user:pass@host/dbname
+        conn_str = os.getenv("SNOWEX_DB_CONNECTION")
+        try:
+            # Split user:pass@host/dbname
+            auth, location = conn_str.split('@')
+            username, password = auth.split(':')
+            host, dbname = location.split('/')
+            
+            return {
+                'username': username,
+                'password': password,
+                'host': host,
+                'dbname': dbname
+            }
+        except ValueError as e:
+            pytest.skip(
+                f"Invalid SNOWEX_DB_CONNECTION format: {e}\n"
+                "Expected format: user:pass@host/dbname"
+            )
+    
+    # Otherwise use load_credentials for JSON file
+    try:
+        creds = load_credentials()
+        
+        # Convert to the format expected by the Lambda handler
+        return {
+            'username': creds.get('username') or creds.get('user'),
+            'password': creds.get('password'),
+            'host': creds.get('address') or creds.get('host'),
+            'dbname': (creds.get('db_name') or 
+                      creds.get('database') or 
+                      creds.get('dbname'))
+        }
+    except FileNotFoundError as e:
         pytest.skip(
-            f"Credentials file not found in {root_path} or "
-            f"{deploy_path}\n"
-            "Create credentials.json in the repository root to run "
-            "handler tests."
+            f"Database credentials not found: {str(e)}\n"
+            "Set SNOWEX_DB_CONNECTION or SNOWEX_DB_CREDENTIALS environment variable"
         )
-    return creds_path
-
-
-@pytest.fixture(scope="module")
-def local_credentials(credentials_file):
-    """Load credentials from the local credentials.json file"""
-    with open(credentials_file) as f:
-        creds_data = json.load(f)
-    
-    # Use 'tests' key if SNOWEXSQL_TESTS env var is set, else
-    # 'production'
-    env_tests = os.getenv('SNOWEXSQL_TESTS', False)
-    creds_key = 'tests' if env_tests else 'production'
-    creds = creds_data.get(creds_key, {})
-    
-    # If the selected key doesn't exist, try the other one
-    if not creds:
-        creds_key = 'production' if creds_key == 'tests' else 'tests'
-        creds = creds_data.get(creds_key, {})
-    
-    # Convert to the format expected by the Lambda handler
-    return {
-        'username': creds.get('username') or creds.get('user'),
-        'password': creds.get('password'),
-        'host': creds.get('address') or creds.get('host'),
-        'dbname': (creds.get('db_name') or 
-                  creds.get('database') or 
-                  creds.get('dbname'))
-    }
 
 
 # ========================================================================
@@ -257,7 +265,7 @@ class TestPointMeasurementsHandler:
         """Test PointMeasurements.from_unique_entries"""
         event = {
             'action': 'PointMeasurements.from_unique_entries',
-            'columns': ['instrument'],
+            'columns': ['value'],  # Use 'type' instead of 'instrument' - direct column
             'filters': {'limit': 10}
         }
         
