@@ -376,21 +376,16 @@ class BaseDataset:
             pt_wkt = None
         
         # Build PostGIS search geometry
-        # Always work in SRID 4326 for comparison since that's what
-        # the data is stored in
+        # Keep everything in the provided CRS to avoid geography issues
         if pt_wkt:
-            # Create point, transform to 4326, buffer using geography
-            # (meters), cast back to geometry
-            # Do comparison in 4326 to avoid transform errors
+            # Create point and buffer in the provided CRS
+            # Uses planar buffer (units depend on CRS - meters for UTM)
             search_geom_sql = (
-                f"ST_Buffer(ST_Transform(ST_GeomFromText('{pt_wkt}', "
-                f"{crs}), 4326)::geography, {buffer})::geometry"
+                f"ST_Buffer(ST_GeomFromText('{pt_wkt}', {crs}), {buffer})"
             )
         elif shp_wkt:
-            # Transform shape to 4326 for comparison
-            search_geom_sql = (
-                f"ST_Transform(ST_GeomFromText('{shp_wkt}', {crs}), 4326)"
-            )
+            # Use provided shape in the provided CRS
+            search_geom_sql = f"ST_GeomFromText('{shp_wkt}', {crs})"
         else:
             raise ValueError("Unable to parse geometry input")
         
@@ -404,16 +399,17 @@ class BaseDataset:
                 where_clauses = []
                 params = {}
                 
-                # Add spatial filter - compare in SRID 4326 since that's
-                # what data is stored in
+                # Add spatial filter - transform geometries to same CRS
+                # Transform DB geometry to match the search CRS
                 if needs_site_join:
                     where_clauses.append(
-                        f"ST_Intersects(s.geom, ({search_geom_sql}))"
+                        f"ST_Intersects(ST_Transform(s.geom, {crs}), "
+                        f"({search_geom_sql}))"
                     )
                 else:
                     where_clauses.append(
-                        f"ST_Intersects({table_name}.geom, "
-                        f"({search_geom_sql}))"
+                        f"ST_Intersects(ST_Transform({table_name}.geom, "
+                        f"{crs}), ({search_geom_sql}))"
                     )
                 
                 # Add standard filters
