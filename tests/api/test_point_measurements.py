@@ -184,7 +184,7 @@ class TestPointMeasurementFilter:
             [point_data_x_y.y],
             crs=f"epsg:{point_data_srid}"
         ).buffer(10)[0]
-        result = self.subject.from_area(shp=shp)
+        result = self.subject.from_area(shp=shp, crs=point_data_srid)
         assert len(result) == 1
 
     def test_from_area_point(self, point_data_x_y, point_data_srid):
