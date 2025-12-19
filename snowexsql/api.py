@@ -34,57 +34,54 @@ from contextlib import contextmanager
 from sqlalchemy.sql import func
 from sqlalchemy import cast, Numeric
 
-# Try to import heavy dependencies, fall back gracefully for Lambda
-try:
-    import geoalchemy2.functions as gfunc
-    from geoalchemy2.shape import from_shape
-    from geoalchemy2.types import Raster
-    from shapely.geometry import box
-    # Import geopandas last since it's the heaviest dependency
-    import geopandas as gpd
-    HAS_GIS_DEPS = True
-except ImportError:
-    # Lambda environment - core geospatial libs not available
-    HAS_GIS_DEPS = False
-    gfunc = None
-    gpd = None
-    from_shape = None
-    Raster = None
-    box = None
+# Initialize logger first
+LOG = logging.getLogger(__name__)
 
-# Try to import conversions separately since it also needs geopandas
-try:
-    if HAS_GIS_DEPS:
-        from snowexsql.conversions import query_to_geopandas, raster_to_rasterio
-    else:
-        raise ImportError("Skipping conversions import - no geopandas")
-except ImportError:
+# Import pandas - always available
+import pandas as pd
+from sqlalchemy.dialects import postgresql
+
+def query_to_geopandas(query, engine, **kwargs):
+    """
+    Convert SQLAlchemy query to GeoDataFrame (if geopandas available) or DataFrame.
     
-    # Create fallback conversion functions
-    import pandas as pd
-    from sqlalchemy.dialects import postgresql
+    Execution context:
+    - Local power users: Returns GeoDataFrame with proper geometry objects
+    - Lambda environment: Returns pandas DataFrame (no geopandas dependency)
+      - DataFrame is serialized to JSON by lambda_handler
+      - lambda_client receives JSON and converts to GeoDataFrame client-side
     
-    def query_to_geopandas(query, engine, **kwargs):
-        """Fallback to pandas when geopandas not available"""
-        sql = query.statement.compile(
-            dialect=postgresql.dialect()
-        )
+    Args:
+        query: SQLAlchemy Query object
+        engine: SQLAlchemy engine
+        **kwargs: Additional arguments passed to read_postgis or read_sql
+        
+    Returns:
+        geopandas.GeoDataFrame if geopandas available, otherwise pandas.DataFrame
+    """
+    sql = query.statement.compile(dialect=postgresql.dialect())
+    
+    try:
+        import geopandas as gpd
+        return gpd.read_postgis(sql, engine.connect(), **kwargs)
+    except ImportError:
+        # Geopandas not available (e.g., Lambda environment)
+        # Returns pandas DataFrame with geometry as WKB/WKT
+        # lambda_client will convert to GeoDataFrame client-side
         return pd.read_sql(sql, engine, **kwargs)
-    
-    def raster_to_rasterio(rasters):
-        """Fallback when rasterio not available"""
-        raise ImportError(
-            "Raster functionality not available in Lambda "
-            "environment"
-        )
+
+def raster_to_rasterio(rasters):
+    """Raster functionality requires rasterio"""
+    raise ImportError(
+        "Raster functionality not available in Lambda environment. "
+        "Use local API for raster operations."
+    )
 from snowexsql.db import get_db
 from snowexsql.tables import (
     Campaign, DOI, ImageData, Instrument, LayerData,
     MeasurementType, Observer, PointData, PointObservation, Site
 )
 from snowexsql.db import db_session_with_credentials
-
-LOG = logging.getLogger(__name__)
 
 # TODO:
 #   * Possible enums
@@ -114,19 +111,6 @@ class BaseDataset:
     SPECIAL_KWARGS = ["limit"]
     # Default max record count
     MAX_RECORD_COUNT = 1000
-
-    @staticmethod
-    def build_box(xmin, ymin, xmax, ymax, crs):
-        # build a geopandas box
-        if gpd is None or box is None:
-            raise ImportError(
-                "geopandas and shapely are required for geometric "
-                "operations. Install with: "
-                "pip install geopandas shapely"
-            )
-        return gpd.GeoDataFrame(
-            geometry=[box(xmin, ymin, xmax, ymax)]
-        ).set_crs(crs)
 
     @staticmethod
     def retrieve_single_value_result(result):
@@ -341,18 +325,21 @@ class BaseDataset:
     ):
         """
         Get data for the class within a specific shapefile or
-        within a point and a known buffer
+        within a point and a known buffer. Uses PostGIS SQL directly
+        for spatial operations, eliminating dependency on geoalchemy2/shapely.
+        
         Args:
-            shp: shapely geometry in which to filter
-            pt: shapely point that will have a buffer applied in
-                order to find search area
-            buffer: in same units as point
-            crs: integer crs to use
-            kwargs: for more filtering or limiting
-                (cls.ALLOWED_QRY_KWARGS)
-        Returns: Geopandas dataframe of results
-
+            shp: shapely geometry in which to filter, or WKT string
+            pt: shapely point that will have a buffer applied, or WKT string
+            buffer: buffer distance in same units as point (meters if using geography)
+            crs: integer SRID/EPSG code (default 26912 = UTM Zone 12N)
+            kwargs: for more filtering or limiting (cls.ALLOWED_QRY_KWARGS)
+            
+        Returns: 
+            pandas DataFrame with results (includes geom column with WKT)
         """
+        from sqlalchemy import text
+        
         if shp is None and pt is None:
             raise ValueError(
                 "Inputs must be a shape description or a point "
@@ -364,63 +351,114 @@ class BaseDataset:
                 "pt and buffer must be given together"
             )
         
-        # Check if geometric operations are available
-        if ((shp is not None or pt is not None) and
-                from_shape is None):
-            raise ImportError(
-                "geoalchemy2 and shapely are required for "
-                "geometric filtering. Install with: "
-                "pip install geoalchemy2 shapely"
-            )
+        # Convert shapely objects to WKT if needed
+        if shp is not None and hasattr(shp, 'wkt'):
+            shp_wkt = shp.wkt
+        elif isinstance(shp, str):
+            shp_wkt = shp
+        else:
+            shp_wkt = None
+            
+        if pt is not None and hasattr(pt, 'wkt'):
+            pt_wkt = pt.wkt
+        elif isinstance(pt, str):
+            pt_wkt = pt
+        else:
+            pt_wkt = None
+        
+        # Build PostGIS search geometry
+        if pt_wkt:
+            # Create point and buffer it
+            # Use geography for accurate meters-based buffering
+            search_geom_sql = f"ST_Buffer(ST_Transform(ST_GeomFromText('{pt_wkt}', {crs}), 4326)::geography, {buffer})::geometry"
+        elif shp_wkt:
+            # Use provided shape, transform to WGS84 for consistency
+            search_geom_sql = f"ST_Transform(ST_GeomFromText('{shp_wkt}', {crs}), 4326)"
+        else:
+            raise ValueError("Unable to parse geometry input")
+        
+        # Determine table structure
+        table_name = cls.MODEL.__tablename__
+        needs_site_join = (table_name == 'layers')
         
         with db_session_with_credentials() as (engine, session):
             try:
-                if shp is not None:
-                    qry = session.query(cls.MODEL)
-                    # Filter geometry based on Site for LayerData
-                    if cls.MODEL == LayerData:
-                        qry = qry.join(cls.MODEL.site).filter(
-                            func.ST_Within(
-                                Site.geom,
-                                from_shape(shp, srid=crs)
-                            )
-                        )
-                    else:
-                        qry = qry.filter(
-                            func.ST_Within(
-                                cls.MODEL.geom,
-                                from_shape(shp, srid=crs)
-                            )
-                        )
-                    qry = cls.extend_qry(
-                        qry, check_size=True, **kwargs
-                    )
-                    df = query_to_geopandas(qry, engine)
+                # Build WHERE clauses for filters
+                where_clauses = []
+                params = {}
+                
+                # Add spatial filter
+                if needs_site_join:
+                    where_clauses.append(f"ST_Intersects(s.geom, ({search_geom_sql}))")
                 else:
-                    qry_pt = from_shape(pt)
-                    qry = session.query(
-                        gfunc.ST_SetSRID(
-                            func.ST_Buffer(qry_pt, buffer), crs
+                    where_clauses.append(f"ST_Intersects({table_name}.geom, ({search_geom_sql}))")
+                
+                # Add standard filters
+                for key, value in kwargs.items():
+                    if key == 'limit':
+                        continue
+                    elif key == 'type':
+                        where_clauses.append(
+                            f"{table_name}.measurement_type_id IN (SELECT id FROM measurement_type WHERE name = :type_name)"
                         )
-                    )
-
-                    buffered_pt = qry.all()[0][0]
-                    qry = session.query(cls.MODEL)
-                    # Filter geometry based on Site for LayerData
-                    if cls.MODEL == LayerData:
-                        qry = qry.join(cls.MODEL.site).filter(
-                            func.ST_Within(Site.geom, buffered_pt)
+                        params['type_name'] = value
+                    elif key == 'instrument':
+                        where_clauses.append(
+                            f"{table_name}.instrument_id IN (SELECT id FROM instrument WHERE name = :instrument_name)"
                         )
-                    else:
-                        qry = qry.filter(
-                            func.ST_Within(
-                                cls.MODEL.geom, buffered_pt
+                        params['instrument_name'] = value
+                    elif key == 'campaign':
+                        if needs_site_join:
+                            where_clauses.append(
+                                f"s.campaign_id IN (SELECT id FROM campaign WHERE name = :campaign_name)"
                             )
-                        )
-                    qry = cls.extend_qry(
-                        qry, check_size=True, **kwargs
-                    )
-                    df = query_to_geopandas(qry, engine)
+                        else:
+                            where_clauses.append(
+                                f"{table_name}.site_id IN (SELECT id FROM sites WHERE campaign_id IN (SELECT id FROM campaign WHERE name = :campaign_name))"
+                            )
+                        params['campaign_name'] = value
+                    elif key == 'date_greater_equal':
+                        where_clauses.append(f"{table_name}.date >= :date_gte")
+                        params['date_gte'] = value
+                    elif key == 'date_less_equal':
+                        where_clauses.append(f"{table_name}.date <= :date_lte")
+                        params['date_lte'] = value
+                    elif key == 'value_greater_equal':
+                        where_clauses.append(f"{table_name}.value >= :value_gte")
+                        params['value_gte'] = value
+                    elif key == 'value_less_equal':
+                        where_clauses.append(f"{table_name}.value <= :value_lte")
+                        params['value_lte'] = value
+                    elif key in cls.ALLOWED_QRY_KWARGS:
+                        where_clauses.append(f"{table_name}.{key} = :{key}")
+                        params[key] = value
+                
+                where_sql = " AND ".join(where_clauses)
+                limit = kwargs.get('limit', cls.MAX_RECORD_COUNT)
+                
+                # Construct query based on table structure
+                if needs_site_join:
+                    query = text(f"""
+                        SELECT {table_name}.*, ST_AsText(s.geom) as geom_wkt, s.geom as geom
+                        FROM {table_name}
+                        JOIN sites s ON {table_name}.site_id = s.id
+                        WHERE {where_sql}
+                        LIMIT :limit
+                    """)
+                else:
+                    query = text(f"""
+                        SELECT *, ST_AsText(geom) as geom_wkt
+                        FROM {table_name}
+                        WHERE {where_sql}
+                        LIMIT :limit
+                    """)
+                params['limit'] = limit
+                
+                # Execute and convert to DataFrame
+                result = session.execute(query, params)
+                rows = [dict(row._mapping) for row in result]
+                df = pd.DataFrame(rows)
+                
             except Exception as e:
                 session.close()
                 raise e
@@ -740,7 +778,7 @@ class RasterMeasurements(BaseDataset):
             )
         
         # Check if geometric operations are available
-        if from_shape is None:
+        if not HAS_CORE_GIS:
             raise ImportError(
                 "geoalchemy2 and shapely are required for "
                 "geometric filtering. Install with: "
