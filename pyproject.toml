@@ -32,7 +32,6 @@ dependencies = [
 
 
 [project.optional-dependencies]
-
 dev = [
     "factory_boy <4.0",
     "pytest-factoryboy <3.0",
@@ -52,7 +51,7 @@ docs = [
     "jupyter-book <2.0",
     "pyyaml <7.0"
 ]
-all = ["snowexsql[dev,docs,lambda]"]
+all = ["snowexsql[dev,docs]"]
 
 [project.urls]
 Homepage = "https://github.com/SnowEx/snowexsql"
