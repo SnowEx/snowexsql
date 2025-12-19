@@ -32,7 +32,7 @@ import os
 from contextlib import contextmanager
 
 from sqlalchemy.sql import func
-from sqlalchemy import cast, Numeric
+from sqlalchemy import cast, Numeric, exists
 
 # Initialize logger first
 LOG = logging.getLogger(__name__)
@@ -359,20 +359,27 @@ class BaseDataset:
         else:
             shp_wkt = None
             
-        if pt is not None and hasattr(pt, 'wkt'):
-            pt_wkt = pt.wkt
-        elif isinstance(pt, str):
-            pt_wkt = pt
+        if pt is not None:
+            if hasattr(pt, 'wkt'):
+                pt_wkt = pt.wkt
+            elif isinstance(pt, str):
+                pt_wkt = pt
+            elif isinstance(pt, (tuple, list)) and len(pt) == 2:
+                # Handle (x, y) tuple format
+                pt_wkt = f"POINT ({pt[0]} {pt[1]})"
+            else:
+                pt_wkt = None
         else:
             pt_wkt = None
         
         # Build PostGIS search geometry
+        # Always work in SRID 4326 for comparison since that's what the data is stored in
         if pt_wkt:
-            # Create point and buffer it
-            # Use geography for accurate meters-based buffering
+            # Create point, transform to 4326, buffer using geography (meters), cast back to geometry
+            # Do comparison in 4326 to avoid transform errors
             search_geom_sql = f"ST_Buffer(ST_Transform(ST_GeomFromText('{pt_wkt}', {crs}), 4326)::geography, {buffer})::geometry"
         elif shp_wkt:
-            # Use provided shape, transform to WGS84 for consistency
+            # Transform shape to 4326 for comparison
             search_geom_sql = f"ST_Transform(ST_GeomFromText('{shp_wkt}', {crs}), 4326)"
         else:
             raise ValueError("Unable to parse geometry input")
@@ -387,7 +394,7 @@ class BaseDataset:
                 where_clauses = []
                 params = {}
                 
-                # Add spatial filter
+                # Add spatial filter - compare in SRID 4326 since that's what data is stored in
                 if needs_site_join:
                     where_clauses.append(f"ST_Intersects(s.geom, ({search_geom_sql}))")
                 else:
@@ -531,10 +538,12 @@ class BaseDataset:
         Return all distinct instruments in the data
         """
         with db_session_with_credentials() as (_engine, session):
-            qry = session.query(Instrument.name).join(
-                self.MODEL,
-                Instrument.id == self.MODEL.instrument_id
-            ).distinct()
+            # Use EXISTS for better performance on large datasets (29GB+ tables)
+            # EXISTS can use index efficiently and stops at first match per instrument
+            # This avoids the expensive DISTINCT + sequential scan on large tables
+            qry = session.query(Instrument.name).filter(
+                exists().where(self.MODEL.instrument_id == Instrument.id)
+            )
             result = qry.all()
         return self.retrieve_single_value_result(result)
 
