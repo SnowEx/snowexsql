@@ -76,11 +76,6 @@ def _test_connection(engine):
         ver = result.fetchone()[0]
     return {'connected': True, 'version': ver}
 
-def _setup_api_class(api_class, tmp_cred_path: str):
-    """Configure the API class with the database credentials path."""
-    api_class.DB_NAME = str(tmp_cred_path)
-    return api_class
-
 def _create_response(action: str, data, **kwargs):
     """
     Create a standardized response format for successful operations.
@@ -217,7 +212,6 @@ def _handle_class_action(
             )
         
         api_class = allowed_classes[class_name]
-        _setup_api_class(api_class, tmp_cred_path)
         
         # Handle different method types
         if method_name == 'from_filter':
@@ -227,35 +221,29 @@ def _handle_class_action(
             return _create_response(action, records, filters=filters)
             
         elif method_name == 'from_area':
-            # from_area expects pt/shp, buffer, crs as direct params
-            # with additional filters
-            area_params = {}
-            for key in ['pt', 'shp', 'buffer', 'crs']:
-                if key in event:
-                    value = event[key]
-                    # Deserialize GeoJSON geometry to Shapely
-                    if key in ['pt', 'shp'] and isinstance(value, dict):
-                        value = deserialize_geometry(value)
-                    area_params[key] = value
+            # Call api.py from_area method directly (it now uses PostGIS SQL)
+            pt_wkt = event.get('pt_wkt')
+            shp_wkt = event.get('shp_wkt')
+            buffer_dist = event.get('buffer')
+            crs = event.get('crs', 26912)
+            filters = event.get('filters', {})
             
-            # Add any additional filters
-            if 'filters' in event:
-                area_params.update(event['filters'])
+            # Set credentials for api.py to use
+            os.environ['SNOWEX_DB_CREDENTIALS_FILE'] = tmp_cred_path
             
-            # Validate required parameters
-            if 'pt' not in area_params and 'shp' not in area_params:
-                raise ValueError(
-                    'Either pt or shp parameter is required for from_area'
+            try:
+                df = api_class.from_area(
+                    shp=shp_wkt,
+                    pt=pt_wkt,
+                    buffer=buffer_dist,
+                    crs=crs,
+                    **filters
                 )
-            
-            df = api_class.from_area(**area_params)
-            records = df.to_dict('records') if hasattr(df, 'to_dict') else []
-            action = f'{class_name}.{method_name}'
-            return _create_response(
-                action, 
-                serialize_for_json(records), 
-                params={k: str(v) for k, v in area_params.items()}
-            )
+                records = df.to_dict('records')
+                action = f'{api_class.__name__}.from_area'
+                return _create_response(action, serialize_for_json(records), count=len(records))
+            except Exception as e:
+                raise Exception(f"from_area query failed: {str(e)}")
             
         elif method_name == 'from_unique_entries':
             columns = event.get('columns', [])
@@ -293,19 +281,23 @@ def _handle_class_action(
         )
 
 def _get_measurements_by_class(api_class, filters: dict):
-    """Get measurements using a specific API class."""
+    """
+    Get measurements by calling api.py methods directly.
+    Single source of truth for query logic.
+    """
     df = api_class.from_filter(**filters)
     records = df.to_dict('records') if hasattr(df, 'to_dict') else []
     return serialize_for_json(records)
 
 def _write_temp_credentials(creds: Dict[str, Any], dest: Path):
     """
-    Write the expected credentials.json structure used by
-    snowexsql.db.load_credentials.
-
-    The existing library expects a JSON file with top-level keys
-    `production` and `tests`. We'll populate both entries from the
-    secret (they can be the same).
+    Write credentials in flat format expected by snowexsql.db.load_credentials.
+    
+    AWS Secrets Manager secret should contain:
+    - username (or user or db_user)
+    - password
+    - host (or address)
+    - dbname (or database or db_name)
     """
     cred_entry = {
         'username': (creds.get('username') or
@@ -318,79 +310,95 @@ def _write_temp_credentials(creds: Dict[str, Any], dest: Path):
                    creds.get('db_name'))
     }
     
-    # Write both 'production' and 'tests' keys with the same
-    # credentials. This ensures it works whether SNOWEXSQL_TESTS
-    # env var is set or not
-    payload = {
-        'production': cred_entry,
-        'tests': cred_entry
-    }
+    # Validate all required fields are present
+    missing = [k for k, v in cred_entry.items() if not v]
+    if missing:
+        LOG.error(f"Missing credential fields: {missing}")
+        LOG.error(f"Available secret keys: {list(creds.keys())}")
+        raise ValueError(f"Missing required credential fields: {missing}")
+    
+    # Write flat structure (NOT nested with production/tests keys)
     dest.parent.mkdir(parents=True, exist_ok=True)
     with open(dest, 'w') as fh:
-        json.dump(payload, fh)
-
-
-def handle_event_with_secret(
-    event: Dict[str, Any],
-    secret: Dict[str, Any]
-):
-    """
-    Main entry: write temporary credentials file and call into
-    snowexsql API.
-
-    Returns a JSON-serializable dict with the result.
-    """
-    tmp_cred_path = Path('/tmp/credentials.json')
-    _write_temp_credentials(secret, tmp_cred_path)
-
-    # The snowexsql.db functions accept a credentials_path parameter;
-    # pass our temp file
-    try:
-        engine, session = sled_db.get_db(str(tmp_cred_path))
-        
-        # Get the action from the event, default to connectivity test
-        action = event.get('action', 'test_connection')
-        
-        # Handle system-level actions
-        if action == 'test_connection':
-            return _test_connection(engine)
-        
-        # Handle raw SQL queries
-        elif action == 'query':
-            sql = event.get('sql')
-            if not sql:
-                return {'error': 'No SQL query provided'}
-            
-            try:
-                result = session.execute(text(sql))
-                # Convert result to list of dicts
-                data = [dict(row._mapping) for row in result]
-                serialized = serialize_for_json(data)
-                return _create_response('query', serialized, sql=sql)
-            except Exception as e:
-                return _create_error_response('query', e)
+        json.dump(cred_entry, fh, indent=2)
     
-        # Handle class-based actions (mirror api.py structure)
-        elif '.' in action:
-            # Parse class.method format
-            # (e.g., 'PointMeasurements.from_filter')
+    LOG.info(f"Wrote credentials to {dest}")
+
+def handle_event_with_secret(event: Dict[str, Any], secret_dict: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Handle an event with credentials from AWS Secrets Manager.
+    
+    Args:
+        event: Lambda event containing action and parameters
+        secret_dict: Credentials from Secrets Manager
+        
+    Returns:
+        Response dictionary with results or error
+    """
+    tmp_creds = Path('/tmp/credentials.json')
+    
+    try:
+        # Write credentials in flat format expected by snowexsql.db
+        _write_temp_credentials(secret_dict, tmp_creds)
+        
+        # Verify credentials file was written and is readable
+        if not tmp_creds.exists():
+            raise FileNotFoundError(f"Failed to write credentials to {tmp_creds}")
+        
+        # Log for debugging (without exposing password)
+        with open(tmp_creds) as f:
+            creds_check = json.load(f)
+            LOG.info(f"Credentials file keys: {list(creds_check.keys())}")
+        
+        # Set environment variable so API classes can find credentials
+        # This is critical because api.py classes call db_session_with_credentials()
+        # without passing credentials_path parameter
+        os.environ['SNOWEX_DB_CREDENTIALS'] = str(tmp_creds)
+        
+        # Get database connection with explicit credentials path
+        engine, session = sled_db.get_db(credentials_path=str(tmp_creds))
+        
+        # Test connection
+        if event.get('action') == 'test_connection':
+            result = _test_connection(engine)
+            session.close()
+            return result
+        
+        # Handle class-based actions (e.g., PointMeasurements.from_filter)
+        action = event.get('action', '')
+        if '.' in action:
             class_name, method_name = action.split('.', 1)
-            return _handle_class_action(
+            result = _handle_class_action(
                 class_name,
                 method_name,
                 event,
-                tmp_cred_path
+                str(tmp_creds)
             )
+            session.close()
+            return result
+        
+        # Handle raw SQL queries
+        if action == 'query':
+            sql = event.get('sql')
+            if not sql:
+                raise ValueError('SQL query not provided')
             
-        else:
-            return {'error': f'Unknown action: {action}'}
-            
-    finally:
-        try:
-            session.close() if 'session' in locals() else None
-            tmp_cred_path.unlink()
-        except Exception:
-            pass
+            result = session.execute(text(sql))
+            rows = [dict(row._mapping) for row in result]
+            session.close()
+            return _create_response('query', serialize_for_json(rows))
+        
+        session.close()
+        raise ValueError(f'Unknown action: {action}')
+        
+    except Exception as e:
+        LOG.error(f"Error in handle_event_with_secret: {str(e)}", exc_info=True)
+        if 'session' in locals():
+            session.close()
+        return {
+            'error': str(e),
+            'action': event.get('action', 'unknown')
+        }
 
 def _get_secret(
     secret_name: str,
