@@ -241,8 +241,21 @@ class SnowExLambdaClient:
             )
             
             result = json.loads(response['Payload'].read().decode('utf-8'))
-            return json.loads(result['body'])
             
+            # Check if result has the expected structure
+            if 'body' not in result:
+                raise Exception(f"Unexpected Lambda response format: {result}")
+            
+            body = json.loads(result['body'])
+            
+            # Check for errors in the response
+            if 'error' in body:
+                raise Exception(f"Lambda returned error: {body['error']}")
+            
+            return body
+            
+        except json.JSONDecodeError as e:
+            raise Exception(f"Failed to parse Lambda response: {str(e)}")
         except Exception as e:
             raise Exception(f"Lambda invocation failed: {str(e)}")
     
@@ -380,26 +393,10 @@ class _LambdaDatasetClient:
                     shaped['filters'] = provided_filters
                 kwargs = shaped if shaped else kwargs
 
-            # from_area: expects pt, buffer, crs, shp as direct params
-            # with additional filters in the filters dict
+            # from_area: Handle server-side spatial filtering using PostGIS
+            # Lambda uses PostGIS for efficient database-side spatial queries
             elif method_name == 'from_area':
-                # Direct parameters for from_area
-                area_params = ['pt', 'shp', 'buffer', 'crs']
-                shaped = {}
-                provided_filters = {}
-                
-                # Separate area-specific params from filters
-                for k in list(kwargs.keys()):
-                    if k in area_params:
-                        shaped[k] = kwargs[k]
-                    else:
-                        provided_filters[k] = kwargs[k]
-                
-                # Add filters if any
-                if provided_filters:
-                    shaped['filters'] = provided_filters
-                
-                kwargs = shaped
+                return self._handle_from_area_server_side(kwargs, as_geodataframe)
 
             # Invoke Lambda with the method call
             action = f'{self._class_name}.{method_name}'
@@ -435,6 +432,91 @@ class _LambdaDatasetClient:
         method_proxy.__name__ = method_name
         
         return method_proxy
+    
+    def _handle_from_area_server_side(self, kwargs: dict, as_geodataframe: bool):
+        """
+        Handle from_area() with server-side PostGIS spatial filtering
+        
+        Lambda uses PostGIS for efficient database-side spatial queries:
+        1. Convert geometry to WKT (Well-Known Text) format
+        2. Send to Lambda with other filters
+        3. Lambda constructs PostGIS spatial query
+        4. Database performs spatial filtering efficiently
+        5. Return filtered results
+        
+        Args:
+            kwargs: Parameters including pt/shp, buffer, crs, and other filters
+            as_geodataframe: Whether to return as GeoDataFrame
+            
+        Returns:
+            Filtered GeoDataFrame or DataFrame
+        """
+        try:
+            from shapely.geometry import Point
+        except ImportError:
+            raise ImportError(
+                "shapely is required for from_area(). "
+                "Install with: pip install shapely"
+            )
+        
+        # Extract spatial parameters
+        pt = kwargs.pop('pt', None)
+        shp = kwargs.pop('shp', None)
+        buffer_dist = kwargs.pop('buffer', None)
+        crs = kwargs.pop('crs', 4326)  # Default to WGS84
+        
+        # Validate parameters
+        if pt is None and shp is None:
+            raise ValueError("Either 'pt' or 'shp' parameter is required for from_area")
+        
+        if pt is not None and buffer_dist is None:
+            raise ValueError("'buffer' parameter is required when using 'pt'")
+        
+        # Convert geometry to WKT for transmission to Lambda
+        if pt is not None:
+            # Convert point to WKT
+            if isinstance(pt, Point):
+                pt_wkt = pt.wkt
+            elif isinstance(pt, (tuple, list)) and len(pt) == 2:
+                pt_wkt = Point(pt[0], pt[1]).wkt
+            else:
+                raise ValueError("pt must be a shapely Point or (x, y) tuple")
+            
+            kwargs['pt_wkt'] = pt_wkt
+            kwargs['buffer'] = buffer_dist
+        else:
+            # Convert shape to WKT
+            if hasattr(shp, 'wkt'):
+                kwargs['shp_wkt'] = shp.wkt
+            else:
+                raise ValueError("shp must be a shapely geometry object")
+        
+        kwargs['crs'] = crs
+        
+        # Remaining kwargs are filters
+        filters = {}
+        for k, v in list(kwargs.items()):
+            if k not in ['pt_wkt', 'shp_wkt', 'buffer', 'crs']:
+                filters[k] = kwargs.pop(k)
+        
+        if filters:
+            kwargs['filters'] = filters
+        
+        # Invoke Lambda with PostGIS spatial query
+        action = f'{self._class_name}.from_area'
+        result = self._client._invoke_lambda(action, **kwargs)
+        
+        # Convert result to DataFrame
+        df = pd.DataFrame(result.get('data', []))
+        
+        if df.empty:
+            return df
+        
+        # Convert to GeoDataFrame if requested
+        if as_geodataframe:
+            df = self._to_geodataframe(df)
+        
+        return df
     
     def _can_convert_to_geodataframe(self, df: pd.DataFrame) -> bool:
         """
