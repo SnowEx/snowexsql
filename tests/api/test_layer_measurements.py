@@ -165,7 +165,7 @@ class TestLayerMeasurementFilter:
         with pytest.raises(expected_error):
             self.subject.from_filter(**kwargs)
 
-    def test_from_area(self, point_data_x_y, point_data_srid):
+    def test_from_area(self, layer_data, point_data_x_y, point_data_srid):
         shp = gpd.points_from_xy(
             [point_data_x_y.x],
             [point_data_x_y.y],
@@ -174,7 +174,7 @@ class TestLayerMeasurementFilter:
         result = self.subject.from_area(shp=shp, crs=point_data_srid)
         assert len(result) == 1
 
-    def test_from_area_point(self, point_data_x_y, point_data_srid):
+    def test_from_area_point(self, layer_data, point_data_x_y, point_data_srid):
         pts = gpd.points_from_xy(
             [point_data_x_y.x],
             [point_data_x_y.y],
