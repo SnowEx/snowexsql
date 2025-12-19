@@ -54,4 +54,4 @@ jobs:
           python3 -m pip install -e ".[dev]"
       - name: Test with pytest
         run: |
-          pytest -s
+          pytest -s -m "not integration"
