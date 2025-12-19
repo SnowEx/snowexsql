@@ -66,10 +66,10 @@ def db_test_session(monkeypatch, sqlalchemy_engine):
     the API when initiating a session.
     """
     @contextmanager
-    def db_session(*args, **kwargs):
-        yield SESSION(), sqlalchemy_engine
+    def db_session_with_credentials(*args, **kwargs):
+        yield sqlalchemy_engine, SESSION()
 
-    monkeypatch.setattr(snowexsql.api, "db_session", db_session)
+    monkeypatch.setattr(snowexsql.api, "db_session_with_credentials", db_session_with_credentials)
 
 
 @pytest.fixture(scope='function')
