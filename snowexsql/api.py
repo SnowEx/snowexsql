@@ -43,7 +43,8 @@ from sqlalchemy.dialects import postgresql
 
 def query_to_geopandas(query, engine, **kwargs):
     """
-    Convert SQLAlchemy query to GeoDataFrame (if geopandas available) or DataFrame.
+    Convert SQLAlchemy query to GeoDataFrame (if geopandas available)
+    or DataFrame.
     
     Execution context:
     - Local power users: Returns GeoDataFrame with proper geometry objects
@@ -57,7 +58,8 @@ def query_to_geopandas(query, engine, **kwargs):
         **kwargs: Additional arguments passed to read_postgis or read_sql
         
     Returns:
-        geopandas.GeoDataFrame if geopandas available, otherwise pandas.DataFrame
+        geopandas.GeoDataFrame if geopandas available,
+        otherwise pandas.DataFrame
     """
     sql = query.statement.compile(dialect=postgresql.dialect())
     
@@ -331,7 +333,8 @@ class BaseDataset:
         Args:
             shp: shapely geometry in which to filter, or WKT string
             pt: shapely point that will have a buffer applied, or WKT string
-            buffer: buffer distance in same units as point (meters if using geography)
+            buffer: buffer distance in same units as point
+                    (meters if using geography)
             crs: integer SRID/EPSG code (default 26912 = UTM Zone 12N)
             kwargs: for more filtering or limiting (cls.ALLOWED_QRY_KWARGS)
             
@@ -373,14 +376,21 @@ class BaseDataset:
             pt_wkt = None
         
         # Build PostGIS search geometry
-        # Always work in SRID 4326 for comparison since that's what the data is stored in
+        # Always work in SRID 4326 for comparison since that's what
+        # the data is stored in
         if pt_wkt:
-            # Create point, transform to 4326, buffer using geography (meters), cast back to geometry
+            # Create point, transform to 4326, buffer using geography
+            # (meters), cast back to geometry
             # Do comparison in 4326 to avoid transform errors
-            search_geom_sql = f"ST_Buffer(ST_Transform(ST_GeomFromText('{pt_wkt}', {crs}), 4326)::geography, {buffer})::geometry"
+            search_geom_sql = (
+                f"ST_Buffer(ST_Transform(ST_GeomFromText('{pt_wkt}', "
+                f"{crs}), 4326)::geography, {buffer})::geometry"
+            )
         elif shp_wkt:
             # Transform shape to 4326 for comparison
-            search_geom_sql = f"ST_Transform(ST_GeomFromText('{shp_wkt}', {crs}), 4326)"
+            search_geom_sql = (
+                f"ST_Transform(ST_GeomFromText('{shp_wkt}', {crs}), 4326)"
+            )
         else:
             raise ValueError("Unable to parse geometry input")
         
@@ -394,11 +404,17 @@ class BaseDataset:
                 where_clauses = []
                 params = {}
                 
-                # Add spatial filter - compare in SRID 4326 since that's what data is stored in
+                # Add spatial filter - compare in SRID 4326 since that's
+                # what data is stored in
                 if needs_site_join:
-                    where_clauses.append(f"ST_Intersects(s.geom, ({search_geom_sql}))")
+                    where_clauses.append(
+                        f"ST_Intersects(s.geom, ({search_geom_sql}))"
+                    )
                 else:
-                    where_clauses.append(f"ST_Intersects({table_name}.geom, ({search_geom_sql}))")
+                    where_clauses.append(
+                        f"ST_Intersects({table_name}.geom, "
+                        f"({search_geom_sql}))"
+                    )
                 
                 # Add standard filters
                 for key, value in kwargs.items():
@@ -406,22 +422,29 @@ class BaseDataset:
                         continue
                     elif key == 'type':
                         where_clauses.append(
-                            f"{table_name}.measurement_type_id IN (SELECT id FROM measurement_type WHERE name = :type_name)"
+                            f"{table_name}.measurement_type_id IN "
+                            f"(SELECT id FROM measurement_type WHERE "
+                            f"name = :type_name)"
                         )
                         params['type_name'] = value
                     elif key == 'instrument':
                         where_clauses.append(
-                            f"{table_name}.instrument_id IN (SELECT id FROM instrument WHERE name = :instrument_name)"
+                            f"{table_name}.instrument_id IN "
+                            f"(SELECT id FROM instrument WHERE "
+                            f"name = :instrument_name)"
                         )
                         params['instrument_name'] = value
                     elif key == 'campaign':
                         if needs_site_join:
                             where_clauses.append(
-                                f"s.campaign_id IN (SELECT id FROM campaign WHERE name = :campaign_name)"
+                                f"s.campaign_id IN (SELECT id FROM campaign "
+                                f"WHERE name = :campaign_name)"
                             )
                         else:
                             where_clauses.append(
-                                f"{table_name}.site_id IN (SELECT id FROM sites WHERE campaign_id IN (SELECT id FROM campaign WHERE name = :campaign_name))"
+                                f"{table_name}.site_id IN (SELECT id FROM "
+                                f"sites WHERE campaign_id IN (SELECT id FROM "
+                                f"campaign WHERE name = :campaign_name))"
                             )
                         params['campaign_name'] = value
                     elif key == 'date_greater_equal':
@@ -431,10 +454,14 @@ class BaseDataset:
                         where_clauses.append(f"{table_name}.date <= :date_lte")
                         params['date_lte'] = value
                     elif key == 'value_greater_equal':
-                        where_clauses.append(f"{table_name}.value >= :value_gte")
+                        where_clauses.append(
+                            f"{table_name}.value >= :value_gte"
+                        )
                         params['value_gte'] = value
                     elif key == 'value_less_equal':
-                        where_clauses.append(f"{table_name}.value <= :value_lte")
+                        where_clauses.append(
+                            f"{table_name}.value <= :value_lte"
+                        )
                         params['value_lte'] = value
                     elif key in cls.ALLOWED_QRY_KWARGS:
                         where_clauses.append(f"{table_name}.{key} = :{key}")
@@ -446,7 +473,9 @@ class BaseDataset:
                 # Construct query based on table structure
                 if needs_site_join:
                     query = text(f"""
-                        SELECT {table_name}.*, ST_AsText(s.geom) as geom_wkt, s.geom as geom
+                        SELECT {table_name}.*, 
+                               ST_AsText(s.geom) as geom_wkt, 
+                               s.geom as geom
                         FROM {table_name}
                         JOIN sites s ON {table_name}.site_id = s.id
                         WHERE {where_sql}
@@ -538,11 +567,12 @@ class BaseDataset:
         Return all distinct instruments in the data
         """
         with db_session_with_credentials() as (_engine, session):
-            # Use EXISTS for better performance on large datasets (29GB+ tables)
-            # EXISTS can use index efficiently and stops at first match per instrument
-            # This avoids the expensive DISTINCT + sequential scan on large tables
+            # Use EXISTS for better performance on large datasets
+            # (29GB+ tables)
             qry = session.query(Instrument.name).filter(
-                exists().where(self.MODEL.instrument_id == Instrument.id)
+                exists().where(
+                    self.MODEL.instrument_id == Instrument.id
+                )
             )
             result = qry.all()
         return self.retrieve_single_value_result(result)
