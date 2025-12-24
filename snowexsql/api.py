@@ -375,41 +375,83 @@ class BaseDataset:
         else:
             pt_wkt = None
         
-        # Build PostGIS search geometry
-        # Keep everything in the provided CRS to avoid geography issues
-        if pt_wkt:
-            # Create point and buffer in the provided CRS
-            # Uses planar buffer (units depend on CRS - meters for UTM)
-            search_geom_sql = (
-                f"ST_Buffer(ST_GeomFromText('{pt_wkt}', {crs}), {buffer})"
-            )
-        elif shp_wkt:
-            # Use provided shape in the provided CRS
-            search_geom_sql = f"ST_GeomFromText('{shp_wkt}', {crs})"
-        else:
-            raise ValueError("Unable to parse geometry input")
-        
         # Determine table structure
         table_name = cls.MODEL.__tablename__
         needs_site_join = (table_name == 'layers')
         
         with db_session_with_credentials() as (engine, session):
             try:
+                # Detect database SRID to avoid transforming indexed column
+                # Query first non-null geometry to determine database SRID
+                if needs_site_join:
+                    db_srid_query = text(f"""
+                        SELECT ST_SRID(s.geom) 
+                        FROM {table_name}
+                        JOIN sites s ON {table_name}.site_id = s.id
+                        WHERE s.geom IS NOT NULL
+                        LIMIT 1
+                    """)
+                else:
+                    db_srid_query = text(f"""
+                        SELECT ST_SRID(geom) 
+                        FROM {table_name}
+                        WHERE geom IS NOT NULL
+                        LIMIT 1
+                    """)
+                
+                try:
+                    db_srid_result = session.execute(db_srid_query).first()
+                    if not db_srid_result or db_srid_result[0] is None:
+                        # No data in table yet - use input CRS as default
+                        # This allows empty table queries to work (will return empty)
+                        LOG.warning(
+                            f"No geometries found in {table_name}, "
+                            f"using input CRS {crs} as default"
+                        )
+                        db_srid = crs
+                    else:
+                        db_srid = db_srid_result[0]
+                        LOG.debug(f"Detected database SRID: {db_srid} for table {table_name}")
+                except Exception as srid_error:
+                    # If SRID detection fails, fall back to input CRS
+                    LOG.warning(
+                        f"SRID detection failed for {table_name}: {srid_error}. "
+                        f"Using input CRS {crs} as default"
+                    )
+                    db_srid = crs
+                
+                # Build PostGIS search geometry
+                # Transform search geometry to match database SRID for index usage
+                if pt_wkt:
+                    # Create point in input CRS, buffer it, then transform to DB SRID
+                    # Buffer before transform to ensure correct distance units
+                    search_geom_sql = (
+                        f"ST_Transform("
+                        f"ST_Buffer(ST_GeomFromText('{pt_wkt}', {crs}), "
+                        f"{buffer}), {db_srid})"
+                    )
+                elif shp_wkt:
+                    # Transform shape from input CRS to database SRID
+                    search_geom_sql = (
+                        f"ST_Transform(ST_GeomFromText('{shp_wkt}', {crs}), "
+                        f"{db_srid})"
+                    )
+                else:
+                    raise ValueError("Unable to parse geometry input")
+                
                 # Build WHERE clauses for filters
                 where_clauses = []
                 params = {}
                 
-                # Add spatial filter - transform geometries to same CRS
-                # Transform DB geometry to match the search CRS
+                # Add spatial filter - DB geometry stays in native SRID
+                # This allows PostGIS to use the spatial index efficiently
                 if needs_site_join:
                     where_clauses.append(
-                        f"ST_Intersects(ST_Transform(s.geom, {crs}), "
-                        f"({search_geom_sql}))"
+                        f"ST_Intersects(s.geom, ({search_geom_sql}))"
                     )
                 else:
                     where_clauses.append(
-                        f"ST_Intersects(ST_Transform({table_name}.geom, "
-                        f"{crs}), ({search_geom_sql}))"
+                        f"ST_Intersects({table_name}.geom, ({search_geom_sql}))"
                     )
                 
                 # Add standard filters
