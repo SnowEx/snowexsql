@@ -19,6 +19,7 @@ os.environ['DB_SECRET_NAME'] = 'dummy_secret'
 os.environ['DB_AWS_REGION'] = 'us-west-2'
 
 from snowexsql.lambda_handler import handle_event_with_secret
+from snowexsql.tables import PointData, LayerData
 
 
 # ========================================================================
@@ -82,6 +83,21 @@ def local_credentials():
             f"Database credentials not found: {str(e)}\n"
             "Set SNOWEX_DB_CONNECTION or SNOWEX_DB_CREDENTIALS environment variable"
         )
+
+
+@pytest.fixture
+def test_point_data(point_data_factory, db_session):
+    """Create test point data for spatial queries"""
+    # Create a point in the Grand Mesa area (UTM Zone 12N)
+    point_data_factory.create()
+    return db_session.query(PointData).all()
+
+
+@pytest.fixture
+def test_layer_data(layer_data_factory, db_session):
+    """Create test layer data for spatial queries"""
+    layer_data_factory.create()
+    return db_session.query(LayerData).all()
 
 
 # ========================================================================
@@ -370,10 +386,12 @@ class TestHandlerErrorHandling:
 # ========================================================================
 
 @pytest.mark.handler
+@pytest.mark.usefixtures("db_test_session")
+@pytest.mark.usefixtures("db_test_connection")
 class TestSpatialQueryHandler:
     """Test spatial query functionality using PostGIS"""
     
-    def test_point_from_area_with_buffer(self, local_credentials):
+    def test_point_from_area_with_buffer(self, test_point_data, local_credentials):
         """Test from_area with point and buffer"""
         event = {
             'action': 'PointMeasurements.from_area',
@@ -390,7 +408,7 @@ class TestSpatialQueryHandler:
         assert 'data' in result, "Response missing 'data' field"
         assert isinstance(result['data'], list)
         
-    def test_layer_from_area_with_shape(self, local_credentials):
+    def test_layer_from_area_with_shape(self, test_layer_data, local_credentials):
         """Test from_area with polygon shape"""
         # Small bounding box
         event = {
