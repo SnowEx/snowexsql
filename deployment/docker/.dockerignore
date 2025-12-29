@@ -1,0 +1,49 @@
+# Ignore unnecessary files for Docker build
+.git
+.gitignore
+README.rst
+docs/
+notebooks/
+tests/
+.pytest_cache/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+.coverage
+.tox
+venv/
+env/
+ENV/
+.venv/
+.env
+.DS_Store
+Thumbs.db
+*.log
+.mypy_cache/
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Build artifacts
+build/
+dist/
+*.egg-info/
+
+# Docker files (don't include docker-compose in container)
+docker-compose.yml
+Dockerfile
+.dockerignore
+
+# Development and documentation
+CHANGELOG.rst
+CODE_OF_CONDUCT.md
+CONTRIBUTING.rst
+LICENSE
+Makefile
+MANIFEST.in
+deploy.sh

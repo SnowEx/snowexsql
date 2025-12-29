@@ -27,6 +27,7 @@ dependencies = [
     "psycopg2-binary <3.0",
     "rasterio <2.0",
     "SQLAlchemy <3.0",
+    "boto3 <2.0",
 ]
 
 
@@ -69,3 +70,10 @@ local_scheme = "no-local-version"
 
 [tool.hatch.build.targets.sdist]
 exclude = ["/tests"]
+
+[tool.pytest.ini_options]
+markers = [
+    "integration: marks tests as integration tests that require AWS credentials (deselect with '-m \"not integration\"')",
+    "handler: marks tests as Lambda handler tests that require local database credentials (deselect with '-m \"not handler\"')",
+    "lambda: marks tests as Lambda-specific tests",
+]
