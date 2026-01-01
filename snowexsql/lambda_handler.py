@@ -216,7 +216,9 @@ def _handle_class_action(
         # Handle different method types
         if method_name == 'from_filter':
             filters = event.get('filters', {})
-            records = _get_measurements_by_class(api_class, filters)
+            # Extract verbose parameter before passing to from_filter
+            verbose = filters.pop('verbose', False)
+            records = _get_measurements_by_class(api_class, filters, verbose=verbose)
             action = f'{class_name}.{method_name}'
             return _create_response(action, records, filters=filters)
             
@@ -227,6 +229,8 @@ def _handle_class_action(
             buffer_dist = event.get('buffer')
             crs = event.get('crs', 26912)
             filters = event.get('filters', {})
+            # Extract verbose parameter before passing to from_area
+            verbose = filters.pop('verbose', False)
             
             # Set credentials for api.py to use
             os.environ['SNOWEX_DB_CREDENTIALS_FILE'] = tmp_cred_path
@@ -237,6 +241,7 @@ def _handle_class_action(
                     pt=pt_wkt,
                     buffer=buffer_dist,
                     crs=crs,
+                    verbose=verbose,
                     **filters
                 )
                 records = df.to_dict('records')
@@ -280,12 +285,12 @@ def _handle_class_action(
             e
         )
 
-def _get_measurements_by_class(api_class, filters: dict):
+def _get_measurements_by_class(api_class, filters: dict, verbose: bool = False):
     """
     Get measurements by calling api.py methods directly.
     Single source of truth for query logic.
     """
-    df = api_class.from_filter(**filters)
+    df = api_class.from_filter(verbose=verbose, **filters)
     records = df.to_dict('records') if hasattr(df, 'to_dict') else []
     return serialize_for_json(records)
 
