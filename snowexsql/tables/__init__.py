@@ -1,4 +1,5 @@
 from .campaign import Campaign
+from .campaign_observation import CampaignObservation
 from .doi import DOI
 from .image_data import ImageData
 from .image_observation import ImageObservation
@@ -12,6 +13,7 @@ from .site import Site
 
 __all__ = [
     "Campaign",
+    "CampaignObservation",
     "DOI",
     "ImageData",
     "ImageObservation",
