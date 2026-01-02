@@ -215,10 +215,14 @@ class BaseDataset:
                             "We cannot compare greater_equal or "
                             "less_equal with a list"
                         )
-                    qry = qry.filter(filter_col.in_(v))
-                    LOG.debug(
-                        f"Filtering {k} to value {v}"
-                    )
+                    elif k == "site":
+                        # Skip list handling here, will be handled below
+                        pass
+                    else:
+                        qry = qry.filter(filter_col.in_(v))
+                        LOG.debug(
+                            f"Filtering {k} to value {v}"
+                        )
                 else:
                     # Filter boundary
                     if "_greater_equal" in k:
@@ -247,9 +251,19 @@ class BaseDataset:
                     elif k == "campaign":
                         qry = cls._filter_campaign(qry, v)
                     elif k == "site":
-                        qry = qry.filter(
-                            qry_model.site.has(name=v)
-                        )
+                        # Handle list of site names
+                        if isinstance(v, list):
+                            qry = qry.filter(
+                                exists().where(
+                                    qry_model.site_id == Site.id
+                                ).where(
+                                    Site.name.in_(v)
+                                )
+                            )
+                        else:
+                            qry = qry.filter(
+                                qry_model.site.has(name=v)
+                            )
                     elif k == "observer":
                         qry = cls._filter_observers(qry, v)
                     elif k == "doi":
