@@ -262,6 +262,21 @@ def _handle_class_action(
                 serialize_for_json(result),
                 columns=columns
             )
+        
+        elif method_name == 'get_sites':
+            # Handle get_sites method for LayerMeasurements
+            site_names = event.get('site_names')
+            
+            # Set credentials for api.py to use
+            os.environ['SNOWEX_DB_CREDENTIALS_FILE'] = tmp_cred_path
+            
+            try:
+                df = api_class.get_sites(site_names=site_names)
+                records = df.to_dict('records')
+                action = f'{api_class.__name__}.get_sites'
+                return _create_response(action, serialize_for_json(records), count=len(records))
+            except Exception as e:
+                raise Exception(f"get_sites query failed: {str(e)}")
             
         elif method_name.startswith('all_'):
             # Handle property-like methods

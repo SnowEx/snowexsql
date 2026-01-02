@@ -898,6 +898,35 @@ class LayerMeasurements(BaseDataset):
             ).distinct().all()
         return self.retrieve_single_value_result(result)
     
+    @classmethod
+    def get_sites(cls, site_names=None, **kwargs):
+        """
+        Get site information including geometries.
+        
+        Args:
+            site_names: List of site names or single site name
+            **kwargs: Additional filters (campaign, date, etc.)
+            
+        Returns:
+            GeoDataFrame with site information
+        """
+        with db_session_with_credentials() as (engine, session):
+            qry = session.query(Site.name, 
+                                Site.geom,
+                                Site.description,
+                                Site.datetime).distinct() 
+                                # others can be added
+            
+            if site_names:
+                if isinstance(site_names, list):
+                    qry = qry.filter(Site.name.in_(site_names))
+                else:
+                    qry = qry.filter(Site.name == site_names)
+            
+            df = query_to_geopandas(qry, engine)
+        
+        return df
+
 class RasterMeasurements(BaseDataset):
     MODEL = ImageData
     ALLOWED_QRY_KWARGS = (
