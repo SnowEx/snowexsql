@@ -248,3 +248,57 @@ class TestTemperatureMeasurementFilter:
         """
         result = self.subject.from_filter(**kwargs)
         assert len(result) == 1
+
+
+@pytest.mark.usefixtures("db_test_session")
+@pytest.mark.usefixtures("db_test_connection")
+@pytest.mark.usefixtures("layer_data")
+class TestGetSites:
+    """Tests for LayerMeasurements.get_sites() method"""
+    
+    @pytest.fixture(autouse=True)
+    def setup_method(self, layer_data):
+        self.db_data = layer_data
+    
+    def test_get_all_sites(self):
+        """Test getting all sites without filtering"""
+        result = LayerMeasurements.get_sites()
+        
+        assert isinstance(result, (gpd.GeoDataFrame, gpd.pd.DataFrame))
+        assert len(result) > 0
+        assert 'name' in result.columns
+        assert 'geom' in result.columns
+    
+    def test_get_sites_with_single_name(self):
+        """Test getting a single site by name"""
+        site_name = self.db_data[0].site.name
+        result = LayerMeasurements.get_sites(site_names=site_name)
+        
+        assert len(result) == 1
+        assert result.loc[0, 'name'] == site_name
+    
+    def test_get_sites_with_list_of_names(self):
+        """Test getting multiple sites by list of names"""
+        site_names = [record.site.name for record in self.db_data[:2]]
+        result = LayerMeasurements.get_sites(site_names=site_names)
+        
+        assert len(result) <= len(site_names)
+        assert all(name in result['name'].values for name in site_names)
+    
+    def test_get_sites_returns_geometry(self):
+        """Test that geometry column is properly returned"""
+        site_name = self.db_data[0].site.name
+        result = LayerMeasurements.get_sites(site_names=site_name)
+        
+        assert result.loc[0, 'geom'] is not None
+        
+        if isinstance(result, gpd.GeoDataFrame):
+            assert result.geometry is not None
+    
+    def test_get_sites_nonexistent_name(self):
+        """Test querying for a site that doesn't exist"""
+        result = LayerMeasurements.get_sites(
+            site_names='NonexistentSite123'
+        )
+        
+        assert len(result) == 0
