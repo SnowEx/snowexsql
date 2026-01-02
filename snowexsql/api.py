@@ -917,7 +917,7 @@ class LayerMeasurements(BaseDataset):
                                 Site.datetime).distinct() 
                                 # others can be added
             
-            if site_names:
+            if site_names is not None:
                 if isinstance(site_names, list):
                     qry = qry.filter(Site.name.in_(site_names))
                 else:
