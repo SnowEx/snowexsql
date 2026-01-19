@@ -3,23 +3,31 @@ SnowEx Lambda API Client
 
 Lightweight client for accessing SnowEx database via AWS Lambda
 function. Provides serverless access to snow data without requiring
-heavy geospatial dependencies.
+AWS credentials or heavy geospatial dependencies.
+
+Uses Lambda Function URL for public HTTP access.
 """
 
-import boto3
 import json
+import os
 import pandas as pd
-from typing import Dict, Any
+import requests
+from typing import Dict, Any, Optional
 from datetime import datetime, date
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 
 
 class SnowExLambdaClient:
     """
-    Client for accessing SnowEx data via AWS Lambda
+    Client for accessing SnowEx data via AWS Lambda Function URL
     
     This client provides serverless access to the SnowEx database through
-    a deployed Lambda function, eliminating the need for direct database
-    connections or heavy geospatial dependencies.
+    a public Lambda Function URL, eliminating the need for AWS credentials,
+    database connections, or heavy geospatial dependencies.
+    
+    The Lambda function handles all database credentials securely via 
+    AWS Secrets Manager.
     
     The client mirrors the api.py class structure, providing access to:
     - PointMeasurements: Point data measurements  
@@ -39,20 +47,58 @@ class SnowExLambdaClient:
         >>> instruments = client.point_measurements.all_instruments
     """
     
-    def __init__(
-        self,
-        region: str = 'us-west-2',
-        function_name: str = 'lambda-snowex-sql'
-    ):
+    # Default production Lambda Function URL
+    DEFAULT_FUNCTION_URL = 'https://izwsawyfkxss5vawq5v64mruqy0ahxek.lambda-url.us-west-2.on.aws'
+    
+    def __init__(self, function_url: Optional[str] = None):
         """
-        Initialize the Lambda client
+        Initialize the Lambda client with Function URL
         
         Args:
-            region: AWS region where the Lambda function is deployed
-            function_name: Name of the deployed Lambda function
+            function_url: Lambda Function URL (https://....lambda-url.us-west-2.on.aws/)
+                         If None, uses SNOWEX_LAMBDA_URL environment variable
+                         or default production URL.
+        
+        No AWS credentials required - uses public HTTP endpoint.
         """
-        self.lambda_client = boto3.client('lambda', region_name=region)
-        self.function_name = function_name
+        # Get Function URL from parameter, environment, or default
+        self.function_url = (
+            function_url or 
+            os.environ.get('SNOWEX_LAMBDA_URL') or
+            self.DEFAULT_FUNCTION_URL
+        )
+        
+        # Validate URL
+        if not self.function_url or self.function_url == 'PASTE_YOUR_FUNCTION_URL_HERE':
+            raise ValueError(
+                "\n\n" +
+                "=" * 70 + "\n" +
+                "Lambda Function URL Not Configured\n" +
+                "=" * 70 + "\n\n" +
+                "Please provide the Lambda Function URL in one of these ways:\n\n" +
+                "1. Pass directly to constructor:\n" +
+                "   client = SnowExLambdaClient(function_url='https://...')\n\n" +
+                "2. Set environment variable:\n" +
+                "   export SNOWEX_LAMBDA_URL='https://...'\n\n" +
+                "3. Update DEFAULT_FUNCTION_URL in lambda_client.py\n\n" +
+                "Contact the SnowEx team if you need the Function URL.\n" +
+                "=" * 70
+            )
+        
+        # Remove trailing slash if present
+        self.function_url = self.function_url.rstrip('/')
+        
+        # Setup HTTP session with retries for reliability
+        self.session = requests.Session()
+        retry_strategy = Retry(
+            total=3,
+            backoff_factor=1,
+            status_forcelist=[429, 500, 502, 503, 504],
+            allowed_methods=["POST"]
+        )
+        adapter = HTTPAdapter(max_retries=retry_strategy)
+        self.session.mount("https://", adapter)
+        self.session.mount("http://", adapter)
         
         # Dynamically create class-based accessors from available
         # measurement classes
@@ -68,24 +114,8 @@ class SnowExLambdaClient:
         Returns:
             pd.DataFrame: Query results as a DataFrame
         """
-        payload = {
-            'action': 'query',
-            'sql': sql_query
-        }
-        
-        response = self.lambda_client.invoke(
-            FunctionName=self.function_name,
-            InvocationType='RequestResponse',
-            Payload=json.dumps(payload)
-        )
-        
-        result = json.loads(response['Payload'].read())
-        
-        if result.get('statusCode') != 200:
-            raise Exception(f"Lambda query failed: {result.get('body')}")
-        
-        body = json.loads(result['body'])
-        return pd.DataFrame(body.get('data', []))
+        result = self._invoke_lambda('query', sql=sql_query)
+        return pd.DataFrame(result.get('data', []))
     
     def _create_measurement_clients(self):
         """
@@ -214,7 +244,7 @@ class SnowExLambdaClient:
     
     def _invoke_lambda(self, action: str, **kwargs) -> dict:
         """
-        Internal method to invoke Lambda function
+        Internal method to invoke Lambda function via HTTP POST
         
         Args:
             action: The action to perform
@@ -234,30 +264,59 @@ class SnowExLambdaClient:
         payload = self._serialize_payload(payload)
         
         try:
-            response = self.lambda_client.invoke(
-                FunctionName=self.function_name,
-                InvocationType='RequestResponse',
-                Payload=json.dumps(payload)
+            response = self.session.post(
+                self.function_url,
+                json=payload,
+                headers={'Content-Type': 'application/json'},
+                timeout=30  # 30 second timeout
             )
             
-            result = json.loads(response['Payload'].read().decode('utf-8'))
+            # Check HTTP status
+            if response.status_code != 200:
+                error_text = response.text[:500] if response.text else 'No response body'
+                raise Exception(
+                    f"Lambda returned HTTP {response.status_code}: {error_text}"
+                )
             
-            # Check if result has the expected structure
-            if 'body' not in result:
-                raise Exception(f"Unexpected Lambda response format: {result}")
+            # Parse JSON response
+            result = response.json()
             
-            body = json.loads(result['body'])
+            # Check for Lambda errors
+            if 'errorMessage' in result:
+                raise Exception(f"Lambda error: {result['errorMessage']}")
             
-            # Check for errors in the response
-            if 'error' in body:
-                raise Exception(f"Lambda returned error: {body['error']}")
+            # Check for application-level errors
+            if 'error' in result:
+                raise Exception(f"Query error: {result['error']}")
             
-            return body
+            if not result.get('success', True):
+                error_msg = result.get('error', 'Unknown error')
+                raise Exception(f"Request failed: {error_msg}")
             
+            return result
+            
+        except requests.exceptions.Timeout:
+            raise Exception(
+                "Request timed out after 30 seconds. The query may be too complex "
+                "or the database is slow. Try adding a 'limit' parameter to reduce result size."
+            )
+        except requests.exceptions.ConnectionError as e:
+            raise Exception(
+                f"Could not connect to Lambda function at:\n{self.function_url}\n\n"
+                f"Please verify:\n"
+                f"1. The Function URL is correct\n"
+                f"2. You have internet connectivity\n"
+                f"3. The Lambda function is deployed and active\n\n"
+                f"Connection error: {str(e)}"
+            )
+        except requests.exceptions.RequestException as e:
+            raise Exception(f"HTTP request failed: {str(e)}")
         except json.JSONDecodeError as e:
-            raise Exception(f"Failed to parse Lambda response: {str(e)}")
-        except Exception as e:
-            raise Exception(f"Lambda invocation failed: {str(e)}")
+            response_preview = response.text[:200] if hasattr(response, 'text') else 'N/A'
+            raise Exception(
+                f"Failed to parse Lambda response as JSON: {str(e)}\n"
+                f"Response preview: {response_preview}"
+            )
     
     def test_connection(self) -> Dict[str, Any]:
         """
@@ -625,18 +684,14 @@ class _LambdaDatasetClient:
 
 
 # Convenience function for quick client creation
-def create_client(
-    region: str = 'us-west-2',
-    function_name: str = 'lambda-snowex-sql'
-) -> SnowExLambdaClient:
+def create_client(function_url: Optional[str] = None) -> SnowExLambdaClient:
     """
     Create a SnowExLambdaClient instance
     
     Args:
-        region: AWS region where the Lambda function is deployed
-        function_name: Name of the deployed Lambda function
+        function_url: Lambda Function URL (optional)
         
     Returns:
         SnowExLambdaClient instance
     """
-    return SnowExLambdaClient(region=region, function_name=function_name)
+    return SnowExLambdaClient(function_url=function_url)
