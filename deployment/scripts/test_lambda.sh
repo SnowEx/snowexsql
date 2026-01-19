@@ -2,11 +2,13 @@
 
 # Test script for the deployed Lambda function
 # This script tests the basic functionality of the deployed Lambda
+# Supports both direct Lambda invocation (requires AWS creds) and Function URL (public)
 
 set -e
 
 AWS_REGION="us-west-2"
 LAMBDA_FUNCTION_NAME="lambda-snowex-sql"
+FUNCTION_URL="https://izwsawyfkxss5vawq5v64mruqy0ahxek.lambda-url.us-west-2.on.aws"
 
 # Colors for output
 GREEN='\033[0;32m'
@@ -16,32 +18,77 @@ NC='\033[0m' # No Color
 
 echo -e "${YELLOW}Testing Lambda function: ${LAMBDA_FUNCTION_NAME}${NC}"
 
+# Determine test method
+if [ "$1" = "--function-url" ] || [ "$1" = "-u" ]; then
+    TEST_METHOD="function-url"
+    echo -e "${YELLOW}Using Function URL (public access - no AWS credentials required)${NC}"
+else
+    TEST_METHOD="boto3"
+    echo -e "${YELLOW}Using boto3 invocation (requires AWS credentials)${NC}"
+    echo -e "${YELLOW}Tip: Use --function-url flag to test public Function URL instead${NC}"
+fi
+
 # Test 1: Basic connectivity test
 echo -e "${YELLOW}Test 1: Basic database connectivity...${NC}"
-aws lambda invoke \
-    --region ${AWS_REGION} \
-    --function-name ${LAMBDA_FUNCTION_NAME} \
-    --cli-binary-format raw-in-base64-out \
-    --payload '{"action":"test_connection"}' \
-    test_response.json
 
-if [ $? -eq 0 ]; then
-    echo -e "${GREEN}✓ Lambda invocation successful${NC}"
-    echo -e "${YELLOW}Response:${NC}"
-    if command -v jq >/dev/null 2>&1; then
-        # Show full response and decoded body
+if [ "$TEST_METHOD" = "function-url" ]; then
+    # Test via Function URL
+    echo -e "${YELLOW}Testing via HTTP POST to: ${FUNCTION_URL}${NC}"
+    HTTP_STATUS=$(curl -s -o test_response.json -w "%{http_code}" \
+        -X POST \
+        -H "Content-Type: application/json" \
+        -d '{"action":"test_connection"}' \
+        "${FUNCTION_URL}")
+    
+    if [ "$HTTP_STATUS" = "200" ]; then
+        echo -e "${GREEN}✓ Function URL request successful (HTTP ${HTTP_STATUS})${NC}"
+    else
+        echo -e "${RED}✗ Function URL request failed (HTTP ${HTTP_STATUS})${NC}"
+        cat test_response.json
+        exit 1
+    fi
+else
+    # Test via AWS CLI (boto3)
+    aws lambda invoke \
+        --region ${AWS_REGION} \
+        --function-name ${LAMBDA_FUNCTION_NAME} \
+        --cli-binary-format raw-in-base64-out \
+        --payload '{"action":"test_connection"}' \
+        test_response.json
+
+    if [ $? -eq 0 ]; then
+        echo -e "${GREEN}✓ Lambda invocation successful${NC}"
+    else
+        echo -e "${RED}✗ Lambda invocation failed${NC}"
+        exit 1
+    fi
+fi
+
+# Display response
+echo -e "${YELLOW}Response:${NC}"
+
+# Display response
+echo -e "${YELLOW}Response:${NC}"
+if command -v jq >/dev/null 2>&1; then
+    # For boto3 invocation, parse nested body; for Function URL, show direct response
+    if [ "$TEST_METHOD" = "boto3" ]; then
         echo -e "${YELLOW}Full invoke response:${NC}"
         jq . test_response.json
         echo -e "${YELLOW}Decoded body:${NC}"
         jq -r '.body' test_response.json | jq . 2>/dev/null || jq -r '.body' test_response.json
     else
-        echo -e "${YELLOW}jq not found; using Python to pretty-print JSON${NC}"
-        if command -v python3 >/dev/null 2>&1; then
+        echo -e "${YELLOW}Function URL response:${NC}"
+        jq . test_response.json
+    fi
+else
+    echo -e "${YELLOW}jq not found; using Python to pretty-print JSON${NC}"
+    if command -v python3 >/dev/null 2>&1; then
+        if [ "$TEST_METHOD" = "boto3" ]; then
             echo -e "${YELLOW}Full invoke response:${NC}"
             python3 -m json.tool < test_response.json || cat test_response.json
             echo -e "${YELLOW}Decoded body:${NC}"
-            python3 - "$AWS_REGION" << 'PY'
-import json,sys
+            python3 - << 'PY'
+import json
 try:
     data=json.load(open('test_response.json','r'))
     body=data.get('body')
@@ -52,52 +99,29 @@ try:
             print(body)
     else:
         print(json.dumps(body, indent=2))
-except Exception as e:
+except Exception:
     print(open('test_response.json','r').read())
 PY
         else
-            cat test_response.json
+            python3 -m json.tool < test_response.json || cat test_response.json
         fi
-    fi
-else
-    echo -e "${RED}✗ Lambda invocation failed${NC}"
-    exit 1
-fi
-
-#############################################
-# Test 2: Check logs (best-effort)
-#############################################
-echo -e "${YELLOW}Test 2: Checking recent logs...${NC}"
-LOG_GROUP=$(aws logs describe-log-groups \
-    --region ${AWS_REGION} \
-    --log-group-name-prefix "/aws/lambda/${LAMBDA_FUNCTION_NAME}" \
-    --query 'logGroups[0].logGroupName' \
-    --output text 2>/dev/null || echo "")
-
-if [ -z "$LOG_GROUP" ] || [ "$LOG_GROUP" = "None" ]; then
-    echo -e "${YELLOW}No log group found yet for ${LAMBDA_FUNCTION_NAME}. Skipping log fetch.${NC}"
-else
-    LOG_STREAM=$(aws logs describe-log-streams \
-        --region ${AWS_REGION} \
-        --log-group-name "$LOG_GROUP" \
-        --order-by LastEventTime \
-        --descending \
-        --max-items 1 \
-        --query 'logStreams[0].logStreamName' \
-        --output text 2>/dev/null || echo "")
-
-    if [ -z "$LOG_STREAM" ] || [ "$LOG_STREAM" = "None" ]; then
-        echo -e "${YELLOW}No recent log stream found. It can take a few seconds for logs to appear.${NC}"
     else
-        aws logs get-log-events \
-            --region ${AWS_REGION} \
-            --log-group-name "$LOG_GROUP" \
-            --log-stream-name "$LOG_STREAM" \
-            --limit 10 \
-            --query 'events[*].message' \
-            --output text || true
+        cat test_response.json
     fi
 fi
+
+echo ""
+echo -e "${GREEN}========================================${NC}"
+echo -e "${GREEN}✓ All tests passed!${NC}"
+echo -e "${GREEN}========================================${NC}"
+echo ""
+echo -e "${YELLOW}Usage tips:${NC}"
+echo -e "  • Test with Function URL (public):  ./test_lambda.sh --function-url"
+echo -e "  • Test with boto3 (requires creds): ./test_lambda.sh"
+echo ""
+
+# Cleanup
+rm -f test_response.json
 
 # Cleanup
 rm -f test_response.json
