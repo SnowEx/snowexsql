@@ -285,13 +285,14 @@ class _LambdaDatasetClient:
     """
     
     # Known methods that return DataFrames
-    _DATAFRAME_METHODS = {'from_filter', 'from_area'}
+    _DATAFRAME_METHODS = {'from_filter', 'from_area', 'get_sites'}
     
     # Known methods that take special parameters
     _KNOWN_METHODS = {
         'from_filter': ['filters'],
         'from_unique_entries': ['columns', 'filters'], 
-        'from_area': ['shp', 'pt', 'buffer', 'crs']
+        'from_area': ['shp', 'pt', 'buffer', 'crs'],
+        'get_sites': ['site_names']
     }
     
     def __init__(

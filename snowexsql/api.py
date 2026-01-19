@@ -32,7 +32,7 @@ import os
 from contextlib import contextmanager
 
 from sqlalchemy.sql import func
-from sqlalchemy import cast, Numeric, exists
+from sqlalchemy import cast, Numeric, exists, literal, select
 
 # Initialize logger first
 LOG = logging.getLogger(__name__)
@@ -80,8 +80,8 @@ def raster_to_rasterio(rasters):
     )
 from snowexsql.db import get_db
 from snowexsql.tables import (
-    Campaign, DOI, ImageData, Instrument, LayerData,
-    MeasurementType, Observer, PointData, PointObservation, Site
+    Campaign, CampaignObservation, DOI, ImageData, ImageObservation, Instrument,
+    LayerData, MeasurementType, Observer, PointData, PointObservation, Site
 )
 from snowexsql.db import db_session_with_credentials
 
@@ -125,6 +125,23 @@ class BaseDataset:
         if len(result) != 0:
             final = [r[0] for r in result]
         return final
+    
+    @classmethod
+    def _build_select_clause(cls, verbose=False):
+        """
+        Build the SELECT clause for queries.
+        Override in subclasses to customize columns returned based on verbose
+        mode.
+        
+        Args:
+            verbose: If True, return denormalized data with related table 
+                     columns
+            
+        Returns:
+            List of SQLAlchemy column expressions for session.query()
+        """
+        # Default: just return the model (all its direct columns)
+        return [cls.MODEL]
     
     @classmethod
     def _check_size(cls, qry, kwargs):
@@ -198,10 +215,14 @@ class BaseDataset:
                             "We cannot compare greater_equal or "
                             "less_equal with a list"
                         )
-                    qry = qry.filter(filter_col.in_(v))
-                    LOG.debug(
-                        f"Filtering {k} to value {v}"
-                    )
+                    elif k == "site":
+                        # Skip list handling here, will be handled below
+                        pass
+                    else:
+                        qry = qry.filter(filter_col.in_(v))
+                        LOG.debug(
+                            f"Filtering {k} to value {v}"
+                        )
                 else:
                     # Filter boundary
                     if "_greater_equal" in k:
@@ -230,9 +251,19 @@ class BaseDataset:
                     elif k == "campaign":
                         qry = cls._filter_campaign(qry, v)
                     elif k == "site":
-                        qry = qry.filter(
-                            qry_model.site.has(name=v)
-                        )
+                        # Handle list of site names
+                        if isinstance(v, list):
+                            qry = qry.filter(
+                                exists().where(
+                                    qry_model.site_id == Site.id
+                                ).where(
+                                    Site.name.in_(v)
+                                )
+                            )
+                        else:
+                            qry = qry.filter(
+                                qry_model.site.has(name=v)
+                            )
                     elif k == "observer":
                         qry = cls._filter_observers(qry, v)
                     elif k == "doi":
@@ -291,14 +322,30 @@ class BaseDataset:
         return results
 
     @classmethod
-    def from_filter(cls, **kwargs):
+    def from_filter(cls, verbose=False, **kwargs):
         """
         Get data for the class by filtering by allowed arguments. The allowed
         filters are cls.ALLOWED_QRY_KWARGS.
+        
+        Args:
+            verbose: If True, return denormalized data with related table 
+            columns
+            **kwargs: Filter arguments from ALLOWED_QRY_KWARGS
         """
         with db_session_with_credentials() as (engine, session):
             try:
-                qry = session.query(cls.MODEL)
+                select_clause = cls._build_select_clause(verbose)
+                qry = session.query(*select_clause)
+                
+                # Add explicit joins for verbose mode to avoid cartesian 
+                # products
+                if verbose and hasattr(cls, '_add_verbose_joins'):
+                    qry = cls._add_verbose_joins(qry)
+                elif hasattr(cls, '_add_base_joins'):
+                    # For verbose=False, still need basic joins (e.g., 
+                    # Site for geom)
+                    qry = cls._add_base_joins(qry)
+                
                 qry = cls.extend_qry(qry, **kwargs)
 
                 # For debugging in the test suite and not
@@ -323,14 +370,16 @@ class BaseDataset:
 
     @classmethod
     def from_area(
-        cls, shp=None, pt=None, buffer=None, crs=26912, **kwargs
+        cls, verbose=False, shp=None, pt=None, buffer=None, crs=26912, **kwargs
     ):
         """
         Get data for the class within a specific shapefile or
-        within a point and a known buffer. Uses PostGIS SQL directly
+        within a point and a known buffer. Uses PostGIS functions via ORM
         for spatial operations, eliminating dependency on geoalchemy2/shapely.
         
         Args:
+            verbose: If True, return denormalized data with related table 
+                     columns
             shp: shapely geometry in which to filter, or WKT string
             pt: shapely point that will have a buffer applied, or WKT string
             buffer: buffer distance in same units as point
@@ -341,7 +390,6 @@ class BaseDataset:
         Returns: 
             pandas DataFrame with results (includes geom column with WKT)
         """
-        from sqlalchemy import text
         
         if shp is None and pt is None:
             raise ValueError(
@@ -384,26 +432,19 @@ class BaseDataset:
                 # Detect database SRID to avoid transforming indexed column
                 # Query first non-null geometry to determine database SRID
                 if needs_site_join:
-                    db_srid_query = text(f"""
-                        SELECT ST_SRID(s.geom) 
-                        FROM {table_name}
-                        JOIN sites s ON {table_name}.site_id = s.id
-                        WHERE s.geom IS NOT NULL
-                        LIMIT 1
-                    """)
+                    srid_qry = session.query(func.ST_SRID(Site.geom)).filter(
+                        Site.geom.isnot(None)
+                    ).limit(1)
                 else:
-                    db_srid_query = text(f"""
-                        SELECT ST_SRID(geom) 
-                        FROM {table_name}
-                        WHERE geom IS NOT NULL
-                        LIMIT 1
-                    """)
-                
+                    srid_qry = session.query(func.ST_SRID(cls.MODEL.geom)).filter(
+                        cls.MODEL.geom.isnot(None)
+                    ).limit(1)        
                 try:
-                    db_srid_result = session.execute(db_srid_query).first()
+                    db_srid_result = session.execute(srid_qry).first()
                     if not db_srid_result or db_srid_result[0] is None:
                         # No data in table yet - use input CRS as default
-                        # This allows empty table queries to work (will return empty)
+                        # This allows empty table queries to work 
+                        # (will return empty)
                         LOG.warning(
                             f"No geometries found in {table_name}, "
                             f"using input CRS {crs} as default"
@@ -411,132 +452,77 @@ class BaseDataset:
                         db_srid = crs
                     else:
                         db_srid = db_srid_result[0]
-                        LOG.debug(f"Detected database SRID: {db_srid} for table {table_name}")
+                        LOG.debug(f"Detected database SRID: \
+                                 {db_srid} for table {table_name}")
                 except Exception as srid_error:
                     # If SRID detection fails, fall back to input CRS
                     LOG.warning(
-                        f"SRID detection failed for {table_name}: {srid_error}. "
+                        f"SRID detection failed for {table_name}: {srid_error}."
                         f"Using input CRS {crs} as default"
                     )
                     db_srid = crs
                 
                 # Build PostGIS search geometry
-                # Transform search geometry to match database SRID for index usage
+                # Transform search geometry to match database SRID for index 
+                # usage
                 if pt_wkt:
-                    # Create point in input CRS, buffer it, then transform to DB SRID
+                    # Create point in input CRS, buffer it, then transform to 
+                    # DB SRID
                     # Buffer before transform to ensure correct distance units
-                    search_geom_sql = (
-                        f"ST_Transform("
-                        f"ST_Buffer(ST_GeomFromText('{pt_wkt}', {crs}), "
-                        f"{buffer}), {db_srid})"
+                    search_geom = func.ST_Transform(
+                        func.ST_Buffer(
+                            func.ST_GeomFromText(literal(pt_wkt), literal(crs)),
+                            literal(buffer)
+                        ),
+                        literal(db_srid)
                     )
                 elif shp_wkt:
                     # Transform shape from input CRS to database SRID
-                    search_geom_sql = (
-                        f"ST_Transform(ST_GeomFromText('{shp_wkt}', {crs}), "
-                        f"{db_srid})"
+                    search_geom = func.ST_Transform(
+                        func.ST_GeomFromText(literal(shp_wkt), literal(crs)),
+                        literal(db_srid)
                     )
                 else:
                     raise ValueError("Unable to parse geometry input")
                 
-                # Build WHERE clauses for filters
-                where_clauses = []
-                params = {}
+            # Build select clause (handles verbose mode)
+                select_clause = cls._build_select_clause(verbose) \
+                                if hasattr(cls, '_build_select_clause') \
+                                else [cls.MODEL]
+                qry = session.query(*select_clause)
                 
-                # Add spatial filter - DB geometry stays in native SRID
-                # This allows PostGIS to use the spatial index efficiently
+                # Add explicit joins for verbose mode to avoid 
+                # cartesian products
+                if verbose and hasattr(cls, '_add_verbose_joins'):
+                    qry = cls._add_verbose_joins(qry)
+                elif hasattr(cls, '_add_base_joins'):
+                    # For verbose=False, still need basic joins
+                    # (e.g., Site for geom)
+                    qry = cls._add_base_joins(qry)
+                
+                # Add spatial filter
                 if needs_site_join:
-                    where_clauses.append(
-                        f"ST_Intersects(s.geom, ({search_geom_sql}))"
-                    )
+                    # For LayerData, join to Site for geometry
+                    # SQLAlchemy handles duplicate joins from _add_*_joins above
+                    qry = qry.join(cls.MODEL.site)
+                    qry = qry.filter(func.ST_Intersects(Site.geom, search_geom))
                 else:
-                    where_clauses.append(
-                        f"ST_Intersects({table_name}.geom, ({search_geom_sql}))"
-                    )
+                    # For PointData, use direct geometry column
+                    qry = qry.filter(func.ST_Intersects(cls.MODEL.geom, 
+                                                        search_geom))
                 
-                # Add standard filters
-                for key, value in kwargs.items():
-                    if key == 'limit':
-                        continue
-                    elif key == 'type':
-                        where_clauses.append(
-                            f"{table_name}.measurement_type_id IN "
-                            f"(SELECT id FROM measurement_type WHERE "
-                            f"name = :type_name)"
-                        )
-                        params['type_name'] = value
-                    elif key == 'instrument':
-                        where_clauses.append(
-                            f"{table_name}.instrument_id IN "
-                            f"(SELECT id FROM instrument WHERE "
-                            f"name = :instrument_name)"
-                        )
-                        params['instrument_name'] = value
-                    elif key == 'campaign':
-                        if needs_site_join:
-                            where_clauses.append(
-                                f"s.campaign_id IN (SELECT id FROM campaign "
-                                f"WHERE name = :campaign_name)"
-                            )
-                        else:
-                            where_clauses.append(
-                                f"{table_name}.site_id IN (SELECT id FROM "
-                                f"sites WHERE campaign_id IN (SELECT id FROM "
-                                f"campaign WHERE name = :campaign_name))"
-                            )
-                        params['campaign_name'] = value
-                    elif key == 'date_greater_equal':
-                        where_clauses.append(f"{table_name}.date >= :date_gte")
-                        params['date_gte'] = value
-                    elif key == 'date_less_equal':
-                        where_clauses.append(f"{table_name}.date <= :date_lte")
-                        params['date_lte'] = value
-                    elif key == 'value_greater_equal':
-                        where_clauses.append(
-                            f"{table_name}.value >= :value_gte"
-                        )
-                        params['value_gte'] = value
-                    elif key == 'value_less_equal':
-                        where_clauses.append(
-                            f"{table_name}.value <= :value_lte"
-                        )
-                        params['value_lte'] = value
-                    elif key in cls.ALLOWED_QRY_KWARGS:
-                        where_clauses.append(f"{table_name}.{key} = :{key}")
-                        params[key] = value
+                # Add standard filters using existing extend_qry
+                # This handles type, instrument, campaign, date ranges, etc.
+                qry = cls.extend_qry(qry, **kwargs)
                 
-                where_sql = " AND ".join(where_clauses)
-                limit = kwargs.get('limit', cls.MAX_RECORD_COUNT)
-                
-                # Construct query based on table structure
-                if needs_site_join:
-                    query = text(f"""
-                        SELECT {table_name}.*, 
-                               ST_AsText(s.geom) as geom_wkt, 
-                               s.geom as geom
-                        FROM {table_name}
-                        JOIN sites s ON {table_name}.site_id = s.id
-                        WHERE {where_sql}
-                        LIMIT :limit
-                    """)
-                else:
-                    query = text(f"""
-                        SELECT *, ST_AsText(geom) as geom_wkt
-                        FROM {table_name}
-                        WHERE {where_sql}
-                        LIMIT :limit
-                    """)
-                params['limit'] = limit
-                
-                # Execute and convert to DataFrame
-                result = session.execute(query, params)
-                rows = [dict(row._mapping) for row in result]
-                df = pd.DataFrame(rows)
+                # Execute and convert to GeoDataFrame
+                df = query_to_geopandas(qry, engine)
                 
             except Exception as e:
                 session.close()
+                LOG.error(f"Failed query for {cls.__name__}")
                 raise e
-
+        
         return df
 
     @property
@@ -623,6 +609,57 @@ class PointMeasurements(BaseDataset):
     MODEL = PointData
 
     @classmethod
+    def _build_select_clause(cls, verbose=False):
+        """
+        Build SELECT clause for PointMeasurements queries.
+        
+        Args:
+            verbose: If False, return only core point columns.
+                    If True, return denormalized data with observation, 
+                    instrument, and measurement type info.
+        """
+        if verbose:
+            # Return denormalized data with meaningful column names
+            # Note: Must also join these tables explicitly in the query
+            return [
+                cls.MODEL.value,
+                cls.MODEL.datetime.label('date'),
+                cls.MODEL.elevation,
+                cls.MODEL.geom,
+                CampaignObservation.name.label('observation_name'),
+                CampaignObservation.description.label('obs_description'),
+                MeasurementType.name.label('type'),
+                MeasurementType.units.label('units'),
+                MeasurementType.derived.label('derived'),
+                Instrument.name.label('instrument_name'),
+                Instrument.model.label('instrument_model'),
+                Instrument.specifications.label('instrument_specifications'),
+                Campaign.name.label('campaign_name'),
+                Observer.name.label('observer_name')
+            ]
+        else:
+            # Return only columns from points table
+            return [
+                cls.MODEL.id,
+                cls.MODEL.value,
+                cls.MODEL.datetime,
+                cls.MODEL.elevation,
+                cls.MODEL.geom
+            ]
+    
+    @classmethod
+    def _add_verbose_joins(cls, qry):
+        """
+        Add explicit joins needed for verbose mode to avoid cartesian products.
+        """
+        qry = qry.join(cls.MODEL.observation)
+        qry = qry.join(cls.MODEL.measurement_type)
+        qry = qry.join(PointObservation.instrument)
+        qry = qry.join(PointObservation.campaign)
+        qry = qry.join(PointObservation.observer)
+        return qry
+
+    @classmethod
     def _filter_campaign(cls, qry, value):
         return qry.join(
             cls.MODEL.observation
@@ -663,6 +700,21 @@ class PointMeasurements(BaseDataset):
         )
 
     @property
+    def all_types(self):
+        """
+        Return all measurement types that have data in the points table
+        """
+        with db_session_with_credentials() as (_engine, session):
+            # Use EXISTS for better performance on large points table
+            qry = session.query(MeasurementType.name).filter(
+                exists().where(
+                    PointData.measurement_type_id == MeasurementType.id
+                )
+            )
+            result = qry.all()
+        return self.retrieve_single_value_result(result)
+    
+    @property
     def all_instruments(self):
         """
         Return all distinct instruments in the data
@@ -674,7 +726,7 @@ class PointMeasurements(BaseDataset):
                         PointObservation.instrument_id
                     ).distinct()
                 )
-            ).all()
+            ).distinct().all()
         return self.retrieve_single_value_result(result)
 
 
@@ -727,6 +779,92 @@ class LayerMeasurements(BaseDataset):
             DOI.doi == value
         )
     
+    @classmethod
+    def _build_select_clause(cls, verbose=False):
+        """
+        Build SELECT clause for LayerMeasurements queries.
+        
+        Args:
+            verbose: If False, return only core layer columns (no joins).
+                    If True, return denormalized data with site, instrument, 
+                    and measurement type info.
+        """
+        if verbose:
+            # Return denormalized data with meaningful column names
+            # Note: Must also join these tables explicitly in the query
+            return [
+                cls.MODEL.depth,
+                cls.MODEL.bottom_depth,
+                cls.MODEL.value,
+                Site.name.label('site_name'),
+                Site.description.label('site_description'),
+                Site.slope_angle.label('slope_angle'),
+                Site.aspect.label('aspect'),
+                Site.air_temp.label('air_temp'),
+                Site.total_depth.label('total_depth'),
+                Site.weather_description.label('weather_description'),
+                Site.precip.label('precip'),
+                Site.sky_cover.label('sky_cover'),  
+                Site.wind.label('wind'),
+                Site.ground_condition.label('ground_condition'),
+                Site.ground_roughness.label('ground_roughness'),
+                Site.ground_vegetation.label('ground_vegetation'),
+                Site.vegetation_height.label('vegetation_height'),
+                Site.tree_canopy.label('tree_canopy'),
+                Site.comments.label('site_comments'),
+                Site.datetime.label('date'),
+                Site.geom,  
+                MeasurementType.name.label('type'),
+                MeasurementType.units.label('units'),
+                MeasurementType.derived.label('type_derived'),
+                Instrument.name.label('instrument_name'),
+                Instrument.model.label('instrument_model'),
+                Instrument.specifications.label('instrument_specifications'),
+                func.ST_AsText(Site.geom).label('geom_wkt')
+            ]
+        else:
+            # Return only core columns from layers table plus geom for geopandas
+            return [
+                cls.MODEL.id,
+                cls.MODEL.depth,
+                cls.MODEL.bottom_depth,
+                cls.MODEL.value,
+                Site.geom  # Required for GeoDataFrame
+            ]
+    
+    @classmethod
+    def _add_base_joins(cls, qry):
+        """
+        Add minimal joins needed for non-verbose mode (just Site for geom).
+        """
+        qry = qry.join(cls.MODEL.site)
+        return qry
+    
+    @classmethod
+    def _add_verbose_joins(cls, qry):
+        """
+        Add explicit joins needed for verbose mode to avoid cartesian products.
+        """
+        qry = qry.join(cls.MODEL.site)
+        qry = qry.join(cls.MODEL.measurement_type)
+        qry = qry.join(cls.MODEL.instrument)
+        return qry
+    
+    @property
+    def all_types(self):
+        """
+        Return all measurement types that have data in the layers table
+        """
+        with db_session_with_credentials() as (_engine, session):
+            # Use EXISTS for better performance on 208M row table
+            qry = session.query(MeasurementType.name).filter(
+                exists().where(
+                    LayerData.measurement_type_id == MeasurementType.id
+                )
+            )
+            result = qry.all()
+        return self.retrieve_single_value_result(result)
+    
     @property
     def all_sites(self):
         """
@@ -760,12 +898,56 @@ class LayerMeasurements(BaseDataset):
             ).distinct().all()
         return self.retrieve_single_value_result(result)
     
+    @classmethod
+    def get_sites(cls, site_names=None, **kwargs):
+        """
+        Get site information including geometries.
+        
+        Args:
+            site_names: List of site names or single site name
+            **kwargs: Additional filters (campaign, date, etc.)
+            
+        Returns:
+            GeoDataFrame with site information
+        """
+        with db_session_with_credentials() as (engine, session):
+            qry = session.query(Site.name, 
+                                Site.geom,
+                                Site.description,
+                                Site.datetime).distinct() 
+                                # others can be added
+            
+            if site_names is not None:
+                if isinstance(site_names, list):
+                    qry = qry.filter(Site.name.in_(site_names))
+                else:
+                    qry = qry.filter(Site.name == site_names)
+            
+            df = query_to_geopandas(qry, engine)
+        
+        return df
+
 class RasterMeasurements(BaseDataset):
     MODEL = ImageData
     ALLOWED_QRY_KWARGS = (
         BaseDataset.ALLOWED_QRY_KWARGS + ['description']
     )
 
+    @property
+    def all_types(self):
+        """
+        Return all measurement types that have data in the images table
+        """
+        with db_session_with_credentials() as (_engine, session):
+            result = session.query(
+                MeasurementType.name
+            ).join(
+                ImageData, ImageData.observation_id == ImageObservation.id
+            ).join(
+                ImageObservation.measurement_type
+            ).distinct().all()
+        return self.retrieve_single_value_result(result)
+    
     @property
     def all_descriptions(self):
         with db_session_with_credentials() as (_engine, session):
