@@ -135,7 +135,7 @@ class BaseDataset:
         
         Args:
             verbose: If True, return denormalized data with related table 
-            columns
+                     columns
             
         Returns:
             List of SQLAlchemy column expressions for session.query()
@@ -379,7 +379,7 @@ class BaseDataset:
         
         Args:
             verbose: If True, return denormalized data with related table 
-            columns
+                     columns
             shp: shapely geometry in which to filter, or WKT string
             pt: shapely point that will have a buffer applied, or WKT string
             buffer: buffer distance in same units as point
