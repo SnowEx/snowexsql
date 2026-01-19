@@ -463,7 +463,22 @@ def lambda_handler(event: Dict[str, Any], context: Any):
     This is the function the Lambda runtime will call when we set the
     handler to `snowexsql.lambda_handler.lambda_handler` in the
     container CMD.
+    
+    Handles both direct Lambda invocation and Function URL HTTP requests.
     """
+    # Parse event based on invocation type
+    # Function URLs wrap the payload in an HTTP structure
+    if 'body' in event and isinstance(event.get('body'), str):
+        # Function URL invocation - parse JSON body
+        try:
+            parsed_event = json.loads(event['body'])
+        except json.JSONDecodeError as e:
+            error_body = json.dumps({'error': f'Invalid JSON in request body: {str(e)}'})
+            return {'statusCode': 400, 'body': error_body}
+    else:
+        # Direct Lambda invocation (boto3) - use event as-is
+        parsed_event = event
+    
     secret_name = os.environ.get('DB_SECRET_NAME')
     region = os.environ.get('DB_AWS_REGION')
 
@@ -479,7 +494,7 @@ def lambda_handler(event: Dict[str, Any], context: Any):
         return {'statusCode': 500, 'body': error_body}
 
     try:
-        result = handle_event_with_secret(event, secret)
+        result = handle_event_with_secret(parsed_event, secret)
         return {'statusCode': 200, 'body': json.dumps(result)}
     except Exception as e:
         LOG.exception('Handler failed')
