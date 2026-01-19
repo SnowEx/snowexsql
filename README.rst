@@ -83,6 +83,14 @@ There are two options to do this:
 
 Accessing the SnowEx data
 -----------------
+
+There are two ways to access SnowEx data through this library:
+
+1. **Direct Database Access** (requires database credentials)
+2. **Lambda Client** (requires AWS credentials for serverless access)
+
+Direct Database Access
+=======================
 A programmatic API has been created for fast and standard
 access to Point and Layer data. There are two examples_ covering the
 features and usage of the api. See the specific api_ documentation for
@@ -98,6 +106,49 @@ detailed description.
         date=date(2020, 5, 28), instrument='camera'
     )
     print(df.head())
+
+Lambda Client (Serverless Access)
+==================================
+For users who prefer serverless access or don't want to manage database
+connections, we provide an AWS Lambda-based client with a public Function URL.
+
+**No credentials required!** The Lambda function handles all database
+credentials internally via AWS Secrets Manager.
+
+**Requirements:**
+
+* No AWS credentials needed - public HTTP endpoint
+* No database credentials needed - handled by Lambda
+* requests library installed (included with snowexsql)
+
+**Usage:**
+
+.. code-block:: python
+
+    from snowexsql.lambda_client import SnowExLambdaClient
+    from datetime import date
+    
+    # Initialize client - no credentials needed!
+    client = SnowExLambdaClient()
+    
+    # Get measurement classes
+    classes = client.get_measurement_classes()
+    PointMeasurements = classes['PointMeasurements']
+    
+    # Query data (same API as direct access)
+    df = PointMeasurements.from_filter(
+        date=date(2020, 5, 28), instrument='camera'
+    )
+
+See the `lambda_example notebook <https://snowexsql.readthedocs.io/en/latest/gallery/lambda_example.html>`_ 
+for complete examples.
+
+**How It Works:**
+
+- Public Lambda Function URL allows anyone to query the database
+- Database credentials stored securely in AWS Secrets Manager (never exposed)
+- Database only accepts connections from Lambda (not public internet)
+- All queries go through Lambda for security and monitoring
 
 
 Getting help
