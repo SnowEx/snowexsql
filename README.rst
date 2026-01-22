@@ -87,7 +87,7 @@ Accessing the SnowEx data
 There are two ways to access SnowEx data through this library:
 
 1. **Direct Database Access** (requires database credentials)
-2. **Lambda Client** (requires AWS credentials for serverless access)
+2. **Lambda Client** (no credentials required - serverless access, recommended)
 
 Direct Database Access
 =======================
