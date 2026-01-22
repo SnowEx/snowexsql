@@ -50,16 +50,23 @@ class SnowExLambdaClient:
     # Default production Lambda Function URL
     DEFAULT_FUNCTION_URL = 'https://izwsawyfkxss5vawq5v64mruqy0ahxek.lambda-url.us-west-2.on.aws'
     
+    # Request timeout in seconds
+    REQUEST_TIMEOUT_SECONDS = 30
+    
     def __init__(self, function_url: Optional[str] = None):
         """
-        Initialize the Lambda client with Function URL
+        Initialize the Lambda client with Function URL.
+        No AWS credentials required - uses public HTTP endpoint.
+        
+        The Lambda Function URL can be set in three ways (in order of precedence):
+        1. Pass directly to constructor: SnowExLambdaClient(function_url='https://...')
+        2. Set SNOWEX_LAMBDA_URL environment variable
+        3. Uses DEFAULT_FUNCTION_URL class constant
         
         Args:
-            function_url: Lambda Function URL (https://....lambda-url.us-west-2.on.aws/)
+            function_url: Lambda Function URL (https://....lambda-url.us-west-2.on.aws)
                          If None, uses SNOWEX_LAMBDA_URL environment variable
                          or default production URL.
-        
-        No AWS credentials required - uses public HTTP endpoint.
         """
         # Get Function URL from parameter, environment, or default
         self.function_url = (
@@ -69,7 +76,7 @@ class SnowExLambdaClient:
         )
         
         # Validate URL
-        if not self.function_url or self.function_url == 'PASTE_YOUR_FUNCTION_URL_HERE':
+        if not self.function_url:
             raise ValueError(
                 "\n\n" +
                 "=" * 70 + "\n" +
@@ -98,7 +105,6 @@ class SnowExLambdaClient:
         )
         adapter = HTTPAdapter(max_retries=retry_strategy)
         self.session.mount("https://", adapter)
-        self.session.mount("http://", adapter)
         
         # Dynamically create class-based accessors from available
         # measurement classes
@@ -268,7 +274,7 @@ class SnowExLambdaClient:
                 self.function_url,
                 json=payload,
                 headers={'Content-Type': 'application/json'},
-                timeout=30  # 30 second timeout
+                timeout=self.REQUEST_TIMEOUT_SECONDS
             )
             
             # Check HTTP status
@@ -297,7 +303,7 @@ class SnowExLambdaClient:
             
         except requests.exceptions.Timeout:
             raise Exception(
-                "Request timed out after 30 seconds. The query may be too complex "
+                f"Request timed out after {self.REQUEST_TIMEOUT_SECONDS} seconds. The query may be too complex "
                 "or the database is slow. Try adding a 'limit' parameter to reduce result size."
             )
         except requests.exceptions.ConnectionError as e:
