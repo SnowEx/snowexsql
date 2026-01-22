@@ -5,7 +5,7 @@ Lightweight client for accessing SnowEx database via AWS Lambda
 function. Provides serverless access to snow data without requiring
 AWS credentials or heavy geospatial dependencies.
 
-Uses Lambda Function URL for public HTTP access.
+Uses Lambda Function URL for public HTTPS access.
 """
 
 import json
@@ -48,7 +48,10 @@ class SnowExLambdaClient:
     """
     
     # Default production Lambda Function URL
-    DEFAULT_FUNCTION_URL = 'https://izwsawyfkxss5vawq5v64mruqy0ahxek.lambda-url.us-west-2.on.aws'
+    DEFAULT_FUNCTION_URL = (
+        'https://izwsawyfkxss5vawq5v64mruqy0ahxek'
+        '.lambda-url.us-west-2.on.aws'
+    )
     
     # Request timeout in seconds
     REQUEST_TIMEOUT_SECONDS = 30
@@ -58,13 +61,16 @@ class SnowExLambdaClient:
         Initialize the Lambda client with Function URL.
         No AWS credentials required - uses public HTTP endpoint.
         
-        The Lambda Function URL can be set in three ways (in order of precedence):
-        1. Pass directly to constructor: SnowExLambdaClient(function_url='https://...')
+        The Lambda Function URL can be set in three ways 
+        (in order of precedence):
+        1. Pass directly to constructor: 
+        SnowExLambdaClient(function_url='https://...')
         2. Set SNOWEX_LAMBDA_URL environment variable
         3. Uses DEFAULT_FUNCTION_URL class constant
         
         Args:
-            function_url: Lambda Function URL (https://....lambda-url.us-west-2.on.aws)
+            function_url: Lambda Function URL 
+                          (https://....lambda-url.us-west-2.on.aws)
                          If None, uses SNOWEX_LAMBDA_URL environment variable
                          or default production URL.
         """
@@ -82,9 +88,11 @@ class SnowExLambdaClient:
                 "=" * 70 + "\n" +
                 "Lambda Function URL Not Configured\n" +
                 "=" * 70 + "\n\n" +
-                "Please provide the Lambda Function URL in one of these ways:\n\n" +
+                "Please provide the Lambda Function URL in one of "
+                "these ways:\n\n" +
                 "1. Pass directly to constructor:\n" +
-                "   client = SnowExLambdaClient(function_url='https://...')\n\n" +
+                "   client = SnowExLambdaClient("
+                "function_url='https://...')\n\n" +
                 "2. Set environment variable:\n" +
                 "   export SNOWEX_LAMBDA_URL='https://...'\n\n" +
                 "3. Update DEFAULT_FUNCTION_URL in lambda_client.py\n\n" +
@@ -164,10 +172,11 @@ class SnowExLambdaClient:
         except ImportError as e:
             # If local discovery fails
             raise ImportError(
-                f"Could not auto-discover measurement classes from "
-                f"snowexsql.api: {e}. "
-                "This usually indicates a packaging or import issue. "
-                "Check that the snowexsql package is properly installed."
+                f"Could not auto-discover measurement classes "
+                f"from snowexsql.api: {e}. "
+                "This usually indicates a packaging or import "
+                "issue. Check that the snowexsql package is "
+                "properly installed."
             )
     
     def get_measurement_classes(self):
@@ -242,7 +251,8 @@ class SnowExLambdaClient:
             # Handle Shapely geometry objects (Point, Polygon, etc.)
             return obj.__geo_interface__
         elif isinstance(obj, dict):
-            return {key: self._serialize_payload(value) for key, value in obj.items()}
+            return {key: self._serialize_payload(value) 
+                    for key, value in obj.items()}
         elif isinstance(obj, (list, tuple)):
             return [self._serialize_payload(item) for item in obj]
         else:
@@ -279,7 +289,8 @@ class SnowExLambdaClient:
             
             # Check HTTP status
             if response.status_code != 200:
-                error_text = response.text[:500] if response.text else 'No response body'
+                error_text = response.text[:500] if response.text \
+                             else 'No response body'
                 raise Exception(
                     f"Lambda returned HTTP {response.status_code}: {error_text}"
                 )
@@ -303,22 +314,29 @@ class SnowExLambdaClient:
             
         except requests.exceptions.Timeout:
             raise Exception(
-                f"Request timed out after {self.REQUEST_TIMEOUT_SECONDS} seconds. The query may be too complex "
-                "or the database is slow. Try adding a 'limit' parameter to reduce result size."
+                f"Request timed out after "
+                f"{self.REQUEST_TIMEOUT_SECONDS} seconds. The query "
+                f"may be too complex or the database is slow. Try "
+                f"adding a 'limit' parameter to reduce result size."
             )
         except requests.exceptions.ConnectionError as e:
             raise Exception(
-                f"Could not connect to Lambda function at:\n{self.function_url}\n\n"
-                f"Please verify:\n"
-                f"1. The Function URL is correct\n"
-                f"2. You have internet connectivity\n"
-                f"3. The Lambda function is deployed and active\n\n"
+                f"Could not connect to Lambda function at:\n"
+                f"{self.function_url}\n\n"
+                f"Possible causes:\n"
+                f"1. Check your internet connectivity\n"
+                f"2. Verify the Function URL is correct\n"
+                f"3. If the issue persists, the service may be "
+                f"temporarily unavailable - contact the SnowEx team\n\n"
                 f"Connection error: {str(e)}"
             )
         except requests.exceptions.RequestException as e:
             raise Exception(f"HTTP request failed: {str(e)}")
         except json.JSONDecodeError as e:
-            response_preview = response.text[:200] if hasattr(response, 'text') else 'N/A'
+            response_preview = (
+                response.text[:200]
+                if hasattr(response, 'text') else 'N/A'
+            )
             raise Exception(
                 f"Failed to parse Lambda response as JSON: {str(e)}\n"
                 f"Response preview: {response_preview}"
@@ -499,7 +517,9 @@ class _LambdaDatasetClient:
         
         return method_proxy
     
-    def _handle_from_area_server_side(self, kwargs: dict, as_geodataframe: bool):
+    def _handle_from_area_server_side(
+        self, kwargs: dict, as_geodataframe: bool
+    ):
         """
         Handle from_area() with server-side PostGIS spatial filtering
         
@@ -533,10 +553,15 @@ class _LambdaDatasetClient:
         
         # Validate parameters
         if pt is None and shp is None:
-            raise ValueError("Either 'pt' or 'shp' parameter is required for from_area")
+            raise ValueError(
+                "Either 'pt' or 'shp' parameter is required "
+                "for from_area"
+            )
         
         if pt is not None and buffer_dist is None:
-            raise ValueError("'buffer' parameter is required when using 'pt'")
+            raise ValueError(
+                "'buffer' parameter is required when using 'pt'"
+            )
         
         # Convert geometry to WKT for transmission to Lambda
         if pt is not None:
@@ -546,7 +571,9 @@ class _LambdaDatasetClient:
             elif isinstance(pt, (tuple, list)) and len(pt) == 2:
                 pt_wkt = Point(pt[0], pt[1]).wkt
             else:
-                raise ValueError("pt must be a shapely Point or (x, y) tuple")
+                raise ValueError(
+                    "pt must be a shapely Point or (x, y) tuple"
+                )
             
             kwargs['pt_wkt'] = pt_wkt
             kwargs['buffer'] = buffer_dist
@@ -627,17 +654,31 @@ class _LambdaDatasetClient:
                         df['geometry'] = df['geom'].apply(
                             lambda x: wkb.loads(x, hex=True) if x else None
                         )
-                        return gpd.GeoDataFrame(df, geometry='geometry', crs='EPSG:4326')
+                        return gpd.GeoDataFrame(
+                            df, geometry='geometry', crs='EPSG:4326'
+                        )
                     except Exception:
                         # Try as WKT string
                         try:
-                            df['geometry'] = df['geom'].apply(lambda x: wkt.loads(x) if x else None)
-                            return gpd.GeoDataFrame(df, geometry='geometry', crs='EPSG:4326')
+                            df['geometry'] = df['geom'].apply(
+                                lambda x: (
+                                    wkt.loads(x) if x else None
+                                )
+                            )
+                            return gpd.GeoDataFrame(
+                                df, geometry='geometry',
+                                crs='EPSG:4326'
+                            )
                         except Exception:
                             # Try as GeoJSON __geo_interface__ dict
                             try:
-                                df['geometry'] = df['geom'].apply(lambda x: shape(x) if x else None)
-                                return gpd.GeoDataFrame(df, geometry='geometry', crs='EPSG:4326')
+                                df['geometry'] = df['geom'].apply(
+                                    lambda x: shape(x) if x else None
+                                )
+                                return gpd.GeoDataFrame(
+                                    df, geometry='geometry',
+                                    crs='EPSG:4326'
+                                )
                             except:
                                 pass  # Fall through to return original df
             
@@ -646,11 +687,15 @@ class _LambdaDatasetClient:
                 # Try to parse as WKT if it's a string
                 if df['geometry'].dtype == 'object':
                     try:
-                        df['geometry'] = df['geometry'].apply(lambda x: wkt.loads(x) if x else None)
+                        df['geometry'] = df['geometry'].apply(
+                            lambda x: wkt.loads(x) if x else None
+                        )
                     except:
-                        pass  # Already valid geometry or will fail below
+                        pass  # Already valid geometry or fail
                 
-                return gpd.GeoDataFrame(df, geometry='geometry', crs='EPSG:4326')
+                return gpd.GeoDataFrame(
+                    df, geometry='geometry', crs='EPSG:4326'
+                )
             
             # Case 3: No spatial data available
             return df
