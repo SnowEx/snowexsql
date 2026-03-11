@@ -102,6 +102,13 @@ def get_points():
 
 
 class BaseDataset:
+    """Base class for all SnowEx measurement dataset accessors.
+
+    Provides filtering, querying, and property-based access to measurements
+    stored in the SnowEx database. Subclasses must set ``MODEL`` to the
+    appropriate SQLAlchemy table class.
+    """
+
     MODEL = None
 
     ALLOWED_QRY_KWARGS = [
@@ -328,9 +335,8 @@ class BaseDataset:
         filters are cls.ALLOWED_QRY_KWARGS.
         
         Args:
-            verbose: If True, return denormalized data with related table 
-            columns
-            **kwargs: Filter arguments from ALLOWED_QRY_KWARGS
+            verbose: If True, return denormalized data with related table columns
+            kwargs: Filter arguments from ALLOWED_QRY_KWARGS
         """
         with db_session_with_credentials() as (engine, session):
             try:
@@ -378,12 +384,10 @@ class BaseDataset:
         for spatial operations, eliminating dependency on geoalchemy2/shapely.
         
         Args:
-            verbose: If True, return denormalized data with related table 
-                     columns
+            verbose: If True, return denormalized data with related table columns
             shp: shapely geometry in which to filter, or WKT string
             pt: shapely point that will have a buffer applied, or WKT string
-            buffer: buffer distance in same units as point
-                    (meters if using geography)
+            buffer: buffer distance in same units as point (meters if using geography)
             crs: integer SRID/EPSG code (default 26912 = UTM Zone 12N)
             kwargs: for more filtering or limiting (cls.ALLOWED_QRY_KWARGS)
             
@@ -905,7 +909,7 @@ class LayerMeasurements(BaseDataset):
         
         Args:
             site_names: List of site names or single site name
-            **kwargs: Additional filters (campaign, date, etc.)
+            kwargs: Additional filters (campaign, date, etc.)
             
         Returns:
             GeoDataFrame with site information

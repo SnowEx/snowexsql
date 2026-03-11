@@ -24,8 +24,6 @@ simply a client for accessing the database using python
 
 .. _SnowEx database: https://www.github.com/SnowEx/snowex_db
 
-WARNING - This is under active development in preparation for SnowEx Hackweek.  Use at your own risk.  Data will change as it is QA/QC'd and the end goal is for all data in this database to be pulled from NSIDC.  The goal is for this to become a community database open to all. 
-
 
 Features
 --------
@@ -35,7 +33,7 @@ Features
 * Useful conversions to pandas and geopandas
 * Lots of examples_
 
-.. _examples: https://snowexsql.readthedocs.io/en/latest/gallery/index.html
+.. _examples: https://projectpythia.org/snow-observations-cookbook/
 
 
 Setup
@@ -155,32 +153,6 @@ Getting help
 ------------
 Jump over to `our discussion forum <https://github.com/SnowEx/snowexsql/discussions>`_ 
 and get help from our community.
-
-
-Documentation
--------------
-
-There is a whole host of resources for users in the documentation. It has been
-setup for you to preview in your browser.
-
-In there you will find:
-
-* Examples of database use
-* Database structure
-* API to the python package snowexsql
-* Links to other resources
-* Notes about the data uploaded
-* And more!
-
-To see the documentation in your browser:
-
-**Warning**: To see the examples/gallery, the snowex db needs to be up. Otherwise they will be left with the
-last image submitted to GitHub.
-
-.. code-block:: bash
-
-  make docs
-
 
 I want to contribute
 ---------------------
