@@ -17,10 +17,14 @@ Welcome to snowexsql
 .. image:: https://codecov.io/gh/SnowEx/snowexsql/graph/badge.svg?token=B27OKGBOTR
     :target: https://codecov.io/gh/SnowEx/snowexsql
 
+.. image:: https://zenodo.org/badge/doi/10.5281/zenodo.7618101.svg
+    :target: https://doi.org/10.5281/zenodo.7618101
+    :alt: DOI
+
 About
 -----
 Database access and tools for using the `SnowEx database`_. This tool is
-simply a client for accessing the database using python
+simply a client for accessing the database using Python.
 
 .. _SnowEx database: https://www.github.com/SnowEx/snowex_db
 
