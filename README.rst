@@ -23,38 +23,70 @@ Welcome to snowexsql
 
 About
 -----
-Database access and tools for using the `SnowEx database`_. This tool is
-simply a client for accessing the database using Python.
+
+NASA SnowEx was a multi-year airborne and field campaign aimed at understanding
+the seasonal snowpack across the western United States and Alaska. Each campaign
+combined airborne remote sensing (lidar, radar, hyperspectral imagery) with 
+intensive ground truth measurements across a variety of different snow climates.
+The goal was to improve snow water equivalent (SWE) retrieval algorithms 
+for future spaceborne missions.
+
+The `SnowEx database`_ consolidates measurements from all campaigns into a 
+single queryable PostgreSQL/PostGIS database. It holds point measurements (snow
+depths, Federal Sampler SWE) and snow pit information (density, temperature,
+stratigraphy from snow pits). This software is a client for accessing the 
+database using Python.
 
 .. _SnowEx database: https://www.github.com/SnowEx/snowex_db
 
 
-Features
---------
-
-* Database access for SnowEx Database
-* Analysis tools
-* Useful conversions to pandas and geopandas
-* Lots of examples_
-
-.. _examples: https://projectpythia.org/snow-observations-cookbook/
-
-
-Setup
------
-
 Installing
-==========
+----------
+
 Install using pip:
 
 .. code-block::
 
     pip install snowexsql
 
+
+Accessing the Database
+----------------------
+
+There are two ways to access the SnowEx database:
+
+**Public access via Lambda client (no credentials required)**
+    The recommended approach for most users. The
+    :class:`~snowexsql.lambda_client.SnowExLambdaClient` connects to a public
+    AWS Lambda Function URL that proxies queries to the database. No AWS
+    account or database credentials are needed.
+
+    .. code-block:: python
+
+        from snowexsql.lambda_client import SnowExLambdaClient
+
+        client = SnowExLambdaClient()
+        classes = client.get_measurement_classes()
+        PointMeasurements = classes['PointMeasurements']
+
+        df = PointMeasurements.from_filter(type='depth', limit=100)
+
+**Direct database access (credentials required)**
+    For users with database credentials, the
+    :mod:`snowexsql.api` classes can be used directly without going through
+    Lambda. This path also supports raster queries.
+
+    .. code-block:: python
+
+        from snowexsql.api import PointMeasurements, LayerMeasurements
+
+        df = LayerMeasurements.from_filter(type='density', limit=100)
+
+
 Configuring the database connection
-===================================
-Using this library requires setting up the database connection credentials.
-There are two options to do this:
+-----------------------------------
+For users wishing to have direct access to the  database, there are two options 
+for setting up the credentials:
 
 * Set database connection URL via ``SNOWEX_DB_CONNECTION`` environment variable
   Example:
@@ -82,76 +114,17 @@ There are two options to do this:
     "password": "password"
   }
 
+Full Tutorial
+-------------
 
-Accessing the SnowEx data
------------------
+For a complete walkthrough of accessing and querying the SnowEx database,
+including spatial queries, filtering by campaign or instrument, and working
+with the returned data, see the Project Pythia Snow Observations Cookbook:
 
-There are two ways to access SnowEx data through this library:
+* `SnowEx Database Tutorial`_ — step-by-step guide to using the Lambda client
+  and the API classes
 
-1. **Direct Database Access** (requires database credentials)
-2. **Lambda Client** (no credentials required - serverless access, recommended)
-
-Direct Database Access
-=======================
-A programmatic API has been created for fast and standard
-access to Point and Layer data. There are two examples_ covering the
-features and usage of the api. See the specific api_ documentation for
-detailed description.
-
-.. _api: https://snowexsql.readthedocs.io/en/latest/api.html
-
-.. code-block:: python
-
-    from snowexsql.api import PointMeasurements, LayerMeasurements
-    # The main functions we will use are `from_area` and `from_filter` like this
-    df = PointMeasurements.from_filter(
-        date=date(2020, 5, 28), instrument='camera'
-    )
-    print(df.head())
-
-Lambda Client (Serverless Access)
-==================================
-For users who prefer serverless access or don't want to manage database
-connections, we provide an AWS Lambda-based client with a public Function URL.
-
-**No credentials required!** The Lambda function handles all database
-credentials internally via AWS Secrets Manager.
-
-**Requirements:**
-
-* No AWS credentials needed - public HTTP endpoint
-* No database credentials needed - handled by Lambda
-* requests library installed (included with snowexsql)
-
-**Usage:**
-
-.. code-block:: python
-
-    from snowexsql.lambda_client import SnowExLambdaClient
-    from datetime import date
-    
-    # Initialize client - no credentials needed!
-    client = SnowExLambdaClient()
-    
-    # Get measurement classes
-    classes = client.get_measurement_classes()
-    PointMeasurements = classes['PointMeasurements']
-    
-    # Query data (same API as direct access)
-    df = PointMeasurements.from_filter(
-        date=date(2020, 5, 28), instrument='camera'
-    )
-
-See the `lambda_example notebook <https://snowexsql.readthedocs.io/en/latest/gallery/lambda_example.html>`_ 
-for complete examples.
-
-**How It Works:**
-
-- Public Lambda Function URL allows anyone to query the database
-- Database credentials stored securely in AWS Secrets Manager (never exposed)
-- Database only accepts connections from Lambda (not public internet)
-- All queries go through Lambda for security and monitoring
-
+.. _SnowEx Database Tutorial: https://projectpythia.org/snow-observations-cookbook/notebooks/snowexsql-database/
 
 Getting help
 ------------

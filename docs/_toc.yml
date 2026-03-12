@@ -4,7 +4,6 @@
 format: jb-book
 root: readme
 chapters:
-  - file: usage
   - file: community/index
   - file: database_structure
   - file: data_notes
