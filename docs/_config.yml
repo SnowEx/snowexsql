@@ -36,7 +36,6 @@ exclude_patterns: ['_build', 'Thumbs.db', '.DS_Store']
 sphinx:
   extra_extensions:
    - 'sphinx.ext.autodoc'
-   - 'sphinxcontrib.apidoc'
    - 'sphinx.ext.viewcode'
    - 'sphinx_gallery.load_style'
    - 'sphinx.ext.autosectionlabel'
