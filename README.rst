@@ -154,6 +154,12 @@ Getting help
 Jump over to `our discussion forum <https://github.com/SnowEx/snowexsql/discussions>`_ 
 and get help from our community.
 
+Documentation
+-------------
+
+Our read the docs pages include `documentation of the API structure <https://snowexsql.readthedocs.io/en/latest/api.html>`_
+and `provides a detailed description of the database schema <https://snowexsql.readthedocs.io/en/latest/database_structure.html>`_.
+
 I want to contribute
 ---------------------
 Thank you for the interest!

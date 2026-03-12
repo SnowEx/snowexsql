@@ -5,16 +5,16 @@ Usage
 About SnowEx
 ------------
 
-NASA SnowEx is a multi-year airborne and field campaign aimed at understanding
-the seasonal snowpack across the western United States. Each campaign combines
-airborne remote sensing (lidar, radar, hyperspectral imagery) with intensive
-ground truth measurements at dozens of snow pit sites, spread across a variety
-of vegetation types and terrain. The goal is to improve snow water equivalent
-(SWE) retrieval algorithms for future spaceborne missions.
+NASA SnowEx was a multi-year airborne and field campaign aimed at understanding
+the seasonal snowpack across the western United States and Alaska. Each campaign
+combined airborne remote sensing (lidar, radar, hyperspectral imagery) with 
+intensive ground truth measurements across a variety of different snow climates.
+The goal was to improve snow water equivalent (SWE) retrieval algorithms 
+for future spaceborne missions.
 
 The SnowEx database consolidates measurements from all campaigns into a single
 queryable PostgreSQL/PostGIS database. It holds point measurements (snow
-depths, Federal Sampler SWE) and layer/profile data (density, temperature,
+depths, Federal Sampler SWE) and snow pit information (density, temperature,
 stratigraphy from snow pits).
 
 Accessing the Database
