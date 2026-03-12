@@ -123,8 +123,8 @@ Known multisampled profiles are:
   * Density
   * LWC (Dielectric Constant)
 
-Density
-~~~~~~~
+Density Profiles
+~~~~~~~~~~~~~~~~
 
 * Density profiles all have multiple profiles. The value assigned is the
   average of the profiles.
