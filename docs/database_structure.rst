@@ -153,10 +153,9 @@ many-to-many join table.
 
 **layers**
 
-Stores individual layer or profile measurements from snow pits — one
-row per depth value at a site. Examples include density profiles,
-temperature profiles, hand hardness, and SMP measurements. Each row
-links to a site (which provides the geographic location and date),
+Stores individual layer (e.g. snow pit) or profile (e.g. SMP) information. For
+example, one row for a snow pit holds density or temperature for one layer.
+Each row links to a site (which provides the geographic location and date),
 a measurement type, and an instrument.
 
 Key columns: ``id``, ``depth`` (cm from surface), ``bottom_depth``,
