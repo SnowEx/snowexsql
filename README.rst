@@ -49,6 +49,17 @@ Install using pip:
 
     pip install snowexsql
 
+Full Tutorial
+-------------
+
+For a complete walkthrough of accessing and querying the SnowEx database,
+including spatial queries, filtering by campaign or instrument, and working
+with the returned data, see the Project Pythia Snow Observations Cookbook:
+
+* `SnowEx Database Tutorial`_ — step-by-step guide to using the Lambda client
+  and the API classes
+
+.. _SnowEx Database Tutorial: https://projectpythia.org/snow-observations-cookbook/notebooks/snowexsql-database/
 
 Accessing the Database
 ----------------------
@@ -113,18 +124,6 @@ for setting up the credentials:
     "username": "user",
     "password": "password"
   }
-
-Full Tutorial
--------------
-
-For a complete walkthrough of accessing and querying the SnowEx database,
-including spatial queries, filtering by campaign or instrument, and working
-with the returned data, see the Project Pythia Snow Observations Cookbook:
-
-* `SnowEx Database Tutorial`_ — step-by-step guide to using the Lambda client
-  and the API classes
-
-.. _SnowEx Database Tutorial: https://projectpythia.org/snow-observations-cookbook/notebooks/snowexsql-database/
 
 Getting help
 ------------
