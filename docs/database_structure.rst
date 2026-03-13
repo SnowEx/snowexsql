@@ -2,193 +2,246 @@
 Database Structure
 ==================
 
-The data base is formed of 4 tables that end users will query.
+The SnowEx database is a PostgreSQL/PostGIS database with a normalized
+relational schema. Measurements are organized around **campaigns**
+(field seasons), **sites** (snow pit locations), and
+**observations** (individual instrument deployments). Shared metadata
+like instruments, observers, measurement types, and DOI references are
+stored in separate lookup tables and linked by foreign key, rather than
+repeated as strings on every row.
 
-* **points**: Contains all data that has a single value with a single coordinate pair (e.g. snow depths).
-* **layers**: Contains all data that has a depth component associated to a single coordinate pair (e.g. density profiles).
-* **images**: Contains all rasters and any query for a raster tile should be done here.
-* **sites**: Contains all the pit site details.
+Schema Diagram
+--------------
 
-There are other tables available, but they are auto-generated to support the 4
-tables above. These other tables are:
+.. mermaid::
 
-* geography_columns
-* geometry_columns
-* spatial_ref_sys
-* raster_columns
-* raster_overviews
+    erDiagram
+        campaigns ||--o{ sites : "campaign_id"
+        campaigns ||--o{ campaign_observations : "campaign_id"
 
-Points Table
-=============
+        sites }o--o{ observers : "site_observers"
+        sites }o--|| dois : "doi_id"
+        sites ||--o{ layers : "site_id"
 
-The `points` table contains any data that can be described by a single
-coordinate pair and a single value.
+        layers }o--|| measurement_type : "measurement_type_id"
+        layers }o--|| instruments : "instrument_id"
 
-Examples of this type of data includes:
- * snow depths
- * GPR SWE
- * GPR two way travel
- * GPR Depth
+        campaign_observations }o--|| dois : "doi_id"
+        campaign_observations }o--|| instruments : "instrument_id"
+        campaign_observations }o--|| observers : "observers_id"
 
-This table is mapped to python with :class:`snowexsql.data.PointData`.
+        campaign_observations ||--o{ points : "observation_id"
+        campaign_observations ||--o{ images : "observation_id"
 
-At a minimum an single entry in python would be similar to the following:
+        points }o--|| measurement_type : "measurement_type_id"
+        images }o--|| measurement_type : "measurement_type_id"
 
-.. code-block:: python
+Lookup Tables
+-------------
 
-  PointData(value=52, easting= 758635.01, northing=4325308.56, type='depth')
+These tables store shared metadata that is referenced by foreign key
+from the data tables.
 
+.. list-table:: campaigns
+   :header-rows: 1
+   :widths: 20 15 65
 
-This table has the following columns:
+   * - Column
+     - Type
+     - Description
+   * - id
+     - Integer (PK)
+     - Primary key
+   * - name
+     - String
+     - Campaign name (e.g. ``SnowEx20``, ``SnowEx23``)
+   * - description
+     - String
+     - Optional description of the campaign
 
-* date - Date data was collected
-* easting - UTM projected coordinate in the east direction in meters
-* elevation - Elevation at the site or acquisition in meters
-* equipment - String indentifying more info about the instruments used
-* geom - GIS software friendly version of the coordinates of where the data was collected in UTM.
-* id - Unique identifier that is automatically assigned when uploaded
-* instrument - Name of the instrument used to collect the data
-* latitude - Geographic northing coordinate of the acquisition location in degrees
-* longitude - Geographic westing coordinate of the acquisition location in degrees
-* northing - Northing coordinate projected in UTM in meters
-* site_id - Unique identifier to pit location
-* site_name - Name describing the general survey area ( e.g. Grand Mesa)
-* observers - Name of the people who acquired the data
-* time - Time (MST) that the data was collected
-* time_updated - Time this entry was last modified
-* type - Name of the data collected
-* units - Units of the data collected
-* utm_zone
-* value - Value of the data collected
-* version_number
+.. list-table:: observers
+   :header-rows: 1
+   :widths: 20 15 65
 
+   * - Column
+     - Type
+     - Description
+   * - id
+     - Integer (PK)
+     - Primary key
+   * - name
+     - String
+     - Observer name
 
-Layers Table
-============
+.. list-table:: instruments
+   :header-rows: 1
+   :widths: 20 15 65
 
-The `layers` table contains all data that can be described by a single
-coordinate pair, a depth in the snowpack, and a single value. This means that a
-single entry in the Layers table is a single layer from a vertical profile.
+   * - Column
+     - Type
+     - Description
+   * - id
+     - Integer (PK)
+     - Primary key
+   * - name
+     - String
+     - Instrument name (e.g. ``depth_probe``, ``SMP``)
+   * - model
+     - String
+     - Instrument model
+   * - specifications
+     - String
+     - Additional instrument specifications
 
-Examples of this data include:
-  * density profiles
-  * SMP
-  * SSA
-  * temperature
-  * Hand hardness
+.. list-table:: measurement_type
+   :header-rows: 1
+   :widths: 20 15 65
 
-This table is mapped to python with :class:`snowexsql.data.LayerData`.
+   * - Column
+     - Type
+     - Description
+   * - id
+     - Integer (PK)
+     - Primary key
+   * - name
+     - Text
+     - Measurement name (e.g. ``density``, ``depth``)
+   * - units
+     - Text
+     - Units of measurement (e.g. ``kg/m^3``, ``cm``)
+   * - derived
+     - Boolean
+     - True if this measurement is derived from other values
 
-At a minimum an single entry would be similar to the following:
+.. list-table:: dois
+   :header-rows: 1
+   :widths: 20 15 65
 
-.. code-block:: python
+   * - Column
+     - Type
+     - Description
+   * - id
+     - Integer (PK)
+     - Primary key
+   * - doi
+     - String
+     - DOI string for the associated publication or dataset
+   * - date_accessed
+     - Date
+     - Date the DOI was accessed
 
-  LayerData(value='300', depth=30, easting= 758635.01, northing=4325308.56, type='density')
+Core Data Tables
+----------------
 
+**sites**
 
-**NOTE**: All values in this table are stored as strings to accommodate a wide
-range of data.
+Stores snow pit and measurement site metadata. Each site belongs to a
+campaign and optionally references a DOI. Sites have a geographic point
+location, a date, and detailed site condition fields recorded in the
+field (slope angle, aspect, sky cover, etc.).
 
-This table contains the following columns:
+Key columns: ``id``, ``name``, ``description``, ``datetime``,
+``elevation``, ``geom`` (PostGIS Point), ``campaign_id`` (FK →
+campaigns), ``doi_id`` (FK → dois), ``slope_angle``, ``aspect``,
+``air_temp``, ``total_depth``, ``weather_description``, ``precip``,
+``sky_cover``, ``wind``, ``ground_condition``, ``ground_roughness``,
+``ground_vegetation``, ``vegetation_height``, ``tree_canopy``,
+``comments``.
 
-* bottom_depth
-* comments
-* date - Date data was collected
-* depth - Depth in centimeters in the snowpack that the data was collected
-* easting - UTM projected coordinate in the east direction in meters
-* elevation - Elevation at the site or acquisition in meters
-* flags - data that was flagged typically just pits
-* geom - GIS software friendly version of the coordinates of where the data was collected in UTM.
-* id - Unique identifier that is automatically assigned when uploaded
-* instrument - Name of the instrument used to collect the data
-* latitude - Geographic northing coordinate of the acquisition location in degrees
-* longitude - Geographic westing coordinate of the acquisition location in degrees
-* northing - Northing coordinate projected in UTM in meters
-* sample_a - 1 of potentially three samples that could have been taken for this measurement, e.g. density
-* sample_b - 1 of potentially three samples that could have been taken for this measurement, e.g. density
-* sample_c - 1 of potentially three samples that could have been taken for this measurement, e.g. density
-* site_id - Unique identifier to pit location
-* site_name - Name describing the general survey area ( e.g. Grand Mesa)
-* observers - Names of the people performing the acquisition
-* time - Time (MST) at the beginning of acquisition
-* time_created - Time this entry was uploaded
-* time_updated - Time this entry was last modified
-* type - Name of the data collected
-* units - Units of the data collected
-* utm_zone - UTM Zone
-* value - Value of the data collected
+Observers are linked to sites through the ``site_observers``
+many-to-many join table.
 
+**layers**
 
-Images Table
-============
+Stores individual layer (e.g. snow pit) or profile (e.g. SMP) information. For
+example, one row for a snow pit holds density or temperature for one layer.
+Each row links to a site (which provides the geographic location and date),
+a measurement type, and an instrument.
 
-The `images` table contains all rasters. Its not called rasters because the
-tables named raster are reserved keywords for postgis.
+Key columns: ``id``, ``depth`` (cm from surface), ``bottom_depth``,
+``value`` (Text), ``site_id`` (FK → sites),
+``measurement_type_id`` (FK → measurement_type),
+``instrument_id`` (FK → instruments).
 
-Examples of this include:
-  * DEMS
-  * UAVSAR products
-  * Lidar acquisitions
+Observation Hierarchy
+---------------------
 
-This table is mapped to python with :class:`snowexsql.data.ImageData`.
+Point and image data are organized through a **campaign observation**
+layer that links each dataset to a campaign, instrument, observer,
+and DOI. A single table inheritance pattern is used: the
+``campaign_observations`` table has a ``type`` discriminator column
+that identifies each row as either a ``PointObservation`` or an
+``ImageObservation``.
 
-At a minimum an single entry in python would be similar to the following:
+.. list-table:: campaign_observations
+   :header-rows: 1
+   :widths: 20 15 65
 
-.. code-block:: python
+   * - Column
+     - Type
+     - Description
+   * - id
+     - Integer (PK)
+     - Primary key
+   * - name
+     - Text
+     - Observation name
+   * - description
+     - Text
+     - Optional description
+   * - date
+     - Date
+     - Date of the observation
+   * - type
+     - String
+     - Discriminator: ``PointObservation`` or ``ImageObservation``
+   * - campaign_id
+     - Integer (FK)
+     - Links to campaigns
+   * - doi_id
+     - Integer (FK)
+     - Links to dois
+   * - instrument_id
+     - Integer (FK)
+     - Links to instruments
+   * - observers_id
+     - Integer (FK)
+     - Links to observers
 
-  ImageData(raster=<RasterElement>, type='depth')
+**points**
 
-This table contains the following columns:
+Stores individual point measurements (one value at one coordinate).
+Examples include snow depth probe measurements and Federal Sampler
+SWE values. Each point row links to a ``PointObservation`` (which
+provides campaign, instrument, observer, and DOI context) and a
+measurement type.
 
-* date - Date data was collected
-* description - Any notes to add
-* id - Unique identifier that is automatically assigned when uploaded
-* instrument - Name of the instrument used to collect the data
-* raster - Raster data in Well Known Binary Format (WKB) best generated using `raster2psql` in the command line
-* site_id - Unique identifier to pit location
-* site_name - Name describing the general survey area ( e.g. Grand Mesa)
-* observers - Names of the people or organization that acquired the data
-* time_created - Time this entry was uploaded
-* time_updated - Time this entry was last modified
-* type - Name of the data collected
-* units - Units of the data collected
+Key columns: ``id``, ``value`` (Float), ``datetime``, ``elevation``,
+``geom`` (PostGIS Point), ``observation_id`` (FK →
+campaign_observations), ``measurement_type_id`` (FK →
+measurement_type).
 
+**images**
 
-Sites Table
-===========
+Stores raster data (e.g. snow depth maps, DEMs). Each row links to an
+``ImageObservation`` and a measurement type.
 
-The sites table contains all the details regarding pit site details. This
-table is formed exclusively from the `SiteDetails.csv` files that were provided
-with `stratigraphy.csv` and `density.csv` files.
+Key columns: ``id``, ``raster`` (PostGIS Raster),
+``observation_id`` (FK → campaign_observations),
+``measurement_type_id`` (FK → measurement_type).
 
-This table is mapped to python with :class:`snowexsql.data.SiteData`.
-This table has a lot of columns. They are:
+Implementation Details
+----------------------
 
-* air_temp - Air temperature in degrees C at time of digging the pit
-* aspect - Slope Aspect in degrees from north
-* date - Date data was collected
-* easting - UTM projected coordinate in the east direction in meters
-* elevation - Elevation at the site or acquisition in meters
-* geom - GIS software friendly version of the coordinates of where the data was collected in UTM.
-* ground_condition - Description of the surface below snow
-* ground_roughness - A description of how rough the surface below the snow is
-* ground_vegetation - Description of the vegetation below snow
-* id - Unique identifier that is automatically assigned when uploaded
-* latitude - Geographic northing coordinate of the acquisition location in degrees
-* longitude - Geographic westing coordinate of the acquisition location in degrees
-* northing - Northing coordinate projected in UTM in meters
-* precip - Description of the precip during pit digging
-* site_id - Unique identifier to pit location
-* site_name - Name describing the general survey area ( e.g. Grand Mesa)
-* site_notes - Any special site specific notes
-* sky_cover - Description of the cloud cover
-* slope_angle - Angle of the slope in degrees
-* time - Time (MST) acquisition began
-* time_created - Time this entry was uploaded
-* time_updated - Time this entry was last modified
-* total_depth - Snow depth at location in centimeters
-* tree_canopy - Description of the tree canopy at location
-* utm_zone - UTM zone
-* vegetation_height - Estimated vegetation height
-* weather_description - Brief description of the weather during acquisition
-* wind - Description of the wind during acquisition
+The schema is implemented in :mod:`snowexsql.tables`. Each table is a
+SQLAlchemy ORM class. Shared column patterns are provided as Python
+mixins:
+
+- :class:`~snowexsql.tables.campaign.InCampaign` — adds ``campaign_id`` FK
+- :class:`~snowexsql.tables.doi.HasDOI` — adds ``doi_id`` FK
+- :class:`~snowexsql.tables.instrument.HasInstrument` — adds ``instrument_id`` FK
+- :class:`~snowexsql.tables.observers.HasObserver` — adds ``observers_id`` FK
+- :class:`~snowexsql.tables.measurement_type.HasMeasurementType` — adds ``measurement_type_id`` FK
+- :class:`~snowexsql.tables.single_location.SingleLocationData` — adds ``datetime``, ``elevation``, ``geom``
+
+Source files: ``snowexsql/tables/``
