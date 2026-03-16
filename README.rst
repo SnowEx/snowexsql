@@ -68,7 +68,7 @@ There are two ways to access the SnowEx database:
 
 **Public access via Lambda client (no credentials required)**
     The recommended approach for most users. The
-    :class:`~snowexsql.lambda_client.SnowExLambdaClient` connects to a public
+    ``SnowExLambdaClient`` connects to a public
     AWS Lambda Function URL that proxies queries to the database. No AWS
     account or database credentials are needed.
 
@@ -84,7 +84,7 @@ There are two ways to access the SnowEx database:
 
 **Direct database access (credentials required)**
     For users with database credentials, the
-    :mod:`snowexsql.api` classes can be used directly without going through
+    ``snowexsql.api`` classes can be used directly without going through
     Lambda. This path also supports raster queries.
 
     .. code-block:: python
