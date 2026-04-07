@@ -31,6 +31,3 @@ scripts/download/data/*
 
 # Version
 _version.py
-
-# agent research and plans
-.agents/
