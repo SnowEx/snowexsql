@@ -39,7 +39,7 @@ qry = qry.filter(<CONDITION>)
      - Filter a column that are/are not Null
 
    * - :python:`.contains()`
-     - :python:`qry.filter(LayerData.comments).contains('graupel'))`
+     - :python:`qry.filter(LayerData.comments.contains('graupel'))`
      - Filter by finding a substring
 
    * - :python:`.distinct()`
