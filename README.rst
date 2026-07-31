@@ -26,15 +26,15 @@ About
 
 NASA SnowEx was a multi-year airborne and field campaign aimed at understanding
 the seasonal snowpack across the western United States and Alaska. Each campaign
-combined airborne remote sensing (lidar, radar, hyperspectral imagery) with 
+combined airborne remote sensing (lidar, radar, hyperspectral imagery) with
 intensive ground truth measurements across a variety of different snow climates.
-The goal was to improve snow water equivalent (SWE) retrieval algorithms 
+The goal was to improve snow water equivalent (SWE) retrieval algorithms
 for future spaceborne missions.
 
-The `SnowEx database`_ consolidates measurements from all campaigns into a 
+The `SnowEx database`_ consolidates measurements from all campaigns into a
 single queryable PostgreSQL/PostGIS database. It holds point measurements (snow
 depths, Federal Sampler SWE) and snow pit information (density, temperature,
-stratigraphy from snow pits). This software is a client for accessing the 
+stratigraphy from snow pits). This software is a client for accessing the
 database using Python.
 
 .. _SnowEx database: https://www.github.com/SnowEx/snowex_db
@@ -64,13 +64,23 @@ with the returned data, see the Project Pythia Snow Observations Cookbook:
 Accessing the Database
 ----------------------
 
-There are two ways to access the SnowEx database:
+There are two ways to access the SnowEx database. The preferred way is to use
+the **Lambda Client**, which does not require setting up credentials locally
+with a user installation. The local **Python API** (this library) connects to
+the database from the local host, which requires authentication setup and has
+less limits on returned records. However, it is more technical to query the
+database directly, and is not recommended for standard users. Rather than
+retrieving a large number of records the user is encouraged to use the filters
+to reduce the amount of data to the needed rows.
 
-**Public access via Lambda client (no credentials required)**
-    The recommended approach for most users. The
-    ``SnowExLambdaClient`` connects to a public
-    AWS Lambda Function URL that proxies queries to the database. No AWS
-    account or database credentials are needed.
+Due to the heavy dependencies of GeoPandas on other libraries, the Lambda Client
+was stripped down to features that are only available via Pandas. The returned
+dataframe still has the ability to be converted to a GeoPandas dataframe locally.
+
+**Lambda client (no credentials required)**
+    The recommended approach for most users. The ``SnowExLambdaClient`` connects
+    to a public Amazon AWS Lambda Function URL that proxies queries to the
+    database. No AWS account or database credentials are needed.
 
     .. code-block:: python
 
@@ -82,10 +92,9 @@ There are two ways to access the SnowEx database:
 
         df = PointMeasurements.from_filter(type='depth', limit=100)
 
-**Direct database access (credentials required)**
-    For users with database credentials, the
-    ``snowexsql.api`` classes can be used directly without going through
-    Lambda. This path also supports raster queries.
+**Direct database access via local API (credentials required)**
+    For advanced users with database credentials, the ``snowexsql.api`` classes
+    can be used directly. This path also supports raster queries (in beta).
 
     .. code-block:: python
 
@@ -96,7 +105,7 @@ There are two ways to access the SnowEx database:
 
 Configuring the database connection
 -----------------------------------
-For users wishing to have direct access to the  database, there are two options 
+For users wishing to have direct access to the  database, there are two options
 for setting up the credentials:
 
 * Set database connection URL via ``SNOWEX_DB_CONNECTION`` environment variable
@@ -127,7 +136,7 @@ for setting up the credentials:
 
 Getting help
 ------------
-Jump over to `our discussion forum <https://github.com/SnowEx/snowexsql/discussions>`_ 
+Jump over to `our discussion forum <https://github.com/SnowEx/snowexsql/discussions>`_
 and get help from our community.
 
 Documentation
@@ -173,10 +182,10 @@ More on connection strings to PostgreSQL can be found with the
 
 DOI
 ---
-.. |HW22| image:: https://zenodo.org/badge/DOI/10.5281/zenodo.7618102.svg 
+.. |HW22| image:: https://zenodo.org/badge/DOI/10.5281/zenodo.7618102.svg
    :target: https://doi.org/10.5281/zenodo.7618102
 .. |HW24| image:: https://zenodo.org/badge/DOI/10.5281/zenodo.13312706.svg
   :target: https://doi.org/10.5281/zenodo.13312706
 
-* `SnowEx Hackweek 2022 <https://snowex-2022.hackweek.io/intro.html>`_ - |HW22|  
+* `SnowEx Hackweek 2022 <https://snowex-2022.hackweek.io/intro.html>`_ - |HW22|
 * `SnowEx Hackweek 2024 <https://snowex-2024.hackweek.io/intro.html>`_ - |HW24|
