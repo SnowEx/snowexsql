@@ -36,3 +36,7 @@ Command:
 ```
 pytest tests/
 ```
+
+# Skills
+Project specific skills are defined in [skills](skills/)
+
