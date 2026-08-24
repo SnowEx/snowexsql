@@ -24,9 +24,13 @@ docs/_build/*
 coverage.xml
 htmlcov/*
 
+# IDEs and editors
 .idea/
 .vscode/
-scripts/download/data/*
+.zed/
+# ZED spellchecker
+codebook.toml
+
 *.egg-info
 
 # Version
